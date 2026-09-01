@@ -1,0 +1,60 @@
+//@version=6
+indicator("Overnight (Globex) High / Low", "ONH/ONL", overlay = true, max_lines_count = 500, max_labels_count = 500)
+
+// Overnight range: the high/low built during the Globex/overnight session
+// (default 18:00 -> 09:30 ET). Frozen at the RTH open and projected across the
+// day. ONH/ONL are prime liquidity levels — breaks and sweeps at the RTH open.
+
+string GRP = "Sessions"
+string onHours  = input.session("1800-0930", "Overnight window", group = GRP, tooltip = "Globex overnight. Crosses midnight.")
+string rthHours = input.session("0930-1600", "Regular session", group = GRP)
+string tz       = input.string("America/New_York", "Timezone", group = GRP)
+
+string GRP2 = "Style"
+color col   = input.color(color.new(color.purple, 0), "ONH / ONL", group = GRP2)
+int   width = input.int(1, "Line width", minval = 1, maxval = 4, group = GRP2)
+bool  showMid = input.bool(false, "Show overnight midpoint", group = GRP2)
+bool  showLbl = input.bool(true, "Labels", group = GRP2)
+bool  lblPrice = input.bool(false, "Show price in label", group = GRP2, tooltip = "Price already shows on the axis; off keeps the label to just the name.")
+
+bool inON  = timeframe.isintraday and not na(time(timeframe.period, onHours, tz))
+bool inRTH = timeframe.isintraday and not na(time(timeframe.period, rthHours, tz))
+
+// overnight session key (handle the midnight cross so one night = one range)
+int localMin = hour(time, tz) * 60 + minute(time, tz)
+int anchorT  = localMin < 570 ? time - 24 * 60 * 60 * 1000 : time   // before 09:30 -> prior date
+int onKey    = year(anchorT, tz) * 10000 + month(anchorT, tz) * 100 + dayofmonth(anchorT, tz)
+bool onStart = inON and (not inON[1] or onKey != onKey[1])
+
+var float onH = na
+var float onL = na
+if onStart
+    onH := high
+    onL := low
+else if inON
+    onH := math.max(onH, high)
+    onL := math.min(onL, low)
+
+// horizontal lines: build during the overnight window, then hold (frozen)
+// through the following RTH day; break in the 16:00-18:00 gap.
+bool showLine = inON or inRTH
+
+// keep the plots out of the status line — the price axis already shows the value
+DISP = display.pane + display.price_scale
+
+plot(showLine ? onH : na, "ONH", color = col, linewidth = width, style = plot.style_linebr, display = DISP)
+plot(showLine ? onL : na, "ONL", color = col, linewidth = width, style = plot.style_linebr, display = DISP)
+plot(showMid and showLine ? (onH + onL) / 2 : na, "ON mid", color = color.new(col, 40), linewidth = 1, style = plot.style_linebr, display = DISP)
+
+// right-edge tags: plain text, no bubble
+var label lbH = na
+var label lbL = na
+if barstate.islast and showLbl and not na(onH)
+    if na(lbH)
+        lbH := label.new(bar_index, onH, "", style = label.style_none, textcolor = col, size = size.small)
+        lbL := label.new(bar_index, onL, "", style = label.style_none, textcolor = col, size = size.small)
+    label.set_xy(lbH, bar_index + 3, onH), label.set_text(lbH, lblPrice ? "ONH " + str.tostring(onH, format.mintick) : "ONH")
+    label.set_xy(lbL, bar_index + 3, onL), label.set_text(lbL, lblPrice ? "ONL " + str.tostring(onL, format.mintick) : "ONL")
+
+alertcondition(inRTH and ta.crossover(close, onH), "Break overnight high", "{{ticker}} broke overnight high")
+alertcondition(inRTH and ta.crossunder(close, onL), "Break overnight low", "{{ticker}} broke overnight low")

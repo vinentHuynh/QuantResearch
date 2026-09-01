@@ -1,0 +1,55 @@
+//@version=6
+indicator("Opening Gap & Fill", "Gap", overlay = true, max_lines_count = 500, max_boxes_count = 500, max_labels_count = 500)
+
+// Opening gap: the distance between today's session open and the prior day's
+// close. Draws the prior close (the fill target), shades the gap, labels its
+// size, and flags when the gap fills (price trades back to prior close).
+
+string GRP = "Session"
+string rthHours = input.session("0930-1600", "Regular session", group = GRP)
+string tz       = input.string("America/New_York", "Timezone", group = GRP)
+float  minGapPct = input.float(0.1, "Only mark gaps larger than (%)", minval = 0.0, step = 0.05, group = GRP)
+
+string GRP2 = "Style"
+color upCol = input.color(color.new(color.green, 0), "Gap up", group = GRP2)
+color dnCol = input.color(color.new(color.red, 0), "Gap down", group = GRP2)
+int   fillT = input.int(88, "Gap shade transparency", minval = 0, maxval = 100, group = GRP2)
+
+bool inRTH = timeframe.isintraday and not na(time(timeframe.period, rthHours, tz))
+bool rthStart = inRTH and not inRTH[1]
+float priorClose = request.security(syminfo.tickerid, "D", close[1], lookahead = barmerge.lookahead_on)
+
+var float pc = na
+var float op = na
+var bool  filled = false
+var bool  active = false
+var line  pcLine = na
+var box   gapBox = na
+var label lb = na
+
+bool justFilled = false
+if rthStart
+    pc := priorClose
+    op := open
+    float gpct = na(pc) or pc == 0 ? 0.0 : (op - pc) / pc * 100.0
+    active := math.abs(gpct) >= minGapPct and not na(pc)
+    filled := false
+    if active
+        color c = op > pc ? upCol : dnCol
+        pcLine := line.new(time, pc, time_close, pc, xloc = xloc.bar_time, color = c, width = 2, style = line.style_dashed)
+        gapBox := box.new(time, math.max(op, pc), time_close, math.min(op, pc), xloc = xloc.bar_time, border_color = color.new(c, 60), bgcolor = color.new(c, fillT))
+        lb := label.new(time, op, (op > pc ? "Gap up " : "Gap down ") + str.tostring(gpct, "#.00") + "%", xloc = xloc.bar_time, style = op > pc ? label.style_label_down : label.style_label_up, color = color.new(c, 20), textcolor = color.white, size = size.small)
+else if inRTH and active and not filled
+    line.set_x2(pcLine, time_close)
+    box.set_right(gapBox, time_close)
+    // fill = price trades through the prior close
+    if low <= pc and high >= pc
+        filled := true
+        justFilled := true
+        line.set_color(pcLine, color.new(color.gray, 20))
+        line.set_style(pcLine, line.style_solid)
+        box.set_bgcolor(gapBox, color.new(color.gray, 92))
+        label.set_text(lb, label.get_text(lb) + " — FILLED")
+
+plotshape(justFilled, "Gap filled", shape.xcross, location.belowbar, color = color.gray, size = size.small, text = "fill")
+alertcondition(justFilled, "Gap filled", "{{ticker}} opening gap filled to prior close")

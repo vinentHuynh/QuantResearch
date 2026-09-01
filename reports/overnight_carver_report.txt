@@ -1,0 +1,149 @@
+====================================================================================================
+OVERNIGHT DRIFT  --  Carver Leveraged Trading vetting
+====================================================================================================
+
+[1] DATA  (windows are pre-specified from prior work; nothing searched here)
+           start         end  sessions   $/pt  tick_$ cost_side_$ vol_c2c vol_seamfree ratio
+inst                                                                                        
+MNQ   2020-01-30  2026-07-31      1682    2.0    0.50         0.9   20.3%        17.6%   1.2
+MES   2020-01-30  2026-07-31      1682    5.0    1.25         1.2   14.3%        12.9%   1.1
+MGC   2016-11-08  2026-07-31      2511   10.0    1.00         1.1   13.3%        12.7%   1.0
+MCL   2021-08-09  2026-07-31      1286  100.0    1.00         1.1   34.0%        32.0%   1.1
+    vol_c2c vs vol_seamfree: close-to-close includes roll seams, seam-free does not.
+    Ratios near 1.0 mean the .v.0 continuous series is not fabricating variance at the roll.
+
+[2] COST SCREEN  (before any signal). Overnight = ~504 trades/yr.
+    speed limit = pre-cost SR 0.30 / 3 = 0.100 SR/yr
+     contract_$ ann_vol ann_vol_$ cost_SR_trade cost@504 cost@24 (24h hold) verdict@504 min_cap_1ct min_cap_4ct
+inst                                                                                                           
+MNQ      53,444   19.6%    10,486      0.000083    0.042              0.002        pass      87,383     349,532
+MES      35,612   13.6%     4,855      0.000256    0.129              0.006      BREACH      40,461     161,843
+MGC      46,088   28.1%    12,957      0.000086    0.044              0.002        pass     107,975     431,902
+MCL       8,444   55.5%     4,690      0.000239    0.120              0.006      BREACH      39,084     156,336
+    Same 504 trades/yr that killed the MGC opening-range breakout (0.34-0.61 SR/yr).
+    What changed is the instrument, not the frequency: a tick is a fixed number of
+    dollars, but the risk it buys differs ~10x across these four contracts.
+
+[3] SINGLE INSTRUMENT -- long the block, vol-scaled to tau=12%, net
+                     years trades_yr SR_gross cost_SR SR_net ann_vol vol_vs_tau  maxDD  skew worst_day win_rate avg_ct   net_$
+strategy                                                                                                                      
+MNQ ON 18-06           6.6       504    +1.03   0.147  +0.88    5.7%       0.48  -6.0% -0.35    -2.09%    54.7%    1.9  33,339
+MNQ ON 23-04           6.6       504    +1.05   0.248  +0.81    3.4%       0.28  -4.2% +0.21    -1.08%    55.6%    1.9  18,028
+MNQ 24h hold           6.7         8      NaN     NaN  +0.71   13.4%       1.12 -22.3% -0.65    -6.58%      NaN    1.9  63,544
+MNQ MAC(16,64)         6.7         9      NaN     NaN  -0.06   13.4%       1.12 -37.9% -0.63    -5.36%      NaN    NaN  -5,662
+MNQ 24h hold [c2c]     6.7         8      NaN     NaN  +0.80   13.8%       1.15 -21.4% -0.56    -6.60%      NaN    1.9  73,256
+MNQ MAC(16,64) [c2c]   6.7         9      NaN     NaN  +0.09   13.8%       1.15 -28.2% -0.47    -5.31%      NaN    NaN   7,970
+MES ON 18-06           6.6       504    +0.76   0.369  +0.39    6.1%       0.51 -11.6% -1.02    -3.75%    53.3%    3.6  15,657
+MES ON 23-04           6.6       504    +0.66   0.615  +0.05    3.7%       0.31  -9.5% -0.36    -1.20%    53.3%    3.6   1,089
+MES 24h hold           6.7        17      NaN     NaN  +0.73   13.3%       1.11 -18.3% -0.66    -5.73%      NaN    3.6  65,207
+MES MAC(16,64)         6.7         8      NaN     NaN  +0.22   14.3%       1.19 -21.6% -0.61    -7.61%      NaN    NaN  21,331
+MES 24h hold [c2c]     6.7        17      NaN     NaN  +0.79   13.8%       1.15 -17.6% -0.60    -5.73%      NaN    3.6  72,542
+MES MAC(16,64) [c2c]   6.7         8      NaN     NaN  +0.40   14.9%       1.24 -18.8% -0.42    -7.54%      NaN    NaN  39,370
+MGC ON 18-06           9.9       497    +1.03   0.422  +0.61    7.2%       0.60 -15.5% +0.41    -2.45%    51.9%    5.5  43,775
+MGC ON 23-04           9.9       494    +0.04   0.680  -0.64    4.5%       0.37 -32.8% -0.62    -3.15%    47.9%    5.5 -28,351
+MGC 24h hold          10.0        17      NaN     NaN  +0.70   13.7%       1.14 -28.0% -0.20    -5.75%      NaN    5.5  95,546
+MGC MAC(16,64)        10.0         8      NaN     NaN  +0.37   14.9%       1.24 -31.4% -0.34    -7.02%      NaN    NaN  54,498
+MGC 24h hold [c2c]    10.0        17      NaN     NaN  +0.99   13.9%       1.16 -20.8% -0.20    -5.79%      NaN    5.5 137,251
+MGC MAC(16,64) [c2c]  10.0         8      NaN     NaN  +0.49   15.2%       1.26 -28.8% -0.35    -7.07%      NaN    NaN  73,398
+MCL ON 18-06           5.0       504    +0.03   0.380  -0.35    7.2%       0.60 -21.1% +0.44    -2.44%    49.3%    4.8 -12,647
+MCL ON 23-04           5.0       504    -0.32   0.649  -0.96    4.2%       0.35 -22.0% -1.18    -2.37%    48.4%    4.8 -20,313
+MCL 24h hold           5.1        14      NaN     NaN  +0.10   13.3%       1.11 -26.9% -0.37    -5.37%      NaN    4.8   7,129
+MCL MAC(16,64)         5.1         8      NaN     NaN  -0.08   20.1%       1.67 -39.6% -0.24    -9.23%      NaN    NaN  -7,927
+MCL 24h hold [c2c]     5.1        14      NaN     NaN  +0.27   13.5%       1.12 -24.0% -0.10    -4.87%      NaN    4.8  18,471
+MCL MAC(16,64) [c2c]   5.1         8      NaN     NaN  -0.05   20.0%       1.67 -42.8% -0.24    -9.65%      NaN    NaN  -4,847
+
+[4] THE REAL QUESTION -- overnight block vs 24h hold, same instrument
+              SR_block SR_24h SR_24h_c2c  edge extra_cost_SR       verdict
+inst window                                                               
+MNQ  ON 18-06    +0.88  +0.71      +0.80 +0.17         0.147      worth it
+     ON 23-04    +0.81  +0.71      +0.80 +0.10         0.248      worth it
+MES  ON 18-06    +0.39  +0.73      +0.79 -0.34         0.369  not worth it
+     ON 23-04    +0.05  +0.73      +0.79 -0.69         0.615  not worth it
+MGC  ON 18-06    +0.61  +0.70      +0.99 -0.09         0.422  not worth it
+     ON 23-04    -0.64  +0.70      +0.99 -1.35         0.680  not worth it
+MCL  ON 18-06    -0.35  +0.10      +0.27 -0.46         0.380  not worth it
+     ON 23-04    -0.96  +0.10      +0.27 -1.07         0.649  not worth it
+    Going flat every morning buys a lower-vol, shorter-exposure book. It has to pay
+    for ~504 trades/yr of turnover to be worth doing.
+    SR_24h is SEAM-FREE and is the number to use. SR_24h_c2c is the same book priced
+    close-to-close, which books the contango roll step as profit -- that is the version
+    a naive backtest produces, and the gap between the two columns is the size of the
+    trap. The block strategies never cross a seam, so they need no such correction.
+
+[5] RISK TARGET -- Carver halves tau for negative-skew payoffs
+              skew worst_night     p1  neg_skew tau_advised
+strategy                                                   
+MNQ ON 18-06 -0.35      -2.09% -1.06%      True        6.0%
+MNQ ON 23-04 +0.21      -1.08% -0.63%     False       12.0%
+MES ON 18-06 -1.02      -3.75% -1.07%      True        6.0%
+MES ON 23-04 -0.36      -1.20% -0.71%      True        6.0%
+MGC ON 18-06 +0.41      -2.45% -1.06%     False       12.0%
+MGC ON 23-04 -0.62      -3.15% -0.68%      True        6.0%
+MCL ON 18-06 +0.44      -2.44% -1.18%     False       12.0%
+MCL ON 23-04 -1.18      -2.37% -0.68%      True        6.0%
+
+[6] PORTFOLIO -- handcrafted weights, measured IDM (the biggest real lever)
+    ON 18-06   equity only (MES+MNQ)  IDM 1.02  weights {'MES': 0.5, 'MNQ': 0.5}
+               SR_net +0.53   ann_vol 4.8% (0.40 x tau)   maxDD -7.8% (0.6 x tau)   skew -0.64   worst -2.74%
+    ON 18-06   handcrafted 4          IDM 1.52  weights {'MNQ': 0.25, 'MES': 0.25, 'MGC': 0.25, 'MCL': 0.25}
+               SR_net +0.58   ann_vol 5.4% (0.45 x tau)   maxDD -10.4% (0.9 x tau)   skew -0.41   worst -2.46%
+    correlation of nightly returns (ON 18-06):
+      MNQ   MES   MGC   MCL
+MNQ +1.00 +0.91 +0.16 -0.00
+MES +0.91 +1.00 +0.12 +0.05
+MGC +0.16 +0.12 +1.00 +0.20
+MCL -0.00 +0.05 +0.20 +1.00
+    ON 23-04   equity only (MES+MNQ)  IDM 1.02  weights {'MES': 0.5, 'MNQ': 0.5}
+               SR_net +0.34   ann_vol 2.9% (0.24 x tau)   maxDD -5.6% (0.5 x tau)   skew -0.06   worst -1.09%
+    ON 23-04   handcrafted 4          IDM 1.51  weights {'MNQ': 0.25, 'MES': 0.25, 'MGC': 0.25, 'MCL': 0.25}
+               SR_net -0.35   ann_vol 3.2% (0.27 x tau)   maxDD -13.4% (1.1 x tau)   skew -0.15   worst -1.35%
+    correlation of nightly returns (ON 23-04):
+      MNQ   MES   MGC   MCL
+MNQ +1.00 +0.91 +0.20 +0.04
+MES +0.91 +1.00 +0.18 +0.08
+MGC +0.20 +0.18 +1.00 +0.12
+MCL +0.04 +0.08 +0.12 +1.00
+    --- the same four instruments held 24h, ~8-17 trades/yr instead of 504 ---
+    24h hold   equity only (MES+MNQ)  IDM 1.02  weights {'MES': 0.5, 'MNQ': 0.5}
+               SR_net +0.61   ann_vol 10.9% (0.91 x tau)   maxDD -20.5% (1.7 x tau)   skew -0.75   worst -6.28%
+    24h hold   handcrafted 4          IDM 1.53  weights {'MNQ': 0.25, 'MES': 0.25, 'MGC': 0.25, 'MCL': 0.25}
+               SR_net +0.79   ann_vol 11.2% (0.93 x tau)   maxDD -18.5% (1.5 x tau)   skew -0.48   worst -5.18%
+    correlation of 24h returns:
+      MNQ   MES   MGC   MCL
+MNQ +1.00 +0.92 +0.12 +0.04
+MES +0.92 +1.00 +0.14 +0.07
+MGC +0.12 +0.14 +1.00 +0.15
+MCL +0.04 +0.07 +0.15 +1.00
+    The 24h book is LONG-ONLY BETA over a decade in which gold went 1,150 -> 4,600
+    and equities ran hard. Its Sharpe is one bull regime, not an edge, and it carries
+    the full drawdown at 0.95 x tau. The overnight block at least has an economic
+    story. Weigh [4] and [6] with that in mind.
+    MES/MNQ correlate ~+0.9: two equity index futures are ONE bet wearing
+    two tickers, and the IDM of ~1.0 says so. The commodity legs are what
+    actually diversify -- which is why they earn a place despite weak
+    standalone overnight numbers.
+
+[7] MINIMUM CAPITAL -- per instrument, at its share of the book
+      min_cap_1ct  min_cap_4ct  book_4ct
+inst                                    
+MNQ        87,383      349,532   928,618
+MES        40,461      161,843   429,976
+MGC       107,975      431,902 1,147,453
+MCL        39,084      156,336   415,346
+    book_4ct = 4-contract floor for that instrument at w=25%, measured IDM 1.51.
+    Portfolio minimum capital is the LARGEST of these: $1,147,453.
+    -> $100,000 does not clear it. Carver's order of preference: micros (already used),
+       then drop the most expensive instrument, then accept 2-contract rounding.
+       Never raise tau to make it fit.
+
+[8] DRAWDOWN EXPECTATION -- set before trading, so a drawdown is not evidence
+    At tau=12%: a 24% peak-to-trough is ORDINARY (2x tau), 36% is planned for (3x tau).
+    Detecting SR 0.5 from zero at 95% needs ~30 years; SR 0.24 needs ~70.
+    This test has 5.0 years on the shortest leg, 10.0 on the longest. Nothing here is
+    proven -- the measurable things are realised vol vs tau and realised cost vs model.
+    Data caveat: MGC before ~2019 traded a few thousand lots a session, so its real
+    spread was wider than the 1-tick cost model assumes; treat MGC's early years as
+    optimistic rather than as clean out-of-sample.
+
+[9] written -> reports/overnight_carver_summary.csv, overnight_carver_daily_returns.csv,
+    overnight_carver_cost_screen.csv, overnight_cost_screen_<INST>.csv

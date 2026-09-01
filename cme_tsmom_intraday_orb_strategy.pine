@@ -1,0 +1,211 @@
+//@version=6
+//@strategy_alert_message {{strategy.order.alert_message}}
+strategy("CME TSMOM Intraday ORB - 25K / 5m", "TSMOM Intraday 5m", overlay = true,
+     initial_capital = 25000, currency = currency.USD,
+     default_qty_type = strategy.fixed, default_qty_value = 1,
+     pyramiding = 0, commission_type = strategy.commission.cash_per_contract,
+     commission_value = 1.25, slippage = 1,
+     margin_long = 10, margin_short = 10,
+     process_orders_on_close = true, calc_on_every_tick = false,
+     calc_on_order_fills = true, fill_orders_on_standard_ohlc = true,
+     use_bar_magnifier = true)
+
+// Experimental intraday adaptation of the daily CME TSMOM model.
+//
+// The completed DAILY trend score is only a direction filter. Entry requires a
+// 5-minute close breakout of the first 15-minute RTH range in that direction. Every trade has
+// an opposite-range stop, a fixed R-multiple target, and is closed by 16:00 ET.
+// There is at most one entry attempt per RTH session. If one whole contract
+// exceeds the dollar-risk budget, the session is skipped.
+//
+// This is deliberately separate from the tested daily TSMOM strategy. It does
+// not reproduce the daily model's historical results and must be evaluated as
+// its own strategy on actual futures data.
+
+// Inputs
+string GROUP_SIGNAL = "Daily TSMOM direction filter"
+string signalSymbol = input.symbol("CME_MINI:NQ1!", "Continuous signal series", group = GROUP_SIGNAL,
+     tooltip = "MNQ chart -> NQ1!; MES chart -> ES1!. Uses completed daily bars.")
+int fastLength = input.int(20, "Fast lookback", minval = 2, group = GROUP_SIGNAL)
+int mediumLength = input.int(60, "Medium lookback", minval = 2, group = GROUP_SIGNAL)
+int slowLength = input.int(120, "Slow lookback", minval = 2, group = GROUP_SIGNAL)
+int annualLength = input.int(252, "Annual lookback", minval = 2, group = GROUP_SIGNAL)
+float minimumScore = input.float(0.50, "Minimum absolute score", minval = 0.0, maxval = 1.0, step = 0.25, group = GROUP_SIGNAL,
+     tooltip = "0.50 requires at least a +0.50 long score or -0.50 short score.")
+
+string GROUP_SETUP = "5-minute intraday setup"
+string marketTimeZone = input.string("America/New_York", "Session time zone", group = GROUP_SETUP)
+string openingRangeSession = input.session("0930-0945", "Opening range", group = GROUP_SETUP)
+string entrySession = input.session("0945-1500", "Allowed entry window", group = GROUP_SETUP)
+string flattenSession = input.session("1545-1600", "Force-flat bar", group = GROUP_SETUP)
+float rewardRisk = input.float(2.0, "Profit target (R)", minval = 0.25, step = 0.25, group = GROUP_SETUP)
+bool requireCloseBreak = input.bool(true, "Require close beyond opening range", group = GROUP_SETUP,
+     tooltip = "Recommended. If disabled, a high/low touch can trigger and historical bar ordering becomes less reliable.")
+
+string GROUP_RISK = "Risk controls"
+float riskBudget = input.float(75.0, "Maximum stop risk per trade ($)", minval = 1.0, step = 5.0, group = GROUP_RISK)
+int maximumContracts = input.int(20, "Maximum micro contracts", minval = 1, maxval = 20, group = GROUP_RISK)
+bool useChartPointValue = input.bool(true, "Use chart syminfo.pointvalue", group = GROUP_RISK)
+float manualPointValue = input.float(2.0, "Manual dollars per point", minval = 0.0001, group = GROUP_RISK,
+     tooltip = "MNQ=2 and MES=5. Used only when automatic point value is disabled.")
+
+string GROUP_TEST = "Backtest and display"
+int startTime = input.time(timestamp("01 Jan 2020 00:00 +0000"), "Start date", group = GROUP_TEST)
+int endTime = input.time(timestamp("31 Dec 2099 23:59 +0000"), "End date", group = GROUP_TEST)
+bool showOpeningRange = input.bool(true, "Plot opening range", group = GROUP_TEST)
+bool colorBars = input.bool(true, "Color bars by daily bias", group = GROUP_TEST)
+bool showMarkers = input.bool(true, "Show setup markers", group = GROUP_TEST)
+bool showDashboard = input.bool(true, "Show dashboard", group = GROUP_TEST)
+
+// Confirmed daily direction
+f_vote(float changeValue) =>
+    changeValue > 0.0 ? 1.0 : changeValue < 0.0 ? -1.0 : 0.0
+
+f_dailyScore() =>
+    bool warm = not na(close[fastLength]) and not na(close[mediumLength]) and not na(close[slowLength]) and not na(close[annualLength])
+    warm ? (f_vote(close - close[fastLength]) + f_vote(close - close[mediumLength]) + f_vote(close - close[slowLength]) + f_vote(close - close[annualLength])) / 4.0 : na
+
+float dailyScoreRaw = request.security(signalSymbol, "D", f_dailyScore(), gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)
+// The completed daily result appears on the final intraday bar. The one-chart-
+// bar offset makes that confirmed result active in the following session.
+float activeScore = dailyScoreRaw[1]
+int dailyDirection = activeScore >= minimumScore ? 1 : activeScore <= -minimumScore ? -1 : 0
+
+f_bias(int direction) =>
+    direction > 0 ? "LONG ONLY" : direction < 0 ? "SHORT ONLY" : "NO TRADE"
+
+f_biasColor(int direction) =>
+    direction > 0 ? color.lime : direction < 0 ? color.red : color.silver
+
+f_signed(float value, string pattern) =>
+    na(value) ? "n/a" : (value > 0.0 ? "+" : "") + str.tostring(value, pattern)
+
+// Session state. On a 5-minute chart the 09:30-09:45 opening range contains
+// exactly three completed bars.
+bool is5MinuteChart = timeframe.isminutes and timeframe.multiplier == 5
+bool inOpeningRange = not na(time(timeframe.period, openingRangeSession, marketTimeZone))
+bool inEntryWindow = not na(time(timeframe.period, entrySession, marketTimeZone))
+bool inFlattenBar = not na(time(timeframe.period, flattenSession, marketTimeZone))
+bool newRthSession = inOpeningRange and not inOpeningRange[1]
+bool inDateRange = time >= startTime and time <= endTime
+
+var float openingHigh = na
+var float openingLow = na
+var bool attemptedToday = false
+var float activeStop = na
+var float activeTarget = na
+var string setupState = "WAITING"
+
+if newRthSession
+    openingHigh := high
+    openingLow := low
+    attemptedToday := false
+    setupState := "BUILDING OR"
+    // Safety: this strategy is never intended to carry an overnight position.
+    if strategy.position_size != 0
+        strategy.close_all(comment = "Overnight safety", alert_message = "Intraday safety close")
+else if inOpeningRange
+    openingHigh := na(openingHigh) ? high : math.max(openingHigh, high)
+    openingLow := na(openingLow) ? low : math.min(openingLow, low)
+
+bool openingRangeReady = not inOpeningRange and not na(openingHigh) and not na(openingLow) and openingHigh > openingLow
+float pointValue = useChartPointValue ? nz(syminfo.pointvalue, manualPointValue) : manualPointValue
+float minimumQuantity = math.max(nz(syminfo.mincontract, 1.0), 0.0000001)
+
+bool longBreak = openingRangeReady and dailyDirection > 0 and (requireCloseBreak ? close > openingHigh : high >= openingHigh)
+bool shortBreak = openingRangeReady and dailyDirection < 0 and (requireCloseBreak ? close < openingLow : low <= openingLow)
+bool qualifiedBreak = is5MinuteChart and inDateRange and inEntryWindow and not attemptedToday and strategy.position_size == 0 and (longBreak or shortBreak)
+
+float candidateEntry = close
+float candidateStop = longBreak ? openingLow : shortBreak ? openingHigh : na
+float stopDistance = qualifiedBreak ? math.abs(candidateEntry - candidateStop) : na
+float oneContractRisk = not na(stopDistance) ? stopDistance * pointValue : na
+float sizedContracts = not na(oneContractRisk) and oneContractRisk > 0.0 ? math.floor(riskBudget / oneContractRisk) : 0.0
+float orderQuantity = math.min(maximumContracts * minimumQuantity, sizedContracts * minimumQuantity)
+bool riskAccepted = qualifiedBreak and orderQuantity >= minimumQuantity
+bool riskSkipped = qualifiedBreak and not riskAccepted
+bool submittedLong = riskAccepted and longBreak
+bool submittedShort = riskAccepted and shortBreak
+
+if qualifiedBreak
+    attemptedToday := true
+    if riskAccepted
+        float tradeRisk = math.abs(candidateEntry - candidateStop)
+        activeStop := candidateStop
+        activeTarget := submittedLong ? candidateEntry + rewardRisk * tradeRisk : candidateEntry - rewardRisk * tradeRisk
+        string side = submittedLong ? "LONG" : "SHORT"
+        string message = "TSMOM intraday " + side + " " + str.tostring(orderQuantity) + " " + syminfo.ticker + "; stop " + str.tostring(activeStop, format.mintick) + "; target " + str.tostring(activeTarget, format.mintick) + "; score " + f_signed(activeScore, "#.00")
+        strategy.entry("Intraday", submittedLong ? strategy.long : strategy.short, qty = orderQuantity, alert_message = message)
+        strategy.exit("Risk bracket", "Intraday", stop = activeStop, limit = activeTarget,
+             alert_message = "TSMOM intraday bracket exit " + syminfo.ticker)
+        setupState := side + " ACTIVE"
+    else
+        setupState := "SKIP: STOP > $" + str.tostring(riskBudget, "#")
+else if openingRangeReady and inEntryWindow and not attemptedToday
+    setupState := dailyDirection == 0 ? "FILTER FLAT" : "WAITING BREAK"
+
+// Keep the bracket working after the entry bar and on order-fill recalculation.
+if strategy.position_size != 0 and not na(activeStop) and not na(activeTarget)
+    strategy.exit("Risk bracket", "Intraday", stop = activeStop, limit = activeTarget,
+         alert_message = "TSMOM intraday bracket exit " + syminfo.ticker)
+
+if inFlattenBar and strategy.position_size != 0
+    strategy.close_all(comment = "RTH close", alert_message = "TSMOM intraday force-flat " + syminfo.ticker)
+    setupState := "FORCE FLAT"
+
+bool positionJustClosed = strategy.position_size == 0 and strategy.position_size[1] != 0
+if positionJustClosed
+    activeStop := na
+    activeTarget := na
+    setupState := "DONE FOR DAY"
+
+bool dateRangeJustEnded = time > endTime and time[1] <= endTime
+if dateRangeJustEnded and strategy.position_size != 0
+    strategy.close_all(comment = "End date", alert_message = "TSMOM intraday backtest-end close")
+
+// Visuals
+color biasColor = f_biasColor(dailyDirection)
+barcolor(colorBars and not na(activeScore) ? color.new(biasColor, 15) : na)
+plot(showOpeningRange and openingRangeReady ? openingHigh : na, "Opening high", color = color.new(color.aqua, 0), style = plot.style_linebr)
+plot(showOpeningRange and openingRangeReady ? openingLow : na, "Opening low", color = color.new(color.aqua, 0), style = plot.style_linebr)
+plot(strategy.position_size != 0 ? activeStop : na, "Active stop", color = color.red, style = plot.style_linebr, linewidth = 2)
+plot(strategy.position_size != 0 ? activeTarget : na, "Active target", color = color.lime, style = plot.style_linebr, linewidth = 2)
+
+plotshape(showMarkers and submittedLong, title = "Long setup", style = shape.labelup, location = location.belowbar, color = color.green, text = "LONG", textcolor = color.white, size = size.tiny)
+plotshape(showMarkers and submittedShort, title = "Short setup", style = shape.labeldown, location = location.abovebar, color = color.red, text = "SHORT", textcolor = color.white, size = size.tiny)
+plotshape(showMarkers and riskSkipped, title = "Risk skip", style = shape.labeldown, location = location.abovebar, color = color.orange, text = "RISK\nSKIP", textcolor = color.black, size = size.tiny)
+
+plot(activeScore, "Daily TSMOM score", display = display.none)
+plot(orderQuantity, "Qualified contracts", display = display.none)
+
+var table dashboard = table.new(position.top_right, 2, 13, bgcolor = color.new(color.black, 10), frame_color = color.gray, frame_width = 1, border_color = color.new(color.gray, 50), border_width = 1)
+if barstate.islast and showDashboard
+    table.cell(dashboard, 0, 0, "TSMOM INTRADAY", text_color = color.white, bgcolor = color.new(color.blue, 45))
+    table.cell(dashboard, 1, 0, syminfo.ticker, text_color = color.white, bgcolor = color.new(color.blue, 45))
+    table.cell(dashboard, 0, 1, "Daily filter", text_color = color.white)
+    table.cell(dashboard, 1, 1, f_bias(dailyDirection), text_color = biasColor)
+    table.cell(dashboard, 0, 2, "Score", text_color = color.white)
+    table.cell(dashboard, 1, 2, f_signed(activeScore, "#.00"), text_color = biasColor)
+    table.cell(dashboard, 0, 3, "Setup state", text_color = color.white)
+    table.cell(dashboard, 1, 3, setupState, text_color = setupState == "WAITING BREAK" ? color.yellow : color.white)
+    table.cell(dashboard, 0, 4, "OR high", text_color = color.white)
+    table.cell(dashboard, 1, 4, na(openingHigh) ? "n/a" : str.tostring(openingHigh, format.mintick), text_color = color.aqua)
+    table.cell(dashboard, 0, 5, "OR low", text_color = color.white)
+    table.cell(dashboard, 1, 5, na(openingLow) ? "n/a" : str.tostring(openingLow, format.mintick), text_color = color.aqua)
+    table.cell(dashboard, 0, 6, "1-contract risk", text_color = color.white)
+    table.cell(dashboard, 1, 6, na(oneContractRisk) ? "waiting" : "$" + str.tostring(oneContractRisk, "#.00"), text_color = color.white)
+    table.cell(dashboard, 0, 7, "Risk cap", text_color = color.white)
+    table.cell(dashboard, 1, 7, "$" + str.tostring(riskBudget, "#"), text_color = color.white)
+    table.cell(dashboard, 0, 8, "Position", text_color = color.white)
+    table.cell(dashboard, 1, 8, str.tostring(strategy.position_size), text_color = strategy.position_size > 0 ? color.lime : strategy.position_size < 0 ? color.red : color.silver)
+    table.cell(dashboard, 0, 9, "Stop / target", text_color = color.white)
+    table.cell(dashboard, 1, 9, na(activeStop) ? "n/a" : str.tostring(activeStop, format.mintick) + " / " + str.tostring(activeTarget, format.mintick), text_color = color.white)
+    table.cell(dashboard, 0, 10, "Timeframe", text_color = color.white)
+    table.cell(dashboard, 1, 10, is5MinuteChart ? "5m OK" : "SET TO 5m", text_color = is5MinuteChart ? color.lime : color.orange)
+    table.cell(dashboard, 0, 11, "Holding", text_color = color.white)
+    table.cell(dashboard, 1, 11, "INTRADAY ONLY", text_color = color.lime)
+    table.cell(dashboard, 0, 12, "Validation", text_color = color.white)
+    table.cell(dashboard, 1, 12, "RESEARCH ONLY", text_color = color.orange)
+
+if barstate.islast and not showDashboard
+    table.clear(dashboard, 0, 0, 1, 12)

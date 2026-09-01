@@ -1,0 +1,142 @@
+//@version=6
+indicator("Market Sessions", "Market Sessions", overlay = true, behind_chart = true,
+     max_boxes_count = 500, max_labels_count = 500)
+
+// Draws the evolving high/low range of each enabled market session.
+// The default windows follow the session presets used in the reference image:
+// Asia 08:00-17:00 Tokyo time and New York 09:30-16:00 New York time.
+
+// -----------------------------------------------------------------------------
+// Display settings
+// -----------------------------------------------------------------------------
+string GROUP_DISPLAY = "Display"
+int fillTransparency = input.int(88, "Box fill transparency", minval = 0, maxval = 100, group = GROUP_DISPLAY)
+int borderWidth = input.int(1, "Border width", minval = 1, maxval = 4, group = GROUP_DISPLAY)
+string borderStyleInput = input.string("Dashed", "Border style", options = ["Solid", "Dashed", "Dotted"], group = GROUP_DISPLAY)
+bool showLabels = input.bool(true, "Show session labels", group = GROUP_DISPLAY, inline = "labels")
+bool showWeekday = input.bool(true, "Show weekday", group = GROUP_DISPLAY, inline = "labels")
+string labelSizeInput = input.string("Tiny", "Label size", options = ["Tiny", "Small", "Normal"], group = GROUP_DISPLAY)
+
+// -----------------------------------------------------------------------------
+// Session settings
+// Each session uses its own IANA timezone, so daylight-saving changes are handled
+// automatically. Session inputs should align with the chart's bar boundaries.
+// -----------------------------------------------------------------------------
+string GROUP_ASIA = "Asia"
+bool asiaEnabled = input.bool(true, "Show", group = GROUP_ASIA, inline = "asia")
+string asiaHours = input.session("0800-1700", "Hours", group = GROUP_ASIA, inline = "asia")
+color asiaColor = input.color(#D99000, "Color", group = GROUP_ASIA, inline = "asia")
+string asiaTimezone = input.string("Asia/Tokyo", "Timezone", group = GROUP_ASIA,
+     tooltip = "IANA timezone used to interpret the Asia session hours.")
+
+string GROUP_LONDON = "London"
+bool londonEnabled = input.bool(false, "Show", group = GROUP_LONDON, inline = "london")
+string londonHours = input.session("0800-1600", "Hours", group = GROUP_LONDON, inline = "london")
+color londonColor = input.color(#24A148, "Color", group = GROUP_LONDON, inline = "london")
+string londonTimezone = input.string("Europe/London", "Timezone", group = GROUP_LONDON,
+     tooltip = "IANA timezone used to interpret the London session hours.")
+
+string GROUP_NEW_YORK = "New York"
+bool newYorkEnabled = input.bool(true, "Show", group = GROUP_NEW_YORK, inline = "newyork")
+string newYorkHours = input.session("0930-1600", "Hours", group = GROUP_NEW_YORK, inline = "newyork")
+color newYorkColor = input.color(#1683C4, "Color", group = GROUP_NEW_YORK, inline = "newyork")
+string newYorkTimezone = input.string("America/New_York", "Timezone", group = GROUP_NEW_YORK,
+     tooltip = "IANA timezone used to interpret the New York session hours.")
+
+string GROUP_SYDNEY = "Sydney"
+bool sydneyEnabled = input.bool(false, "Show", group = GROUP_SYDNEY, inline = "sydney")
+string sydneyHours = input.session("0800-1700", "Hours", group = GROUP_SYDNEY, inline = "sydney")
+color sydneyColor = input.color(#8E44AD, "Color", group = GROUP_SYDNEY, inline = "sydney")
+string sydneyTimezone = input.string("Australia/Sydney", "Timezone", group = GROUP_SYDNEY,
+     tooltip = "IANA timezone used to interpret the Sydney session hours.")
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+f_border_style(string choice) =>
+    switch choice
+        "Solid" => line.style_solid
+        "Dotted" => line.style_dotted
+        => line.style_dashed
+
+f_label_size(string choice) =>
+    switch choice
+        "Small" => size.small
+        "Normal" => size.normal
+        => size.tiny
+
+f_weekday_name(int timestampValue, string timezone) =>
+    switch dayofweek(timestampValue, timezone)
+        dayofweek.monday => "Monday"
+        dayofweek.tuesday => "Tuesday"
+        dayofweek.wednesday => "Wednesday"
+        dayofweek.thursday => "Thursday"
+        dayofweek.friday => "Friday"
+        dayofweek.saturday => "Saturday"
+        => "Sunday"
+
+// Returns a date key for the local calendar day on which a session began.
+// This lets the script recognize a new session even when the chart hides all
+// out-of-session bars. It also keeps an overnight custom session as one box.
+f_session_key(string sessionHours, string timezone) =>
+    int startMinutes = int(str.tonumber(str.substring(sessionHours, 0, 2))) * 60 + int(str.tonumber(str.substring(sessionHours, 2, 4)))
+    int endMinutes = int(str.tonumber(str.substring(sessionHours, 5, 7))) * 60 + int(str.tonumber(str.substring(sessionHours, 7, 9)))
+    int localMinutes = hour(time, timezone) * 60 + minute(time, timezone)
+    bool crossesMidnight = startMinutes > endMinutes
+    int sessionAnchor = crossesMidnight and localMinutes < endMinutes ? time - 24 * 60 * 60 * 1000 : time
+    int dateKey = year(sessionAnchor, timezone) * 10000 + month(sessionAnchor, timezone) * 100 + dayofmonth(sessionAnchor, timezone)
+    [dateKey, sessionAnchor]
+
+f_draw_session(bool enabled, string sessionName, string sessionHours, string timezone, color sessionColor) =>
+    bool inSession = enabled and timeframe.isintraday and not na(time(timeframe.period, sessionHours, timezone))
+    [sessionKey, sessionAnchor] = f_session_key(sessionHours, timezone)
+    bool sessionStarted = inSession and (not inSession[1] or sessionKey != sessionKey[1])
+
+    var box rangeBox = na
+    var label nameLabel = na
+    var float sessionHigh = na
+    var float sessionLow = na
+    var int sessionStartTime = na
+
+    if sessionStarted
+        sessionHigh := high
+        sessionLow := low
+        sessionStartTime := time
+
+        string sessionText = showWeekday ? sessionName + " - " + f_weekday_name(sessionAnchor, timezone) : sessionName
+        rangeBox := box.new(left = time, top = sessionHigh, right = time_close, bottom = sessionLow,
+             xloc = xloc.bar_time, border_color = sessionColor, border_width = borderWidth,
+             border_style = f_border_style(borderStyleInput), bgcolor = color.new(sessionColor, fillTransparency))
+
+        if showLabels
+            nameLabel := label.new(x = time, y = sessionHigh, text = sessionText,
+                 xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_down,
+                 color = color.new(sessionColor, 100), textcolor = sessionColor,
+                 size = f_label_size(labelSizeInput))
+
+    else if inSession
+        sessionHigh := math.max(sessionHigh, high)
+        sessionLow := math.min(sessionLow, low)
+
+        box.set_right(rangeBox, time_close)
+        box.set_top(rangeBox, sessionHigh)
+        box.set_bottom(rangeBox, sessionLow)
+
+        if showLabels and not na(nameLabel)
+            int labelTime = sessionStartTime + int((time_close - sessionStartTime) / 2)
+            label.set_x(nameLabel, labelTime)
+            label.set_y(nameLabel, sessionHigh)
+
+    [inSession, sessionStarted]
+
+// Each written function call keeps independent state for its session.
+[asiaActive, asiaStarted] = f_draw_session(asiaEnabled, "Asia", asiaHours, asiaTimezone, asiaColor)
+[londonActive, londonStarted] = f_draw_session(londonEnabled, "London", londonHours, londonTimezone, londonColor)
+[newYorkActive, newYorkStarted] = f_draw_session(newYorkEnabled, "New York", newYorkHours, newYorkTimezone, newYorkColor)
+[sydneyActive, sydneyStarted] = f_draw_session(sydneyEnabled, "Sydney", sydneyHours, sydneyTimezone, sydneyColor)
+
+// Session-start alerts are available from TradingView's Create Alert dialog.
+alertcondition(asiaStarted, "Asia session open", "Asia session opened on {{ticker}}.")
+alertcondition(londonStarted, "London session open", "London session opened on {{ticker}}.")
+alertcondition(newYorkStarted, "New York session open", "New York session opened on {{ticker}}.")
+alertcondition(sydneyStarted, "Sydney session open", "Sydney session opened on {{ticker}}.")

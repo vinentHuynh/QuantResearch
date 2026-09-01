@@ -1,0 +1,52 @@
+//@version=6
+indicator("Session VWAP + Bands", "VWAP±", overlay = true)
+
+// Session VWAP (volume-weighted average price = intraday "fair value") with
+// standard-deviation bands. Price above VWAP = bullish bias, below = bearish;
+// stretches to the outer bands get faded, VWAP itself acts as support/resistance.
+
+string GRP = "Anchor"
+string anchorMode = input.string("Session (RTH)", "Reset VWAP at", options = ["Session (RTH)", "Daily"], group = GRP)
+string rthHours = input.session("0930-1600", "Regular session", group = GRP)
+string tz       = input.string("America/New_York", "Timezone", group = GRP)
+
+string GRP2 = "Bands"
+float m1 = input.float(1.0, "Band 1 (std dev)", minval = 0.1, step = 0.5, group = GRP2)
+float m2 = input.float(2.0, "Band 2 (std dev)", minval = 0.1, step = 0.5, group = GRP2)
+bool  showB2 = input.bool(true, "Show 2nd band", group = GRP2)
+
+string GRP3 = "Asia VWAP"
+bool   showAsia  = input.bool(true, "Show Asia VWAP", group = GRP3)
+string asiaHours = input.session("2000-0500", "Asia session", group = GRP3, tooltip = "Anchored at the Asia open (8pm ET), runs through the following London/NY sessions until the next Asia open.")
+color  asiaCol   = input.color(color.new(color.orange, 0), "Asia VWAP", group = GRP3)
+
+// anchor: reset at RTH open, or at each new day
+bool inRTH = timeframe.isintraday and not na(time(timeframe.period, rthHours, tz))
+bool anchor = anchorMode == "Session (RTH)" ? (inRTH and not inRTH[1]) : timeframe.change("D")
+
+src = hlc3
+[vwap, up1, lo1] = ta.vwap(src, anchor, m1)
+[_, up2, lo2]    = ta.vwap(src, anchor, m2)
+
+// Asia-anchored VWAP: resets at the Asia open, runs through the day
+bool inAsia = timeframe.isintraday and not na(time(timeframe.period, asiaHours, tz))
+bool asiaAnchor = inAsia and not inAsia[1]
+[asiaVwap, _a1, _a2] = ta.vwap(src, asiaAnchor, 1.0)
+
+// only draw during the session when RTH-anchored (cleaner)
+bool show = anchorMode == "Daily" or inRTH
+plot(show ? vwap : na, "VWAP", color = color.new(color.blue, 0), linewidth = 2, style = plot.style_linebr)
+pU1 = plot(show ? up1 : na, "Upper 1", color = color.new(color.blue, 55), style = plot.style_linebr)
+pL1 = plot(show ? lo1 : na, "Lower 1", color = color.new(color.blue, 55), style = plot.style_linebr)
+pU2 = plot(show and showB2 ? up2 : na, "Upper 2", color = color.new(color.blue, 75), style = plot.style_linebr)
+pL2 = plot(show and showB2 ? lo2 : na, "Lower 2", color = color.new(color.blue, 75), style = plot.style_linebr)
+fill(pU1, pL1, color = color.new(color.blue, 94), title = "1σ band")
+fill(pU2, pU1, color = showB2 ? color.new(color.blue, 96) : na, title = "2σ upper")
+fill(pL1, pL2, color = showB2 ? color.new(color.blue, 96) : na, title = "2σ lower")
+
+plot(showAsia ? asiaVwap : na, "Asia VWAP", color = asiaCol, linewidth = 2, style = plot.style_linebr)
+
+alertcondition(ta.crossover(close, vwap), "Cross above VWAP", "{{ticker}} crossed above session VWAP")
+alertcondition(ta.crossunder(close, vwap), "Cross below VWAP", "{{ticker}} crossed below session VWAP")
+alertcondition(ta.crossover(high, up2), "Tag upper 2σ", "{{ticker}} tagged VWAP upper 2σ (stretch)")
+alertcondition(ta.crossunder(low, lo2), "Tag lower 2σ", "{{ticker}} tagged VWAP lower 2σ (stretch)")

@@ -1,0 +1,80 @@
+//@version=6
+indicator("Opening Range Breakout", "ORB", overlay = true, behind_chart = true,
+     max_boxes_count = 500, max_lines_count = 500, max_labels_count = 500)
+
+// Opening Range Breakout (ORB)
+// Builds the high/low of the first N minutes of the chosen session, freezes it,
+// projects the range through the session, and flags the first close beyond it.
+
+// -----------------------------------------------------------------------------
+// Inputs
+// -----------------------------------------------------------------------------
+string GRP = "Opening range"
+int    orMinutes = input.int(15, "OR duration (minutes)", minval = 1, maxval = 120, group = GRP)
+string orHours   = input.session("0930-1600", "Session", group = GRP)
+string orTz      = input.string("America/New_York", "Timezone", group = GRP)
+bool   extend    = input.bool(true, "Extend levels through session", group = GRP)
+
+string GRP2 = "Style"
+color  upCol = input.color(color.new(color.teal, 1), "OR high", group = GRP2)
+color  dnCol = input.color(color.new(color.maroon, 0), "OR low", group = GRP2)
+int    fillT = input.int(92, "Box fill transparency", minval = 0, maxval = 100, group = GRP2)
+bool   showBreaks = input.bool(true, "Show breakout markers", group = GRP2)
+
+// -----------------------------------------------------------------------------
+// Session tracking (survives charts that hide out-of-session bars)
+// -----------------------------------------------------------------------------
+bool inSession = timeframe.isintraday and not na(time(timeframe.period, orHours, orTz))
+int  dateKey = year(time, orTz) * 10000 + month(time, orTz) * 100 + dayofmonth(time, orTz)
+bool sessionStarted = inSession and (not inSession[1] or dateKey != dateKey[1])
+
+var float orHigh = na
+var float orLow  = na
+var int   orStart = na
+var int   orEnd   = na
+var bool  brokeUp = false
+var bool  brokeDn = false
+var box   orBox = na
+var line  hiLine = na
+var line  loLine = na
+
+if sessionStarted
+    orStart := time
+    orEnd   := time + orMinutes * 60 * 1000
+    orHigh  := high
+    orLow   := low
+    brokeUp := false
+    brokeDn := false
+    orBox := box.new(orStart, orHigh, orEnd, orLow, xloc = xloc.bar_time,
+         border_color = color.new(color.gray, 40), bgcolor = color.new(color.gray, fillT))
+    hiLine := line.new(orStart, orHigh, orEnd, orHigh, xloc = xloc.bar_time, color = upCol, width = 1)
+    loLine := line.new(orStart, orLow, orEnd, orLow, xloc = xloc.bar_time, color = dnCol, width = 1)
+else if inSession
+    bool building = time < orEnd
+    if building
+        orHigh := math.max(orHigh, high)
+        orLow  := math.min(orLow, low)
+        box.set_top(orBox, orHigh)
+        box.set_bottom(orBox, orLow)
+    int right = extend ? time_close : orEnd
+    line.set_xy1(hiLine, orStart, orHigh)
+    line.set_xy2(hiLine, right, orHigh)
+    line.set_xy1(loLine, orStart, orLow)
+    line.set_xy2(loLine, right, orLow)
+
+// -----------------------------------------------------------------------------
+// First breakout of the completed range
+// -----------------------------------------------------------------------------
+bool orReady = inSession and time >= orEnd and not na(orHigh)
+bool breakUp = orReady and not brokeUp and not brokeDn and close > orHigh
+bool breakDn = orReady and not brokeUp and not brokeDn and close < orLow
+if breakUp
+    brokeUp := true
+if breakDn
+    brokeDn := true
+
+plotshape(showBreaks and breakUp, "Break up", shape.triangleup, location.belowbar, color = upCol, size = size.small, text = "ORB↑")
+plotshape(showBreaks and breakDn, "Break down", shape.triangledown, location.abovebar, color = dnCol, size = size.small, text = "ORB↓")
+
+alertcondition(breakUp, "ORB breakout up", "Opening range broken UP on {{ticker}}")
+alertcondition(breakDn, "ORB breakout down", "Opening range broken DOWN on {{ticker}}")

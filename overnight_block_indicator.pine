@@ -1,0 +1,134 @@
+//@version=6
+indicator("MNQ Overnight Block Signal", "ON Signal", overlay = true, max_labels_count = 100, max_lines_count = 100)
+
+// Signal/alert companion to overnight_block_strategy.pine: tells you WHEN to act
+// and marks the LEVEL the model assumes you got. Same validated window, same
+// mechanics, no strategy engine -- use this on a live chart with alerts wired.
+//
+// The system is time-based, not level-based: there is no setup to wait for and
+// no price trigger. The "level" is whatever the market prints at the window
+// boundary -- the 18:00 reopen open for entry, the 06:00 open for exit. What this
+// indicator adds on top of the clock:
+//   * ARM alert on the 17:00 bar close (last bar before the CME halt): submit the
+//     buy order now so it fills at the 18:00 reopen, the exact price backtested.
+//   * EXIT alert on the 06:00 bar close (first bar past the boundary): go flat.
+//   * The entry print is drawn and held on screen while the position is on, with
+//     live P&L in points and dollars, so drift from the modeled fill is visible
+//     the moment it happens, not at reconciliation.
+//   * A 2-sigma DISASTER STOP line, computed live from the last 60 completed
+//     nights' point moves (lagged: tonight's move never feeds tonight's level) --
+//     the one exit rule the R:R grid (mnq_rr_stop_backtest.py) found to be
+//     statistically free in BOTH eras (pair-t -0.39 in-sample, -0.07 OOS) while
+//     halving the worst night. Everything tighter is validated harm. Treat it as
+//     a map edge: below that line, tonight is outside the backtest. Whether it is
+//     a hard stop order or an alert-only line is an account decision, not a
+//     statistical one. Auto-scales to any symbol (sigma is in chart points).
+//
+// Validated on 2015-2026 (pooled t=3.58, PF 1.22, 55% win, ~$14/night/micro,
+// MaxDD ~$3.9k/contract). Full night 18:00->06:00 ET is the OOS-robust window;
+// 23:00->04:00 half-replicated and is only for accounts that cannot hold a
+// ~$1,800/contract night. Never short, never condition, never optimize the clock
+// (permutation-tested; see mnq_window_scan_backtest.py).
+
+// ---- inputs -----------------------------------------------------------------
+string GW = "Hold window (see strategy file: 17 arms the 18:00 reopen fill)"
+int  armHour  = input.int(17, "Arm/entry hour",  minval = 0, maxval = 23, group = GW)
+int  armMin   = input.int(0,  "Arm minute",      minval = 0, maxval = 59, group = GW)
+int  exitHour = input.int(6,  "Exit hour",       minval = 0, maxval = 23, group = GW)
+int  exitMin  = input.int(0,  "Exit minute",     minval = 0, maxval = 59, group = GW)
+string tz     = input.string("America/New_York", "Timezone", group = GW)
+
+string GD = "Display"
+int    qty        = input.int(1, "Contracts (for $ P&L)", minval = 1, group = GD)
+float  dppIn      = input.float(0.0, "$ per point (0 = auto from symbol)", minval = 0.0, group = GD, tooltip = "Leave 0: uses the contract's real point value (MNQ $2, MES $5, NQ $20, ES $50). Set only to override.")
+float  stopMult   = input.float(2.0, "Disaster stop (sigma multiple, 0 = off)", minval = 0.0, step = 0.5, group = GD, tooltip = "2.0 tested statistically free in-sample AND out-of-sample; anything tighter bled edge in both eras. Sigma = sd of the last 60 completed overnight moves, always lagged.")
+bool   shade      = input.bool(true, "Shade hold window", group = GD)
+bool   showTable  = input.bool(true, "Status table", group = GD)
+float  dollarsPt  = dppIn > 0 ? dppIn : syminfo.pointvalue
+
+// ---- window clock (evaluated on bar CLOSE time; matches the strategy fills) --
+int nowMins  = hour(time_close, tz) * 60 + minute(time_close, tz)
+int armMins  = armHour * 60 + armMin
+int exitMins = exitHour * 60 + exitMin
+bool inWindow = armMins < exitMins ? (nowMins >= armMins and nowMins < exitMins)
+                                   : (nowMins >= armMins or nowMins < exitMins)
+bool armBar  = inWindow and not inWindow[1]      // 17:00 close: order goes in now
+bool exitBar = not inWindow and inWindow[1]      // 06:00 close: go flat now
+
+// ---- position state + lagged sigma of completed nights -----------------------
+var float entryPx   = na
+var int   entryTime = na
+var array<float> nightMoves = array.new_float()   // last 60 completed 18->06 moves
+bool holding = not na(entryPx)
+
+// entry fills on the first bar AFTER the arm bar (the 18:00 reopen open)
+if armBar[1] and not holding
+    entryPx := open
+    entryTime := time
+if exitBar
+    if holding
+        array.push(nightMoves, open - entryPx)     // exit fill = this bar's open
+        if array.size(nightMoves) > 60
+            array.shift(nightMoves)
+    entryPx := na
+    entryTime := na
+holding := not na(entryPx)
+
+// sigma known BEFORE tonight: array only updates at exits, so tonight's move
+// never feeds tonight's stop level -- same lag convention as every backtest here
+float sigma   = array.size(nightMoves) >= 60 ? array.stdev(nightMoves) : na
+float stopLvl = holding and stopMult > 0 and not na(sigma) ? entryPx - stopMult * sigma : na
+
+float pnlPts = holding ? close - entryPx : na
+float pnlUsd = holding ? pnlPts * dollarsPt * qty : na
+
+// ---- drawing -----------------------------------------------------------------
+bgcolor(shade and inWindow ? color.new(color.teal, 92) : na, title = "Hold window")
+
+plot(holding ? entryPx : na, "Entry level", color.new(color.teal, 0), 2, plot.style_linebr)
+plot(stopLvl, "2-sigma disaster stop", color.new(color.red, 40), 1, plot.style_linebr)
+
+if armBar
+    label.new(bar_index, high, "ARM\nbuy the 18:00 reopen", style = label.style_label_down,
+              color = color.new(color.teal, 10), textcolor = color.white, size = size.small)
+if armBar[1] and holding and na(entryPx[1])
+    label.new(bar_index, low, "LONG @ " + str.tostring(entryPx, format.mintick),
+              style = label.style_label_up, color = color.new(color.green, 10),
+              textcolor = color.white, size = size.small)
+if exitBar
+    label.new(bar_index, high, "EXIT flat", style = label.style_label_down,
+              color = color.new(color.orange, 10), textcolor = color.white, size = size.small)
+
+// ---- status table ------------------------------------------------------------
+if showTable and barstate.islast
+    var table t = table.new(position.top_right, 2, 6, border_width = 1,
+                            bgcolor = color.new(color.black, 20))
+    table.cell(t, 0, 0, "ON Block", text_color = color.white, bgcolor = color.new(color.teal, 30))
+    table.cell(t, 1, 0, holding ? "LONG" : inWindow ? "ARMED" : "FLAT",
+               text_color = holding ? color.lime : color.white,
+               bgcolor = color.new(color.teal, 30))
+    table.cell(t, 0, 1, "Entry", text_color = color.silver)
+    table.cell(t, 1, 1, holding ? str.tostring(entryPx, format.mintick) : "—",
+               text_color = color.white)
+    table.cell(t, 0, 2, "P&L pts", text_color = color.silver)
+    table.cell(t, 1, 2, holding ? str.tostring(pnlPts, "#.##") : "—",
+               text_color = holding ? (pnlPts >= 0 ? color.lime : color.red) : color.white)
+    table.cell(t, 0, 3, "P&L $ (" + str.tostring(qty) + "x)", text_color = color.silver)
+    table.cell(t, 1, 3, holding ? str.tostring(pnlUsd, "#,###.##") : "—",
+               text_color = holding ? (pnlUsd >= 0 ? color.lime : color.red) : color.white)
+    table.cell(t, 0, 4, "2σ stop", text_color = color.silver)
+    table.cell(t, 1, 4, not na(stopLvl) ? str.tostring(stopLvl, format.mintick) :
+               stopMult > 0 ? "warming up" : "off", text_color = color.new(color.red, 20))
+    table.cell(t, 0, 5, "Next", text_color = color.silver)
+    table.cell(t, 1, 5, holding ? "exit " + str.tostring(exitHour, "00") + ":" + str.tostring(exitMin, "00") :
+               "arm " + str.tostring(armHour, "00") + ":" + str.tostring(armMin, "00") + " ET",
+               text_color = color.white)
+
+// ---- alerts ------------------------------------------------------------------
+// Wire both as "Once per bar close" on a 5-minute MNQ chart.
+alertcondition(armBar,  "ON Block: ARM entry",
+     "Overnight block: submit BUY order now — fills at the 18:00 ET Globex reopen.")
+alertcondition(exitBar, "ON Block: EXIT",
+     "Overnight block: EXIT — go flat at the 06:00 ET open.")
+alertcondition(holding and not na(stopLvl) and close < stopLvl, "ON Block: 2-sigma disaster stop",
+     "Overnight block: close below the 2-sigma disaster stop. If running with stops, exit now; either way tonight is at the edge of the backtested map.")

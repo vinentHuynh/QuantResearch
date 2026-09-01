@@ -1,0 +1,241 @@
+//@version=6
+indicator("Prior Session / Week Levels", "PD Levels", overlay = true, max_lines_count = 500, max_labels_count = 500)
+
+// Prior-period reference levels: prior session high/low/close and prior week
+// high/low. These are the most-watched intraday magnets and breakout triggers.
+//
+// Periods are CME *sessions*, not calendar days: a session runs 18:00 ET to
+// 17:00 ET the next day. The roll fires on the bar whose close crosses 17:00,
+// so the levels are current from settlement rather than from the 18:00 reopen.
+// The boundary comes from the bar's own timestamps, not from the chart's
+// session setting, so RTH/ETH and extended-hours toggles cannot move it.
+// Non-repainting: the roll waits for that final bar to confirm.
+//
+// Two separate clocks, and they are not the same thing: the session boundary
+// above decides *when* the level rolls, while "New York hours only" decides
+// *which bars are measured*. By default only 09:30-16:00 bars fold in, so the
+// levels are the New York day's high/low/close and the Globex overnight range
+// is excluded — but they still roll over at settlement, not at 16:00. A session
+// with no RTH bars at all (holiday) does not roll; the last real day's levels
+// stay in force.
+//
+// Each level draws as one segment running from the start of the session that
+// formed it and extending right, so the high/low visibly touches the candles
+// that made it.
+
+string GRP = "Levels"
+bool showPD   = input.bool(true, "Prior session H/L/C", group = GRP)
+bool showPW   = input.bool(false, "Prior week H/L", group = GRP)
+bool spanBack = input.bool(true, "Extend back over the session that formed it", group = GRP, tooltip = "Off: the segment starts at the roll and only runs right.")
+bool keepHist = input.bool(false, "Keep old sessions on chart", group = GRP, tooltip = "Off: only the level currently in force. On: every past segment stays, ending where it rolled.")
+
+string GRP3 = "Session"
+int    rollHour   = input.int(17, "Session close hour", minval = 0, maxval = 23, group = GRP3, tooltip = "CME settles 17:00 ET and reopens 18:00. The bar whose close crosses this hour is the session's last.")
+bool   rthOnly    = input.bool(true, "Measure New York hours only", group = GRP3, tooltip = "On: only bars inside the regular session below count toward the high/low/close, so these are the New York day's levels. Off: the whole 23-hour session, Globex overnight included. Either way the level rolls at the session close above.")
+bool   startAtRTH = input.bool(false, "Hold new level until the RTH open", group = GRP3, tooltip = "Off: the new level appears at settlement. On: it is held back until 09:30.")
+string rthHours   = input.session("0930-1600", "Regular session", group = GRP3)
+string tz         = input.string("America/New_York", "Timezone", group = GRP3)
+
+string GRP4 = "Labels"
+bool   showLbl  = input.bool(true, "Right-edge labels", group = GRP4)
+bool   longName = input.bool(true, "Long names", group = GRP4, tooltip = "On: \"previous session high\". Off: \"PDH\".")
+bool   lblPrice = input.bool(false, "Show price in label", group = GRP4, tooltip = "Price already shows on the axis.")
+
+string GRP2 = "Style"
+color pdCol = input.color(color.red, "Prior session H/L", group = GRP2)
+color pcCol = input.color(color.blue, "Prior close", group = GRP2)
+color pwCol = input.color(color.aqua, "Prior week H/L", group = GRP2)
+int   width = input.int(1, "Line width", minval = 1, maxval = 4, group = GRP2)
+
+// Shift the clock so the session close lands on midnight; the calendar date of
+// the shifted time is then the session id, and the weekend gap sorts itself out
+// (Sun 18:00 -> Mon, Fri 16:55 -> Fri). Keyed off the bar's open for membership
+// and off its close to find the last bar — the +1s absorbs feeds that stamp the
+// close a hair under the boundary.
+int shift   = (24 - rollHour) * 60 * 60 * 1000
+int anchor  = time + shift
+int anchorC = time_close + 1000 + shift
+int sKey = year(anchor,  tz) * 10000 + month(anchor,  tz) * 100 + dayofmonth(anchor,  tz)
+int cKey = year(anchorC, tz) * 10000 + month(anchorC, tz) * 100 + dayofmonth(anchorC, tz)
+
+bool endOfSess = timeframe.isintraday and cKey != sKey
+bool keyRollS  = timeframe.isintraday and not na(sKey[1]) and sKey != sKey[1]
+bool keyRollW  = keyRollS and dayofweek(anchor, tz) == dayofweek.monday
+
+// Which bars count toward the range, and when the RTH day opens. Both come from
+// the same window so "measure NY only" and "hold until the RTH open" agree.
+bool inRTH   = timeframe.isintraday and not na(time(timeframe.period, rthHours, tz))
+bool rthOpen = inRTH and not inRTH[1]
+bool inRange = not rthOnly or inRTH
+
+// session in progress
+var float sH = na
+var float sL = na
+var float sC = na
+var int   sStart = na
+// prior session
+var float pH = na
+var float pL = na
+var float pC = na
+var int   pStart = na
+// week in progress
+var float wH = na
+var float wL = na
+var int   wStart = na
+// prior week
+var float pwH = na
+var float pwL = na
+var int   pwStart = na
+
+// The roll fires at the end of the session's last bar. The key-change check is
+// only a backstop for a session that ends without one (early close, data gap);
+// these flags stop it rolling twice.
+var bool doneS = false
+var bool doneW = false
+var bool rolledS = false
+var bool rolledW = false
+
+if timeframe.isintraday
+    // na means the period collected no bars at all — a holiday with no RTH.
+    // Rolling then would blank the levels, so leave the last real one in force.
+    bool newSess = keyRollS and not doneS and not na(sH)
+    bool newWeek = keyRollW and not doneW and not na(wH)
+    doneS   := false
+    doneW   := false
+    rolledS := false
+    rolledW := false
+
+    // backstop roll
+    if newWeek
+        pwH     := wH
+        pwL     := wL
+        pwStart := wStart
+        wH      := na
+        wL      := na
+        rolledW := true
+    if newSess
+        pH      := sH
+        pL      := sL
+        pC      := sC
+        pStart  := sStart
+        sH      := na
+        sL      := na
+        sC      := na
+        rolledS := true
+
+    // fold this bar in, if it is inside the measured window
+    if inRange
+        if na(wH)
+            wStart := bar_index
+            wH     := high
+            wL     := low
+        else
+            wH := math.max(wH, high)
+            wL := math.min(wL, low)
+        if na(sH)
+            sStart := bar_index
+            sH     := high
+            sL     := low
+        else
+            sH := math.max(sH, high)
+            sL := math.min(sL, low)
+        sC := close
+
+    // primary roll: this bar's close crosses the boundary, so it is the last
+    // bar of the session. Waiting for confirmation keeps the old level in force
+    // until the session is genuinely done — otherwise the close, high and low
+    // track the live tick through that final bar.
+    if endOfSess and barstate.isconfirmed and not na(sH)
+        pH      := sH
+        pL      := sL
+        pC      := sC
+        pStart  := sStart
+        sH      := na
+        sL      := na
+        sC      := na
+        doneS   := true
+        rolledS := true
+        if dayofweek(anchor, tz) == dayofweek.friday and not na(wH)
+            pwH     := wH
+            pwL     := wL
+            pwStart := wStart
+            wH      := na
+            wL      := na
+            doneW   := true
+            rolledW := true
+
+// When to put the new segment on the chart: at the roll, or held back to the
+// RTH open so the level shows up where it starts trading.
+var bool armedS = false
+var bool armedW = false
+if rolledS
+    armedS := true
+if rolledW
+    armedW := true
+bool drawS = armedS and (startAtRTH ? rthOpen : true)
+bool drawW = armedW and (startAtRTH ? rthOpen : true)
+
+// ---- segments -------------------------------------------------------------
+// Open a fresh right-extending segment, closing out the one it replaces.
+f_roll(line prev, float y, color c, int x1) =>
+    line out = prev
+    if not na(prev)
+        if keepHist
+            line.set_extend(prev, extend.none)
+            line.set_x2(prev, bar_index)
+        else
+            line.delete(prev)
+    int x = spanBack and not na(x1) ? x1 : bar_index
+    out := na(y) ? na : line.new(x, y, x + 1, y, xloc = xloc.bar_index, extend = extend.right, color = c, width = width)
+    out
+
+var line lnH  = na
+var line lnL  = na
+var line lnC  = na
+var line lnWH = na
+var line lnWL = na
+
+// Values actually on the chart. Same as pH/pL/... except when startAtRTH
+// holds the line back: these only update when the line does, so the label
+// can't show a level the line hasn't drawn yet.
+var float dispPH  = na
+var float dispPL  = na
+var float dispPC  = na
+var float dispPWH = na
+var float dispPWL = na
+
+if drawS
+    armedS := false
+    dispPH := pH
+    dispPL := pL
+    dispPC := pC
+    if showPD
+        lnH := f_roll(lnH, pH, pdCol, pStart)
+        lnL := f_roll(lnL, pL, pdCol, pStart)
+        lnC := f_roll(lnC, pC, pcCol, pStart)
+if drawW
+    armedW := false
+    dispPWH := pwH
+    dispPWL := pwL
+    if showPW
+        lnWH := f_roll(lnWH, pwH, pwCol, pwStart)
+        lnWL := f_roll(lnWL, pwL, pwCol, pwStart)
+
+// ---- labels ---------------------------------------------------------------
+f_lbl(bool on, float y, string txt, color c) =>
+    var label lb = na
+    if on and not na(y)
+        if na(lb)
+            lb := label.new(bar_index, y, txt, style = label.style_none, textcolor = c, size = size.small)
+        label.set_xy(lb, bar_index + 3, y)
+        label.set_text(lb, lblPrice ? txt + " " + str.tostring(y, format.mintick) : txt)
+
+if barstate.islast
+    f_lbl(showPD and showLbl, dispPH,  longName ? "previous session high"  : "PDH", pdCol)
+    f_lbl(showPD and showLbl, dispPL,  longName ? "previous session low"   : "PDL", pdCol)
+    f_lbl(showPD and showLbl, dispPC,  longName ? "previous session close" : "PDC", pcCol)
+    f_lbl(showPW and showLbl, dispPWH, longName ? "previous week high"     : "PWH", pwCol)
+    f_lbl(showPW and showLbl, dispPWL, longName ? "previous week low"      : "PWL", pwCol)
+
+alertcondition(ta.crossover(close, pH), "Cross above prior session high", "{{ticker}} crossed above prior session high")
+alertcondition(ta.crossunder(close, pL), "Cross below prior session low", "{{ticker}} crossed below prior session low")

@@ -1,0 +1,148 @@
+//@version=6
+indicator("IB", "IB", overlay = true, behind_chart = true,
+     max_boxes_count = 500, max_lines_count = 500)
+
+// Initial Balance (IB)
+// Builds the high/low range from the first 60 minutes of every enabled session,
+// then freezes the range and projects its 0%, 25%, 50%, 75%, and 100% levels.
+
+color IB_COLOR = color.white
+
+// -----------------------------------------------------------------------------
+// Display
+// -----------------------------------------------------------------------------
+string GROUP_DISPLAY = "Display"
+int ibMinutes = input.int(60, "IB duration (minutes)", minval = 1, maxval = 240, group = GROUP_DISPLAY)
+bool extendThroughSession = input.bool(true, "Extend levels through session", group = GROUP_DISPLAY)
+string fibOrientationInput = input.string("0% at Low", "Fib orientation", options = ["0% at Low", "0% at High"], group = GROUP_DISPLAY)
+int fillTransparency = input.int(90, "IB box fill transparency", minval = 0, maxval = 100, group = GROUP_DISPLAY)
+int boxBorderWidth = input.int(1, "IB box border width", minval = 1, maxval = 4, group = GROUP_DISPLAY)
+int fibLineWidth = input.int(1, "Fib line width", minval = 1, maxval = 4, group = GROUP_DISPLAY)
+
+// -----------------------------------------------------------------------------
+// Sessions
+// The IANA timezones keep each window aligned through daylight-saving changes.
+// -----------------------------------------------------------------------------
+string GROUP_ASIA = "Asia"
+bool asiaEnabled = input.bool(true, "Show", group = GROUP_ASIA, inline = "asia")
+string asiaHours = input.session("2000-0500", "Hours", group = GROUP_ASIA, inline = "asia")
+string asiaTimezone = input.string("America/New_York", "Timezone", group = GROUP_ASIA,
+     tooltip = "Asia starts at 8:00 PM Eastern Time and automatically follows daylight-saving changes.")
+
+string GROUP_LONDON = "London"
+bool londonEnabled = input.bool(false, "Show", group = GROUP_LONDON, inline = "london")
+string londonHours = input.session("0800-1600", "Hours", group = GROUP_LONDON, inline = "london")
+string londonTimezone = input.string("Europe/London", "Timezone", group = GROUP_LONDON)
+
+string GROUP_NEW_YORK = "New York"
+bool newYorkEnabled = input.bool(true, "Show", group = GROUP_NEW_YORK, inline = "newyork")
+string newYorkHours = input.session("0930-1600", "Hours", group = GROUP_NEW_YORK, inline = "newyork")
+string newYorkTimezone = input.string("America/New_York", "Timezone", group = GROUP_NEW_YORK)
+
+string GROUP_SYDNEY = "Sydney"
+bool sydneyEnabled = input.bool(false, "Show", group = GROUP_SYDNEY, inline = "sydney")
+string sydneyHours = input.session("0800-1700", "Hours", group = GROUP_SYDNEY, inline = "sydney")
+string sydneyTimezone = input.string("Australia/Sydney", "Timezone", group = GROUP_SYDNEY)
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+f_fib_price(float rangeLow, float rangeHigh, float ratio) =>
+    fibOrientationInput == "0% at Low" ? rangeLow + (rangeHigh - rangeLow) * ratio : rangeHigh - (rangeHigh - rangeLow) * ratio
+
+// Identifies the local calendar date on which a session began. This starts a
+// fresh IB even when a chart hides every out-of-session bar, and it keeps a
+// custom overnight window together as one session.
+f_session_key(string sessionHours, string timezone) =>
+    int startMinutes = int(str.tonumber(str.substring(sessionHours, 0, 2))) * 60 + int(str.tonumber(str.substring(sessionHours, 2, 4)))
+    int endMinutes = int(str.tonumber(str.substring(sessionHours, 5, 7))) * 60 + int(str.tonumber(str.substring(sessionHours, 7, 9)))
+    int localMinutes = hour(time, timezone) * 60 + minute(time, timezone)
+    bool crossesMidnight = startMinutes > endMinutes
+    int sessionAnchor = crossesMidnight and localMinutes < endMinutes ? time - 24 * 60 * 60 * 1000 : time
+    int dateKey = year(sessionAnchor, timezone) * 10000 + month(sessionAnchor, timezone) * 100 + dayofmonth(sessionAnchor, timezone)
+    [dateKey, sessionAnchor]
+
+f_draw_ib(bool enabled, string sessionHours, string timezone) =>
+    bool inSession = enabled and timeframe.isintraday and not na(time(timeframe.period, sessionHours, timezone))
+    [sessionKey, sessionAnchor] = f_session_key(sessionHours, timezone)
+    bool sessionStarted = inSession and (not inSession[1] or sessionKey != sessionKey[1])
+
+    var float ibHigh = na
+    var float ibLow = na
+    var int sessionStartTime = na
+    var int ibEndTime = na
+    var box ibBox = na
+    var line fib0 = na
+    var line fib25 = na
+    var line fib50 = na
+    var line fib75 = na
+    var line fib100 = na
+
+    if sessionStarted
+        sessionStartTime := time
+        ibEndTime := time + ibMinutes * 60 * 1000
+        ibHigh := high
+        ibLow := low
+
+        float fib0Price = f_fib_price(ibLow, ibHigh, 0.00)
+        float fib25Price = f_fib_price(ibLow, ibHigh, 0.25)
+        float fib50Price = f_fib_price(ibLow, ibHigh, 0.50)
+        float fib75Price = f_fib_price(ibLow, ibHigh, 0.75)
+        float fib100Price = f_fib_price(ibLow, ibHigh, 1.00)
+        int levelRight = extendThroughSession ? time_close : ibEndTime
+
+        ibBox := box.new(left = sessionStartTime, top = ibHigh, right = ibEndTime, bottom = ibLow,
+             xloc = xloc.bar_time, border_color = IB_COLOR, border_width = boxBorderWidth,
+             border_style = line.style_solid, bgcolor = color.new(IB_COLOR, fillTransparency))
+
+        fib0 := line.new(x1 = sessionStartTime, y1 = fib0Price, x2 = levelRight, y2 = fib0Price,
+             xloc = xloc.bar_time, color = IB_COLOR, width = fibLineWidth, style = line.style_solid)
+        fib25 := line.new(x1 = sessionStartTime, y1 = fib25Price, x2 = levelRight, y2 = fib25Price,
+             xloc = xloc.bar_time, color = IB_COLOR, width = fibLineWidth, style = line.style_solid)
+        fib50 := line.new(x1 = sessionStartTime, y1 = fib50Price, x2 = levelRight, y2 = fib50Price,
+             xloc = xloc.bar_time, color = IB_COLOR, width = fibLineWidth, style = line.style_solid)
+        fib75 := line.new(x1 = sessionStartTime, y1 = fib75Price, x2 = levelRight, y2 = fib75Price,
+             xloc = xloc.bar_time, color = IB_COLOR, width = fibLineWidth, style = line.style_solid)
+        fib100 := line.new(x1 = sessionStartTime, y1 = fib100Price, x2 = levelRight, y2 = fib100Price,
+             xloc = xloc.bar_time, color = IB_COLOR, width = fibLineWidth, style = line.style_solid)
+
+    else if inSession
+        bool buildingIB = time < ibEndTime
+        if buildingIB
+            ibHigh := math.max(ibHigh, high)
+            ibLow := math.min(ibLow, low)
+            box.set_top(ibBox, ibHigh)
+            box.set_bottom(ibBox, ibLow)
+
+        float fib0Price = f_fib_price(ibLow, ibHigh, 0.00)
+        float fib25Price = f_fib_price(ibLow, ibHigh, 0.25)
+        float fib50Price = f_fib_price(ibLow, ibHigh, 0.50)
+        float fib75Price = f_fib_price(ibLow, ibHigh, 0.75)
+        float fib100Price = f_fib_price(ibLow, ibHigh, 1.00)
+        int levelRight = extendThroughSession ? time_close : ibEndTime
+
+        line.set_xy1(fib0, sessionStartTime, fib0Price)
+        line.set_xy2(fib0, levelRight, fib0Price)
+        line.set_xy1(fib25, sessionStartTime, fib25Price)
+        line.set_xy2(fib25, levelRight, fib25Price)
+        line.set_xy1(fib50, sessionStartTime, fib50Price)
+        line.set_xy2(fib50, levelRight, fib50Price)
+        line.set_xy1(fib75, sessionStartTime, fib75Price)
+        line.set_xy2(fib75, levelRight, fib75Price)
+        line.set_xy1(fib100, sessionStartTime, fib100Price)
+        line.set_xy2(fib100, levelRight, fib100Price)
+
+    bool buildingNow = inSession and time < ibEndTime
+    bool ibCompleted = inSession and not buildingNow and buildingNow[1]
+    [sessionStarted, ibCompleted]
+
+// Each written function call maintains independent drawings and range state.
+[asiaStarted, asiaCompleted] = f_draw_ib(asiaEnabled, asiaHours, asiaTimezone)
+[londonStarted, londonCompleted] = f_draw_ib(londonEnabled, londonHours, londonTimezone)
+[newYorkStarted, newYorkCompleted] = f_draw_ib(newYorkEnabled, newYorkHours, newYorkTimezone)
+[sydneyStarted, sydneyCompleted] = f_draw_ib(sydneyEnabled, sydneyHours, sydneyTimezone)
+
+alertcondition(asiaCompleted, "Asia IB complete", "Asia initial balance is complete on {{ticker}}.")
+alertcondition(londonCompleted, "London IB complete", "London initial balance is complete on {{ticker}}.")
+alertcondition(newYorkCompleted, "New York IB complete", "New York initial balance is complete on {{ticker}}.")
+alertcondition(sydneyCompleted, "Sydney IB complete", "Sydney initial balance is complete on {{ticker}}.")

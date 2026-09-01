@@ -1,0 +1,171 @@
+//@version=6
+//@strategy_alert_message {{strategy.order.alert_message}}
+strategy("CME Overnight Drift Strategy", "Overnight Drift", overlay = true,
+     initial_capital = 100000, currency = currency.USD,
+     risk_free_rate = 0,
+     default_qty_type = strategy.fixed, default_qty_value = 1,
+     pyramiding = 0, commission_type = strategy.commission.cash_per_contract,
+     commission_value = 1.25, slippage = 1,
+     margin_long = 10, margin_short = 10,
+     process_orders_on_close = true, calc_on_every_tick = false,
+     calc_on_order_fills = false, fill_orders_on_standard_ohlc = true)
+
+// Harvest the overnight equity risk premium on a CME index future: at the
+// regular-session (New York, 0930-1600) close, decide a side, hold through the
+// Globex overnight, and go FLAT at the next regular-session open. Flat all day.
+// Companion to overnight_drift_backtest.py.
+//
+// "New York close filter" input decides tonight's trade from the session that
+// just closed:
+//   Long after up close   - long overnight only if the RTH session closed up.
+//   Long after down close - long overnight only if it closed down (reversal).
+//   Long up / short down   - long after an up close, short after a down close.
+//   Strong close only      - long only if the close is high in the day's range.
+//   Always                 - the original unconditional long overnight hold.
+//
+// Full-history (2010-2026, SPX/NDX proxies) this is a MODEST, cost-fragile edge:
+// gross Sharpe ~0.90 but ~0.59 net at 1bp round trip, and negative past ~5bp.
+// It earns its keep mainly as a diversifier to the TSMOM sleeve (corr ~+0.28).
+// Run it on ES/MES or NQ/MNQ where round-trip cost as a fraction of notional is
+// small. Use an INTRADAY chart so the session transitions are visible.
+//
+// process_orders_on_close = true so the entry fills at the RTH close and the
+// exit fills at (the bar containing) the RTH open, matching the backtest's
+// buy-close / sell-open convention as closely as TradingView allows.
+
+// Inputs
+string GROUP_SESSION = "Session"
+string rthSession   = input.session("0930-1600", "Regular session (exit window)", group = GROUP_SESSION, tooltip = "Overnight = the gap between one RTH close and the next RTH open. ES/NQ RTH is 0930-1600.")
+string sessionTz    = input.string("America/New_York", "Session timezone", group = GROUP_SESSION)
+bool   tradeWeekend = input.bool(false, "Hold over Friday->Monday", group = GROUP_SESSION, tooltip = "If off, the position is not held into a weekend (Friday RTH close is treated like any close, but exposure still spans the weekend unless your data has no weekend bars, which is normal for futures).")
+
+string GROUP_FILTER = "New York close filter"
+string closeRule = input.string("Long after up close", "Trade tonight based on NY close", options = ["Long after up close", "Long after down close", "Long up / short down", "Strong close only (long)", "Always (no filter)"], group = GROUP_FILTER, tooltip = "Uses the just-finished regular session (0930-1600 New York) to decide tonight's overnight trade. Up/down close = session close vs session open. Strong close = where the close sits within the session high-low range. 'Always' = the original unconditional overnight hold.")
+float strongThreshold = input.float(0.6, "Strong-close range threshold (0-1)", minval = 0.0, maxval = 1.0, step = 0.05, group = GROUP_FILTER, tooltip = "Only used by 'Strong close only'. 0.6 = close sits in the top 40% of the session's range.")
+
+string GROUP_RISK = "Risk sizing"
+string sizingMode = input.string("Vol-targeted", "Sizing mode", options = ["Vol-targeted", "Fixed contracts"], group = GROUP_RISK)
+float  annualRiskTarget = input.float(20.0, "Annual sleeve volatility target (%)", minval = 0.1, step = 0.5, group = GROUP_RISK) / 100.0
+float  maximumLeverage  = input.float(2.0, "Maximum sleeve exposure (x)", minval = 0.1, step = 0.1, group = GROUP_RISK)
+int    volatilityLength = input.int(60, "Overnight point-vol window (days)", minval = 5, group = GROUP_RISK)
+int    sleeveCount      = input.int(4, "Equal portfolio sleeves", minval = 1, maxval = 20, group = GROUP_RISK, tooltip = "Strategy equity is divided by this before sizing, matching a multi-market book.")
+int    fixedContracts   = input.int(1, "Fixed contracts (fixed mode)", minval = 1, group = GROUP_RISK)
+bool   useChartPointValue = input.bool(true, "Use chart syminfo.pointvalue", group = GROUP_RISK)
+float  manualPointValue = input.float(50.0, "Manual $ per point", minval = 0.0001, group = GROUP_RISK, tooltip = "ES=50, MES=5, NQ=20, MNQ=2.")
+
+string GROUP_EXEC = "Backtest window and display"
+int  startTime = input.time(timestamp("01 Jan 2010 00:00 +0000"), "Start date", group = GROUP_EXEC)
+int  endTime   = input.time(timestamp("31 Dec 2099 23:59 +0000"), "End date", group = GROUP_EXEC)
+bool showMarkers   = input.bool(true, "Show entry/exit markers", group = GROUP_EXEC)
+bool showDashboard = input.bool(true, "Show dashboard", group = GROUP_EXEC)
+
+// --- session state ----------------------------------------------------------
+// isRth is true on bars inside the regular session.
+bool isRth = not na(time(timeframe.period, rthSession, sessionTz))
+bool rthEnded   = isRth[1] and not isRth      // first overnight bar -> enter long
+bool rthStarted = not isRth[1] and isRth      // first RTH bar -> exit flat
+bool inDateRange = time >= startTime and time <= endTime
+
+// --- track the regular (New York) session's OHLC, then pick tonight's side ---
+var float rthOpen  = na
+var float rthHigh  = na
+var float rthLow   = na
+var float rthClose = na
+if rthStarted
+    rthOpen := open
+    rthHigh := high
+    rthLow  := low
+if isRth
+    rthHigh  := math.max(nz(rthHigh, high), high)
+    rthLow   := math.min(nz(rthLow, low), low)
+    rthClose := close
+
+// At the RTH close, snapshot the completed session and decide the overnight side.
+var float nyMove     = na
+var float nyCloseLoc = na
+var int   nyDir      = 0
+if rthEnded
+    nyMove := rthClose - rthOpen
+    float rng = rthHigh - rthLow
+    nyCloseLoc := rng > 0 ? (rthClose - rthLow) / rng : 0.5
+    if closeRule == "Long after up close"
+        nyDir := nyMove > 0 ? 1 : 0
+    else if closeRule == "Long after down close"
+        nyDir := nyMove < 0 ? 1 : 0
+    else if closeRule == "Long up / short down"
+        nyDir := nyMove > 0 ? 1 : nyMove < 0 ? -1 : 0
+    else if closeRule == "Strong close only (long)"
+        nyDir := nyCloseLoc >= strongThreshold ? 1 : 0
+    else
+        nyDir := 1
+
+// --- daily overnight point volatility (no look-ahead) -----------------------
+// Pull daily open/close from the chart symbol's daily context and measure the
+// volatility of the overnight point move (open - previous close). [1] uses the
+// last CONFIRMED daily bar, so today's session is sized from prior data only.
+f_overnightVol() =>
+    float overnightMove = open - close[1]
+    float pv = ta.stdev(overnightMove, volatilityLength, true)
+    [pv, close]
+[dailyPointVol, dailyClose] = request.security(syminfo.tickerid, "D", f_overnightVol(), lookahead = barmerge.lookahead_off)
+float pointVolKnown = dailyPointVol[1]         // known before tonight's session
+float priorClose    = dailyClose[1]
+
+// --- contract sizing --------------------------------------------------------
+float pointValue = useChartPointValue ? nz(syminfo.pointvalue, manualPointValue) : manualPointValue
+float minQty     = math.max(nz(syminfo.mincontract, 1.0), 0.0000001)
+float sleeveEquity = math.max(strategy.equity, 0.0) / sleeveCount
+float dailyRiskTarget = annualRiskTarget / math.sqrt(252.0)
+
+float rawExposure = (not na(pointVolKnown) and pointVolKnown > 0.0 and not na(priorClose)) ? dailyRiskTarget / pointVolKnown * math.abs(priorClose) : na
+float targetLeverage = na(rawExposure) ? na : math.min(rawExposure, maximumLeverage)
+float contractNotional = math.abs(close) * pointValue
+float rawContracts = (not na(targetLeverage) and contractNotional > 0.0) ? sleeveEquity * targetLeverage / contractNotional : 0.0
+float volContracts = math.max(math.round(rawContracts), 0.0)
+float targetContracts = sizingMode == "Fixed contracts" ? fixedContracts : volContracts
+
+// --- orders: long at RTH close, flat at RTH open ----------------------------
+bool canEnter = rthEnded and inDateRange and targetContracts >= 1 and nyDir != 0 and (tradeWeekend or dayofweek != dayofweek.friday)
+if canEnter and strategy.position_size == 0
+    string dirTxt = nyDir > 0 ? "BUY" : "SELL"
+    string closeTxt = nyMove > 0 ? "UP" : nyMove < 0 ? "DOWN" : "FLAT"
+    string msg = "Overnight " + dirTxt + " " + str.tostring(targetContracts) + " " + syminfo.ticker + " at RTH close; NY closed " + closeTxt + "; lev " + str.tostring(targetLeverage, "#.00") + "x"
+    strategy.entry("Overnight", nyDir > 0 ? strategy.long : strategy.short, qty = targetContracts, alert_message = msg)
+
+if rthStarted and strategy.position_size != 0
+    strategy.close("Overnight", comment = "RTH open", alert_message = "Overnight SELL " + syminfo.ticker + " at RTH open")
+
+// safety exit at window end
+bool dateRangeJustEnded = time > endTime and time[1] <= endTime
+if dateRangeJustEnded and strategy.position_size != 0
+    strategy.close_all(comment = "End date", alert_message = "Overnight close all at backtest end")
+
+// --- visuals ----------------------------------------------------------------
+bgcolor(strategy.position_size != 0 ? color.new(color.teal, 88) : na, title = "Overnight held")
+plotshape(showMarkers and canEnter and nyDir > 0 and strategy.position_size == 0, title = "Enter long", style = shape.triangleup, location = location.belowbar, color = color.lime, size = size.tiny, text = "L")
+plotshape(showMarkers and canEnter and nyDir < 0 and strategy.position_size == 0, title = "Enter short", style = shape.triangledown, location = location.abovebar, color = color.red, size = size.tiny, text = "S")
+plotshape(showMarkers and rthStarted and strategy.position_size != 0, title = "Exit", style = shape.xcross, location = location.abovebar, color = color.orange, size = size.tiny, text = "flat")
+
+var table dash = table.new(position.top_right, 2, 9, bgcolor = color.new(color.black, 10), frame_color = color.gray, frame_width = 1, border_color = color.new(color.gray, 50), border_width = 1)
+if barstate.islast and showDashboard
+    table.cell(dash, 0, 0, "Overnight Drift", text_color = color.white, bgcolor = color.new(color.teal, 40))
+    table.cell(dash, 1, 0, syminfo.ticker, text_color = color.white, bgcolor = color.new(color.teal, 40))
+    table.cell(dash, 0, 1, "State", text_color = color.white)
+    table.cell(dash, 1, 1, strategy.position_size != 0 ? "HOLDING O/N" : (isRth ? "flat (RTH)" : "flat"), text_color = strategy.position_size != 0 ? color.lime : color.silver)
+    table.cell(dash, 0, 2, "Target lev", text_color = color.white)
+    table.cell(dash, 1, 2, na(targetLeverage) ? "n/a" : str.tostring(targetLeverage, "#.00") + "x", text_color = color.white)
+    table.cell(dash, 0, 3, "Target / held", text_color = color.white)
+    table.cell(dash, 1, 3, str.tostring(targetContracts) + " / " + str.tostring(strategy.position_size), text_color = color.white)
+    table.cell(dash, 0, 4, "Overnight pt-vol", text_color = color.white)
+    table.cell(dash, 1, 4, na(pointVolKnown) ? "n/a" : str.tostring(pointVolKnown, "#.00"), text_color = color.white)
+    table.cell(dash, 0, 5, "Point value", text_color = color.white)
+    table.cell(dash, 1, 5, "$" + str.tostring(pointValue, "#.##"), text_color = color.white)
+    table.cell(dash, 0, 6, "Chart check", text_color = color.white)
+    table.cell(dash, 1, 6, timeframe.isintraday ? "Intraday OK" : "USE INTRADAY", text_color = timeframe.isintraday ? color.lime : color.orange)
+    table.cell(dash, 0, 7, "NY close", text_color = color.white)
+    table.cell(dash, 1, 7, na(nyMove) ? "n/a" : (nyMove > 0 ? "UP " : nyMove < 0 ? "DOWN " : "FLAT ") + str.tostring(nyCloseLoc * 100.0, "#0") + "% rng", text_color = na(nyMove) ? color.gray : nyMove > 0 ? color.lime : color.red)
+    table.cell(dash, 0, 8, "Tonight", text_color = color.white)
+    table.cell(dash, 1, 8, nyDir > 0 ? "LONG" : nyDir < 0 ? "SHORT" : "SKIP", text_color = nyDir > 0 ? color.lime : nyDir < 0 ? color.red : color.gray)
+
+// Create a strategy alert on order fills and put {{strategy.order.alert_message}}
+// in the Message field for live notifications.

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overnight Drift Data</title>
+<style>
+:root{color-scheme:light;--s0:#f5f4f1;--s1:#fcfcfb;--s2:#efeeea;--t1:#0b0b0b;
+ --t2:#52514e;--t3:#77756f;--line:#dedcd6;--blue:#2a78d6;--good:#0ca30c;--crit:#d03b3b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+ --s0:#141413;--s1:#1a1a19;--s2:#232322;--t1:#fff;--t2:#c3c2b7;--t3:#94938a;
+ --line:#33322f;--blue:#3987e5;--good:#0ca30c;--crit:#e66767}}
+:root[data-theme="dark"]{color-scheme:dark;--s0:#141413;--s1:#1a1a19;--s2:#232322;
+ --t1:#fff;--t2:#c3c2b7;--t3:#94938a;--line:#33322f;--blue:#3987e5;--crit:#e66767}
+*{box-sizing:border-box}
+body{margin:0;background:var(--s0);color:var(--t1);
+ font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:34px 20px 80px}
+h1{font-size:27px;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:19px;margin:44px 0 4px;letter-spacing:-.01em}
+.meta{color:var(--t3);font-size:12.5px;font-variant-numeric:tabular-nums;margin:0 0 6px}
+.cap{color:var(--t3);font-size:12.5px;margin:6px 0 0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:18px 0}
+.tile{background:var(--s1);border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+.tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3)}
+.tile .v{font-size:23px;font-weight:650;margin-top:3px;font-variant-numeric:tabular-nums;
+ letter-spacing:-.02em}
+.tile .n{font-size:12px;color:var(--t2);margin-top:2px}
+.scroll{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:9px}
+table{border-collapse:collapse;width:100%;font-size:13px;background:var(--s1);
+ font-variant-numeric:tabular-nums}
+th,td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+tbody th{text-align:left;font-weight:500;color:var(--t2)}
+thead th{background:var(--s2);color:var(--t2);font-size:12px;font-weight:620;
+ text-transform:uppercase;letter-spacing:.04em;text-align:right}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:none}
+.pos{color:var(--good)}.neg{color:var(--crit)}
+img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:9px;
+ background:#fcfcfb;margin-top:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+code{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:var(--s2);
+ padding:1px 5px;border-radius:4px}
+footer{color:var(--t3);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);
+ padding-top:16px}
+</style></head><body><div class="wrap">
+
+<h1>MNQ overnight drift — data sheet</h1>
+<p class="meta">Long 18:00 ET reopen → flat 06:00 ET open · 1-tick round trip charged ·
+MNQ 2020-01-01 → 2026-08-06 (1,703 nights, in sample) ·
+NQ 2015-01-01 → 2019-12-30 (1,258 nights, out of sample,
+rescaled to today's notional)</p>
+
+<div class="tiles">
+  <div class="tile"><div class="k">$ / night</div><div class="v">13.23</div>
+    <div class="n">OOS 15.54</div></div>
+  <div class="tile"><div class="k">t-stat</div><div class="v">2.47</div>
+    <div class="n">OOS 2.42</div></div>
+  <div class="tile"><div class="k">Sharpe</div><div class="v">0.95</div>
+    <div class="n">OOS 1.08</div></div>
+  <div class="tile"><div class="k">Profit factor</div><div class="v">1.20</div>
+    <div class="n">OOS 1.23</div></div>
+  <div class="tile"><div class="k">Hit rate</div><div class="v">55.3%</div>
+    <div class="n">OOS 56.4%</div></div>
+  <div class="tile"><div class="k">Max DD</div><div class="v">-3,552</div>
+    <div class="n">OOS -3,190</div></div>
+  <div class="tile"><div class="k">Worst night</div><div class="v">-1,772</div>
+    <div class="n">OOS -1,693</div></div>
+  <div class="tile"><div class="k">sd / night</div><div class="v">221</div>
+    <div class="n">OOS 228</div></div>
+</div>
+
+<h2>1 · Performance</h2>
+<img src="drift_performance.png" alt="Equity, drawdown, rolling mean and rolling Sharpe">
+<p class="cap">Equity and drawdown per contract; rolling 250-night mean and annualised Sharpe.</p>
+<div class="scroll"><table class="stats"><thead><tr><th></th><th>MNQ 2020-2026</th><th>NQ 2015-2019 (OOS)</th></tr></thead><tbody><tr><th>Nights</th><td class="">1,703</td><td class="">1,258</td></tr><tr><th>Total $</th><td class="">$22,533</td><td class="">$19,554</td></tr><tr><th>Mean $/night</th><td class="">$13.23</td><td class="">$15.54</td></tr><tr><th>Median $/night</th><td class="">$22.00</td><td class="">$22.93</td></tr><tr><th>Annualised $ (252)</th><td class="">$3,334</td><td class="">$3,917</td></tr><tr><th>sd $/night</th><td class="">$221</td><td class="">$228</td></tr><tr><th>Sharpe</th><td class="">0.95</td><td class="">1.08</td></tr><tr><th>t-stat</th><td class="">2.47</td><td class="">2.42</td></tr><tr><th>Profit factor</th><td class="">1.20</td><td class="">1.23</td></tr><tr><th>Hit rate %</th><td class="">55.3</td><td class="">56.4</td></tr><tr><th>Avg win $</th><td class="">$147</td><td class="">$146</td></tr><tr><th>Avg loss $</th><td class="">$-152</td><td class="">$-153</td></tr><tr><th>Best night</th><td class="">$1,418</td><td class="">$1,563</td></tr><tr><th>Worst night</th><td class="">$-1,772</td><td class="">$-1,693</td></tr><tr><th>Max drawdown</th><td class="">$-3,552</td><td class="">$-3,190</td></tr><tr><th>Longest win streak</th><td class="">9</td><td class="">12</td></tr><tr><th>Longest loss streak</th><td class="">9</td><td class="">7</td></tr></tbody></table></div>
+
+<h2>2 · Distribution and where the money accrues</h2>
+<img src="drift_distribution.png" alt="P&L distribution, CDF, intranight path, hourly contribution">
+<div class="grid2">
+<div><p class="cap">Nightly P&amp;L quantiles, $ per contract</p><div class="scroll"><table class=""><thead><tr><th></th><th>MNQ 2020-2026</th><th>NQ 2015-2019 (OOS)</th></tr></thead><tbody><tr><th>p1</th><td class="">$-620</td><td class="">$-796</td></tr><tr><th>p5</th><td class="">$-320</td><td class="">$-309</td></tr><tr><th>p10</th><td class="">$-210</td><td class="">$-205</td></tr><tr><th>p25</th><td class="">$-84</td><td class="">$-74</td></tr><tr><th>p50</th><td class="">$22</td><td class="">$23</td></tr><tr><th>p75</th><td class="">$112</td><td class="">$117</td></tr><tr><th>p90</th><td class="">$225</td><td class="">$240</td></tr><tr><th>p95</th><td class="">$342</td><td class="">$351</td></tr><tr><th>p99</th><td class="">$660</td><td class="">$649</td></tr></tbody></table></div></div>
+<div><p class="cap">By entry weekday, MNQ</p><div class="scroll"><table class=""><thead><tr><th></th><th>nights</th><th>$/night</th><th>total $</th></tr></thead><tbody><tr><th>Mon</th><td class="">344</td><td class="pos">$2.33</td><td class="">$802</td></tr><tr><th>Tue</th><td class="">341</td><td class="pos">$36.10</td><td class="">$12,308</td></tr><tr><th>Wed</th><td class="">343</td><td class="pos">$13.44</td><td class="">$4,608</td></tr><tr><th>Thu</th><td class="">336</td><td class="neg">$-7.53</td><td class="">$-2,529</td></tr><tr><th>Sun</th><td class="">339</td><td class="pos">$21.66</td><td class="">$7,342</td></tr></tbody></table></div></div>
+</div>
+
+<h2>3 · Seasonality</h2>
+<img src="drift_seasonality.png" alt="Year-month heatmap, weekday, month, year bars">
+<p class="cap">Per-year detail, both eras</p>
+<div class="scroll"><table class=""><thead><tr><th></th><th>nights</th><th>$/night</th><th>total $</th><th>hit %</th><th>worst</th><th>best</th></tr></thead><tbody><tr><th>MNQ 2020</th><td class="">257</td><td class="pos">$28.62</td><td class="">$7,354</td><td class="">61.1</td><td class="">$-725</td><td class="">$897</td></tr><tr><th>MNQ 2021</th><td class="">259</td><td class="pos">$5.44</td><td class="">$1,408</td><td class="">56.0</td><td class="">$-523</td><td class="">$594</td></tr><tr><th>MNQ 2022</th><td class="">258</td><td class="pos">$0.33</td><td class="">$84</td><td class="">50.8</td><td class="">$-689</td><td class="">$928</td></tr><tr><th>MNQ 2023</th><td class="">258</td><td class="neg">$-1.24</td><td class="">$-320</td><td class="">53.9</td><td class="">$-411</td><td class="">$322</td></tr><tr><th>MNQ 2024</th><td class="">259</td><td class="pos">$13.41</td><td class="">$3,473</td><td class="">55.2</td><td class="">$-1,154</td><td class="">$740</td></tr><tr><th>MNQ 2025</th><td class="">257</td><td class="pos">$18.23</td><td class="">$4,686</td><td class="">54.1</td><td class="">$-1,772</td><td class="">$1,066</td></tr><tr><th>MNQ 2026</th><td class="">155</td><td class="pos">$37.73</td><td class="">$5,848</td><td class="">56.1</td><td class="">$-1,551</td><td class="">$1,418</td></tr><tr><th>NQ (OOS) 2015</th><td class="">228</td><td class="pos">$21.39</td><td class="">$4,877</td><td class="">53.1</td><td class="">$-1,193</td><td class="">$1,563</td></tr><tr><th>NQ (OOS) 2016</th><td class="">258</td><td class="neg">$-4.76</td><td class="">$-1,228</td><td class="">50.4</td><td class="">$-1,693</td><td class="">$779</td></tr><tr><th>NQ (OOS) 2017</th><td class="">257</td><td class="pos">$12.19</td><td class="">$3,132</td><td class="">59.1</td><td class="">$-465</td><td class="">$303</td></tr><tr><th>NQ (OOS) 2018</th><td class="">257</td><td class="pos">$16.98</td><td class="">$4,364</td><td class="">58.0</td><td class="">$-1,194</td><td class="">$755</td></tr><tr><th>NQ (OOS) 2019</th><td class="">258</td><td class="pos">$32.59</td><td class="">$8,409</td><td class="">60.9</td><td class="">$-1,109</td><td class="">$749</td></tr></tbody></table></div>
+
+<h2>4 · Lagged regime buckets</h2>
+<img src="drift_conditioning.png" alt="Quintile buckets by prior night, prior day, vol, trend">
+<p class="cap">Every key is known before the 18:00 entry. Descriptive — prior work found
+bucket selection does not survive train/test.</p>
+<div class="scroll"><table class=""><thead><tr><th></th><th>nights</th><th>bucket low</th><th>bucket high</th><th>$/night</th><th>hit %</th><th>t</th></tr></thead><tbody><tr><th>Prior night P&amp;L Q1</th><td class="">341</td><td class="">-1,772.50</td><td class="">-118.00</td><td class="pos">$53.12</td><td class="">62.5</td><td class="pos">3.66</td></tr><tr><th>Prior night P&amp;L Q2</th><td class="">340</td><td class="">-117.00</td><td class="">-15.50</td><td class="pos">$8.97</td><td class="">55.3</td><td class="pos">0.78</td></tr><tr><th>Prior night P&amp;L Q3</th><td class="">340</td><td class="">-15.00</td><td class="">52.50</td><td class="neg">$-4.93</td><td class="">52.9</td><td class="neg">-0.54</td></tr><tr><th>Prior night P&amp;L Q4</th><td class="">340</td><td class="">53.00</td><td class="">139.00</td><td class="pos">$4.47</td><td class="">51.2</td><td class="pos">0.41</td></tr><tr><th>Prior night P&amp;L Q5</th><td class="">341</td><td class="">140.00</td><td class="">1,418.50</td><td class="pos">$4.21</td><td class="">54.3</td><td class="pos">0.32</td></tr><tr><th>Prior RTH day % Q1</th><td class="">341</td><td class="">-6.12</td><td class="">-0.77</td><td class="pos">$29.95</td><td class="">58.4</td><td class="pos">2.10</td></tr><tr><th>Prior RTH day % Q2</th><td class="">340</td><td class="">-0.76</td><td class="">-0.12</td><td class="pos">$8.90</td><td class="">60.6</td><td class="pos">0.64</td></tr><tr><th>Prior RTH day % Q3</th><td class="">340</td><td class="">-0.12</td><td class="">0.34</td><td class="pos">$14.79</td><td class="">53.8</td><td class="pos">1.69</td></tr><tr><th>Prior RTH day % Q4</th><td class="">340</td><td class="">0.34</td><td class="">0.88</td><td class="pos">$3.50</td><td class="">54.1</td><td class="pos">0.31</td></tr><tr><th>Prior RTH day % Q5</th><td class="">341</td><td class="">0.88</td><td class="">12.00</td><td class="pos">$8.76</td><td class="">49.3</td><td class="pos">0.81</td></tr><tr><th>20-night vol (lagged) Q1</th><td class="">337</td><td class="">54.75</td><td class="">111.76</td><td class="neg">$-3.72</td><td class="">55.2</td><td class="neg">-0.54</td></tr><tr><th>20-night vol (lagged) Q2</th><td class="">336</td><td class="">111.91</td><td class="">140.89</td><td class="pos">$6.74</td><td class="">56.2</td><td class="pos">0.96</td></tr><tr><th>20-night vol (lagged) Q3</th><td class="">337</td><td class="">141.09</td><td class="">192.35</td><td class="pos">$16.50</td><td class="">53.4</td><td class="pos">1.51</td></tr><tr><th>20-night vol (lagged) Q4</th><td class="">336</td><td class="">192.42</td><td class="">271.89</td><td class="neg">$-7.02</td><td class="">53.9</td><td class="neg">-0.50</td></tr><tr><th>20-night vol (lagged) Q5</th><td class="">337</td><td class="">271.94</td><td class="">636.92</td><td class="pos">$54.27</td><td class="">57.0</td><td class="pos">3.09</td></tr><tr><th>Close vs 50d avg % Q1</th><td class="">331</td><td class="">-22.69</td><td class="">-2.41</td><td class="pos">$16.66</td><td class="">50.8</td><td class="pos">1.10</td></tr><tr><th>Close vs 50d avg % Q2</th><td class="">330</td><td class="">-2.41</td><td class="">1.31</td><td class="pos">$22.37</td><td class="">56.7</td><td class="pos">1.75</td></tr><tr><th>Close vs 50d avg % Q3</th><td class="">331</td><td class="">1.31</td><td class="">3.79</td><td class="pos">$10.42</td><td class="">56.5</td><td class="pos">0.85</td></tr><tr><th>Close vs 50d avg % Q4</th><td class="">330</td><td class="">3.79</td><td class="">5.95</td><td class="pos">$9.12</td><td class="">56.1</td><td class="pos">1.00</td></tr><tr><th>Close vs 50d avg % Q5</th><td class="">331</td><td class="">5.96</td><td class="">14.36</td><td class="pos">$12.02</td><td class="">56.2</td><td class="pos">1.13</td></tr></tbody></table></div>
+
+<h2>5 · Tails — 10 worst and 10 best nights (MNQ)</h2>
+<div class="scroll"><table class=""><thead><tr><th></th><th>net $</th><th>best moment $</th><th>worst moment $</th></tr></thead><tbody><tr><th>2025-01-26</th><td class="">$-1,772</td><td class="">$0</td><td class="">$2,020</td></tr><tr><th>2026-06-22</th><td class="">$-1,551</td><td class="">$76</td><td class="">$1,772</td></tr><tr><th>2024-08-04</th><td class="">$-1,154</td><td class="">$4</td><td class="">$2,092</td></tr><tr><th>2026-03-02</th><td class="">$-1,104</td><td class="">$17</td><td class="">$1,220</td></tr><tr><th>2026-07-16</th><td class="">$-952</td><td class="">$66</td><td class="">$1,264</td></tr><tr><th>2026-05-14</th><td class="">$-942</td><td class="">$76</td><td class="">$1,036</td></tr><tr><th>2026-07-07</th><td class="">$-856</td><td class="">$342</td><td class="">$954</td></tr><tr><th>2025-04-09</th><td class="">$-830</td><td class="">$237</td><td class="">$1,120</td></tr><tr><th>2026-06-25</th><td class="">$-753</td><td class="">$292</td><td class="">$1,176</td></tr><tr><th>2020-03-11</th><td class="">$-725</td><td class="">$218</td><td class="">$795</td></tr><tr><th>2026-04-07</th><td class="">$1,418</td><td class="">$1,510</td><td class="">$260</td></tr><tr><th>2025-05-11</th><td class="">$1,066</td><td class="">$1,114</td><td class="">$0</td></tr><tr><th>2022-01-25</th><td class="">$928</td><td class="">$1,009</td><td class="">$2</td></tr><tr><th>2020-03-19</th><td class="">$897</td><td class="">$903</td><td class="">$94</td></tr><tr><th>2020-03-09</th><td class="">$858</td><td class="">$877</td><td class="">$158</td></tr><tr><th>2026-06-10</th><td class="">$838</td><td class="">$954</td><td class="">$388</td></tr><tr><th>2026-06-14</th><td class="">$838</td><td class="">$996</td><td class="">$2</td></tr><tr><th>2026-06-07</th><td class="">$792</td><td class="">$890</td><td class="">$45</td></tr><tr><th>2020-03-12</th><td class="">$780</td><td class="">$887</td><td class="">$450</td></tr><tr><th>2026-06-28</th><td class="">$768</td><td class="">$903</td><td class="">$1</td></tr></tbody></table></div>
+
+<footer>Generated by <code>mnq_overnight_drift_dashboard.py</code> ·
+per-night data: <a href="drift_nights.csv">drift_nights.csv</a> ·
+regenerate and refresh to update every number and chart on this page.</footer>
+</div></body></html>

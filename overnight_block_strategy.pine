@@ -1,0 +1,93 @@
+//@version=6
+strategy("MNQ Overnight Block", "ON Block", overlay = true,
+     initial_capital = 50000, currency = currency.USD,
+     risk_free_rate = 0,
+     default_qty_type = strategy.fixed, default_qty_value = 1,
+     pyramiding = 0, commission_type = strategy.commission.cash_per_contract,
+     commission_value = 0.25, slippage = 0,
+     process_orders_on_close = false, calc_on_every_tick = false,
+     calc_on_order_fills = false, fill_orders_on_standard_ohlc = true)
+
+// Long a fixed clock window of the Globex night, flat the rest of the day. No
+// signal, no filter, no stop -- the edge is that the index drifts up overnight
+// and the only decision is which hours to hold. Companion to
+// mnq_time_block_backtest.py / mnq_window_scan_backtest.py.
+//
+// Default window is the full Globex night 18:00 -> 06:00 ET, the config that
+// survived the 2015-2020 out-of-sample test (mnq_oos_2015_backtest.py): OOS
+// PF 1.234 vs in-sample 1.210, pooled t = 3.58 over 2,949 nights, ~$14/night per
+// micro at 2024-26 prices, worst night -$1,770. The tighter 23:00 -> 04:00 cut
+// only HALF-replicated out of sample (PF 1.127, hit 51.9% in 2015-19) -- its
+// lower tail is structural (shorter hold) but its "equal edge at lower vol"
+// claim was 2020-26-specific. Use 23:00/04:00 only if the account's loss buffer
+// cannot survive a ~$1,800 night per contract; otherwise trade the full night.
+//
+// ENTRY HOUR 17, NOT 18. CME equity futures halt 17:00-18:00 ET, so no bar ever
+// closes between those hours. Arming the window at 17:00 makes the last pre-halt
+// bar (closing 17:00) place the entry order, which then fills at the next bar's
+// open -- the 18:00 reopen print, exactly the price the backtest buys. Setting 18
+// instead would trigger on the bar closing 18:05 and fill at 18:05, five minutes
+// late and after the Sunday gap's first prints. The position is still flat across
+// the halt and the weekend either way; the fill just lands on the reopen itself.
+//
+// Two things the backtest established that this script deliberately does NOT try
+// to improve on. Scanning for a better window is overfitting: a permutation test
+// showed the best of 276 windows reaches Sharpe ~0.97 on data with no edge at
+// all, and the top windows collapsed out of sample. And conditioning on the prior
+// session (up day, down day, close location) beat plain "always long" in none of
+// the five rules tested. Leave the window alone and never short it.
+//
+// Cost model: commission_value 0.25 cash-per-contract = $0.50 round trip = one
+// MNQ tick, matching the backtest. Raise it to your real all-in cost (broker
+// commission plus fees, typically $1.00-1.50 RT) before believing the equity
+// curve. The edge survived 8 ticks RT in testing, so this is not fragile.
+//
+// Run on MNQ1! (or MES1!) on a 5-minute chart. Timing needs an intraday chart;
+// 5-minute matches the data the backtest was built on.
+
+// Inputs
+string GROUP_WINDOW = "Hold window (exchange local time)"
+int    entryHour = input.int(17, "Entry hour",   minval = 0, maxval = 23, group = GROUP_WINDOW,
+     tooltip = "17 = fill at the 18:00 Globex reopen (see header). No bars exist 17:00-18:00, so 17 and 18:00-sharp are the same exposure; 17 gets the reopen print, 18 fills at 18:05.")
+int    entryMin  = input.int(0,  "Entry minute", minval = 0, maxval = 59, group = GROUP_WINDOW)
+int    exitHour  = input.int(6,  "Exit hour",    minval = 0, maxval = 23, group = GROUP_WINDOW)
+int    exitMin   = input.int(0,  "Exit minute",  minval = 0, maxval = 59, group = GROUP_WINDOW)
+string tz        = input.string("America/New_York", "Timezone", group = GROUP_WINDOW,
+     tooltip = "Window is defined in this timezone, so it follows DST the way the exchange does.")
+
+string GROUP_TEST = "Backtest range"
+int    startDate = input.time(timestamp("01 Jan 2020 00:00 -0500"), "Start", group = GROUP_TEST)
+int    endDate   = input.time(timestamp("01 Jan 2100 00:00 -0500"), "End",   group = GROUP_TEST)
+
+bool   shade     = input.bool(true, "Shade the hold window", group = "Display")
+
+// The window is evaluated on each bar's CLOSING timestamp, not its opening one.
+// That is what makes the fills match the backtest: on the bar that ENDS at 23:00
+// the window turns on, the order is placed, and it fills at the open of the 23:00
+// bar. Same at the other end -- the bar ending at 04:00 turns the window off and
+// the position exits at the 04:00 open. Window is open-to-open, as backtested.
+int nowMins   = hour(time_close, tz) * 60 + minute(time_close, tz)
+int entryMins = entryHour * 60 + entryMin
+int exitMins  = exitHour * 60 + exitMin
+
+// Handles a window that wraps past midnight (23:00 -> 04:00) as well as one that
+// does not (18:00 -> 23:00).
+bool inWindow = entryMins < exitMins
+     ? (nowMins >= entryMins and nowMins < exitMins)
+     : (nowMins >= entryMins or nowMins < exitMins)
+
+bool windowOpens  = inWindow and not inWindow[1]
+bool windowCloses = not inWindow and inWindow[1]
+bool inDateRange  = time >= startDate and time <= endDate
+
+if windowOpens and inDateRange
+    strategy.entry("ON", strategy.long)
+
+// Exit on the window boundary. The second condition is a safety net: if the feed
+// skips the boundary bar (holiday, half session, data gap) the position still
+// closes on the first bar that is outside the window rather than riding into the
+// day session.
+if windowCloses or (not inWindow and strategy.position_size > 0)
+    strategy.close("ON", comment = "flat")
+
+bgcolor(shade and inWindow ? color.new(color.teal, 90) : na, title = "Hold window")

@@ -1,0 +1,101 @@
+//@version=6
+// Single-symbol Factor Score  (proxy for the cross-sectional factor book)
+//
+// IMPORTANT: this is NOT the market-neutral L/S strategy from
+// factor_ls_backtest.py. Pine sees one symbol at a time and cannot rank a stock
+// against the ~6,500-name universe, so there is no true cross-sectional
+// percentile here. Instead it scores the CHART stock's own factor exposures
+// against the stock's OWN HISTORY (self-referential percentile), and blends
+// them into a 0-100 composite: high = this stock currently looks like a
+// long-basket ("good factor") name, low = a short-basket name.
+//
+// Use it as a per-ticker screen: flip through symbols and read the composite.
+// Run on a daily chart of an individual STOCK (fundamentals are na on
+// indices/futures/FX). It is an indicator, not a strategy - it places no orders.
+
+indicator("Factor Score (single-symbol proxy)", overlay = false, precision = 0)
+
+// ---- inputs ----------------------------------------------------------------
+string GRP = "Factors (self-history percentile)"
+int   rankLen = input.int(756, "Self-history lookback (bars)", minval = 60, group = GRP, tooltip = "Percentile is vs the stock's own last N bars (~756 = 3y daily). Not vs the universe - Pine can't do that.")
+string finPer = input.string("TTM", "Fundamentals period", options = ["TTM", "FY", "FQ"], group = GRP)
+bool useMom  = input.bool(true, "Momentum (12-1)", group = GRP)
+bool useLowV = input.bool(true, "Low volatility", group = GRP)
+bool useProf = input.bool(true, "Profitability (ROE)", group = GRP)
+bool useQual = input.bool(true, "Quality (net margin)", group = GRP)
+bool useCf   = input.bool(true, "Cash flow (FCF margin)", group = GRP)
+bool useVal  = input.bool(true, "Value (earnings yield)", group = GRP)
+bool useSolv = input.bool(true, "Solvency (low debt/equity)", group = GRP)
+
+string GRP2 = "Display"
+int   hiZone = input.int(70, "Long-candidate zone", minval = 51, maxval = 99, group = GRP2)
+int   loZone = input.int(30, "Short-candidate zone", minval = 1, maxval = 49, group = GRP2)
+bool  showDash = input.bool(true, "Show factor dashboard", group = GRP2)
+
+// ---- raw factor exposures --------------------------------------------------
+// Momentum 12-1: return from ~12 months ago to ~1 month ago (skip last month).
+float mom = not na(close[252]) and not na(close[21]) ? close[21] / close[252] - 1.0 : na
+// Realized volatility (annualized) of daily log returns; low is good -> invert.
+float ret = math.log(close / close[1])
+float vol = ta.stdev(ret, 252) * math.sqrt(252)
+// Fundamentals via request.financial (na on non-stocks or when unavailable).
+float roe   = request.financial(syminfo.tickerid, "RETURN_ON_EQUITY", finPer)
+float nmarg = request.financial(syminfo.tickerid, "NET_MARGIN", finPer)
+float fcf   = request.financial(syminfo.tickerid, "FREE_CASH_FLOW", finPer)
+float rev   = request.financial(syminfo.tickerid, "TOTAL_REVENUE", finPer)
+float eps   = request.financial(syminfo.tickerid, "EARNINGS_PER_SHARE_BASIC", finPer)
+float d2e   = request.financial(syminfo.tickerid, "DEBT_TO_EQUITY", finPer)
+float fcfMargin = not na(fcf) and not na(rev) and rev != 0 ? fcf / rev : na
+float earnYield = not na(eps) and close != 0 ? eps / close : na   // value: E/P
+
+// ---- self-history percentile (0-100); invert where low is good -------------
+f_score(float src, bool invert) =>
+    float p = na(src) ? na : ta.percentrank(src, rankLen)
+    na(p) ? na : (invert ? 100.0 - p : p)
+
+float sMom  = useMom  ? f_score(mom, false)       : na
+float sLowV = useLowV ? f_score(vol, true)        : na   // low vol -> high score
+float sProf = useProf ? f_score(roe, false)       : na
+float sQual = useQual ? f_score(nmarg, false)     : na
+float sCf   = useCf   ? f_score(fcfMargin, false) : na
+float sVal  = useVal  ? f_score(earnYield, false) : na
+float sSolv = useSolv ? f_score(d2e, true)        : na   // low debt -> high score
+
+// ---- composite = mean of available factor scores ---------------------------
+var float[] _vals = na
+_vals := array.new_float()
+for s in array.from(sMom, sLowV, sProf, sQual, sCf, sVal, sSolv)
+    if not na(s)
+        array.push(_vals, s)
+float composite = array.size(_vals) > 0 ? array.avg(_vals) : na
+
+// ---- plot ------------------------------------------------------------------
+color compColor = na(composite) ? color.gray : composite >= hiZone ? color.lime : composite <= loZone ? color.red : color.silver
+plot(composite, "Factor score", color = compColor, linewidth = 2)
+hline(hiZone, "Long zone", color = color.new(color.lime, 60), linestyle = hline.style_dashed)
+hline(50, "Neutral", color = color.new(color.gray, 70))
+hline(loZone, "Short zone", color = color.new(color.red, 60), linestyle = hline.style_dashed)
+bgcolor(na(composite) ? color.new(color.orange, 90) : na, title = "No data (use a stock)")
+
+// ---- dashboard -------------------------------------------------------------
+f_cell(table t, int row, string label, float raw, float score, string fmt) =>
+    table.cell(t, 0, row, label, text_color = color.white, text_size = size.small)
+    table.cell(t, 1, row, na(raw) ? "n/a" : str.tostring(raw, fmt), text_color = color.silver, text_size = size.small)
+    color sc = na(score) ? color.gray : score >= hiZone ? color.lime : score <= loZone ? color.red : color.silver
+    table.cell(t, 2, row, na(score) ? "-" : str.tostring(score, "#0"), text_color = sc, text_size = size.small)
+
+var table dash = table.new(position.top_right, 3, 9, bgcolor = color.new(color.black, 10), frame_color = color.gray, frame_width = 1, border_color = color.new(color.gray, 60), border_width = 1)
+if barstate.islast and showDash
+    table.cell(dash, 0, 0, "Factor", text_color = color.white, bgcolor = color.new(color.blue, 40), text_size = size.small)
+    table.cell(dash, 1, 0, "Raw", text_color = color.white, bgcolor = color.new(color.blue, 40), text_size = size.small)
+    table.cell(dash, 2, 0, "Score", text_color = color.white, bgcolor = color.new(color.blue, 40), text_size = size.small)
+    f_cell(dash, 1, "Momentum 12-1", mom, sMom, "#.00")
+    f_cell(dash, 2, "Low vol (ann)", vol, sLowV, "#.00")
+    f_cell(dash, 3, "Profitability ROE", roe, sProf, "#.00")
+    f_cell(dash, 4, "Quality netmargin", nmarg, sQual, "#.00")
+    f_cell(dash, 5, "FCF margin", fcfMargin, sCf, "#.00")
+    f_cell(dash, 6, "Value E/P", earnYield, sVal, "#.000")
+    f_cell(dash, 7, "Solvency D/E", d2e, sSolv, "#.00")
+    table.cell(dash, 0, 8, "COMPOSITE", text_color = color.white, bgcolor = color.new(color.teal, 40), text_size = size.small)
+    table.cell(dash, 1, 8, na(composite) ? "use a stock" : (composite >= hiZone ? "LONG-type" : composite <= loZone ? "SHORT-type" : "neutral"), text_color = compColor, bgcolor = color.new(color.teal, 40), text_size = size.small)
+    table.cell(dash, 2, 8, na(composite) ? "-" : str.tostring(composite, "#0"), text_color = compColor, bgcolor = color.new(color.teal, 40), text_size = size.small)

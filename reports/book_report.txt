@@ -1,0 +1,97 @@
+====================================================================================================
+TREND + OVERNIGHT BOOK  --  Carver's improvement ladder, measured
+====================================================================================================
+
+[1] 4 instruments, seam-free P&L, tau=12%, capital $100,000
+
+[2] SPEED LIMIT PER RULE -- applied per rule per instrument, not to the book
+    limit = pre-cost SR 0.30 / 3 = 0.100 SR/yr
+             lots_traded_yr avg_pos cost_SR SR_gross SR_net  passes
+inst rule                                                          
+MNQ  EWMAC16             31     1.9   0.002    +0.47  +0.46    pass
+     EWMAC32             23     1.9   0.002    +0.48  +0.48    pass
+     EWMAC64             23     1.9   0.002    +0.29  +0.29    pass
+     ON18-06            972     1.9   0.147    +1.03  +0.88  BREACH
+MES  EWMAC16             63     3.6   0.007    +0.20  +0.19    pass
+     EWMAC32             50     3.6   0.006    +0.26  +0.26    pass
+     EWMAC64             44     3.6   0.005    +0.29  +0.28    pass
+     ON18-06          1,810     3.6   0.369    +0.76  +0.39  BREACH
+MGC  EWMAC16             73     5.5   0.008    +0.41  +0.40    pass
+     EWMAC32             43     5.5   0.005    +0.58  +0.57    pass
+     EWMAC64             28     5.5   0.004    +0.72  +0.71    pass
+     ON18-06          2,727     5.5   0.422    +1.03  +0.61  BREACH
+MCL  EWMAC16             57     4.9   0.008    -0.17  -0.18    pass
+     EWMAC32             32     4.9   0.007    -0.48  -0.49    pass
+     EWMAC64             17     4.9   0.006    -0.49  -0.49    pass
+     ON18-06          2,443     4.8   0.380    +0.03  -0.35  BREACH
+    Trend rules trade a handful of lots a year and cost almost nothing in SR units.
+    The overnight rule is 2-3 orders of magnitude more expensive per unit of risk --
+    that is the price of a rule whose exposure is set by the clock, not by a signal.
+
+    IMPORTANT -- cost_SR here is MEASURED (SR_gross - SR_net), not the a-priori
+    screen. They disagree, and the measured one is right. The formula
+    cost_ccy / (price x mult x sigma_ann) divides by the risk of holding the
+    instrument CONTINUOUSLY. A block strategy is flat ~12h of every 24, so it
+    realises only ~0.3-0.5x that risk while paying the full ticket. On MNQ the
+    a-priori screen says the overnight rule costs 0.042 SR/yr; measured, it is
+    0.147 -- a 3.5x understatement, and it moves MNQ from 'pass' to BREACH.
+    Any part-time strategy needs the realised number; the a-priori screen is a
+    lower bound on its cost, not an estimate of it.
+
+[3] TREND SLEEVE -- 3 speeds combined, equal weights x FDM
+    MNQ  FDM 1.07   SR_net +0.46   ann_vol 17.1% (1.42 x tau)   maxDD -21.7%   lots/yr 25
+    MES  FDM 1.06   SR_net +0.26   ann_vol 18.3% (1.53 x tau)   maxDD -26.8%   lots/yr 52
+    MGC  FDM 1.09   SR_net +0.63   ann_vol 16.0% (1.34 x tau)   maxDD -38.4%   lots/yr 46
+    MCL  FDM 1.11   SR_net -0.35   ann_vol 9.4% (0.79 x tau)   maxDD -29.0%   lots/yr 36
+    FDM ~1.1-1.2 is expected: three trend speeds are highly correlated, so combining
+    them adds little. Carry would add far more than a fourth speed -- and cannot be
+    computed from front-month-only data.
+
+[4] TREND + OVERNIGHT, per instrument (sleeve weights 50/50 x measured DM)
+    MNQ  corr(trend,ON) +0.34  DM 1.22 | trend +0.46  ON +0.88  -> combined +0.65   vol 12.1%   maxDD -14.8%
+    MES  corr(trend,ON) +0.38  DM 1.20 | trend +0.26  ON +0.39  -> combined +0.34   vol 12.9%   maxDD -20.8%
+    MGC  corr(trend,ON) +0.41  DM 1.19 | trend +0.63  ON +0.61  -> combined +0.72   vol 12.0%   maxDD -29.4%
+    MCL  corr(trend,ON) -0.00  DM 1.42 | trend -0.35  ON -0.35  -> combined -0.49   vol 8.4%   maxDD -31.7%
+    A near-zero correlation is the whole argument for holding both: the overnight
+    sleeve is a clock exposure, the trend sleeve is a signal exposure, and they are
+    not the same bet.
+
+[5] THE LADDER -- what each Carver improvement was actually worth
+                                 SR_net  step ann_vol vol_vs_tau  maxDD DD_in_tau  skew                                                        note
+rung                                                                                                                                               
+1 inst 1 rule    MNQ EWMAC16      +0.46   NaN   16.9%       1.41 -19.9%       1.7 -1.51                                          the Starter System
+1 inst 3 rules   MNQ trend        +0.46 +0.00   17.1%       1.42 -21.7%       1.8 -1.35                         + more rules (2 extra trend speeds)
+4 inst 3 rules   trend book       +0.50 +0.04   14.0%       1.17 -19.5%       1.6 -1.25                               + more instruments (IDM 1.64)
+4 inst 3+ON      full book        +0.59 +0.09   10.0%       0.84 -16.0%       1.3 -0.98                             + the overnight rule (IDM 1.61)
+[aside] 1 inst 3+ON MNQ trend+ON  +0.65 +0.19   12.1%       1.01 -14.8%       1.2 -1.00  MNQ alone with both sleeves -- compare to the 4-inst rungs
+
+    Carver ranks 'more instruments' above 'more rules'. On THIS data that
+    ordering does not hold, and the reason is instructive rather than a
+    refutation: the ordering assumes the instruments you add are ones that
+    passed the screen. MCL did not -- it breaches the speed limit and its trend
+    sleeve is -0.35 -- and equal-weighting a loser at 25% costs more than the
+    diversification it brings. Carver's own instrument screen is what protects
+    the ordering, and skipping it inverts the result.
+
+    Note also what 'more rules' bought: nothing (+0.00). Three trend speeds are
+    ~0.9 correlated, which is exactly why the FDM comes out at 1.07. The rule
+    that helped was the one that is genuinely DIFFERENT (overnight, corr +0.34
+    to trend), not the one that was merely additional.
+
+[6] SANITY CHECKS
+    realised vol 10.0% vs tau 12% (0.84 x). Carver's tolerance is +/-25%; a book
+    that runs cold is under-using its risk budget, not safer.
+    SR +0.59 over 9.9 years. SE(SR) = 0.35, so the 95% interval is [-0.08, +1.27].
+    Expect a drawdown of at least 24% (2 x tau) and plan for 36%. Worst here: -16.0%.
+    Backtest Sharpe above ~1.5 on liquid markets should be assumed a bug first.
+
+    On realised vol running above tau in the trend sleeves (1.3-1.5x): this is
+    not an estimator fault. Forecast scaling targets average ABSOLUTE forecast
+    10, which makes the average POSITION right, but portfolio risk scales with
+    the root-mean-square of the forecast, and RMS > mean-abs for any spread
+    distribution. Measured mean|f| is 8.7-10.6 across these instruments, i.e.
+    the published scalars reproduce their design target on this sample -- the
+    extra risk is structural to forecast scaling, and Carver accepts it rather
+    than re-fitting scalars per instrument.
+
+[7] written -> reports/book_rule_speed_limit.csv, book_ladder.csv, book_daily_returns.csv

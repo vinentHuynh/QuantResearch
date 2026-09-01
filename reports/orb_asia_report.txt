@@ -1,0 +1,99 @@
+====================================================================================================
+MNQ ASIA ORB  --  Globex and Tokyo as SEPARATE studies
+====================================================================================================
+cost/side $1.37  ($1.24 comm + 3 tk x $0.50), round trip $2.74
+speed limit 0.100 SR/yr; every verdict below uses MEASURED drag.
+
+====================================================================================================
+GLOBEX   18:00 -> 02:55 ET   (CME reopen 18:00 ET -> last bar before the London open)
+====================================================================================================
+  [data] 2020-01-30 -> 2026-08-07   1661 sessions (6.6 yr)   median 108 bars, 95,171 contracts/session
+  [control] PASSIVE LONG this window: SR_net +0.75, ann_vol 4.6%, maxDD -7.2%, net $23,108
+            That is the bar. Beating zero here means nothing.
+
+  [grid] all 18 cells; vs_passive is the column that decides
+                       trades trades_yr SR_gross cost_SR SR_net vs_passive ann_vol  maxDD  skew long_$ short_$   net_$
+cell                                                                                                                  
+OR15|or_stop_2r|trend    1171       355    +0.72   0.432  +0.29      -0.47    2.2%  -6.5% +0.88  7,372  -3,195   4,177
+OR15|close     |trend    1171       355    +0.39   0.303  +0.09      -0.66    3.1%  -9.3% -0.86  6,313  -4,459   1,855
+OR30|or_stop_2r|trend    1111       337    +0.48   0.402  +0.08      -0.68    2.2%  -6.8% +0.69  4,835  -3,715   1,120
+OR30|close     |trend    1111       337    +0.24   0.305  -0.06      -0.82    3.0%  -9.8% -0.95  5,278  -6,522  -1,243
+OR15|or_stop   |trend    1171       355    +0.31   0.406  -0.09      -0.85    2.3%  -7.3% +1.55  5,443  -6,871  -1,428
+OR60|or_stop_2r|trend    1028       312    +0.25   0.368  -0.12      -0.88    2.3%  -7.9% +0.86  1,917  -3,739  -1,822
+OR60|close     |trend    1028       312    +0.09   0.298  -0.21      -0.96    2.8%  -9.5% -1.21  1,344  -5,238  -3,894
+OR30|or_stop   |trend    1111       337    +0.16   0.385  -0.23      -0.98    2.3%  -7.4% +1.26  2,746  -6,275  -3,529
+OR15|or_stop_2r|both     1634       496    +0.23   0.487  -0.26      -1.01    2.7% -11.6% +0.83  6,556 -11,121  -4,565
+OR15|close     |both     1634       496    +0.03   0.323  -0.29      -1.05    4.0% -19.3% +0.07  7,302 -15,057  -7,756
+OR60|or_stop_2r|both     1576       478    +0.10   0.429  -0.33      -1.09    2.9% -13.6% +0.76    909  -7,366  -6,457
+OR60|or_stop   |trend    1028       312    -0.00   0.364  -0.37      -1.12    2.3%  -7.9% +0.95    -19  -5,553  -5,572
+OR15|or_stop   |both     1634       496    -0.01   0.433  -0.45      -1.20    3.0% -18.7% +1.87  3,486 -12,343  -8,857
+OR30|or_stop_2r|both     1612       489    +0.00   0.459  -0.46      -1.21    2.8% -13.5% +0.74  1,022  -9,466  -8,445
+OR30|or_stop   |both     1612       489    -0.18   0.423  -0.60      -1.36    3.0% -19.0% +1.55 -1,958 -10,170 -12,128
+OR60|or_stop   |both     1576       478    -0.20   0.416  -0.61      -1.37    3.0% -18.0% +1.13   -743 -11,479 -12,222
+OR30|close     |both     1612       489    -0.35   0.328  -0.68      -1.43    3.9% -25.4% +0.04    421 -18,016 -17,595
+OR60|close     |both     1576       478    -0.59   0.335  -0.93      -1.68    3.7% -25.8% -0.60 -2,553 -20,352 -22,904
+
+  [verdict] best OR15|or_stop_2r|trend  SR_net +0.288  (passive +0.754)
+            beats passive long: 0/18 cells
+            best-of-18 null: median +0.403, 95th +0.952 -> p = 0.652  (search noise)
+            speed limit: 18/18 cells breach (limit 0.100)
+            long/short:  $7,372 long (862) / $-3,195 short (309)
+
+  [stress] OR15|or_stop_2r|trend
+    cost sweep ticks RT  1:+0.45 2:+0.37 3:+0.29 4:+0.21 6:+0.05 8:-0.11 12:-0.42
+    split sample         1st -0.01 / 2nd +0.58
+    ex-COVID             +0.29
+    drop best  5 nights  +0.06   [81% of P&L]
+    drop best 20 nights  -0.48   [250% of P&L]
+
+====================================================================================================
+TOKYO   20:00 -> 01:55 ET   (Tokyo cash 09:00-15:00 JST = 20:00-02:00 ET)
+====================================================================================================
+  [data] 2020-01-30 -> 2026-08-07   1661 sessions (6.6 yr)   median 72 bars, 60,913 contracts/session
+  [control] PASSIVE LONG this window: SR_net +0.26, ann_vol 3.4%, maxDD -5.3%, net $5,755
+            That is the bar. Beating zero here means nothing.
+
+  [grid] all 18 cells; vs_passive is the column that decides
+                       trades trades_yr SR_gross cost_SR SR_net vs_passive ann_vol  maxDD  skew long_$ short_$   net_$
+cell                                                                                                                  
+OR60|close     |trend     821       249    +0.54   0.400  +0.14      -0.12    1.7%  -3.7% -0.12  4,648  -3,132   1,516
+OR15|or_stop_2r|trend    1121       340    +0.56   0.535  +0.02      -0.24    1.7%  -6.1% +0.85  2,304  -2,076     228
+OR60|or_stop_2r|trend     821       249    +0.46   0.443  +0.02      -0.24    1.5%  -3.7% +0.36  3,401  -3,202     198
+OR15|or_stop   |trend    1121       340    +0.50   0.494  +0.00      -0.25    1.8%  -5.9% +1.54  3,333  -3,299      35
+OR60|or_stop   |trend     821       249    +0.43   0.429  -0.00      -0.26    1.6%  -4.4% +1.05  2,957  -2,994     -38
+OR30|close     |trend     994       302    +0.38   0.385  -0.01      -0.27    2.1%  -3.9% -0.72  3,580  -3,683    -103
+OR30|or_stop_2r|trend     994       302    +0.40   0.472  -0.07      -0.33    1.7%  -4.7% +0.82  2,187  -2,964    -777
+OR15|close     |trend    1121       340    +0.31   0.389  -0.08      -0.34    2.3%  -5.0% -0.57  3,392  -4,578  -1,186
+OR60|close     |both     1429       434    +0.39   0.469  -0.08      -0.34    2.4% -10.3% +0.31  4,300  -5,563  -1,263
+OR30|or_stop   |trend     994       302    +0.37   0.458  -0.09      -0.35    1.8%  -5.2% +1.12  1,814  -2,839  -1,025
+OR60|or_stop   |both     1429       434    +0.41   0.504  -0.09      -0.35    2.3%  -9.4% +1.22  2,501  -3,865  -1,363
+OR15|or_stop   |both     1644       499    +0.43   0.539  -0.11      -0.37    2.4%  -8.1% +1.82  3,218  -4,950  -1,732
+OR60|or_stop_2r|both     1429       434    +0.41   0.525  -0.12      -0.37    2.2%  -8.9% +0.69  2,715  -4,365  -1,650
+OR15|or_stop_2r|both     1644       499    +0.42   0.603  -0.18      -0.44    2.2%  -7.7% +1.00  2,939  -5,532  -2,592
+OR30|or_stop   |both     1593       483    +0.34   0.526  -0.18      -0.44    2.4%  -8.2% +1.34  1,219  -4,132  -2,913
+OR30|or_stop_2r|both     1593       483    +0.35   0.553  -0.20      -0.46    2.3%  -7.7% +0.89  1,680  -4,734  -3,054
+OR30|close     |both     1593       483    +0.13   0.450  -0.32      -0.58    2.8%  -9.7% +0.01  1,810  -7,731  -5,921
+OR15|close     |both     1644       499    -0.11   0.434  -0.54      -0.80    3.0% -14.6% +0.22  1,360 -12,226 -10,866
+
+  [verdict] best OR60|close     |trend  SR_net +0.138  (passive +0.258)
+            beats passive long: 0/18 cells
+            best-of-18 null: median +0.400, 95th +0.939 -> p = 0.791  (search noise)
+            speed limit: 18/18 cells breach (limit 0.100)
+            long/short:  $4,648 long (606) / $-3,132 short (215)
+
+  [stress] OR60|close     |trend
+    cost sweep ticks RT  1:+0.28 2:+0.21 3:+0.14 4:+0.06 6:-0.08 8:-0.23 12:-0.52
+    split sample         1st -0.26 / 2nd +0.55
+    ex-COVID             +0.13
+    drop best  5 nights  -0.15   [202% of P&L]
+    drop best 20 nights  -0.69   [541% of P&L]
+
+====================================================================================================
+SIDE BY SIDE
+====================================================================================================
+         sessions years passive_SR              best_cell best_SR vs_passive p_best  cells_beating_passive  cells_breaching long_$ short_$
+session                                                                                                                                   
+GLOBEX       1661   6.6      +0.75  OR15|or_stop_2r|trend   +0.29      -0.47  0.652                      0               18  7,372  -3,195
+TOKYO        1661   6.6      +0.26  OR60|close     |trend   +0.14      -0.12  0.791                      0               18  4,648  -3,132
+
+written -> reports/orb_asia_grid_<SESSION>.csv, orb_asia_returns_<SESSION>.csv, orb_asia_side_by_side.csv

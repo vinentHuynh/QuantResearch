@@ -1,0 +1,172 @@
+//@version=6
+//@strategy_alert_message {{strategy.order.alert_message}}
+strategy("CME Multi-Speed Trend Strategy - 25K / 15m", "CME TSMOM 25K", overlay = true,
+     initial_capital = 25000, currency = currency.USD,
+     risk_free_rate = 0,
+     default_qty_type = strategy.fixed, default_qty_value = 1,
+     pyramiding = 0, commission_type = strategy.commission.cash_per_contract,
+     commission_value = 1.25, slippage = 1,
+     margin_long = 10, margin_short = 10,
+     process_orders_on_close = true, calc_on_every_tick = false,
+     calc_on_order_fills = false, fill_orders_on_standard_ohlc = true)
+
+// Single-market TradingView implementation of the four-speed CME trend model.
+// Its execution structure mirrors overnight_drift_strategy.pine:
+//   1. Request the DAILY model with lookahead_off.
+//   2. Offset the returned series by one chart bar, so the active target uses
+//      only the last completed daily observation.
+//   3. Rebalance at the close of the first 15-minute bar of each new session.
+//   4. Hold the resulting long/short position continuously, including overnight,
+//      until the confirmed daily target changes.
+//
+// For historical/Deep Backtesting, use a continuous tradable chart such as
+// CME_MINI:MNQ1!. A TradingView strategy can only trade its chart symbol.
+
+// Inputs
+string GROUP_SIGNAL = "Trend signal"
+string signalSymbol = input.symbol("CME_MINI:NQ1!", "Continuous signal series", group = GROUP_SIGNAL, tooltip = "MNQ chart -> NQ1! signal; MES -> ES1!; MGC/1OZ -> GC1!; MCL -> CL1!.")
+int fastLength = input.int(20, "Fast lookback", minval = 2, group = GROUP_SIGNAL)
+int mediumLength = input.int(60, "Medium lookback", minval = 2, group = GROUP_SIGNAL)
+int slowLength = input.int(120, "Slow lookback", minval = 2, group = GROUP_SIGNAL)
+int annualLength = input.int(252, "Annual lookback", minval = 2, group = GROUP_SIGNAL)
+int volatilityLength = input.int(60, "Point-volatility window", minval = 2, group = GROUP_SIGNAL)
+
+string GROUP_RISK = "Risk sizing"
+string sizingMode = input.string("Vol-targeted", "Sizing mode", options = ["Vol-targeted", "Fixed contracts"], group = GROUP_RISK)
+float annualRiskTarget = input.float(20.0, "Annual sleeve volatility target (%)", minval = 0.1, step = 0.5, group = GROUP_RISK) / 100.0
+float maximumLeverage = input.float(2.0, "Maximum sleeve exposure (x)", minval = 0.1, step = 0.1, group = GROUP_RISK)
+int sleeveCount = input.int(1, "Equal portfolio sleeves", minval = 1, maxval = 20, group = GROUP_RISK, tooltip = "Keep at 1 for the standalone $25,000 test. Use 4 only when this strategy represents one sleeve of a larger account.")
+int fixedContracts = input.int(1, "Fixed contracts (fixed mode)", minval = 1, group = GROUP_RISK)
+string roundingMode = input.string("Nearest", "Whole-contract rounding", options = ["Nearest", "Down"], group = GROUP_RISK)
+bool useChartPointValue = input.bool(true, "Use chart syminfo.pointvalue", group = GROUP_RISK)
+float manualPointValue = input.float(2.0, "Manual $ per point", minval = 0.0001, group = GROUP_RISK, tooltip = "MES=5, MNQ=2, MGC=10, 1OZ=1, MCL=100.")
+
+string GROUP_EXEC = "Backtest window and display"
+int startTime = input.time(timestamp("01 Jan 1990 00:00 +0000"), "Start date", group = GROUP_EXEC)
+int endTime = input.time(timestamp("31 Dec 2099 23:59 +0000"), "End date", group = GROUP_EXEC)
+bool colorBars = input.bool(true, "Color bars by active bias", group = GROUP_EXEC)
+bool shadeBackground = input.bool(false, "Shade background while positioned", group = GROUP_EXEC)
+bool showMarkers = input.bool(true, "Show rebalance markers", group = GROUP_EXEC)
+bool showDashboard = input.bool(true, "Show dashboard", group = GROUP_EXEC)
+
+// Daily trend model
+f_vote(float changeValue) =>
+    changeValue > 0.0 ? 1.0 : changeValue < 0.0 ? -1.0 : 0.0
+
+f_clamp(float value, float lower, float upper) =>
+    math.max(lower, math.min(upper, value))
+
+// Evaluated inside the signal symbol's daily context. No offset is used here;
+// the requested daily series is confirmed outside the request, like the
+// working overnight-drift strategy.
+f_dailyModel() =>
+    bool warm = not na(close[fastLength]) and not na(close[mediumLength]) and not na(close[slowLength]) and not na(close[annualLength])
+    float score = warm ? (f_vote(close - close[fastLength]) + f_vote(close - close[mediumLength]) + f_vote(close - close[slowLength]) + f_vote(close - close[annualLength])) / 4.0 : na
+    float pointVolatility = ta.stdev(ta.change(close), volatilityLength, true)
+    bool valid = warm and not na(pointVolatility) and pointVolatility > 0.0
+    float dailyRiskTarget = annualRiskTarget / math.sqrt(252.0)
+    float rawPointExposure = valid ? score * dailyRiskTarget / pointVolatility : na
+    float rawNotionalExposure = rawPointExposure * math.abs(close)
+    float targetExposure = valid ? f_clamp(rawNotionalExposure, -maximumLeverage, maximumLeverage) : na
+    float annualizedVolatility = valid and math.abs(close[1]) > 0.0 ? pointVolatility / math.abs(close[1]) * math.sqrt(252.0) : na
+    [score, targetExposure, annualizedVolatility, close]
+
+[dailyScoreRaw, dailyTargetRaw, dailyVolatilityRaw, dailyCloseRaw] = request.security(signalSymbol, "D", f_dailyModel(), gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)
+
+// The outside [1] is one intraday bar, not one extra daily session. With
+// lookahead_off, the new daily result first appears on the last intraday bar;
+// this offset makes it available as a confirmed value in the next session.
+float activeScore = dailyScoreRaw[1]
+float activeTarget = dailyTargetRaw[1]
+float activeVolatility = dailyVolatilityRaw[1]
+float priorDailyClose = dailyCloseRaw[1]
+
+f_bias(float score) =>
+    na(score) ? "WARMUP" : score > 0.0 ? "LONG" : score < 0.0 ? "SHORT" : "FLAT"
+
+f_biasColor(float score) =>
+    na(score) ? color.gray : score > 0.0 ? color.lime : score < 0.0 ? color.red : color.silver
+
+f_signed(float value, string pattern) =>
+    na(value) ? "n/a" : (value > 0.0 ? "+" : "") + str.tostring(value, pattern)
+
+f_roundToIncrement(float value, float increment, bool roundDown) =>
+    float safeIncrement = increment > 0.0 ? increment : 1.0
+    float units = value / safeIncrement
+    (roundDown ? math.floor(units) : math.round(units)) * safeIncrement
+
+// Contract sizing
+float pointValue = useChartPointValue ? nz(syminfo.pointvalue, manualPointValue) : manualPointValue
+float minimumQuantity = math.max(nz(syminfo.mincontract, 1.0), 0.0000001)
+float sleeveEquity = math.max(strategy.equity, 0.0) / sleeveCount
+float contractNotional = math.abs(close) * pointValue
+float rawAbsoluteContracts = not na(activeTarget) and contractNotional > 0.0 ? sleeveEquity * math.abs(activeTarget) / contractNotional : 0.0
+float volAbsoluteContracts = f_roundToIncrement(rawAbsoluteContracts, minimumQuantity, roundingMode == "Down")
+float fixedAbsoluteContracts = fixedContracts * minimumQuantity
+float absoluteTargetContracts = sizingMode == "Fixed contracts" and not na(activeTarget) and activeTarget != 0.0 ? fixedAbsoluteContracts : sizingMode == "Vol-targeted" ? volAbsoluteContracts : 0.0
+float signedTargetContracts = activeTarget > 0.0 ? absoluteTargetContracts : activeTarget < 0.0 ? -absoluteTargetContracts : 0.0
+float achievedExposure = sleeveEquity > 0.0 ? signedTargetContracts * contractNotional / sleeveEquity : na
+
+// Orders
+bool newDailySession = timeframe.change("D")
+bool is15MinuteChart = timeframe.isminutes and timeframe.multiplier == 15
+bool isContinuousChart = not na(syminfo.current_contract)
+bool inDateRange = time >= startTime and time <= endTime
+float desiredPosition = not na(activeTarget) ? signedTargetContracts : 0.0
+float orderDelta = desiredPosition - strategy.position_size
+bool rebalance = newDailySession and is15MinuteChart and inDateRange and math.abs(orderDelta) >= minimumQuantity * 0.5
+
+if rebalance
+    string action = orderDelta > 0.0 ? "BUY" : "SELL"
+    string message = "CME TSMOM " + action + " " + str.tostring(math.abs(orderDelta)) + " " + syminfo.ticker + "; target position " + str.tostring(desiredPosition) + "; model " + f_signed(activeTarget, "#.00") + "x; score " + f_signed(activeScore, "#.00")
+    strategy.order("Daily target", orderDelta > 0.0 ? strategy.long : strategy.short, qty = math.abs(orderDelta), alert_message = message)
+
+// Exit once when the script's broad safety window ends. TradingView's Deep
+// Backtesting picker can select any narrower period inside this window.
+bool dateRangeJustEnded = time > endTime and time[1] <= endTime
+if dateRangeJustEnded and strategy.position_size != 0.0
+    strategy.close_all(comment = "End date", alert_message = "CME TSMOM close all at backtest end")
+
+// Visuals
+color biasColor = f_biasColor(activeScore)
+barcolor(colorBars and not na(activeScore) ? color.new(biasColor, 15) : na)
+bgcolor(shadeBackground and strategy.position_size != 0.0 ? color.new(biasColor, 90) : na)
+
+plotshape(showMarkers and rebalance and orderDelta > 0.0, title = "Buy rebalance", style = shape.labelup, location = location.belowbar, color = color.green, text = "BUY", textcolor = color.white, size = size.tiny)
+plotshape(showMarkers and rebalance and orderDelta < 0.0 and desiredPosition != 0.0, title = "Sell rebalance", style = shape.labeldown, location = location.abovebar, color = color.red, text = "SELL", textcolor = color.white, size = size.tiny)
+plotshape(showMarkers and rebalance and desiredPosition == 0.0, title = "Flat rebalance", style = shape.labeldown, location = location.abovebar, color = color.gray, text = "FLAT", textcolor = color.white, size = size.tiny)
+
+plot(activeTarget, "Model target exposure", display = display.none)
+plot(signedTargetContracts, "Target contracts", display = display.none)
+plot(activeScore, "Trend score", display = display.none)
+
+var table dashboard = table.new(position.top_right, 2, 11, bgcolor = color.new(color.black, 10), frame_color = color.gray, frame_width = 1, border_color = color.new(color.gray, 50), border_width = 1)
+if barstate.islast and showDashboard
+    table.cell(dashboard, 0, 0, "CME TSMOM 25K", text_color = color.white, bgcolor = color.new(color.blue, 45))
+    table.cell(dashboard, 1, 0, syminfo.ticker, text_color = color.white, bgcolor = color.new(color.blue, 45))
+    table.cell(dashboard, 0, 1, "Signal", text_color = color.white)
+    table.cell(dashboard, 1, 1, signalSymbol, text_color = color.white)
+    table.cell(dashboard, 0, 2, "Bias / score", text_color = color.white)
+    table.cell(dashboard, 1, 2, f_bias(activeScore) + "  " + f_signed(activeScore, "#.00"), text_color = biasColor)
+    table.cell(dashboard, 0, 3, "Model target", text_color = color.white)
+    table.cell(dashboard, 1, 3, f_signed(activeTarget, "#.00") + "x", text_color = biasColor)
+    table.cell(dashboard, 0, 4, "Annual vol", text_color = color.white)
+    table.cell(dashboard, 1, 4, na(activeVolatility) ? "n/a" : str.tostring(activeVolatility * 100.0, "#.0") + "%", text_color = color.white)
+    table.cell(dashboard, 0, 5, "Prior daily close", text_color = color.white)
+    table.cell(dashboard, 1, 5, na(priorDailyClose) ? "n/a" : str.tostring(priorDailyClose, format.mintick), text_color = color.white)
+    table.cell(dashboard, 0, 6, "Raw contracts", text_color = color.white)
+    table.cell(dashboard, 1, 6, str.tostring(rawAbsoluteContracts, "#.00"), text_color = color.white)
+    table.cell(dashboard, 0, 7, "Target / held", text_color = color.white)
+    table.cell(dashboard, 1, 7, str.tostring(signedTargetContracts) + " / " + str.tostring(strategy.position_size), text_color = signedTargetContracts > 0.0 ? color.lime : signedTargetContracts < 0.0 ? color.red : color.silver)
+    table.cell(dashboard, 0, 8, "Actual exposure", text_color = color.white)
+    table.cell(dashboard, 1, 8, f_signed(achievedExposure, "#.00") + "x", text_color = color.white)
+    table.cell(dashboard, 0, 9, "Timeframe", text_color = color.white)
+    table.cell(dashboard, 1, 9, is15MinuteChart ? "15m OK" : "SET CHART TO 15m", text_color = is15MinuteChart ? color.lime : color.orange)
+    table.cell(dashboard, 0, 10, "History chart", text_color = color.white)
+    table.cell(dashboard, 1, 10, isContinuousChart ? "CONTINUOUS OK" : "DATED: LIMITED", text_color = isContinuousChart ? color.lime : color.orange)
+
+if barstate.islast and not showDashboard
+    table.clear(dashboard, 0, 0, 1, 10)
+
+// Create a strategy alert on order fills. The compiler annotation at the top
+// pre-fills TradingView's Message field with the order-specific alert text.
