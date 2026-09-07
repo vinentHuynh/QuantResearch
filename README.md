@@ -20,6 +20,13 @@ existing `.venv` and write isolated outputs under `reports/dashboard_runs/<run-i
 overwrite the canonical report directories. CSV output can be inspected as a table or line chart,
 while JSON, text, images, and generated HTML are previewed in the same workspace.
 
+Strategies and charts are separate inputs. The chart catalog currently reads the normalized,
+timezone-aware Databento one-minute archives for MNQ, NQ, ES, YM, and CL, together with their
+prepared 5m/30m/1h/4h/1d bars. Contract tick size and dollar point value come from the chart
+catalog, not from strategy code. Every run saves a reproducibility record containing the chart,
+dataset identity, contract economics, strategy parameters, and calculation time. TradingView
+exports are not inputs to this runner.
+
 The API only accepts workflows and parameters declared in `dashboard_api/main.py`; browser input
 is never interpreted as a shell command. The local API listens on `127.0.0.1:8000` and is not meant
 to be exposed directly to the internet.

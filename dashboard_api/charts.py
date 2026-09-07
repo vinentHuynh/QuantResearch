@@ -43,6 +43,14 @@ def file_fingerprint(path: Path) -> str:
     return hashlib.sha256(f"{path.resolve()}|{stat.st_size}|{stat.st_mtime_ns}".encode()).hexdigest()
 
 
+def content_fingerprint(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def chart_metadata(chart: Chart) -> dict[str, Any]:
     value = asdict(chart)
     source_path = chart.path_1m()

@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from .charts import CHARTS, ROOT, chart_metadata, file_fingerprint
+from .charts import CHARTS, ROOT, chart_metadata, content_fingerprint, file_fingerprint
 
 
 RUNS_ROOT = ROOT / "reports" / "dashboard_runs"
@@ -67,8 +67,12 @@ STRATEGIES: dict[str, StrategyDefinition] = {
             *COMMON_DATES,
             Parameter("body_ratio", "Minimum body ratio", "number", .5, "Zone impulse candle body/range threshold.", "--body-ratio", minimum=.01, maximum=1),
             Parameter("max_tests", "Maximum zone tests", "integer", 2, "Touches allowed before a zone expires.", "--max-tests", minimum=1, maximum=20),
-            Parameter("bounce_points", "Bounce target (points)", "number", 75, "Required favorable move after a touch.", "--bounce-points", minimum=.25, maximum=1000),
-            Parameter("stop_cap_points", "Stop cap (points)", "number", 100, "Maximum allowed stop distance.", "--stop-cap-points", minimum=.25, maximum=2000),
+            Parameter("bounce_ticks", "Bounce confirmation (ticks)", "number", 300, "Required favorable move after a touch.", "--bounce-points", minimum=1, maximum=100_000),
+            Parameter("stop_cap_ticks", "Stop cap (ticks)", "number", 400, "Maximum allowed stop distance.", "--stop-cap-points", minimum=1, maximum=100_000),
+            Parameter("zone_stop_buffer_ticks", "Zone stop buffer (ticks)", "number", 4, "Distance beyond the distal zone edge.", "--zone-stop-buffer-points", minimum=0, maximum=10_000),
+            Parameter("target_1h_ticks", "1h target (ticks)", "number", 400, "Profit target for 1h zones.", "--target-1h-ticks", minimum=1, maximum=100_000),
+            Parameter("target_4h_ticks", "4h target (ticks)", "number", 800, "Profit target for 4h zones.", "--target-4h-ticks", minimum=1, maximum=100_000),
+            Parameter("target_1d_ticks", "Daily target (ticks)", "number", 1600, "Profit target for daily zones.", "--target-1d-ticks", minimum=1, maximum=100_000),
             Parameter("cost_ticks", "Round-trip cost (ticks)", "number", 0, "Commission and slippage proxy.", "--cost-ticks", minimum=0, maximum=100),
         ),
         ("MNQ", "NQ", "ES", "YM", "CL"), "snd",
@@ -98,7 +102,7 @@ STRATEGIES: dict[str, StrategyDefinition] = {
             Parameter("asia_end", "Asia end", "time", "00:00", "Session deadline in ET.", "--asia-end", required=True),
             Parameter("rule_side", "Headline side", "select", "Short", "Direction used by the headline rule.", "--rule-side", ("Long", "Short", "Both"), required=True),
             Parameter("rule_max_gap_bps", "Maximum gap (bps)", "number", 3, "Largest gap accepted by the headline rule.", "--rule-max-gap-bps", minimum=.01, maximum=100),
-            Parameter("min_gap_points", "Minimum gap (points)", "number", .25, "Smallest gap included.", "--min-gap-points", minimum=.25, maximum=1000),
+            Parameter("min_gap_ticks", "Minimum gap (ticks)", "number", 1, "Smallest gap included.", "--min-gap-points", minimum=1, maximum=100_000),
             Parameter("commission_rt", "Round-trip commission", "number", 1, "Dollars per contract.", "--commission-rt", minimum=0),
             Parameter("entry_slippage_ticks", "Entry slippage", "number", 1, "Adverse ticks at entry.", "--entry-slippage-ticks", minimum=0, maximum=100),
             Parameter("exit_slippage_ticks", "Exit slippage", "number", 1, "Adverse ticks on market exits.", "--exit-slippage-ticks", minimum=0, maximum=100),
@@ -114,12 +118,14 @@ STRATEGIES: dict[str, StrategyDefinition] = {
             Parameter("rth_start", "RTH start", "time", "08:30", "Chicago time.", "--rth-start", required=True),
             Parameter("rth_end", "RTH end", "time", "15:00", "Chicago time.", "--rth-end", required=True),
             Parameter("bracket_minutes", "Bracket minutes", "integer", 30, "Market-profile bracket width.", "--bracket-minutes", minimum=5, maximum=120),
-            Parameter("price_step", "Profile price step", "number", 1, "Row height in index points.", "--price-step", minimum=.25, maximum=100),
+            Parameter("price_step_ticks", "Profile row (ticks)", "number", 4, "Price increments per profile row.", "--price-step", minimum=1, maximum=10_000),
             Parameter("va_percent", "Value-area fraction", "number", .7, "Fraction of activity included in value area.", "--va-percent", minimum=.01, maximum=.99),
             Parameter("profile_mode", "Profile mode", "select", "volume", "Volume or TPO profile.", "--profile-mode", ("volume", "tpo"), required=True),
             Parameter("accept_mode", "Acceptance mode", "select", "close", "Bracket close or complete range must be in value area.", "--accept-mode", ("close", "range"), required=True),
             Parameter("confirm_brackets", "Confirmation brackets", "integer", 2, "Consecutive accepted brackets.", "--confirm-brackets", minimum=1, maximum=12),
             Parameter("slippage_ticks", "Slippage per side", "number", 1, "Adverse ticks on each side.", "--slippage-ticks", minimum=0, maximum=100),
+            Parameter("stop_buffer_ticks", "80% rule stop buffer (ticks)", "number", 20, "Distance beyond the entry-side value-area edge.", "--stop-buffer-points", minimum=0, maximum=100_000),
+            Parameter("npoc_max_distance_ticks", "Maximum nPOC distance (ticks)", "number", 400, "Only trade nPOCs within this distance.", "--npoc-max-distance", minimum=1, maximum=1_000_000),
         ),
         ("MNQ", "NQ", "ES", "YM", "CL"), "one-minute",
     ),
@@ -260,6 +266,8 @@ def build_command(definition: StrategyDefinition, chart_id: str, supplied: dict[
         command.append(param.cli)
         if param.kind != "boolean":
             formatted = ",".join(value) if param.kind == "multiselect" else str(value)
+            if param.key in {"bounce_ticks", "stop_cap_ticks", "zone_stop_buffer_ticks", "min_gap_ticks", "price_step_ticks", "stop_buffer_ticks", "npoc_max_distance_ticks"}:
+                formatted = str(float(value) * chart.tick_size)
             if definition.id == "snd-baseline" and param.kind == "date":
                 boundary = "23:59:59" if param.key == "end" else "00:00:00"
                 formatted = datetime.fromisoformat(f"{value}T{boundary}").replace(tzinfo=ZoneInfo("America/New_York")).isoformat()
@@ -374,8 +382,11 @@ def create_run(request: RunRequest) -> dict[str, Any]:
     (run_dir / "reproducibility.json").write_text(json.dumps({
         "run_id": run_id,
         "strategy": definition.id,
+        "strategy_script": definition.script,
+        "strategy_sha256": content_fingerprint(ROOT / definition.script),
         "chart": chart_metadata(CHARTS[request.chart_id]),
-        "dataset_fingerprint": file_fingerprint(CHARTS[request.chart_id].path_1m()),
+        "dataset_identity": file_fingerprint(CHARTS[request.chart_id].path_1m()),
+        "dataset_sha256": content_fingerprint(CHARTS[request.chart_id].path_1m()),
         "parameters": validated,
         "created_at": record.created_at,
     }, indent=2))

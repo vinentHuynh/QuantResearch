@@ -119,7 +119,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--point-value", type=float, default=2.0,
                         help="MNQ dollars per index point; SND's NQ display uses 20")
     parser.add_argument("--cost-ticks", type=float, default=0.0,
-                        help="round-trip cost in 0.25-point MNQ ticks")
+                        help="round-trip cost in the selected chart's ticks")
+    parser.add_argument("--target-1h-ticks", type=float, default=400.0)
+    parser.add_argument("--target-4h-ticks", type=float, default=800.0)
+    parser.add_argument("--target-1d-ticks", type=float, default=1600.0)
     return parser.parse_args()
 
 
@@ -348,7 +351,11 @@ def trade_levels(zone: Zone, args: argparse.Namespace) -> tuple[float, float, fl
     zone_stop_points = abs(zone.proximal - zone_break_stop)
     risk_points = min(zone_stop_points, args.stop_cap_points)
     stop = zone.proximal - risk_points if zone.direction == "long" else zone.proximal + risk_points
-    target_points = TF_TARGET[zone.timeframe]
+    target_points = {
+        "1h": args.target_1h_ticks,
+        "4h": args.target_4h_ticks,
+        "1d": args.target_1d_ticks,
+    }[zone.timeframe] * args.tick_size
     target = zone.proximal + target_points if zone.direction == "long" else (
         zone.proximal - target_points
     )
@@ -748,7 +755,11 @@ def write_report(
             "zone_stop_buffer_points": args.zone_stop_buffer_points,
             "point_value": args.point_value,
             "cost_ticks": args.cost_ticks,
-            "targets": {TF_LABEL[k]: TF_TARGET[k] for k in TF_TARGET},
+            "target_ticks": {
+                "1h": args.target_1h_ticks,
+                "4h": args.target_4h_ticks,
+                "1d": args.target_1d_ticks,
+            },
         },
         "zones": {
             "total": len(zones),

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "api": ".venv/bin/uvicorn dashboard_api.main:app --reload --host 127.0.0.1 --port 8000",
+    "api": ".venv/bin/uvicorn dashboard_api.main:app --host 127.0.0.1 --port 8000",
     "dev:full": "concurrently -k -n API,WEB -c magenta,cyan \"npm run api\" \"npm run dev\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
