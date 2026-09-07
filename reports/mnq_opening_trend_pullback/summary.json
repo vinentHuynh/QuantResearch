@@ -1,0 +1,37 @@
+{
+  "config": {
+    "account": 25000,
+    "risk_dollars": 100,
+    "atr_period": 14,
+    "zone_atr": 0.1,
+    "stop_buffer_ticks": 2,
+    "minimum_rr": 1.0,
+    "maximum_trades": 3,
+    "daily_goal_points": 10.0,
+    "daily_stop_r": -2.0,
+    "commission_rt": 1.24,
+    "slippage_ticks_rt": 2.0,
+    "bias_flip_exit": false
+  },
+  "statistics": {
+    "start": "2019-05-07",
+    "end": "2026-09-03",
+    "sessions": 1824,
+    "trades": 81,
+    "trades_per_year": 11.055773542600896,
+    "participation": 0.044407894736842105,
+    "win_rate": 0.3950617283950617,
+    "average_net_points": -0.14910052910053317,
+    "average_net_r": 0.025269171187966913,
+    "profit_factor": 1.0313237253239695,
+    "net_dollars": 110.84571428572099,
+    "ending_equity": 25110.845714285722,
+    "cagr": 0.0006040225080612416,
+    "annual_volatility": 0.013826663566880878,
+    "sharpe": 0.044303415505093965,
+    "max_drawdown_dollars": -1157.682857142845,
+    "max_drawdown_pct_initial": -0.0463073142857138
+  },
+  "rolls": 29,
+  "roll_adjusted": true
+}

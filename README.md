@@ -3,6 +3,27 @@
 Local environment for running [Papers With Backtest](https://paperswithbacktest.com/) strategies.
 Data and code come from PWB; **execution runs on this machine** — no run endpoint, no per-run limit.
 
+## Strategy dashboard
+
+The React/Redux/Mantine dashboard includes a local, allowlisted Python runner. Install once, then
+start the web UI and API together:
+
+```bash
+npm install
+.venv/bin/pip install -r requirements-dashboard.txt
+npm run dev:full
+```
+
+Open `http://127.0.0.1:5173` and choose **Run analysis**. The form supports date windows,
+chart timeframes, costs, risk settings, and strategy-specific parameters. Runs execute in the
+existing `.venv` and write isolated outputs under `reports/dashboard_runs/<run-id>/`; they do not
+overwrite the canonical report directories. CSV output can be inspected as a table or line chart,
+while JSON, text, images, and generated HTML are previewed in the same workspace.
+
+The API only accepts workflows and parameters declared in `dashboard_api/main.py`; browser input
+is never interpreted as a shell command. The local API listens on `127.0.0.1:8000` and is not meant
+to be exposed directly to the internet.
+
 ## Layout
 
 - `.venv/` — Python 3.10 virtual environment (gitignored)
@@ -194,6 +215,27 @@ Both claims are also converted into costed trade ledgers. Output goes to
 # TPO value areas, whole-bracket acceptance, coarser rows, day-session revisits only
 .\.venv\Scripts\python.exe .\scripts\mnq\mnq_market_profile_backtest.py `
   --profile-mode tpo --accept-mode range --price-step 4 --npoc-touch-scope rth
+```
+
+## MNQ opening trend-pullback
+
+Run the mechanical version of the 09:30-11:00 ET trend/pullback plan against
+the local one-minute MNQ archive:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\mnq\mnq_opening_trend_pullback_backtest.py
+```
+
+It uses completed five-minute bars for structure, VWAP, pullback and rejection
+signals, then one-minute bars for conservative bracket fills. Fuzzy terms from
+the discretionary plan are frozen and documented in
+`reports/mnq_opening_trend_pullback/report.md`; the trade ledger, daily series,
+annual totals, and machine-readable configuration are written beside it.
+
+```powershell
+# Different account risk, date window, and the optional bias-flip exit
+.\.venv\Scripts\python.exe .\scripts\mnq\mnq_opening_trend_pullback_backtest.py `
+  --start 2023-01-01 --risk-dollars 200 --bias-flip-exit
 ```
 
 ## CME Group data + statistical reports

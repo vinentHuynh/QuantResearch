@@ -717,6 +717,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--symbol", default="MNQ", help="chart/instrument label")
+    parser.add_argument("--tick-size", type=float, default=0.25)
+    parser.add_argument("--point-value", type=float, default=2.0)
     parser.add_argument("--start", default="2020-01-02")
     parser.add_argument("--end", default=None)
     parser.add_argument("--close-times", default="16:00,17:00")
@@ -748,8 +751,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    global TICK_SIZE, DOLLARS_PER_POINT
     parser = build_parser()
     args = parser.parse_args()
+    if args.tick_size <= 0 or args.point_value <= 0:
+        raise ValueError("Tick size and point value must be positive")
+    TICK_SIZE, DOLLARS_PER_POINT = args.tick_size, args.point_value
     close_times = [item.strip() for item in args.close_times.split(",") if item.strip()]
     for close_time in close_times:
         parse_clock(close_time)
@@ -895,7 +902,7 @@ def write_report(
     comparison = pd.concat([headline_frame, benchmark_frame], ignore_index=True)
 
     lines = [
-        "# MNQ Asia gap-fade strategy backtests",
+        f"# {args.symbol} Asia gap-fade strategy backtests",
         "",
         "## What this adds to the fill study",
         "",
@@ -912,7 +919,7 @@ def write_report(
         f"${args.commission_rt:.2f} commission per round trip "
         f"(${all_in:.2f} all-in when both legs are market orders). "
         f"Stop: {'none' if args.stop_points is None else f'{args.stop_points:g} points'}. "
-        f"Size: one MNQ contract, ${DOLLARS_PER_POINT:g} per point.",
+        f"Size: one {args.symbol} contract, ${DOLLARS_PER_POINT:g} per point and {TICK_SIZE:g} tick size.",
         "",
         "## Headline rule versus passive overnight length",
         "",

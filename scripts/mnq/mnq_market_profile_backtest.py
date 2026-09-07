@@ -56,6 +56,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--one-minute", type=Path, default=DEFAULT_ONE_MINUTE)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--symbol", default="MNQ", help="chart/instrument label")
+    parser.add_argument("--tick-size", type=float, default=0.25)
     parser.add_argument("--start", default=None, help="first session, ISO date")
     parser.add_argument("--end", default=None, help="last session, ISO date")
 
@@ -128,7 +130,7 @@ def validate_args(args: argparse.Namespace) -> None:
 
 def load_minutes(path: Path) -> pd.DataFrame:
     if not path.exists():
-        raise FileNotFoundError(f"MNQ one-minute parquet not found: {path}")
+        raise FileNotFoundError(f"One-minute parquet not found: {path}")
     frame = pd.read_parquet(path, columns=OHLCV + ["instrument_id"]).sort_index()
     if not isinstance(frame.index, pd.DatetimeIndex) or frame.index.tz is None:
         raise ValueError("Source index must be a timezone-aware DatetimeIndex")
@@ -853,7 +855,11 @@ def write_report(path: Path, sections: list[str]) -> None:
 
 
 def main() -> None:
+    global TICK_SIZE
     args = parse_args()
+    if args.tick_size <= 0:
+        raise ValueError("--tick-size must be positive")
+    TICK_SIZE = args.tick_size
     validate_args(args)
     output = args.output_dir
     output.mkdir(parents=True, exist_ok=True)
@@ -926,8 +932,8 @@ def main() -> None:
     cost_points = config["cost_points_round_trip"]
     span = f"{profiles[0].session.date()} to {profiles[-1].session.date()}"
     sections = [
-        "# MNQ Market Profile folklore: the 80% rule and naked POCs",
-        f"MNQ one-minute data, {span}, {len(profiles):,} sessions "
+        f"# {args.symbol} Market Profile: the 80% rule and naked POCs",
+        f"{args.symbol} one-minute data, {span}, {len(profiles):,} sessions "
         f"({len(valid):,} full-length RTH sessions used for profiles). RTH is "
         f"{args.rth_start}-{args.rth_end} America/Chicago. Value area is "
         f"{args.va_percent:.0%} at a {args.price_step:g}-point row. Prices are "
