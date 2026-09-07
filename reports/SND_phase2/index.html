@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+    <title>SND Phase 2 feature dataset</title><style>
+    :root{color-scheme:light;--bg:#f5f6f8;--panel:#fff;--text:#121826;--muted:#687386;--line:#dfe3e8;--blue:#4c8bf5}
+    @media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#101216;--panel:#181b21;--text:#f4f6f8;--muted:#9aa4b2;--line:#303640;--blue:#70a4ff}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{max-width:1120px;margin:auto;padding:36px 20px 80px}h1{font-size:30px;letter-spacing:-.03em;margin:4px 0}h2{margin:38px 0 4px;font-size:20px}
+    .eyebrow{text-transform:uppercase;letter-spacing:.1em;font-size:11px;font-weight:700;color:var(--blue)}.lead,.note{color:var(--muted);max-width:850px}
+    .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:20px 0}.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+    .tile span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase}.tile strong{display:block;font-size:22px;margin-top:3px}.scroll{overflow:auto;border:1px solid var(--line);border-radius:10px;margin:12px 0}
+    table{border-collapse:collapse;width:100%;background:var(--panel);font-variant-numeric:tabular-nums}th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}thead th{color:var(--muted);font-size:10px;text-transform:uppercase;background:color-mix(in srgb,var(--panel) 82%,var(--line))}th:first-child{text-align:left}tbody tr:last-child>*{border-bottom:0}
+    code{background:color-mix(in srgb,var(--panel) 80%,var(--line));padding:2px 5px;border-radius:4px}.method{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}.method li{margin:7px 0}
+    </style></head><body><main>
+    <div class='eyebrow'>MNQ · SND strategy lab</div><h1>Phase 2 feature dataset</h1>
+    <p class='lead'>The baseline trades are unchanged. This report describes the point-in-time zone and retest information prepared for controlled confluence experiments.</p>
+    <div class='tiles'><div class='tile'><span>Zones</span><strong>8,647</strong></div><div class='tile'><span>Touch episodes</span><strong>49,871</strong></div><div class='tile'><span>Zones retested</span><strong>8,170</strong></div><div class='tile'><span>BOS zones</span><strong>2,599</strong></div><div class='tile'><span>FVG zones</span><strong>38</strong></div><div class='tile'><span>HTF nested</span><strong>793</strong></div></div>
+    <h2>Formation coverage</h2><p class='note'>Features fixed when the source candle closes; no later zone outcome is used.</p>
+    <div class='scroll'><table><thead><tr><th>timeframe</th><th>zones</th><th>bos rate</th><th>fvg rate</th><th>nested rate</th><th>median body atr</th><th>median width atr</th><th>median rvol</th><th>retested rate</th></tr></thead><tbody><tr><th>1h</th><td>6,578</td><td>29.7%</td><td>0.4%</td><td>10.9%</td><td>0.61</td><td>0.45</td><td>0.96</td><td>94.4%</td></tr><tr><th>4h</th><td>1,762</td><td>30.6%</td><td>0.5%</td><td>4.4%</td><td>0.64</td><td>0.47</td><td>0.99</td><td>94.7%</td></tr><tr><th>Daily</th><td>307</td><td>35.2%</td><td>0.3%</td><td>0.0%</td><td>0.71</td><td>0.49</td><td>1.04</td><td>95.1%</td></tr></tbody></table></div>
+    <h2>Retest reactions</h2><p class='note'>Independent physical touch episodes, including events SND did not trade.</p>
+    <div class='scroll'><table><thead><tr><th>timeframe</th><th>retests</th><th>first touch share</th><th>reclaim rate</th><th>hit 1r 4h</th><th>hit 2r 4h</th><th>median mfe r 4h</th><th>median mae r 4h</th><th>median age minutes</th></tr></thead><tbody><tr><th>1h</th><td>31,592</td><td>19.7%</td><td>56.9%</td><td>42.7%</td><td>22.7%</td><td>1.31</td><td>1.32</td><td>358.00</td></tr><tr><th>4h</th><td>13,586</td><td>12.3%</td><td>52.8%</td><td>27.8%</td><td>11.3%</td><td>0.59</td><td>0.65</td><td>1,510.00</td></tr><tr><th>Daily</th><td>4,693</td><td>6.2%</td><td>49.9%</td><td>8.5%</td><td>1.6%</td><td>0.26</td><td>0.31</td><td>8,760.00</td></tr></tbody></table></div>
+    <h2>Point-in-time contract</h2><div class='method'><ul>
+    <li>Formation RVOL uses only earlier volume from the same session-time slot.</li>
+    <li>BOS uses only swings confirmed before the impulse candle.</li>
+    <li>A continuous overlap with a zone is one touch episode.</li>
+    <li>Touch-candle rejection is available one minute after the touch begins.</li>
+    <li>MFE/MAE and 1R/2R outcomes begin after that confirmation time and are labels, never filters.</li>
+    <li>Contract-roll formations remain in the data but carry <code>roll_formation=true</code>.</li>
+    </ul></div>
+    <h2>Outputs</h2><div class='method'><code>zones_enriched.parquet</code> · <code>retests_enriched.parquet</code> · summary CSVs · <code>feature_dictionary.json</code></div>
+    </main></body></html>

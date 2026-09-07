@@ -22,6 +22,10 @@ service-account*.json
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+node_modules/
+dist/
+*.tsbuildinfo
+reports/dashboard_runs/
 data/**
 !data/mnq_dom_sample/
 data/mnq_dom_sample/**
@@ -32,3 +36,4 @@ data/mnq_dom_sample/full_history/ohlcv-1m/**
 !data/mnq_dom_sample/full_history/ohlcv-1m/candles_1m.parquet
 !data/mnq_dom_sample/full_history/ohlcv-resampled/
 !data/mnq_dom_sample/full_history/ohlcv-resampled/*.parquet
+node_modules/*

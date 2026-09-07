@@ -1,6 +1,6 @@
 # QuantResearch
 
-Research and backtesting workspace for futures and equities, including Python research scripts, TradingView Pine studies/strategies, NinjaTrader 8 ports, and generated reports.
+Research and backtesting workspace for futures and equities, including Python research scripts, TradingView Pine studies/strategies, NinjaTrader 8 ports, generated reports, and a local strategy dashboard.
 
 ## Repository overview
 
@@ -46,6 +46,18 @@ cp .env.example .env
 ```bash
 python scripts/misc/smoke_test.py
 ```
+
+## Strategy dashboard (optional)
+
+A local React/Redux/Mantine dashboard is available for running allowlisted workflows.
+
+```bash
+npm install
+.venv/bin/pip install -r requirements-dashboard.txt
+npm run dev:full
+```
+
+Then open `http://127.0.0.1:5173`.
 
 ## Research notes / limitations
 
