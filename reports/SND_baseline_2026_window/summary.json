@@ -1,0 +1,62 @@
+{
+  "method": "SND default logic; 1-minute execution",
+  "entry_period": {
+    "start": "2026-01-01 23:00:00+00:00",
+    "end": "2026-05-30 21:00:00+00:00"
+  },
+  "parameters": {
+    "timeframes": "1h,4h,1d",
+    "body_ratio": 0.5,
+    "max_zones_per_side": 50,
+    "max_tests": 2,
+    "bounce_points": 75.0,
+    "min_zone_age_bars_1m": 1,
+    "min_bars_between_tests_1m": 5,
+    "min_bars_in_trade_1m": 1,
+    "stop_cap_points": 100.0,
+    "zone_stop_buffer_points": 1.0,
+    "point_value": 2.0,
+    "cost_ticks": 0.0,
+    "targets": {
+      "1h": 100.0,
+      "4h": 200.0,
+      "Daily": 400.0
+    }
+  },
+  "zones": {
+    "total": 8647,
+    "demand": 4485,
+    "supply": 4162,
+    "roll_formation": 14
+  },
+  "tests": {
+    "consumed": 10243,
+    "executed": 446
+  },
+  "performance": {
+    "trades": 446.0,
+    "wins": 148.0,
+    "losses": 298.0,
+    "win_rate": 0.33183856502242154,
+    "avg_points": -2.083520179372197,
+    "total_points": -929.25,
+    "avg_r": -0.010934087528596126,
+    "total_pnl": -1858.5,
+    "avg_pnl": -4.167040358744394,
+    "profit_factor": 0.9462713750885359,
+    "max_drawdown": -4615.0,
+    "avg_mfe_points": 63.93273542600897,
+    "avg_mae_points": 54.49103139013453
+  },
+  "audit": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 10243,
+    "tests_outside_entry_period": 9764,
+    "tests_in_no_trade_window": 33,
+    "opposite_side_tests_consumed": 0,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 1,
+    "open_trade_at_data_end": 0
+  }
+}

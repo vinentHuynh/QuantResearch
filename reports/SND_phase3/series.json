@@ -1,0 +1,10 @@
+{
+  "SND baseline": "series/screen_00.parquet",
+  "1h reference": "series/screen_01.parquet",
+  "1h \u00b7 first SND test": "series/screen_02.parquet",
+  "1h \u00b7 width \u22640.5 ATR": "series/screen_03.parquet",
+  "1h \u00b7 opposing room \u22652R/open": "series/screen_04.parquet",
+  "1h \u00b7 no BOS": "series/screen_05.parquet",
+  "1h \u00b7 RVOL 0.75\u20131.25": "series/screen_06.parquet",
+  "1h \u00b7 prior 5m RVOL 0.75\u20131.25": "series/screen_07.parquet"
+}

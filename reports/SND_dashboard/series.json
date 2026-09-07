@@ -1,0 +1,14 @@
+{
+  "SND baseline": "reports/SND_baseline/trades.parquet",
+  "P4 \u00b7 1h reference": "reports/SND_phase4/01_1h_reference/trades.parquet",
+  "P4 \u00b7 no BOS": "reports/SND_phase4/02_1h_no_bos/trades.parquet",
+  "P4 \u00b7 normal RVOL": "reports/SND_phase4/03_1h_normal_rvol/trades.parquet",
+  "P4 \u00b7 low impulse volume": "reports/SND_phase4/04_1h_low_impulse_volume/trades.parquet",
+  "P4 \u00b7 first SND test": "reports/SND_phase4/05_1h_first_SND_test/trades.parquet",
+  "P4 \u00b7 first physical touch": "reports/SND_phase4/06_1h_first_physical_touch/trades.parquet",
+  "P4 \u00b7 width \u22640.5 ATR": "reports/SND_phase4/07_1h_tight_zone/trades.parquet",
+  "P4 \u00b7 opposing room": "reports/SND_phase4/08_1h_open_room/trades.parquet",
+  "P5 \u00b7 first touch + opposing": "reports/SND_phase5/04_first_touch_open_room/trades.parquet",
+  "P5 \u00b7 first touch + width": "reports/SND_phase5/01_first_touch_tight/trades.parquet",
+  "P5 \u00b7 first touch + low volume": "reports/SND_phase5/02_first_touch_low_volume/trades.parquet"
+}
