@@ -19,7 +19,7 @@ Research and backtesting workspace for futures and equities, including Python re
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+& .\.venv\Scripts\Activate.ps1
 ```
 
 **macOS/Linux (bash/zsh):**
@@ -31,14 +31,21 @@ source .venv/bin/activate
 
 2. Create your local environment file from [`.env.example`](.env.example):
 
+**Windows (PowerShell):**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+**macOS/Linux (bash/zsh):**
+
 ```bash
 cp .env.example .env
 ```
 
-(Windows alternative: `Copy-Item .env.example .env`)
-
-3. Fill in required keys in `.env` for workflows that need external data access.
-   - Typical examples: `DATABENTO_API_KEY` and/or `PWB_API_KEY`.
+3. Fill in keys in `.env` for workflows that need external data access.
+   - `PWB_API_KEY`: required for scripts that use Papers With Backtest datasets/utilities.
+   - `DATABENTO_API_KEY`: required for scripts that fetch/use Databento futures data.
    - Never commit credentials.
 
 4. Run scripts from the repository root, for example:
@@ -53,11 +60,25 @@ A local React/Redux/Mantine dashboard is available for running allowlisted workf
 
 ```bash
 npm install
-.venv/bin/pip install -r requirements-dashboard.txt
 npm run dev:full
 ```
 
-Then open `http://127.0.0.1:5173`.
+Install dashboard Python dependencies in the same virtual environment first:
+
+**Windows (PowerShell):**
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dashboard.txt
+```
+
+**macOS/Linux (bash/zsh):**
+
+```bash
+./.venv/bin/python -m pip install -r requirements-dashboard.txt
+```
+
+Run from the repository root with your virtual environment active. `npm run dev:full`
+starts the web UI and local API together; open `http://127.0.0.1:5173`.
 
 ## Research notes / limitations
 
