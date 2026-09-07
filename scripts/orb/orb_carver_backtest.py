@@ -33,10 +33,13 @@ positive result here would be surprising and should be treated as such.
 from __future__ import annotations
 
 import argparse
+import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "overnight"))
 from overnight_drift_carver_backtest import (
     ANNUALISE, INSTRUMENTS, REPORTS, SPEED_LIMIT_PRECOST_SR, TAU,
     carver_vol, cost_per_side, daily_closes, load_5m, session_key,

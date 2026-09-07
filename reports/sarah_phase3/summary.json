@@ -1,0 +1,10 @@
+{
+  "trades_screened": 6475,
+  "experiments": 18,
+  "validated_screens": 0,
+  "promising_screens": 7,
+  "baseline_profit_factor": 0.9086195293332132,
+  "one_hour_profit_factor": 0.98599337320883,
+  "bootstrap_samples": 2000,
+  "method": "Univariate cohort screen of unchanged Phase 1 trades"
+}

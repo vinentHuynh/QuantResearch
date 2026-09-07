@@ -42,7 +42,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data") / "cme_daily.parquet"
+DATA = (Path(__file__).resolve().parents[2] / "data") / "cme_daily.parquet"
 
 TRADING_DAYS = 252
 

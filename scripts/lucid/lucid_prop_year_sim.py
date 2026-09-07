@@ -34,7 +34,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 WINDOWS = {"23-04": (23, 3), "18-06": (18, 5)}
 PLANS = {
     #        eval_tgt  mll   payout_tgt  first_cost  reset  max_micro

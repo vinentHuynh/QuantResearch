@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 # minimal .env loader (no extra dependency)
-env = Path(__file__).with_name(".env")
+env = (Path(__file__).resolve().parents[2] / ".env")
 if env.exists():
     for line in env.read_text().splitlines():
         line = line.strip()

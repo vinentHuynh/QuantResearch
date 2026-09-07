@@ -1,0 +1,9 @@
+{
+  "primary_combinations": 5,
+  "sensitivity_checks": 4,
+  "recommended_for_next_validation": "First touch + opposing room",
+  "recommendation_worst_period_profit_factor": 1.0069794375033554,
+  "recommendation_two_tick_profit_factor": 1.0591053094952547,
+  "best_primary_challenger_by_sharpe": "First touch + opposing room",
+  "selection_rule": "Promote an added rule only if it beats the first-touch core at two ticks and on overall and holdout Sharpe, with PF > 1 in every era; otherwise retain the core."
+}

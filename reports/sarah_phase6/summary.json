@@ -1,0 +1,9 @@
+{
+  "candidate": "1h first physical touch + opposing room >=2R/open",
+  "historical_trades": 3915,
+  "parity_reference_trades": 230,
+  "gross_profit_factor": 1.0880781878873909,
+  "four_tick_profit_factor": 1.031313134742911,
+  "pine_parity_status": "pending",
+  "paper_forward_status": "not started"
+}

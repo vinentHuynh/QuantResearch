@@ -52,7 +52,7 @@ from mnq_ny_close_asia_fill_backtest import (
 )
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA = ROOT / "data" / "MNQ_5min_databento.parquet"
 DEFAULT_OUT = ROOT / "reports" / "mnq_asia_fill_strategy"
 TRADING_DAYS = 252

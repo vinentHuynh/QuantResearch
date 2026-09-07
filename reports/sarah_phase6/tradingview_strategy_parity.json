@@ -1,0 +1,56 @@
+{
+  "status": "review",
+  "source_file": "Sarah_P6_Strategy_CME_MINI_MNQ1!_2026-09-05.csv",
+  "tradingview_timezone": "America/New_York",
+  "expected_native_fill_delay_minutes": 1,
+  "diagnostic_comments": 225,
+  "matching_tolerance_minutes": 2.0,
+  "reference_trades": 230,
+  "tradingview_trades": 225,
+  "matched_signals": 215,
+  "reference_signal_coverage": 0.9347826086956522,
+  "tradingview_signal_coverage": 0.9555555555555556,
+  "unmatched_reference": 15,
+  "unmatched_tradingview": 10,
+  "matched_diagnostics": {
+    "exact_signal_minute": 212,
+    "exact_zone_width": 211,
+    "zone_width_within_one_point": 215,
+    "maximum_zone_width_difference_points": 0.75,
+    "same_zone_different_touch_pairs": 6,
+    "dominant_proximal_basis_adjustments": [
+      {
+        "points": 508.25,
+        "trades": 112
+      },
+      {
+        "points": 292.75,
+        "trades": 99
+      },
+      {
+        "points": 513.0,
+        "trades": 1
+      }
+    ]
+  },
+  "tradingview": {
+    "net_pnl_usd": 2046.0,
+    "profit_factor": 1.1881985006668814,
+    "winning_trades": 74,
+    "closed_trade_drawdown_usd": 1223.0,
+    "commission_usd": 0.0
+  },
+  "python_reference": {
+    "net_pnl_usd": 2478.5,
+    "profit_factor": 1.2254206457480672,
+    "winning_trades": 75,
+    "closed_trade_drawdown_usd": 1031.0
+  },
+  "matched_price_difference": {
+    "median": 499.5,
+    "minimum": 249.25,
+    "maximum": 541.5,
+    "interpretation": "Includes TradingView continuous-contract back-adjustment and native fill difference; it is not slippage alone."
+  },
+  "interpretation": "Signal timing and zone geometry strongly align. The fixed but changing price-basis offsets and same-zone/different-touch pairs show that continuous-contract construction is the primary residual difference. Do not tune strategy rules to this sample."
+}

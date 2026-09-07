@@ -31,7 +31,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 DPP, TICK = 2.0, 0.25
 COST = TICK * DPP
 NIGHT_HOURS = [18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5]

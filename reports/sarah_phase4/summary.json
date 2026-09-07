@@ -1,0 +1,10 @@
+{
+  "variants": 8,
+  "validated_full_simulations": 0,
+  "positive_all_periods": 2,
+  "promising_full_simulations": 6,
+  "best_holdout_variant": "1h \u00b7 width \u22640.5 ATR",
+  "best_holdout_sharpe": 1.848994021492265,
+  "best_holdout_profit_factor": 1.2186025837718482,
+  "cost_ticks": 0.0
+}

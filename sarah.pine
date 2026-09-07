@@ -1,0 +1,2895 @@
+//@version=6
+indicator("boop", shorttitle="boop", overlay=true,
+     scale=scale.right, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
+
+// ══════════════════════════════════════════════════════════════════════════
+// INPUTS
+// ══════════════════════════════════════════════════════════════════════════
+i_ratio              = 50.0 / 100  // Hidden fixed setting: Body ratio % = 40
+i_maxZ               = 50  // Hidden fixed setting: max active zones per side = 15
+i_maxSR              = 10  // Hidden fixed setting: max S/R lines = 10
+i_showSR             = true  // Hidden fixed setting: S/R lines on break stay ON
+i_gapBreakSR         = true  // Hidden fixed setting: gap open beyond zone converts to S/R stays ON
+i_zoneBreakMode      = "Wick or Close"  // Hidden fixed setting: zone breaks on wick or close, whichever comes first
+
+i_showClusters       = input.bool(true, "Show nested HTF cluster boxes", display=display.none)
+i_clusterRightPad    = 1  // Hidden fixed setting: cluster box right padding = 1
+i_clusterLabelOffset = 1  // Hidden fixed setting: cluster label x offset = 1
+i_clusterOverlapPct  = 70.0 / 100  // Hidden fixed setting: hide weaker cluster overlap % = 70
+i_minChildren        = 1  // Hidden fixed setting: min nested zones inside parent = 1
+
+i_30m = input.bool(false, "30m",   group="Active timeframes", display=display.none)
+i_1h  = input.bool(true,  "1h",    group="Active timeframes", display=display.none)
+i_90m = input.bool(false, "90m",   group="Active timeframes", display=display.none)
+i_2h  = input.bool(false, "2h",    group="Active timeframes", display=display.none)
+i_3h  = input.bool(false, "3h",    group="Active timeframes", display=display.none)
+i_4h  = input.bool(true,  "4h",    group="Active timeframes", display=display.none)
+i_6h  = input.bool(false, "6h",    group="Active timeframes", display=display.none)
+i_12h = input.bool(false, "12h",   group="Active timeframes", display=display.none)
+i_D   = input.bool(true,  "Daily", group="Active timeframes", display=display.none)
+
+i_t30m = input.bool(false, "30m",   group="Trade timeframes", display=display.none)
+i_t1h  = input.bool(true,  "1h",    group="Trade timeframes", display=display.none)
+i_t90m = input.bool(false, "90m",   group="Trade timeframes", display=display.none)
+i_t2h  = input.bool(false, "2h",    group="Trade timeframes", display=display.none)
+i_t3h  = input.bool(false, "3h",    group="Trade timeframes", display=display.none)
+i_t4h  = input.bool(true,  "4h",    group="Trade timeframes", display=display.none)
+i_t6h  = input.bool(false, "6h",    group="Trade timeframes", display=display.none)
+i_t12h = input.bool(false, "12h",   group="Trade timeframes", display=display.none)
+i_tD   = input.bool(true,  "Daily", group="Trade timeframes", display=display.none)
+
+i_showDash = input.bool(true,  "Show Dashboard",        group="Dashboard", display=display.none)
+i_compact  = input.bool(true, "Mobile dashboard layout", group="Dashboard")
+i_mobileDashMode = input.string("Split", "Mobile dashboard mode", options=["Split", "Summary Only", "TF Only"], group="Dashboard")
+
+var G_ALERT = "Alerts"
+i_nearTapAlertPts = input.float(25.0, "Near-zone alert distance points", minval=0.25, maxval=1000.0, step=0.25, group=G_ALERT)
+i_eodHour        = input.int(15, "EOD report hour (CT)", minval=0, maxval=23, group=G_ALERT)
+i_eodMinute      = input.int(1,  "EOD report minute (CT)", minval=0, maxval=59, group=G_ALERT)
+
+var G_SESSION = "Active Sessions"
+i_tradeAsia   = input.bool(true, "Asia (5PM-2AM CT)",   group=G_SESSION)
+i_tradeLondon = input.bool(true, "London (2AM-8:30AM CT)", group=G_SESSION)
+i_tradeNY     = input.bool(true, "New York (8:30AM-3PM CT)", group=G_SESSION)
+
+var G_SR = "S/R Settings"
+i_srBounceConfirmPts = input.float(30.0, "S/R bounce confirmation points", minval=0.25, maxval=1000.0, step=0.25, group=G_SR)
+i_srOrangeAfterBounces = input.int(2, "S/R turns orange after bounces", minval=1, maxval=10, group=G_SR)
+
+var G_RISK = "Risk Calculator"
+i_showRisk       = input.bool(true, "Show risk calculator", group=G_RISK)
+i_riskATRLen     = input.int(10, "ATR length", minval=1, maxval=100, group=G_RISK)
+i_riskATRMult    = input.float(1.5, "Stop loss ATR multiplier", minval=0.1, maxval=10.0, step=0.1, group=G_RISK)
+i_riskDollars    = input.float(1500.0, "Dollar risk per trade", minval=1.0, step=50.0, group=G_RISK)
+i_riskUseActive  = input.bool(true, "Use active trade SL when in a trade", group=G_RISK)
+i_riskTickVal1   = input.float(20.0, "Point value — primary (NQ)", minval=0.01, step=0.25, group=G_RISK)
+i_riskTickVal2   = input.float(2.0,  "Point value — micro (MNQ)", minval=0.01, step=0.25, group=G_RISK)
+i_riskSym1       = input.string("NQ1!",  "Primary symbol label", group=G_RISK)
+i_riskSym2       = input.string("MNQ1!", "Micro symbol label", group=G_RISK)
+i_riskTP1R       = input.float(1.0, "TP1 R multiple", minval=0.25, maxval=10.0, step=0.25, group=G_RISK)
+i_riskTP2R       = input.float(2.0, "TP2 R multiple", minval=0.25, maxval=10.0, step=0.25, group=G_RISK)
+i_riskTP3R       = input.float(3.0, "TP3 R multiple", minval=0.25, maxval=10.0, step=0.25, group=G_RISK)
+i_riskShowLines  = input.bool(true, "Plot TP/SL projection lines", group=G_RISK)
+
+var G_WR = "Win Rate"
+i_wrShow             = true  // Hidden fixed setting: win-rate logic stays ON
+i_wrShowOutcomeLabels = true  // Hidden fixed setting: show WIN/LOSS labels at entry stays ON
+i_wrMaxOutcomeLabels  = input.int(100, "Max WIN/LOSS labels shown", minval=10, maxval=500, group=G_WR, display=display.none)
+i_wrShowPnL          = true  // Hidden fixed setting: realized PnL stays ON
+i_wrContracts        = input.int(1, "Contracts for PnL", minval=1, maxval=100, group=G_WR, display=display.none)
+i_wrPointValue       = input.float(20.0, "Point value per contract", minval=0.01, maxval=1000.0, step=0.25, group=G_WR, display=display.none)
+i_wrPeriod           = input.string("WR Date Range", "Win rate period", options=["Daily", "Weekly", "Bi-Weekly", "Monthly", "Yearly", "WR Date Range", "All Time"], group=G_WR, display=display.none)
+i_wrStartTime = input.time(defval=timestamp("01 Jan 2026 17:00 -0600"), title="WR start date/time", group=G_WR, display=display.none)
+i_wrEndTime   = input.time(defval=timestamp("30 May 2026 16:00 -0500"), title="WR end date/time", group=G_WR, display=display.none)
+i_wrForceCloseAtTime = true  // Hidden fixed setting: timed retest close stays ON
+i_wrCloseHour        = input.int(15, "Active retest close hour", minval=0, maxval=23, group=G_WR, display=display.none)
+i_wrCloseMinute      = input.int(0, "Active retest close minute", minval=0, maxval=59, group=G_WR, display=display.none)
+i_wrMaxTests         = input.int(2, "Max tests allowed for trade", minval=1, maxval=10, group=G_WR, display=display.none)
+i_wrBouncePts        = input.float(75.0, "Bounce-away points before next retest", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrMinZoneAgeBars   = input.int(1, "Min bars after zone forms before first retest", minval=0, maxval=100, group=G_WR, display=display.none)
+i_wrMinBarsBetween   = input.int(5, "Min bars between retests", minval=0, maxval=100, group=G_WR, display=display.none)
+i_wrMinBarsInTrade   = input.int(1, "Min bars after entry before TP/SL counts", minval=0, maxval=20, group=G_WR, display=display.none)
+i_wrRequireCloseAway = true  // Hidden fixed setting: require candle close away before next retest stays ON
+i_wrRequireNextCandleAfterTap = false  // Hidden fixed setting: tap candle is the retest/entry candle
+i_wrZonePriority    = "Higher TF First"  // Hidden fixed setting: always use higher timeframe zones first
+i_wrTPMode           = "Fixed Points"  // Hidden fixed setting: always use fixed TP points
+i_wrFixedTPPts       = 100.0  // Hidden fixed setting: default fixed TP points
+i_wrTP30mPts         = input.float(50.0, "30m zone fixed TP points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrTP1hPts          = input.float(100.0, "1h zone fixed TP points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrTP90mPts         = input.float(125.0, "90m zone fixed TP points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrTP2hPts          = input.float(150.0, "2h zone fixed TP points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrTP3hPts          = input.float(175.0, "3h zone fixed TP points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrTP4hPts          = input.float(200.0, "4h zone fixed TP points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrTP6hPts          = input.float(250.0, "6h zone fixed TP points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrTP12hPts         = input.float(300.0, "12h zone fixed TP points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrTPDailyPts       = input.float(400.0, "Daily zone fixed TP points", minval=1.0, maxval=2000.0, step=5.0, group=G_WR, display=display.none)
+i_wrSLMode           = "Zone Break or Point Cap"  // Hidden fixed setting: SL mode uses zone break or point cap
+i_wrSLCapPts         = input.float(100.0, "SL point cap / fixed points", minval=1.0, maxval=1000.0, step=5.0, group=G_WR, display=display.none)
+i_wrZoneSLBufferPts  = input.float(1.0, "Zone-break SL buffer points", minval=0.0, maxval=100.0, step=0.25, group=G_WR, display=display.none)
+i_wrFallbackToFixed  = true  // Hidden fixed setting: use fixed TP if closest zone is unavailable stays ON
+
+var G_P6 = "Phase 6 · Locked Candidate"
+i_p6Mode = input.string("Original Sarah", "Research mode", options=["Original Sarah", "Phase 6 Candidate"], group=G_P6)
+i_p6MinOpposingRoomR = input.float(2.0, "Minimum opposing-zone room (structural R)", minval=0.25, maxval=10.0, step=0.25, group=G_P6)
+i_p6ShowAudit = input.bool(true, "Show Phase 6 audit panel", group=G_P6)
+p6Enabled = i_p6Mode == "Phase 6 Candidate"
+p6OneMinuteChart = timeframe.in_seconds() == 60
+
+// ══════════════════════════════════════════════════════════════════════════
+// COLORS
+// ══════════════════════════════════════════════════════════════════════════
+dC     = color.new(#1D9E75, 0)
+dBG    = color.new(#1D9E75, 20)
+dBoxBG = color.new(#1D9E75, 85)
+
+sC     = color.new(#E24B4A, 0)
+sBG    = color.new(#E24B4A, 20)
+sBoxBG = color.new(#E24B4A, 85)
+
+srC  = color.new(color.yellow, 0)
+srBG = color.new(color.yellow, 20)
+srMultiC  = color.new(color.orange, 0)
+srMultiBG = color.new(color.orange, 20)
+srMultiBounceThreshold = i_srOrangeAfterBounces
+
+trBg  = color.new(color.black, 100)
+trTxt = color.new(color.white, 100)
+
+// ══════════════════════════════════════════════════════════════════════════
+// SECURITY CALLS
+// ══════════════════════════════════════════════════════════════════════════
+[cfa,t0a,t1a,o0a,o1a,c0a,c1a,h0a,h1a,l0a,l1a] = request.security(syminfo.tickerid,"30",  [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+[cfb,t0b,t1b,o0b,o1b,c0b,c1b,h0b,h1b,l0b,l1b] = request.security(syminfo.tickerid,"60",  [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+[cfc,t0c,t1c,o0c,o1c,c0c,c1c,h0c,h1c,l0c,l1c] = request.security(syminfo.tickerid,"90",  [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+[cfd,t0d,t1d,o0d,o1d,c0d,c1d,h0d,h1d,l0d,l1d] = request.security(syminfo.tickerid,"120", [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+[cfe,t0e,t1e,o0e,o1e,c0e,c1e,h0e,h1e,l0e,l1e] = request.security(syminfo.tickerid,"180", [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+[cff,t0f,t1f,o0f,o1f,c0f,c1f,h0f,h1f,l0f,l1f] = request.security(syminfo.tickerid,"240", [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+[cfg,t0g,t1g,o0g,o1g,c0g,c1g,h0g,h1g,l0g,l1g] = request.security(syminfo.tickerid,"360", [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+[cfh,t0h,t1h,o0h,o1h,c0h,c1h,h0h,h1h,l0h,l1h] = request.security(syminfo.tickerid,"720", [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+[cfi,t0i,t1i,o0i,o1i,c0i,c1i,h0i,h1i,l0i,l1i] = request.security(syminfo.tickerid,"D",   [barstate.isconfirmed,time,time[1],open,open[1],close,close[1],high,high[1],low,low[1]], lookahead=barmerge.lookahead_off)
+
+// ══════════════════════════════════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════════════════════════════════
+var array<line>   dLn       = array.new_line()
+var array<label>  dLb       = array.new_label()
+var array<float>  dK        = array.new_float()
+var array<float>  dB        = array.new_float()
+var array<int>    dX        = array.new_int()
+var array<int>    dXT       = array.new_int()
+var array<string> dTF       = array.new_string()
+var array<int>    dTC       = array.new_int()
+var array<int>    dLastTest = array.new_int()
+var array<bool>   dReady    = array.new_bool()
+var array<bool>   dNearArmed = array.new_bool()
+var array<int>    dPhysicalTouches = array.new_int()
+var array<bool>   dTouchingPreviousBar = array.new_bool()
+
+var array<line>   sLn       = array.new_line()
+var array<label>  sLb       = array.new_label()
+var array<float>  sK        = array.new_float()
+var array<float>  sB        = array.new_float()
+var array<int>    sX        = array.new_int()
+var array<int>    sXT       = array.new_int()
+var array<string> sTF       = array.new_string()
+var array<int>    sTC       = array.new_int()
+var array<int>    sLastTest = array.new_int()
+var array<bool>   sReady    = array.new_bool()
+var array<bool>   sNearArmed = array.new_bool()
+var array<int>    sPhysicalTouches = array.new_int()
+var array<bool>   sTouchingPreviousBar = array.new_bool()
+
+var array<line>   srLn = array.new_line()
+var array<label>  srLb = array.new_label()
+var array<float>  srLv = array.new_float()
+var array<string> srTF = array.new_string()
+var array<int>    srBC = array.new_int()
+var array<int>    srCreated = array.new_int()
+var array<bool>   srPending = array.new_bool()
+var array<int>    srDir = array.new_int()
+var array<bool>   srArmed = array.new_bool()
+var array<int>    srLastBounceBar = array.new_int()
+
+var array<box>    cBx = array.new_box()
+var array<line>   cLn = array.new_line()
+var array<label>  cLb = array.new_label()
+
+var array<int> dNewZone  = array.new_int(1, 0)
+var array<int> sNewZone  = array.new_int(1, 0)
+var array<int> srNewLine = array.new_int(1, 0)
+
+var int last30  = na
+var int last1h  = na
+var int last90  = na
+var int last2h  = na
+var int last3h  = na
+var int last4h  = na
+var int last6h  = na
+var int last12h = na
+var int lastD   = na
+
+var int wrFirstLoadedTs = time
+
+var bool   wrActive      = false
+var bool   wrLong        = false
+var float  wrEntry       = na
+var float  wrSL          = na
+var float  wrTP          = na
+var int    wrWins        = 0
+var int    wrLosses      = 0
+var int    wrTrades      = 0
+
+float p6EntryExport = na
+float p6ExitExport = na
+float p6DirectionExport = na
+float p6RoomRExport = na
+float p6TouchEpisodeExport = na
+float p6ZoneCreatedExport = na
+float p6ExitReasonExport = na
+var float p6LastRoomR = na
+var int p6LastTouchEpisode = na
+var string p6LastDecision = "Waiting"
+
+var int    wrLongWins    = 0
+var int    wrLongLosses  = 0
+var int    wrShortWins   = 0
+var int    wrShortLosses = 0
+
+var float  wrGrossWinPnL  = 0.0
+var float  wrGrossLossPnL = 0.0
+
+var int wr30mWins   = 0
+var int wr30mLosses = 0
+var int wr1hWins    = 0
+var int wr1hLosses  = 0
+var int wr90mWins   = 0
+var int wr90mLosses = 0
+var int wr2hWins    = 0
+var int wr2hLosses  = 0
+var int wr3hWins    = 0
+var int wr3hLosses  = 0
+var int wr4hWins    = 0
+var int wr4hLosses  = 0
+var int wr6hWins    = 0
+var int wr6hLosses  = 0
+var int wr12hWins   = 0
+var int wr12hLosses = 0
+var int wrDWins     = 0
+var int wrDLosses   = 0
+
+var float wrActiveFavPts = 0.0
+var float wrActiveAdvPts = 0.0
+var float wrActiveNextZonePts = na
+var float wr30mFavSum   = 0.0
+var float wr30mAdvSum   = 0.0
+var float wr1hFavSum    = 0.0
+var float wr1hAdvSum    = 0.0
+var float wr90mFavSum   = 0.0
+var float wr90mAdvSum   = 0.0
+var float wr2hFavSum    = 0.0
+var float wr2hAdvSum    = 0.0
+var float wr3hFavSum    = 0.0
+var float wr3hAdvSum    = 0.0
+var float wr4hFavSum    = 0.0
+var float wr4hAdvSum    = 0.0
+var float wr6hFavSum    = 0.0
+var float wr6hAdvSum    = 0.0
+var float wr12hFavSum   = 0.0
+var float wr12hAdvSum   = 0.0
+var float wrDFavSum     = 0.0
+var float wrDAdvSum     = 0.0
+
+var int   wrDailyWins   = 0
+var int   wrDailyLosses = 0
+var int   wrDailyTrades = 0
+var float wrDailyPnL      = 0.0
+var float wrEODPnlAsia    = 0.0
+var float wrEODPnlLondon  = 0.0
+var float wrEODPnlNY      = 0.0
+var array<string> wrDailyTradeLog = array.new_string()
+
+var float wr30mPnL = 0.0
+var float wr1hPnL  = 0.0
+var float wr90mPnL = 0.0
+var float wr2hPnL  = 0.0
+var float wr3hPnL  = 0.0
+var float wr4hPnL  = 0.0
+var float wr6hPnL  = 0.0
+var float wr12hPnL = 0.0
+var float wrDPnL   = 0.0
+
+var float  wrRealizedPnL = 0.0
+var float  wrPnlMon      = 0.0
+var float  wrPnlTue      = 0.0
+var float  wrPnlWed      = 0.0
+var float  wrPnlThu      = 0.0
+var float  wrPnlFri      = 0.0
+
+var float  wrPnlAsia     = 0.0
+var float  wrPnlLondon   = 0.0
+var float  wrPnlNY       = 0.0
+
+var float  wrPnlBiWk1    = 0.0
+var float  wrPnlBiWk2    = 0.0
+
+var float  wrPnlWk1      = 0.0
+var float  wrPnlWk2      = 0.0
+var float  wrPnlWk3      = 0.0
+var float  wrPnlWk4      = 0.0
+var float  wrPnlWk5      = 0.0
+
+var float  wrPnlJan      = 0.0
+var float  wrPnlFeb      = 0.0
+var float  wrPnlMar      = 0.0
+var float  wrPnlApr      = 0.0
+var float  wrPnlMay      = 0.0
+var float  wrPnlJun      = 0.0
+var float  wrPnlJul      = 0.0
+var float  wrPnlAug      = 0.0
+var float  wrPnlSep      = 0.0
+var float  wrPnlOct      = 0.0
+var float  wrPnlNov      = 0.0
+var float  wrPnlDec      = 0.0
+
+var int    wrJanTrades   = 0
+var int    wrFebTrades   = 0
+var int    wrMarTrades   = 0
+var int    wrAprTrades   = 0
+var int    wrMayTrades   = 0
+var int    wrJunTrades   = 0
+var int    wrJulTrades   = 0
+var int    wrAugTrades   = 0
+var int    wrSepTrades   = 0
+var int    wrOctTrades   = 0
+var int    wrNovTrades   = 0
+var int    wrDecTrades   = 0
+
+var bool   wrWasInRangePeriod = false
+var string wrActiveDir   = "-"
+var string wrActiveTF    = ""
+var int    wrActiveTests = na
+var int    wrEntryBar    = na
+var int    wrEntryTime   = na
+var box    wrActiveZoneBox  = na
+var box    wrActiveEntryBox = na
+var label  wrActiveEntryBadge = na
+var line   wrActiveTPLine   = na
+var line   wrActiveSLLine   = na
+var array<label> wrOutcomeLb = array.new_label()
+
+
+var array<box>   wrZoneBx    = array.new_box()
+var array<box>   wrEntryBx   = array.new_box()
+var array<label> wrEntryBadgeLb = array.new_label()
+var array<line>  wrTPLineArr = array.new_line()
+var array<line>  wrSLLineArr = array.new_line()
+
+var table dash = table.new(position.top_right, 2, 28,
+     bgcolor      = color.new(#0D1117, 10),
+     border_color = color.new(#3A3F52, 0),
+     border_width = 1,
+     frame_color  = color.new(#3A3F52, 0),
+     frame_width  = 1)
+
+var table dayPnlDash = table.new(position.bottom_right, 2, 7,
+     bgcolor      = color.new(#0D1117, 10),
+     border_color = color.new(#3A3F52, 0),
+     border_width = 1,
+     frame_color  = color.new(#3A3F52, 0),
+     frame_width  = 1)
+
+var table tfWrDash = table.new(position.bottom_right, 6, 10,
+     bgcolor      = color.new(#0D1117, 10),
+     border_color = color.new(#3A3F52, 0),
+     border_width = 1,
+     frame_color  = color.new(#3A3F52, 0),
+     frame_width  = 1)
+
+var table riskDash = table.new(position.bottom_left, 2, 12,
+     bgcolor      = color.new(#0D1117, 10),
+     border_color = color.new(#3A3F52, 0),
+     border_width = 1,
+     frame_color  = color.new(#3A3F52, 0),
+     frame_width  = 1)
+
+var line riskSLLn  = na
+var line riskTP1Ln = na
+var line riskTP2Ln = na
+var line riskTP3Ln = na
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+WR_TZ = "America/Chicago"
+WR_ONE_DAY_MS = 24 * 60 * 60 * 1000
+WR_WEEK_MS = 7 * WR_ONE_DAY_MS
+
+f_fmt(p) =>
+    na(p) ? "n/a" : str.tostring(p, format.mintick)
+
+f_money(float v) =>
+    (v >= 0 ? "$" : "-$") + str.tostring(math.abs(v), "#.##") + "  "
+
+f_money_short(float v) =>
+    na(v) ? "$0.00" : (v >= 0 ? "$" : "-$") + str.tostring(math.abs(v), "#.##")
+
+f_trading_time(int t) =>
+    int mins = hour(t, WR_TZ) * 60 + minute(t, WR_TZ)
+    mins >= 17 * 60 ? t + WR_ONE_DAY_MS : t
+
+f_trading_day_midnight(int t) =>
+    int tt = f_trading_time(t)
+    timestamp(WR_TZ, year(tt, WR_TZ), month(tt, WR_TZ), dayofmonth(tt, WR_TZ), 0, 0)
+
+f_input_day_midnight(int y, int m, int d) =>
+    timestamp(WR_TZ, y, m, d, 0, 0)
+
+f_calendar_day_midnight(int t) =>
+    timestamp(WR_TZ, year(t, WR_TZ), month(t, WR_TZ), dayofmonth(t, WR_TZ), 0, 0)
+
+f_trading_day_start_ts(int y, int m, int d) =>
+    timestamp(WR_TZ, y, m, d, 17, 0) - WR_ONE_DAY_MS
+
+f_trading_day_end_ts(int y, int m, int d) =>
+    timestamp(WR_TZ, y, m, d, 16, 0)
+
+f_trading_month_start_day_midnight(int t) =>
+    int tt = f_trading_time(t)
+    timestamp(WR_TZ, year(tt, WR_TZ), month(tt, WR_TZ), 1, 0, 0)
+
+f_trading_month_end_day_midnight(int t) =>
+    int tt = f_trading_time(t)
+    int m = month(tt, WR_TZ)
+    int y = year(tt, WR_TZ)
+    int nextM = m == 12 ? 1 : m + 1
+    int nextY = m == 12 ? y + 1 : y
+    timestamp(WR_TZ, nextY, nextM, 1, 0, 0) - WR_ONE_DAY_MS
+
+f_date_short(int t) =>
+    str.tostring(month(t, WR_TZ)) + "/" + str.tostring(dayofmonth(t, WR_TZ))
+
+f_date_full(int t) =>
+    str.tostring(month(t, WR_TZ)) + "/" + str.tostring(dayofmonth(t, WR_TZ)) + "/" + str.tostring(year(t, WR_TZ))
+
+f_month_name(int m) =>
+    switch m
+        1  => "Jan"
+        2  => "Feb"
+        3  => "Mar"
+        4  => "Apr"
+        5  => "May"
+        6  => "Jun"
+        7  => "Jul"
+        8  => "Aug"
+        9  => "Sep"
+        10 => "Oct"
+        11 => "Nov"
+        12 => "Dec"
+        => ""
+
+f_year_month_pnl(int m) =>
+    switch m
+        1  => wrPnlJan
+        2  => wrPnlFeb
+        3  => wrPnlMar
+        4  => wrPnlApr
+        5  => wrPnlMay
+        6  => wrPnlJun
+        7  => wrPnlJul
+        8  => wrPnlAug
+        9  => wrPnlSep
+        10 => wrPnlOct
+        11 => wrPnlNov
+        12 => wrPnlDec
+        => 0.0
+
+f_year_month_trades(int m) =>
+    switch m
+        1  => wrJanTrades
+        2  => wrFebTrades
+        3  => wrMarTrades
+        4  => wrAprTrades
+        5  => wrMayTrades
+        6  => wrJunTrades
+        7  => wrJulTrades
+        8  => wrAugTrades
+        9  => wrSepTrades
+        10 => wrOctTrades
+        11 => wrNovTrades
+        12 => wrDecTrades
+        => 0
+
+f_year_month_has_trades(int m) =>
+    f_year_month_trades(m) > 0
+
+f_year_month_cell(int row, int m, string sz, color rBG, color dimTx) =>
+    float pnl = f_year_month_pnl(m)
+    table.cell(dash, 0, row, "  " + f_month_name(m), text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+    table.cell(dash, 1, row, f_money(pnl), text_color=pnl > 0 ? dC : pnl < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+f_year_month_pair_str(int m1, int m2) =>
+    bool show1 = f_year_month_has_trades(m1)
+    bool show2 = f_year_month_has_trades(m2)
+    string left = show1 ? f_month_name(m1) + " " + f_money(f_year_month_pnl(m1)) : ""
+    string sep = show1 and show2 ? " | " : ""
+    string right = show2 ? f_month_name(m2) + " " + f_money(f_year_month_pnl(m2)) : ""
+    left + sep + right
+
+f_year_month_pair_has_trades(int m1, int m2) =>
+    f_year_month_has_trades(m1) or f_year_month_has_trades(m2)
+
+f_trading_week_start_day_midnight(int t) =>
+    int td = f_trading_day_midnight(t)
+    int dow = dayofweek(td, WR_TZ)
+    int offsetDays = dow == dayofweek.monday ? 1 :
+         dow == dayofweek.tuesday ? 2 :
+         dow == dayofweek.wednesday ? 3 :
+         dow == dayofweek.thursday ? 4 :
+         dow == dayofweek.friday ? 5 :
+         dow == dayofweek.saturday ? 6 :
+         0
+    td - offsetDays * WR_ONE_DAY_MS
+
+f_week_range_label(int wk, int startDayTs, int endDayTs) =>
+    int firstWeekStart = f_trading_week_start_day_midnight(startDayTs)
+    int lastWeekStart = f_trading_week_start_day_midnight(endDayTs)
+    int rawWkStart = firstWeekStart + (wk - 1) * WR_WEEK_MS
+    int rawWkEnd = rawWkStart + 5 * WR_ONE_DAY_MS
+    int clippedStart = rawWkStart < startDayTs ? startDayTs : rawWkStart
+    int clippedEnd = rawWkEnd > endDayTs ? endDayTs : rawWkEnd
+    string wkName = "Wk " + str.tostring(wk)
+    rawWkStart <= lastWeekStart and clippedStart <= clippedEnd ? wkName + " " + f_date_short(clippedStart) + "-" + f_date_short(clippedEnd) : wkName
+
+f_tf_wr_rate(int wins, int losses) =>
+    int trades = wins + losses
+    trades > 0 ? str.tostring(wins * 100.0 / trades, "#.##") + "%  " : "-  "
+
+f_tf_wr_count(int wins, int losses) =>
+    wins + losses > 0 ? str.tostring(wins) + "W / " + str.tostring(losses) + "L  " : "-  "
+
+f_tf_avg_pts(float sumPts, int wins, int losses) =>
+    int trades = wins + losses
+    trades > 0 ? str.tostring(sumPts / trades, "#.##") + " pts  " : "-  "
+
+f_tf_enabled(string tf) =>
+    switch tf
+        "30m"   => i_30m
+        "1h"    => i_1h
+        "90m"   => i_90m
+        "2h"    => i_2h
+        "3h"    => i_3h
+        "4h"    => i_4h
+        "6h"    => i_6h
+        "12h"   => i_12h
+        "Daily" => i_D
+        => false
+
+f_tf_tradeable(string tf) =>
+    switch tf
+        "30m"   => i_t30m
+        "1h"    => i_t1h
+        "90m"   => i_t90m
+        "2h"    => i_t2h
+        "3h"    => i_t3h
+        "4h"    => i_t4h
+        "6h"    => i_t6h
+        "12h"   => i_t12h
+        "Daily" => i_tD
+        => false
+
+f_tf_cell(int row, string tf, int wins, int losses, float favSum, float advSum, float pnl, string sz, color rBG, color dimTx) =>
+    bool enabled = f_tf_enabled(tf)
+    int trades = wins + losses
+
+    string wrTxt  = enabled and trades > 0 ? str.tostring(wins * 100.0 / trades, "#.##") + "%" : "-"
+    string wlTxt  = enabled and trades > 0 ? str.tostring(wins) + "W / " + str.tostring(losses) + "L" : "-"
+    string avgP   = enabled and trades > 0 ? str.tostring(favSum / trades, "#.##") + " pts" : "-"
+    string avgM   = enabled and trades > 0 ? str.tostring(advSum / trades, "#.##") + " pts" : "-"
+    string pnlTxt = enabled and trades > 0 ? f_money(pnl) : "-"
+
+    color tfColor  = enabled ? dimTx : color.new(dimTx, 55)
+    color wrColor  = enabled and trades > 0 ? color.white : dimTx
+    color wlColor  = not enabled or trades == 0 ? dimTx : wins >= losses ? dC : sC
+    color avgPCol  = enabled and trades > 0 ? dC : dimTx
+    color avgMCol  = enabled and trades > 0 ? sC : dimTx
+    color pnlColor = not enabled or trades == 0 ? dimTx : pnl >= 0 ? dC : sC
+
+    table.cell(tfWrDash, 0, row, "  " + tf, text_color=tfColor, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+    table.cell(tfWrDash, 1, row, wrTxt + "  ", text_color=wrColor, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+    table.cell(tfWrDash, 2, row, wlTxt + "  ", text_color=wlColor, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+    table.cell(tfWrDash, 3, row, avgP + "  ", text_color=avgPCol, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+    table.cell(tfWrDash, 4, row, avgM + "  ", text_color=avgMCol, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+    table.cell(tfWrDash, 5, row, pnlTxt + "  ", text_color=pnlColor, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+f_wr_trade_dow(int t) =>
+    int tt = f_trading_time(t)
+    dayofweek(tt, WR_TZ)
+
+f_wr_session_id(int t) =>
+    int mins = hour(t, WR_TZ) * 60 + minute(t, WR_TZ)
+    mins >= 17 * 60 or mins < 2 * 60 ? 1 : mins < 8 * 60 + 30 ? 2 : 3
+
+f_lbl_size() => i_compact ? size.tiny : size.small
+
+f_wr_clear_outcome_labels() =>
+    while array.size(wrOutcomeLb) > 0
+        label oldLb = array.pop(wrOutcomeLb)
+        if not na(oldLb)
+            label.delete(oldLb)
+
+f_wr_trim_outcome_labels() =>
+    while array.size(wrOutcomeLb) > i_wrMaxOutcomeLabels
+        label oldLb = array.pop(wrOutcomeLb)
+        if not na(oldLb)
+            label.delete(oldLb)
+
+
+f_wr_clear_trade_drawings() =>
+    while array.size(wrZoneBx) > 0
+        box oldBx = array.pop(wrZoneBx)
+        if not na(oldBx)
+            box.delete(oldBx)
+    while array.size(wrEntryBx) > 0
+        box oldEntryBx = array.pop(wrEntryBx)
+        if not na(oldEntryBx)
+            box.delete(oldEntryBx)
+    while array.size(wrEntryBadgeLb) > 0
+        label oldEntryBadge = array.pop(wrEntryBadgeLb)
+        if not na(oldEntryBadge)
+            label.delete(oldEntryBadge)
+    while array.size(wrTPLineArr) > 0
+        line oldTpLn = array.pop(wrTPLineArr)
+        if not na(oldTpLn)
+            line.delete(oldTpLn)
+    while array.size(wrSLLineArr) > 0
+        line oldSlLn = array.pop(wrSLLineArr)
+        if not na(oldSlLn)
+            line.delete(oldSlLn)
+
+f_wr_trim_trade_drawings() =>
+    while array.size(wrZoneBx) > i_wrMaxOutcomeLabels
+        box oldBx = array.pop(wrZoneBx)
+        if not na(oldBx)
+            box.delete(oldBx)
+    while array.size(wrEntryBx) > i_wrMaxOutcomeLabels
+        box oldEntryBx = array.pop(wrEntryBx)
+        if not na(oldEntryBx)
+            box.delete(oldEntryBx)
+    while array.size(wrEntryBadgeLb) > i_wrMaxOutcomeLabels
+        label oldEntryBadge = array.pop(wrEntryBadgeLb)
+        if not na(oldEntryBadge)
+            label.delete(oldEntryBadge)
+    while array.size(wrTPLineArr) > i_wrMaxOutcomeLabels
+        line oldTpLn = array.pop(wrTPLineArr)
+        if not na(oldTpLn)
+            line.delete(oldTpLn)
+    while array.size(wrSLLineArr) > i_wrMaxOutcomeLabels
+        line oldSlLn = array.pop(wrSLLineArr)
+        if not na(oldSlLn)
+            line.delete(oldSlLn)
+
+f_wr_create_entry_box(bool isLong, float zoneTop, float zoneBot) =>
+    color zColor = isLong ? dC : sC
+    box.new(bar_index, zoneTop, bar_index + 1, zoneBot,
+         xloc=xloc.bar_index,
+         border_color=zColor,
+         bgcolor=color.new(zColor, 88),
+         border_width=1)
+
+f_wr_create_active_entry_price_box(float entry, float sl, string tf) =>
+    float riskPts = math.abs(entry - sl)
+    float boxH = math.max(riskPts * 0.20, syminfo.mintick * 20)
+    float top = entry + boxH / 2.0
+    float bot = entry - boxH / 2.0
+    string entryTxt = "ENTRY " + tf
+    box.new(bar_index, top, bar_index + 1, bot,
+         xloc=xloc.bar_index,
+         border_color=color.white,
+         bgcolor=color.new(color.white, 88),
+         border_width=2,
+         text=entryTxt,
+         text_color=color.white,
+         text_size=f_lbl_size(),
+         text_halign=text.align_center,
+         text_valign=text.align_center)
+
+f_wr_create_active_entry_badge(bool isLong, float entry, string dir, string tf, int tests) =>
+    string testTxt = na(tests) ? "" : " T" + str.tostring(tests)
+    string badgeTxt = "ACTIVE " + dir + (tf == "" ? "" : " " + tf) + testTxt
+    color badgeColor = isLong ? color.new(dC, 0) : color.new(sC, 0)
+    label.new(bar_index, entry, badgeTxt,
+         xloc=xloc.bar_index, yloc=yloc.price,
+         style=isLong ? label.style_label_up : label.style_label_down,
+         color=badgeColor, textcolor=color.white,
+         size=size.tiny, textalign=text.align_center)
+
+f_wr_create_trade_line(float level, color lnColor) =>
+    line.new(bar_index, level, bar_index + 1, level,
+         xloc=xloc.bar_index,
+         color=lnColor,
+         width=2,
+         style=line.style_solid,
+         extend=extend.none)
+
+f_tf_rank(string tf) =>
+    switch tf
+        "30m"   => 30
+        "1h"    => 60
+        "90m"   => 90
+        "2h"    => 120
+        "3h"    => 180
+        "4h"    => 240
+        "6h"    => 360
+        "12h"   => 720
+        "Daily" => 1440
+        => 0
+
+f_hide_label(label lb) =>
+    label.set_text(lb, "")
+    label.set_color(lb, trBg)
+    label.set_textcolor(lb, trTxt)
+    label.set_style(lb, label.style_none)
+
+f_restore_demand_label(int idx) =>
+    label lb = array.get(dLb, idx)
+    string tcStr = str.tostring(array.get(dTC, idx))
+    string tf    = array.get(dTF, idx)
+    string entry = f_fmt(array.get(dK, idx))
+    string bot   = f_fmt(array.get(dB, idx))
+    string txt   = i_compact
+         ? "D•" + tf + "[" + tcStr + "x]\n" + entry
+         : "Demand • " + tf + " [" + tcStr + "x]\n" + entry + " - " + bot
+    label.set_text(lb, txt)
+    label.set_color(lb, dBG)
+    label.set_textcolor(lb, color.white)
+    label.set_style(lb, label.style_label_left)
+    label.set_size(lb, f_lbl_size())
+
+f_restore_supply_label(int idx) =>
+    label lb = array.get(sLb, idx)
+    string tcStr = str.tostring(array.get(sTC, idx))
+    string tf    = array.get(sTF, idx)
+    string entry = f_fmt(array.get(sK, idx))
+    string top   = f_fmt(array.get(sB, idx))
+    string txt   = i_compact
+         ? "S•" + tf + "[" + tcStr + "x]\n" + entry
+         : "Supply • " + tf + " [" + tcStr + "x]\n" + top + " - " + entry
+    label.set_text(lb, txt)
+    label.set_color(lb, sBG)
+    label.set_textcolor(lb, color.white)
+    label.set_style(lb, label.style_label_left)
+    label.set_size(lb, f_lbl_size())
+
+f_restore_sr_label(int idx) =>
+    label lb  = array.get(srLb, idx)
+    string lv = f_fmt(array.get(srLv, idx))
+    string tf = array.get(srTF, idx)
+    string txt = tf + " S/R\n" + lv
+    bool multiBounce = array.get(srBC, idx) >= srMultiBounceThreshold
+    color srLineColor = multiBounce ? srMultiC : srC
+    color srLabelColor = multiBounce ? srMultiBG : srBG
+    label.set_text(lb, txt)
+    label.set_color(lb, srLabelColor)
+    label.set_textcolor(lb, color.white)
+    label.set_style(lb, label.style_label_left)
+    label.set_size(lb, f_lbl_size())
+    line.set_color(array.get(srLn, idx), srLineColor)
+
+f_refresh_zone_labels() =>
+    int dSz = array.size(dLb)
+    if dSz > 0
+        for i = 0 to dSz - 1
+            f_restore_demand_label(i)
+    int sSz = array.size(sLb)
+    if sSz > 0
+        for i = 0 to sSz - 1
+            f_restore_supply_label(i)
+    int srSz = array.size(srLb)
+    if srSz > 0
+        for i = 0 to srSz - 1
+            f_restore_sr_label(i)
+
+f_trim_demand() =>
+    while array.size(dLn) > i_maxZ
+        line.delete(array.pop(dLn))
+        label.delete(array.pop(dLb))
+        array.pop(dK)
+        array.pop(dB)
+        array.pop(dX)
+        array.pop(dXT)
+        array.pop(dTF)
+        array.pop(dTC)
+        array.pop(dLastTest)
+        array.pop(dReady)
+        array.pop(dNearArmed)
+        array.pop(dPhysicalTouches)
+        array.pop(dTouchingPreviousBar)
+
+f_trim_supply() =>
+    while array.size(sLn) > i_maxZ
+        line.delete(array.pop(sLn))
+        label.delete(array.pop(sLb))
+        array.pop(sK)
+        array.pop(sB)
+        array.pop(sX)
+        array.pop(sXT)
+        array.pop(sTF)
+        array.pop(sTC)
+        array.pop(sLastTest)
+        array.pop(sReady)
+        array.pop(sNearArmed)
+        array.pop(sPhysicalTouches)
+        array.pop(sTouchingPreviousBar)
+
+f_trim_sr() =>
+    while array.size(srLn) > i_maxSR
+        line.delete(array.shift(srLn))
+        label.delete(array.shift(srLb))
+        array.shift(srLv)
+        array.shift(srTF)
+        array.shift(srBC)
+        array.shift(srCreated)
+        array.shift(srPending)
+        array.shift(srDir)
+        array.shift(srArmed)
+        array.shift(srLastBounceBar)
+
+f_update_line_ends() =>
+    int dSz = array.size(dLn)
+    if dSz > 0
+        for i = 0 to dSz - 1
+            line.set_x2(array.get(dLn, i), bar_index + 1)
+    int sSz = array.size(sLn)
+    if sSz > 0
+        for i = 0 to sSz - 1
+            line.set_x2(array.get(sLn, i), bar_index + 1)
+    int srSz = array.size(srLn)
+    if srSz > 0
+        for i = 0 to srSz - 1
+            line.set_x2(array.get(srLn, i), bar_index + 1)
+
+f_pin(lbs, lvls) =>
+    int sz = array.size(lbs)
+    if sz > 0
+        for i = 0 to sz - 1
+            label.set_x(array.get(lbs, i), bar_index + 1)
+            label.set_y(array.get(lbs, i), array.get(lvls, i))
+
+f_clear_clusters() =>
+    while array.size(cBx) > 0
+        box.delete(array.pop(cBx))
+    while array.size(cLn) > 0
+        line.delete(array.pop(cLn))
+    while array.size(cLb) > 0
+        label.delete(array.pop(cLb))
+
+f_d_contains(int parentIdx, int childIdx) =>
+    float pTop = array.get(dK, parentIdx)
+    float pBot = array.get(dB, parentIdx)
+    float cTop = array.get(dK, childIdx)
+    float cBot = array.get(dB, childIdx)
+    cTop <= pTop and cBot >= pBot
+
+f_s_contains(int parentIdx, int childIdx) =>
+    float pBot = array.get(sK, parentIdx)
+    float pTop = array.get(sB, parentIdx)
+    float cBot = array.get(sK, childIdx)
+    float cTop = array.get(sB, childIdx)
+    cBot >= pBot and cTop <= pTop
+
+f_hide_sr_labels_in_range(float lowLvl, float highLvl) =>
+    int srSz = array.size(srLb)
+    if srSz > 0
+        for i = 0 to srSz - 1
+            float lvl = array.get(srLv, i)
+            if lvl >= lowLvl and lvl <= highLvl
+                f_hide_label(array.get(srLb, i))
+
+f_overlap_pct(float topA, float botA, float topB, float botB) =>
+    float overlap = math.max(math.min(topA, topB) - math.max(botA, botB), 0)
+    float sizeA   = math.max(topA - botA, syminfo.mintick)
+    overlap / sizeA
+
+f_d_child_count(int parentIdx) =>
+    int count = 0
+    int sz = array.size(dK)
+    int parentRank = f_tf_rank(array.get(dTF, parentIdx))
+    if sz > 1
+        for j = 0 to sz - 1
+            if j != parentIdx
+                int childRank = f_tf_rank(array.get(dTF, j))
+                if childRank < parentRank and f_d_contains(parentIdx, j)
+                    count += 1
+    count
+
+f_s_child_count(int parentIdx) =>
+    int count = 0
+    int sz = array.size(sK)
+    int parentRank = f_tf_rank(array.get(sTF, parentIdx))
+    if sz > 1
+        for j = 0 to sz - 1
+            if j != parentIdx
+                int childRank = f_tf_rank(array.get(sTF, j))
+                if childRank < parentRank and f_s_contains(parentIdx, j)
+                    count += 1
+    count
+
+f_d_has_bigger_parent(int idx) =>
+    bool has = false
+    int sz = array.size(dK)
+    int thisRank = f_tf_rank(array.get(dTF, idx))
+    if sz > 1
+        for j = 0 to sz - 1
+            if j != idx
+                int otherRank = f_tf_rank(array.get(dTF, j))
+                if otherRank > thisRank and f_d_contains(j, idx)
+                    has := true
+    has
+
+f_s_has_bigger_parent(int idx) =>
+    bool has = false
+    int sz = array.size(sK)
+    int thisRank = f_tf_rank(array.get(sTF, idx))
+    if sz > 1
+        for j = 0 to sz - 1
+            if j != idx
+                int otherRank = f_tf_rank(array.get(sTF, j))
+                if otherRank > thisRank and f_s_contains(j, idx)
+                    has := true
+    has
+
+f_stronger_cluster(int rankA, int childrenA, int idxA, int rankB, int childrenB, int idxB) =>
+    bool stronger = false
+    if rankA > rankB
+        stronger := true
+    else if rankA == rankB and childrenA > childrenB
+        stronger := true
+    else if rankA == rankB and childrenA == childrenB and idxA < idxB
+        stronger := true
+    stronger
+
+f_d_is_weaker_overlap(int idx, int thisRank, int thisChildren, float thisTop, float thisBot) =>
+    bool weaker = false
+    int sz = array.size(dK)
+    if sz > 1
+        for j = 0 to sz - 1
+            if j != idx
+                float otherTop    = array.get(dK, j)
+                float otherBot    = array.get(dB, j)
+                float overlap     = f_overlap_pct(thisTop, thisBot, otherTop, otherBot)
+                int otherRank     = f_tf_rank(array.get(dTF, j))
+                int otherChildren = f_d_child_count(j)
+                bool otherValid   = otherChildren >= i_minChildren and not f_d_has_bigger_parent(j)
+                if otherValid and overlap >= i_clusterOverlapPct
+                    if f_stronger_cluster(otherRank, otherChildren, j, thisRank, thisChildren, idx)
+                        weaker := true
+    weaker
+
+f_s_is_weaker_overlap(int idx, int thisRank, int thisChildren, float thisTop, float thisBot) =>
+    bool weaker = false
+    int sz = array.size(sK)
+    if sz > 1
+        for j = 0 to sz - 1
+            if j != idx
+                float otherBot    = array.get(sK, j)
+                float otherTop    = array.get(sB, j)
+                float overlap     = f_overlap_pct(thisTop, thisBot, otherTop, otherBot)
+                int otherRank     = f_tf_rank(array.get(sTF, j))
+                int otherChildren = f_s_child_count(j)
+                bool otherValid   = otherChildren >= i_minChildren and not f_s_has_bigger_parent(j)
+                if otherValid and overlap >= i_clusterOverlapPct
+                    if f_stronger_cluster(otherRank, otherChildren, j, thisRank, thisChildren, idx)
+                        weaker := true
+    weaker
+
+f_d_cluster_left_t(int parentIdx) =>
+    array.get(dXT, parentIdx)
+
+f_s_cluster_left_t(int parentIdx) =>
+    array.get(sXT, parentIdx)
+
+f_nearestSup(float[] k) =>
+    float best = na
+    int sz = array.size(k)
+    if sz > 0
+        for i = 0 to sz - 1
+            float lvl = array.get(k, i)
+            if lvl >= close
+                best := na(best) ? lvl : math.min(best, lvl)
+    best
+
+f_nearestDem(float[] k) =>
+    float best = na
+    int sz = array.size(k)
+    if sz > 0
+        for i = 0 to sz - 1
+            float lvl = array.get(k, i)
+            if lvl <= close
+                best := na(best) ? lvl : math.max(best, lvl)
+    best
+
+f_nearestDemTC() =>
+    int   bestTC   = na
+    float bestDist = na
+    int sz = array.size(dK)
+    if sz > 0
+        for i = 0 to sz - 1
+            float lvl = array.get(dK, i)
+            if lvl <= close
+                float dist = close - lvl
+                if na(bestDist) or dist < bestDist
+                    bestDist := dist
+                    bestTC   := array.get(dTC, i)
+    bestTC
+
+f_nearestSupTC() =>
+    int   bestTC   = na
+    float bestDist = na
+    int sz = array.size(sK)
+    if sz > 0
+        for i = 0 to sz - 1
+            float lvl = array.get(sK, i)
+            if lvl >= close
+                float dist = lvl - close
+                if na(bestDist) or dist < bestDist
+                    bestDist := dist
+                    bestTC   := array.get(sTC, i)
+    bestTC
+
+f_nextSupAbove(float level) =>
+    float best = na
+    int sz = array.size(sK)
+    if sz > 0
+        for i = 0 to sz - 1
+            float lvl = array.get(sK, i)
+            if lvl > level
+                best := na(best) ? lvl : math.min(best, lvl)
+    best
+
+f_nextDemBelow(float level) =>
+    float best = na
+    int sz = array.size(dK)
+    if sz > 0
+        for i = 0 to sz - 1
+            float lvl = array.get(dK, i)
+            if lvl < level
+                best := na(best) ? lvl : math.max(best, lvl)
+    best
+
+f_wr_tp_points(string tf) =>
+    float configured = switch tf
+        "30m"   => i_wrTP30mPts
+        "1h"    => i_wrTP1hPts
+        "90m"   => i_wrTP90mPts
+        "2h"    => i_wrTP2hPts
+        "3h"    => i_wrTP3hPts
+        "4h"    => i_wrTP4hPts
+        "6h"    => i_wrTP6hPts
+        "12h"   => i_wrTP12hPts
+        "Daily" => i_wrTPDailyPts
+        => i_wrFixedTPPts
+    p6Enabled and tf == "1h" ? 100.0 : configured
+
+f_wr_levels(bool isLong, float entry, float zoneStop, string zoneTF) =>
+    float tp = na
+    float effectiveBuffer = p6Enabled ? 1.0 : i_wrZoneSLBufferPts
+    float effectiveCap = p6Enabled ? 100.0 : i_wrSLCapPts
+    float zoneBreakSL = isLong ? zoneStop - effectiveBuffer : zoneStop + effectiveBuffer
+    float zoneSLPts = math.abs(entry - zoneBreakSL)
+    float slPts = i_wrSLMode == "Zone Break" ? zoneSLPts :
+         i_wrSLMode == "Zone Break or Point Cap" ? math.min(zoneSLPts, effectiveCap) :
+         effectiveCap
+    float sl = isLong ? entry - slPts : entry + slPts
+    if i_wrTPMode == "Fixed Points"
+        tp := isLong ? entry + f_wr_tp_points(zoneTF) : entry - f_wr_tp_points(zoneTF)
+    else
+        tp := isLong ? f_nextSupAbove(entry) : f_nextDemBelow(entry)
+        if na(tp) and i_wrFallbackToFixed
+            tp := isLong ? entry + f_wr_tp_points(zoneTF) : entry - f_wr_tp_points(zoneTF)
+    [tp, sl]
+
+f_srBounce() =>
+    bool res = false
+    int sz = array.size(srLv)
+    if sz > 0
+        for i = 0 to sz - 1
+            float lvl = array.get(srLv, i)
+            bool touched = low <= lvl and high >= lvl
+            bool prevTouched = not na(low[1]) and low[1] <= lvl and high[1] >= lvl
+            bool pending = array.get(srPending, i)
+            bool armed = array.get(srArmed, i)
+            int lastBounceBar = array.get(srLastBounceBar, i)
+
+            bool rearmedAfterBounce = not pending and not armed and bar_index > lastBounceBar and not touched and (close >= lvl + i_srBounceConfirmPts or close <= lvl - i_srBounceConfirmPts)
+            if rearmedAfterBounce
+                array.set(srArmed, i, true)
+                armed := true
+
+            bool freshRetap = armed and touched and not prevTouched and bar_index > array.get(srCreated, i)
+            if freshRetap
+                int dir = close[1] > lvl ? 1 : close[1] < lvl ? -1 : close >= lvl ? 1 : -1
+                array.set(srPending, i, true)
+                array.set(srArmed, i, false)
+                array.set(srDir, i, dir)
+                pending := true
+                armed := false
+
+            int bounceDir = array.get(srDir, i)
+            bool confirmedSupportBounce = pending and bounceDir == 1 and high >= lvl + i_srBounceConfirmPts
+            bool confirmedResistanceBounce = pending and bounceDir == -1 and low <= lvl - i_srBounceConfirmPts
+            bool confirmedBounce = confirmedSupportBounce or confirmedResistanceBounce
+
+            if confirmedBounce
+                int newCount = array.get(srBC, i) + 1
+                array.set(srBC, i, newCount)
+                array.set(srPending, i, false)
+                array.set(srDir, i, 0)
+                array.set(srArmed, i, false)
+                array.set(srLastBounceBar, i, bar_index)
+                if newCount >= srMultiBounceThreshold
+                    line.set_color(array.get(srLn, i), srMultiC)
+                    label.set_color(array.get(srLb, i), srMultiBG)
+                // ── DISCORD EMBED ──
+                if f_tf_enabled(array.get(srTF, i))
+                    alert('{"embeds":[{"title":"S/R Bounce — ' + syminfo.ticker + '","color":15844367,"fields":[{"name":"Timeframe","value":"' + array.get(srTF, i) + '","inline":true},{"name":"Level","value":"' + f_fmt(array.get(srLv, i)) + '","inline":true},{"name":"Bounces","value":"' + str.tostring(newCount) + '","inline":true},{"name":"Price","value":"' + f_fmt(close) + '","inline":true}]}]}'  , alert.freq_once_per_bar)
+                res := true
+    res
+
+// ══════════════════════════════════════════════════════════════════════════
+// ADD ZONES
+// ══════════════════════════════════════════════════════════════════════════
+f_add_demand(string tf, int zoneT, float entry, float bottom) =>
+    int startX = bar_index
+    string txt = i_compact
+         ? "D•" + tf + "[0x]\n" + f_fmt(entry)
+         : "Demand • " + tf + " [0x]\n" + f_fmt(entry) + " - " + f_fmt(bottom)
+    line ln = line.new(startX, entry, bar_index + 1, entry,
+         xloc=xloc.bar_index, color=dC, width=2,
+         style=line.style_solid, extend=extend.none)
+    label lb = label.new(bar_index + 1, entry, txt,
+         xloc=xloc.bar_index, yloc=yloc.price,
+         color=dBG, textcolor=color.white,
+         style=label.style_label_left, size=f_lbl_size())
+    array.unshift(dLn, ln)
+    array.unshift(dLb, lb)
+    array.unshift(dK, entry)
+    array.unshift(dB, bottom)
+    array.unshift(dX, startX)
+    array.unshift(dXT, zoneT)
+    array.unshift(dTF, tf)
+    array.unshift(dTC, 0)
+    array.unshift(dLastTest, -1)
+    array.unshift(dReady, true)
+    array.unshift(dNearArmed, true)
+    array.unshift(dPhysicalTouches, 0)
+    array.unshift(dTouchingPreviousBar, false)
+    array.set(dNewZone, 0, array.get(dNewZone, 0) + 1)
+    // ── DISCORD EMBED ──
+    alert('{"embeds":[{"title":"New Demand Zone — ' + syminfo.ticker + '","color":3066993,"fields":[{"name":"Timeframe","value":"' + tf + '","inline":true},{"name":"Entry","value":"' + f_fmt(entry) + '","inline":true},{"name":"Bottom","value":"' + f_fmt(bottom) + '","inline":true},{"name":"Size","value":"' + f_fmt(entry - bottom) + ' pts","inline":true}]}]}'  , alert.freq_once_per_bar)
+    f_trim_demand()
+
+f_add_supply(string tf, int zoneT, float entry, float top) =>
+    int startX = bar_index
+    string txt = i_compact
+         ? "S•" + tf + "[0x]\n" + f_fmt(entry)
+         : "Supply • " + tf + " [0x]\n" + f_fmt(top) + " - " + f_fmt(entry)
+    line ln = line.new(startX, entry, bar_index + 1, entry,
+         xloc=xloc.bar_index, color=sC, width=2,
+         style=line.style_solid, extend=extend.none)
+    label lb = label.new(bar_index + 1, entry, txt,
+         xloc=xloc.bar_index, yloc=yloc.price,
+         color=sBG, textcolor=color.white,
+         style=label.style_label_left, size=f_lbl_size())
+    array.unshift(sLn, ln)
+    array.unshift(sLb, lb)
+    array.unshift(sK, entry)
+    array.unshift(sB, top)
+    array.unshift(sX, startX)
+    array.unshift(sXT, zoneT)
+    array.unshift(sTF, tf)
+    array.unshift(sTC, 0)
+    array.unshift(sLastTest, -1)
+    array.unshift(sReady, true)
+    array.unshift(sNearArmed, true)
+    array.unshift(sPhysicalTouches, 0)
+    array.unshift(sTouchingPreviousBar, false)
+    array.set(sNewZone, 0, array.get(sNewZone, 0) + 1)
+    // ── DISCORD EMBED ──
+    alert('{"embeds":[{"title":"New Supply Zone — ' + syminfo.ticker + '","color":15158332,"fields":[{"name":"Timeframe","value":"' + tf + '","inline":true},{"name":"Entry","value":"' + f_fmt(entry) + '","inline":true},{"name":"Top","value":"' + f_fmt(top) + '","inline":true},{"name":"Size","value":"' + f_fmt(top - entry) + ' pts","inline":true}]}]}'  , alert.freq_once_per_bar)
+    f_trim_supply()
+
+f_add_sr(int startX, string tf, float level) =>
+    string txt = tf + " S/R\n" + f_fmt(level)
+    line ln = line.new(startX, level, bar_index + 1, level,
+         xloc=xloc.bar_index, color=srC, width=1,
+         style=line.style_dashed, extend=extend.none)
+    label lb = label.new(bar_index + 1, level, txt,
+         xloc=xloc.bar_index, yloc=yloc.price,
+         color=srBG, textcolor=color.white,
+         style=label.style_label_left, size=f_lbl_size())
+    array.push(srLn, ln)
+    array.push(srLb, lb)
+    array.push(srLv, level)
+    array.push(srTF, tf)
+    array.push(srBC, 0)
+    array.push(srCreated, bar_index)
+    array.push(srPending, false)
+    array.push(srDir, 0)
+    array.push(srArmed, true)
+    array.push(srLastBounceBar, -1)
+    array.set(srNewLine, 0, array.get(srNewLine, 0) + 1)
+    // ── DISCORD EMBED ──
+    alert('{"embeds":[{"title":"Zone Broken — S/R Created — ' + syminfo.ticker + '","color":15844367,"fields":[{"name":"Timeframe","value":"' + tf + '","inline":true},{"name":"Level","value":"' + f_fmt(level) + '","inline":true}]}]}', alert.freq_once_per_bar)
+    f_trim_sr()
+
+// ══════════════════════════════════════════════════════════════════════════
+// DETECT ZONES
+// ══════════════════════════════════════════════════════════════════════════
+f_process(bool en, bool cf, int t0, int t1, float o0, float o1, float c0, float c1, float h0, float h1, float l0, float l1, string tf, int lastT) =>
+    int newLast = lastT
+    bool newHTFBar = not na(t0) and (na(lastT) or t0 != lastT)
+    if en and cf and newHTFBar
+        newLast := t0
+        float bd0 = math.abs(c0 - o0)
+        float bd1 = math.abs(c1 - o1)
+        if o1 > c1 and c0 > o0 and bd0 > 0 and bd1 <= i_ratio * bd0
+            f_add_demand(tf, t1, o1, math.min(l1, l0))
+        if c1 > o1 and o0 > c0 and bd0 > 0 and bd1 <= i_ratio * bd0
+            f_add_supply(tf, t1, o1, math.max(h1, h0))
+    newLast
+
+// ══════════════════════════════════════════════════════════════════════════
+// INVALIDATION
+// ══════════════════════════════════════════════════════════════════════════
+f_inv() =>
+    int i = 0
+    while i < array.size(sLn)
+        float topS   = array.get(sB, i)
+        float entryS = array.get(sK, i)
+        int startS   = array.get(sX, i)
+        string tfS   = array.get(sTF, i)
+        bool supplyCloseBreak = close > topS
+        bool supplyWickBreak = i_zoneBreakMode == "Wick or Close" and high > topS
+        bool supplyGapBreak = i_gapBreakSR and not na(close[1]) and close[1] <= topS and open > topS
+        if supplyCloseBreak or supplyWickBreak or supplyGapBreak
+            line.delete(array.get(sLn, i))
+            label.delete(array.get(sLb, i))
+            if i_showSR
+                f_add_sr(startS, tfS, entryS)
+            array.remove(sLn, i)
+            array.remove(sLb, i)
+            array.remove(sK, i)
+            array.remove(sB, i)
+            array.remove(sX, i)
+            array.remove(sXT, i)
+            array.remove(sTF, i)
+            array.remove(sTC, i)
+            array.remove(sLastTest, i)
+            array.remove(sReady, i)
+            array.remove(sNearArmed, i)
+            array.remove(sPhysicalTouches, i)
+            array.remove(sTouchingPreviousBar, i)
+            i += 0
+        else
+            i += 1
+    int j = 0
+    while j < array.size(dLn)
+        float botD   = array.get(dB, j)
+        float entryD = array.get(dK, j)
+        int startD   = array.get(dX, j)
+        string tfD   = array.get(dTF, j)
+        bool demandCloseBreak = close < botD
+        bool demandWickBreak = i_zoneBreakMode == "Wick or Close" and low < botD
+        bool demandGapBreak = i_gapBreakSR and not na(close[1]) and close[1] >= botD and open < botD
+        if demandCloseBreak or demandWickBreak or demandGapBreak
+            line.delete(array.get(dLn, j))
+            label.delete(array.get(dLb, j))
+            if i_showSR
+                f_add_sr(startD, tfD, entryD)
+            array.remove(dLn, j)
+            array.remove(dLb, j)
+            array.remove(dK, j)
+            array.remove(dB, j)
+            array.remove(dX, j)
+            array.remove(dXT, j)
+            array.remove(dTF, j)
+            array.remove(dTC, j)
+            array.remove(dLastTest, j)
+            array.remove(dReady, j)
+            array.remove(dNearArmed, j)
+            array.remove(dPhysicalTouches, j)
+            array.remove(dTouchingPreviousBar, j)
+            j += 0
+        else
+            j += 1
+
+// ══════════════════════════════════════════════════════════════════════════
+// TEST COUNTING
+// ══════════════════════════════════════════════════════════════════════════
+f_p6_context_tf(string tf) =>
+    tf == "1h" or tf == "4h" or tf == "Daily"
+
+f_p6_opposing_room_r(bool isLong, float entry, float zoneStop) =>
+    float nearestDistance = na
+    if isLong
+        int sz = array.size(sK)
+        if sz > 0
+            for i = 0 to sz - 1
+                float opposingEntry = array.get(sK, i)
+                string opposingTF = array.get(sTF, i)
+                if f_p6_context_tf(opposingTF) and opposingEntry > entry
+                    float distance = opposingEntry - entry
+                    nearestDistance := na(nearestDistance) ? distance : math.min(nearestDistance, distance)
+    else
+        int sz = array.size(dK)
+        if sz > 0
+            for i = 0 to sz - 1
+                float opposingEntry = array.get(dK, i)
+                string opposingTF = array.get(dTF, i)
+                if f_p6_context_tf(opposingTF) and opposingEntry < entry
+                    float distance = entry - opposingEntry
+                    nearestDistance := na(nearestDistance) ? distance : math.min(nearestDistance, distance)
+    float structuralRisk = math.abs(entry - zoneStop) + (p6Enabled ? 1.0 : i_wrZoneSLBufferPts)
+    na(nearestDistance) ? na : nearestDistance / structuralRisk
+
+f_p6_room_is_open(bool isLong, float entry, float zoneStop) =>
+    float roomR = f_p6_opposing_room_r(isLong, entry, zoneStop)
+    na(roomR) or roomR >= i_p6MinOpposingRoomR
+
+f_p6_track_physical_touches() =>
+    // A maintenance/weekend gap starts a new episode, matching the one-minute research engine.
+    bool contiguous = not na(time[1]) and time - time[1] == 60 * 1000
+    int dSz = array.size(dK)
+    if dSz > 0
+        for i = 0 to dSz - 1
+            bool touched = low <= array.get(dK, i) and high >= array.get(dB, i)
+            bool wasTouching = array.get(dTouchingPreviousBar, i)
+            if touched and (not contiguous or not wasTouching)
+                array.set(dPhysicalTouches, i, array.get(dPhysicalTouches, i) + 1)
+            array.set(dTouchingPreviousBar, i, touched)
+    int sSz = array.size(sK)
+    if sSz > 0
+        for i = 0 to sSz - 1
+            bool touched = high >= array.get(sK, i) and low <= array.get(sB, i)
+            bool wasTouching = array.get(sTouchingPreviousBar, i)
+            if touched and (not contiguous or not wasTouching)
+                array.set(sPhysicalTouches, i, array.get(sPhysicalTouches, i) + 1)
+            array.set(sTouchingPreviousBar, i, touched)
+
+f_count_tests() =>
+    bool newLongRetest = false
+    float longEntry = na
+    float longStop = na
+    int longTests = na
+    string longTF = ""
+    int longZoneT = na
+    float longZoneTop = na
+    float longZoneBot = na
+
+    bool newShortRetest = false
+    float shortEntry = na
+    float shortStop = na
+    int shortTests = na
+    string shortTF = ""
+    int shortZoneT = na
+    float shortZoneTop = na
+    float shortZoneBot = na
+
+    int selectedD = na
+    int selectedS = na
+
+    int longBestRank = na
+    float longBestDist = na
+
+    int shortBestRank = na
+    float shortBestDist = na
+
+    bool canSelectRetest = i_wrShow and not wrActive
+
+    int dSz = array.size(dK)
+    if dSz > 0
+        for i = 0 to dSz - 1
+            float entry = array.get(dK, i)
+            float bottom = array.get(dB, i)
+            string tf = array.get(dTF, i)
+            int tfRank = f_tf_rank(tf)
+            float dist = math.abs(close - entry)
+
+            bool touched = low <= entry and high >= bottom
+            bool prevTouched = low[1] <= entry and high[1] >= bottom
+            bool nextCandleConfirm = prevTouched and close >= entry
+            bool validRetestTouch = i_wrRequireNextCandleAfterTap ? nextCandleConfirm : touched
+            bool bouncedAwayWick = high >= entry + i_wrBouncePts
+            bool bouncedAwayClose = close >= entry + i_wrBouncePts
+            bool bouncedAway = i_wrRequireCloseAway ? bouncedAwayClose : bouncedAwayWick
+            bool ready = array.get(dReady, i)
+            int lastTestBar = array.get(dLastTest, i)
+            int createdBar = array.get(dX, i)
+            bool zoneOldEnough = bar_index - createdBar >= i_wrMinZoneAgeBars
+            bool tapAfterZoneCreated = i_wrRequireNextCandleAfterTap ? bar_index - 1 > createdBar : bar_index > createdBar
+            bool enoughBarsSinceTest = lastTestBar < 0 or bar_index - lastTestBar >= i_wrMinBarsBetween
+            int nextTC = array.get(dTC, i) + 1
+
+            if not ready and bouncedAway and not touched and enoughBarsSinceTest
+                array.set(dReady, i, true)
+                ready := true
+
+            bool tfTradeable = p6Enabled ? tf == "1h" : f_tf_tradeable(tf)
+            bool p6Eligible = not p6Enabled or (p6OneMinuteChart and array.get(dPhysicalTouches, i) == 1 and f_p6_room_is_open(true, entry, bottom))
+            if canSelectRetest and tfTradeable and p6Eligible and validRetestTouch and tapAfterZoneCreated and ready and zoneOldEnough and enoughBarsSinceTest and nextTC <= i_wrMaxTests
+                bool takeCandidate = false
+
+                if na(selectedD)
+                    takeCandidate := true
+                else
+                    takeCandidate := tfRank > longBestRank or (tfRank == longBestRank and dist < longBestDist)
+
+                if takeCandidate
+                    selectedD := i
+                    longBestRank := tfRank
+                    longBestDist := dist
+
+    if not na(selectedD)
+        float entry = array.get(dK, selectedD)
+        float bottom = array.get(dB, selectedD)
+        int newTC = array.get(dTC, selectedD) + 1
+
+        array.set(dTC, selectedD, newTC)
+        array.set(dLastTest, selectedD, bar_index)
+        array.set(dReady, selectedD, false)
+
+        newLongRetest := true
+        longEntry := entry
+        longStop := bottom
+        longTests := newTC
+        longTF := array.get(dTF, selectedD)
+        longZoneT := array.get(dXT, selectedD)
+        longZoneTop := entry
+        longZoneBot := bottom
+
+    int sSz = array.size(sK)
+    if sSz > 0
+        for i = 0 to sSz - 1
+            float entry = array.get(sK, i)
+            float top = array.get(sB, i)
+            string tf = array.get(sTF, i)
+            int tfRank = f_tf_rank(tf)
+            float dist = math.abs(close - entry)
+
+            bool touched = high >= entry and low <= top
+            bool prevTouched = high[1] >= entry and low[1] <= top
+            bool nextCandleConfirm = prevTouched and close <= entry
+            bool validRetestTouch = i_wrRequireNextCandleAfterTap ? nextCandleConfirm : touched
+            bool bouncedAwayWick = low <= entry - i_wrBouncePts
+            bool bouncedAwayClose = close <= entry - i_wrBouncePts
+            bool bouncedAway = i_wrRequireCloseAway ? bouncedAwayClose : bouncedAwayWick
+            bool ready = array.get(sReady, i)
+            int lastTestBar = array.get(sLastTest, i)
+            int createdBar = array.get(sX, i)
+            bool zoneOldEnough = bar_index - createdBar >= i_wrMinZoneAgeBars
+            bool tapAfterZoneCreated = i_wrRequireNextCandleAfterTap ? bar_index - 1 > createdBar : bar_index > createdBar
+            bool enoughBarsSinceTest = lastTestBar < 0 or bar_index - lastTestBar >= i_wrMinBarsBetween
+            int nextTC = array.get(sTC, i) + 1
+
+            if not ready and bouncedAway and not touched and enoughBarsSinceTest
+                array.set(sReady, i, true)
+                ready := true
+
+            bool tfTradeableS = p6Enabled ? tf == "1h" : f_tf_tradeable(tf)
+            bool p6EligibleS = not p6Enabled or (p6OneMinuteChart and array.get(sPhysicalTouches, i) == 1 and f_p6_room_is_open(false, entry, top))
+            if canSelectRetest and tfTradeableS and p6EligibleS and validRetestTouch and tapAfterZoneCreated and ready and zoneOldEnough and enoughBarsSinceTest and nextTC <= i_wrMaxTests
+                bool takeCandidate = false
+
+                if na(selectedS)
+                    takeCandidate := true
+                else
+                    takeCandidate := tfRank > shortBestRank or (tfRank == shortBestRank and dist < shortBestDist)
+
+                if takeCandidate
+                    selectedS := i
+                    shortBestRank := tfRank
+                    shortBestDist := dist
+
+    if not na(selectedS)
+        float entry = array.get(sK, selectedS)
+        float top = array.get(sB, selectedS)
+        int newTC = array.get(sTC, selectedS) + 1
+
+        array.set(sTC, selectedS, newTC)
+        array.set(sLastTest, selectedS, bar_index)
+        array.set(sReady, selectedS, false)
+
+        newShortRetest := true
+        shortEntry := entry
+        shortStop := top
+        shortTests := newTC
+        shortTF := array.get(sTF, selectedS)
+        shortZoneT := array.get(sXT, selectedS)
+        shortZoneTop := top
+        shortZoneBot := entry
+
+    [newLongRetest, longEntry, longStop, longTests, longTF, longZoneT, longZoneTop, longZoneBot, newShortRetest, shortEntry, shortStop, shortTests, shortTF, shortZoneT, shortZoneTop, shortZoneBot]
+
+// ══════════════════════════════════════════════════════════════════════════
+// CLUSTERS — DEMAND
+// ══════════════════════════════════════════════════════════════════════════
+f_draw_demand_clusters() =>
+    int sz   = array.size(dK)
+    int tfMs = timeframe.in_seconds() * 1000
+    if sz > 1
+        for i = 0 to sz - 1
+            string parentTf = array.get(dTF, i)
+            int parentRank  = f_tf_rank(parentTf)
+            bool hasBiggerParent = false
+            int childCount = 0
+            string childText = ""
+            for j = 0 to sz - 1
+                if j != i
+                    string childTf = array.get(dTF, j)
+                    int childRank  = f_tf_rank(childTf)
+                    if childRank > parentRank and f_d_contains(j, i)
+                        hasBiggerParent := true
+                    if childRank < parentRank and f_d_contains(i, j)
+                        childCount += 1
+                        childText := childText == "" ? childTf : childText + ", " + childTf
+            if not hasBiggerParent and childCount >= i_minChildren
+                float parentTop = array.get(dK, i)
+                float parentBot = array.get(dB, i)
+                bool weakerCluster = f_d_is_weaker_overlap(i, parentRank, childCount, parentTop, parentBot)
+                if not weakerCluster
+                    float zoneSize = parentTop - parentBot
+                    int leftT  = f_d_cluster_left_t(i)
+                    int rightT = time + i_clusterRightPad  * tfMs
+                    int labelT = rightT + i_clusterLabelOffset * tfMs
+                    float labelY = (parentTop + parentBot) / 2
+                    string clusterTxt = i_compact
+                         ? "DC•" + parentTf + "\n" + f_fmt(parentTop) + "\n" + childText
+                         : "Demand cluster • " + parentTf + "\n" + f_fmt(parentTop) + " - " + f_fmt(parentBot) + "\nSize: " + f_fmt(zoneSize) + "\nInside: " + childText
+                    box b = box.new(leftT, parentTop, rightT, parentBot,
+                         xloc=xloc.bar_time, border_color=dC, bgcolor=dBoxBG)
+                    array.push(cBx, b)
+                    label infoLb = label.new(labelT, labelY, clusterTxt,
+                         xloc=xloc.bar_time, yloc=yloc.price,
+                         style=label.style_label_left,
+                         color=dBG, textcolor=color.white, size=f_lbl_size())
+                    array.push(cLb, infoLb)
+                    f_hide_label(array.get(dLb, i))
+                    f_hide_sr_labels_in_range(parentBot, parentTop)
+                    for j = 0 to sz - 1
+                        if j != i
+                            string childTf = array.get(dTF, j)
+                            int childRank  = f_tf_rank(childTf)
+                            if childRank < parentRank and f_d_contains(i, j)
+                                float childEntry = array.get(dK, j)
+                                line nestedLn = line.new(leftT, childEntry, rightT, childEntry,
+                                     xloc=xloc.bar_time, color=dC, width=1,
+                                     style=line.style_dashed)
+                                array.push(cLn, nestedLn)
+                                label nestedDTfLb = label.new(rightT, childEntry, array.get(dTF, j),
+                                     xloc=xloc.bar_time, yloc=yloc.price,
+                                     style=label.style_label_left,
+                                     color=dBG, textcolor=color.white,
+                                     size=f_lbl_size(), textalign=text.align_center)
+                                array.push(cLb, nestedDTfLb)
+                                f_hide_label(array.get(dLb, j))
+
+// ══════════════════════════════════════════════════════════════════════════
+// CLUSTERS — SUPPLY
+// ══════════════════════════════════════════════════════════════════════════
+f_draw_supply_clusters() =>
+    int sz   = array.size(sK)
+    int tfMs = timeframe.in_seconds() * 1000
+    if sz > 1
+        for i = 0 to sz - 1
+            string parentTf = array.get(sTF, i)
+            int parentRank  = f_tf_rank(parentTf)
+            bool hasBiggerParent = false
+            int childCount = 0
+            string childText = ""
+            for j = 0 to sz - 1
+                if j != i
+                    string childTf = array.get(sTF, j)
+                    int childRank  = f_tf_rank(childTf)
+                    if childRank > parentRank and f_s_contains(j, i)
+                        hasBiggerParent := true
+                    if childRank < parentRank and f_s_contains(i, j)
+                        childCount += 1
+                        childText := childText == "" ? childTf : childText + ", " + childTf
+            if not hasBiggerParent and childCount >= i_minChildren
+                float parentBot = array.get(sK, i)
+                float parentTop = array.get(sB, i)
+                bool weakerCluster = f_s_is_weaker_overlap(i, parentRank, childCount, parentTop, parentBot)
+                if not weakerCluster
+                    float zoneSize = parentTop - parentBot
+                    int leftT  = f_s_cluster_left_t(i)
+                    int rightT = time + i_clusterRightPad  * tfMs
+                    int labelT = rightT + i_clusterLabelOffset * tfMs
+                    float labelY = (parentTop + parentBot) / 2
+                    string clusterTxt = i_compact
+                         ? "SC•" + parentTf + "\n" + f_fmt(parentBot) + "\n" + childText
+                         : "Supply cluster • " + parentTf + "\n" + f_fmt(parentTop) + " - " + f_fmt(parentBot) + "\nSize: " + f_fmt(zoneSize) + "\nInside: " + childText
+                    box b = box.new(leftT, parentTop, rightT, parentBot,
+                         xloc=xloc.bar_time, border_color=sC, bgcolor=sBoxBG)
+                    array.push(cBx, b)
+                    label infoLb = label.new(labelT, labelY, clusterTxt,
+                         xloc=xloc.bar_time, yloc=yloc.price,
+                         style=label.style_label_left,
+                         color=sBG, textcolor=color.white, size=f_lbl_size())
+                    array.push(cLb, infoLb)
+                    f_hide_label(array.get(sLb, i))
+                    f_hide_sr_labels_in_range(parentBot, parentTop)
+                    for j = 0 to sz - 1
+                        if j != i
+                            string childTf = array.get(sTF, j)
+                            int childRank  = f_tf_rank(childTf)
+                            if childRank < parentRank and f_s_contains(i, j)
+                                float childEntry = array.get(sK, j)
+                                line nestedLn = line.new(leftT, childEntry, rightT, childEntry,
+                                     xloc=xloc.bar_time, color=sC, width=1,
+                                     style=line.style_dashed)
+                                array.push(cLn, nestedLn)
+                                label nestedSTfLb = label.new(rightT, childEntry, array.get(sTF, j),
+                                     xloc=xloc.bar_time, yloc=yloc.price,
+                                     style=label.style_label_left,
+                                     color=sBG, textcolor=color.white,
+                                     size=f_lbl_size(), textalign=text.align_center)
+                                array.push(cLb, nestedSTfLb)
+                                f_hide_label(array.get(sLb, j))
+
+// ══════════════════════════════════════════════════════════════════════════
+// TOUCH ALERT LOGIC
+// ══════════════════════════════════════════════════════════════════════════
+f_touchD() =>
+    bool res = false
+    int sz = array.size(dK)
+    if sz > 0
+        for i = 0 to sz - 1
+            if low <= array.get(dK, i) and high >= array.get(dB, i)
+                res := true
+    res
+
+f_touchS() =>
+    bool res = false
+    int sz = array.size(sK)
+    if sz > 0
+        for i = 0 to sz - 1
+            if high >= array.get(sK, i) and low <= array.get(sB, i)
+                res := true
+    res
+
+f_nearTapD(float pts) =>
+    bool res = false
+    float resDist = na
+    float resEntry = na
+    string resTF = ""
+    int sz = array.size(dK)
+    if sz > 0
+        for i = 0 to sz - 1
+            float entry = array.get(dK, i)
+            float bottom = array.get(dB, i)
+            bool armed = array.get(dNearArmed, i)
+            bool alreadyTapped = low <= entry and high >= bottom
+            bool approachingFromAbove = close > entry and low > entry
+            bool withinDistance = low - entry <= pts
+            bool movedAway = (i_wrRequireCloseAway ? close >= entry + i_wrBouncePts : high >= entry + i_wrBouncePts) and not alreadyTapped
+
+            if not armed and movedAway
+                array.set(dNearArmed, i, true)
+                armed := true
+
+            if armed and not alreadyTapped and approachingFromAbove and withinDistance
+                res := true
+                resDist := low - entry
+                resEntry := entry
+                resTF := array.get(dTF, i)
+                array.set(dNearArmed, i, false)
+    [res, resDist, resEntry, resTF]
+
+f_nearTapS(float pts) =>
+    bool res = false
+    float resDist = na
+    float resEntry = na
+    string resTF = ""
+    int sz = array.size(sK)
+    if sz > 0
+        for i = 0 to sz - 1
+            float entry = array.get(sK, i)
+            float top = array.get(sB, i)
+            bool armed = array.get(sNearArmed, i)
+            bool alreadyTapped = high >= entry and low <= top
+            bool approachingFromBelow = close < entry and high < entry
+            bool withinDistance = entry - high <= pts
+            bool movedAway = (i_wrRequireCloseAway ? close <= entry - i_wrBouncePts : low <= entry - i_wrBouncePts) and not alreadyTapped
+
+            if not armed and movedAway
+                array.set(sNearArmed, i, true)
+                armed := true
+
+            if armed and not alreadyTapped and approachingFromBelow and withinDistance
+                res := true
+                resDist := entry - high
+                resEntry := entry
+                resTF := array.get(sTF, i)
+                array.set(sNearArmed, i, false)
+    [res, resDist, resEntry, resTF]
+
+// ══════════════════════════════════════════════════════════════════════════
+// RUN
+// ══════════════════════════════════════════════════════════════════════════
+int prevDCount  = array.get(dNewZone,  0)
+int prevSCount  = array.get(sNewZone,  0)
+int prevSRCount = array.get(srNewLine, 0)
+
+last30  := f_process(p6Enabled ? false : i_30m, cfa, t0a, t1a, o0a, o1a, c0a, c1a, h0a, h1a, l0a, l1a, "30m",   last30)
+last1h  := f_process(p6Enabled ? true  : i_1h,  cfb, t0b, t1b, o0b, o1b, c0b, c1b, h0b, h1b, l0b, l1b, "1h",    last1h)
+last90  := f_process(p6Enabled ? false : i_90m, cfc, t0c, t1c, o0c, o1c, c0c, c1c, h0c, h1c, l0c, l1c, "90m",   last90)
+last2h  := f_process(p6Enabled ? false : i_2h,  cfd, t0d, t1d, o0d, o1d, c0d, c1d, h0d, h1d, l0d, l1d, "2h",    last2h)
+last3h  := f_process(p6Enabled ? false : i_3h,  cfe, t0e, t1e, o0e, o1e, c0e, c1e, h0e, h1e, l0e, l1e, "3h",    last3h)
+last4h  := f_process(p6Enabled ? true  : i_4h,  cff, t0f, t1f, o0f, o1f, c0f, c1f, h0f, h1f, l0f, l1f, "4h",    last4h)
+last6h  := f_process(p6Enabled ? false : i_6h,  cfg, t0g, t1g, o0g, o1g, c0g, c1g, h0g, h1g, l0g, l1g, "6h",    last6h)
+last12h := f_process(p6Enabled ? false : i_12h, cfh, t0h, t1h, o0h, o1h, c0h, c1h, h0h, h1h, l0h, l1h, "12h",   last12h)
+lastD   := f_process(p6Enabled ? true  : i_D,   cfi, t0i, t1i, o0i, o1i, c0i, c1i, h0i, h1i, l0i, l1i, "Daily", lastD)
+
+bool newDemandZone = array.get(dNewZone,  0) > prevDCount
+bool newSupplyZone = array.get(sNewZone,  0) > prevSCount
+bool newSRLine     = array.get(srNewLine, 0) > prevSRCount
+
+f_inv()
+f_p6_track_physical_touches()
+[wrNewLongRetest, wrLongEntry, wrLongZoneStop, wrLongTests, wrLongTF, wrLongZoneT, wrLongZoneTop, wrLongZoneBot, wrNewShortRetest, wrShortEntry, wrShortZoneStop, wrShortTests, wrShortTF, wrShortZoneT, wrShortZoneTop, wrShortZoneBot] = f_count_tests()
+f_update_line_ends()
+f_refresh_zone_labels()
+
+if i_showClusters
+    f_clear_clusters()
+    f_draw_demand_clusters()
+    f_draw_supply_clusters()
+else
+    f_clear_clusters()
+
+f_pin(dLb, dK)
+f_pin(sLb, sK)
+f_pin(srLb, srLv)
+
+demandTouch = f_touchD()
+supplyTouch = f_touchS()
+srBounce    = f_srBounce()
+
+[nearDemandTap, nearDemandDist, nearDemandEntry, nearDemandTapTF] = f_nearTapD(i_nearTapAlertPts)
+[nearSupplyTap, nearSupplyDist, nearSupplyEntry, nearSupplyTapTF] = f_nearTapS(i_nearTapAlertPts)
+nearDemandTapAlert = nearDemandTap and not nearDemandTap[1]
+nearSupplyTapAlert = nearSupplyTap and not nearSupplyTap[1]
+
+if nearDemandTapAlert and f_tf_enabled(nearDemandTapTF)
+    // ── DISCORD EMBED ──
+    alert('{"embeds":[{"title":"⚠️ Demand Near Tap — ' + syminfo.ticker + '","color":3066993,"fields":[{"name":"Timeframe","value":"' + nearDemandTapTF + '","inline":true},{"name":"Zone Entry","value":"' + f_fmt(nearDemandEntry) + '","inline":true},{"name":"Distance","value":"' + str.tostring(nearDemandDist, "#.##") + ' pts","inline":true},{"name":"Price","value":"' + f_fmt(close) + '","inline":true}]}]}', alert.freq_once_per_bar)
+if nearSupplyTapAlert and f_tf_enabled(nearSupplyTapTF)
+    // ── DISCORD EMBED ──
+    alert('{"embeds":[{"title":"⚠️ Supply Near Tap — ' + syminfo.ticker + '","color":15158332,"fields":[{"name":"Timeframe","value":"' + nearSupplyTapTF + '","inline":true},{"name":"Zone Entry","value":"' + f_fmt(nearSupplyEntry) + '","inline":true},{"name":"Distance","value":"' + str.tostring(nearSupplyDist, "#.##") + ' pts","inline":true},{"name":"Price","value":"' + f_fmt(close) + '","inline":true}]}]}', alert.freq_once_per_bar)
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// WIN RATE PERIOD RESET
+// ══════════════════════════════════════════════════════════════════════════
+int wrHour = hour(time, WR_TZ)
+int wrMinute = minute(time, WR_TZ)
+int wrPrevHour = hour(time[1], WR_TZ)
+int wrPrevMinute = minute(time[1], WR_TZ)
+
+int wrTradingTime = f_trading_time(time)
+int wrPrevTradingTime = not na(time[1]) ? f_trading_time(time[1]) : na
+int wrTradingMonthKey = year(wrTradingTime, WR_TZ) * 12 + month(wrTradingTime, WR_TZ)
+int wrPrevTradingMonthKey = not na(wrPrevTradingTime) ? year(wrPrevTradingTime, WR_TZ) * 12 + month(wrPrevTradingTime, WR_TZ) : na
+int wrTradingYearKey = year(wrTradingTime, WR_TZ)
+int wrPrevTradingYearKey = not na(wrPrevTradingTime) ? year(wrPrevTradingTime, WR_TZ) : na
+int wrTradingDayKey = year(wrTradingTime, WR_TZ) * 10000 + month(wrTradingTime, WR_TZ) * 100 + dayofmonth(wrTradingTime, WR_TZ)
+int wrPrevTradingDayKey = not na(wrPrevTradingTime) ? year(wrPrevTradingTime, WR_TZ) * 10000 + month(wrPrevTradingTime, WR_TZ) * 100 + dayofmonth(wrPrevTradingTime, WR_TZ) : na
+bool wrTradingDayChanged = not na(wrPrevTradingDayKey) and wrTradingDayKey != wrPrevTradingDayKey
+bool wrTradingMonthChanged = not na(wrPrevTradingMonthKey) and wrTradingMonthKey != wrPrevTradingMonthKey
+bool wrTradingYearChanged = not na(wrPrevTradingYearKey) and wrTradingYearKey != wrPrevTradingYearKey
+
+int wrRangeStartTs = i_wrStartTime
+int wrRangeEndTs = i_wrEndTime
+bool wrRangeValid = wrRangeEndTs >= wrRangeStartTs
+bool wrInRangePeriod = wrRangeValid and time >= wrRangeStartTs and time <= wrRangeEndTs
+bool wrRangePeriodStarts = i_wrPeriod == "WR Date Range" and wrInRangePeriod and not wrWasInRangePeriod
+bool wrRangePeriodEnds = i_wrPeriod == "WR Date Range" and not wrInRangePeriod and wrWasInRangePeriod
+wrWasInRangePeriod := wrInRangePeriod
+
+int wrTradeDOW = f_wr_trade_dow(time)
+int wrPrevTradeDOW = not na(time[1]) ? f_wr_trade_dow(time[1]) : na
+bool wrNewPnlWeek = not na(wrPrevTradeDOW) and wrTradeDOW == dayofweek.monday and wrPrevTradeDOW != dayofweek.monday
+
+bool wrNewPeriod = p6Enabled ? false : i_wrPeriod == "Daily" ? wrTradingDayChanged :
+     i_wrPeriod == "Weekly" ? wrNewPnlWeek :
+     i_wrPeriod == "Bi-Weekly" ? ta.change(time("2W")) != 0 :
+     i_wrPeriod == "Monthly" ? wrTradingMonthChanged :
+     i_wrPeriod == "Yearly" ? wrTradingYearChanged :
+     i_wrPeriod == "WR Date Range" ? wrRangePeriodStarts :
+     false
+
+int wrEffectiveCloseMinute = p6Enabled ? 15 * 60 : i_wrCloseHour * 60 + i_wrCloseMinute
+bool wrForceCloseNow = i_wrForceCloseAtTime and not na(time[1]) and
+     (wrPrevHour * 60 + wrPrevMinute) < wrEffectiveCloseMinute and
+     (wrHour * 60 + wrMinute) >= wrEffectiveCloseMinute
+
+bool wrNoTradeWindow = (wrHour * 60 + wrMinute) >= (15 * 60) and (wrHour * 60 + wrMinute) < (16 * 60)
+int wrCurrentSession = f_wr_session_id(time)
+bool wrSessionAllowed = p6Enabled or (wrCurrentSession == 1 and i_tradeAsia) or (wrCurrentSession == 2 and i_tradeLondon) or (wrCurrentSession == 3 and i_tradeNY)
+bool wrAllowPnLTrade = not wrNoTradeWindow and wrSessionAllowed
+
+bool wrUsingDateRange = not p6Enabled and i_wrPeriod == "WR Date Range"
+bool wrResetDayPnlDash = wrUsingDateRange ? wrRangePeriodStarts : i_wrPeriod == "Daily" ? wrTradingDayChanged : wrNewPnlWeek
+
+if wrResetDayPnlDash
+    wrPnlMon := 0.0
+    wrPnlTue := 0.0
+    wrPnlWed := 0.0
+    wrPnlThu := 0.0
+    wrPnlFri := 0.0
+    wrPnlAsia := 0.0
+    wrPnlLondon := 0.0
+    wrPnlNY := 0.0
+
+// EOD counters always reset every trading day regardless of WR period
+if wrTradingDayChanged
+    wrDailyWins := 0
+    wrDailyLosses := 0
+    wrDailyTrades := 0
+    wrDailyPnL := 0.0
+    wrEODPnlAsia := 0.0
+    wrEODPnlLondon := 0.0
+    wrEODPnlNY := 0.0
+    while array.size(wrDailyTradeLog) > 0
+        array.pop(wrDailyTradeLog)
+
+if i_wrShow and wrNewPeriod
+    wrWins := 0
+    wrLosses := 0
+    wrTrades := 0
+    wrLongWins := 0
+    wrLongLosses := 0
+    wrShortWins := 0
+    wrShortLosses := 0
+    wrGrossWinPnL := 0.0
+    wrGrossLossPnL := 0.0
+    wr30mWins := 0
+    wr30mLosses := 0
+    wr1hWins := 0
+    wr1hLosses := 0
+    wr90mWins := 0
+    wr90mLosses := 0
+    wr2hWins := 0
+    wr2hLosses := 0
+    wr3hWins := 0
+    wr3hLosses := 0
+    wr4hWins := 0
+    wr4hLosses := 0
+    wr6hWins := 0
+    wr6hLosses := 0
+    wr12hWins := 0
+    wr12hLosses := 0
+    wrDWins := 0
+    wrDLosses := 0
+    wrActiveFavPts := 0.0
+    wrActiveAdvPts := 0.0
+    wr30mFavSum := 0.0
+    wr30mAdvSum := 0.0
+    wr1hFavSum := 0.0
+    wr1hAdvSum := 0.0
+    wr90mFavSum := 0.0
+    wr90mAdvSum := 0.0
+    wr2hFavSum := 0.0
+    wr2hAdvSum := 0.0
+    wr3hFavSum := 0.0
+    wr3hAdvSum := 0.0
+    wr4hFavSum := 0.0
+    wr4hAdvSum := 0.0
+    wr6hFavSum := 0.0
+    wr6hAdvSum := 0.0
+    wr12hFavSum := 0.0
+    wr12hAdvSum := 0.0
+    wrDFavSum := 0.0
+    wrDAdvSum := 0.0
+    wr30mPnL := 0.0
+    wr1hPnL := 0.0
+    wr90mPnL := 0.0
+    wr2hPnL := 0.0
+    wr3hPnL := 0.0
+    wr4hPnL := 0.0
+    wr6hPnL := 0.0
+    wr12hPnL := 0.0
+    wrDPnL := 0.0
+    wrRealizedPnL := 0.0
+    wrPnlAsia := 0.0
+    wrPnlLondon := 0.0
+    wrPnlNY := 0.0
+    wrPnlBiWk1 := 0.0
+    wrPnlBiWk2 := 0.0
+    wrPnlWk1 := 0.0
+    wrPnlWk2 := 0.0
+    wrPnlWk3 := 0.0
+    wrPnlWk4 := 0.0
+    wrPnlWk5 := 0.0
+    wrPnlJan := 0.0
+    wrPnlFeb := 0.0
+    wrPnlMar := 0.0
+    wrPnlApr := 0.0
+    wrPnlMay := 0.0
+    wrPnlJun := 0.0
+    wrPnlJul := 0.0
+    wrPnlAug := 0.0
+    wrPnlSep := 0.0
+    wrPnlOct := 0.0
+    wrPnlNov := 0.0
+    wrPnlDec := 0.0
+    wrJanTrades := 0
+    wrFebTrades := 0
+    wrMarTrades := 0
+    wrAprTrades := 0
+    wrMayTrades := 0
+    wrJunTrades := 0
+    wrJulTrades := 0
+    wrAugTrades := 0
+    wrSepTrades := 0
+    wrOctTrades := 0
+    wrNovTrades := 0
+    wrDecTrades := 0
+    wrActive := false
+    wrLong := false
+    wrEntry := na
+    wrSL := na
+    wrTP := na
+    wrActiveDir := "-"
+    wrActiveTests := na
+    wrActiveTF := ""
+    wrEntryBar := na
+    wrEntryTime := na
+    wrActiveFavPts := 0.0
+    wrActiveAdvPts := 0.0
+    wrActiveNextZonePts := na
+    wrActiveZoneBox := na
+    wrActiveEntryBox := na
+    wrActiveEntryBadge := na
+    wrActiveTPLine := na
+    wrActiveSLLine := na
+    f_wr_clear_outcome_labels()
+    f_wr_clear_trade_drawings()
+
+// ══════════════════════════════════════════════════════════════════════════
+// WIN RATE ENGINE
+// ══════════════════════════════════════════════════════════════════════════
+bool wrPeriodActive = p6Enabled or i_wrPeriod != "WR Date Range" or wrInRangePeriod
+
+bool wrLongStartedAlert = false
+bool wrShortStartedAlert = false
+bool wrTPHitAlert = false
+bool wrSLHitAlert = false
+
+if i_wrShow and not p6Enabled and i_wrPeriod == "WR Date Range" and wrRangePeriodEnds
+    if not na(wrActiveZoneBox)
+        box.set_right(wrActiveZoneBox, bar_index)
+    if not na(wrActiveEntryBox)
+        box.set_right(wrActiveEntryBox, bar_index)
+    if not na(wrActiveTPLine)
+        line.set_x2(wrActiveTPLine, bar_index)
+    if not na(wrActiveSLLine)
+        line.set_x2(wrActiveSLLine, bar_index)
+    if not na(wrActiveEntryBadge)
+        label.delete(wrActiveEntryBadge)
+        wrActiveEntryBadge := na
+    wrActive := false
+    wrLong := false
+    wrEntry := na
+    wrSL := na
+    wrTP := na
+    wrActiveDir := "-"
+    wrActiveTests := na
+    wrActiveTF := ""
+    wrEntryBar := na
+    wrActiveFavPts := 0.0
+    wrActiveAdvPts := 0.0
+    wrActiveNextZonePts := na
+    wrActiveZoneBox := na
+    wrActiveEntryBox := na
+    wrActiveEntryBadge := na
+    wrActiveTPLine := na
+    wrActiveSLLine := na
+
+if i_wrShow and wrPeriodActive and wrActive
+    if not na(wrActiveZoneBox)
+        box.set_right(wrActiveZoneBox, bar_index)
+    if not na(wrActiveEntryBox)
+        box.set_right(wrActiveEntryBox, bar_index)
+    if not na(wrActiveTPLine)
+        line.set_x2(wrActiveTPLine, bar_index)
+    if not na(wrActiveSLLine)
+        line.set_x2(wrActiveSLLine, bar_index)
+
+    float wrFavNow = wrLong ? high - wrEntry : wrEntry - low
+    float wrAdvNow = wrLong ? wrEntry - low : high - wrEntry
+    wrActiveFavPts := math.max(wrActiveFavPts, math.max(wrFavNow, 0))
+    wrActiveAdvPts := math.max(wrActiveAdvPts, math.max(wrAdvNow, 0))
+
+    int wrEffectiveMinBars = p6Enabled ? 1 : i_wrMinBarsInTrade
+    bool wrCanExit = na(wrEntryBar) ? true : bar_index - wrEntryBar >= wrEffectiveMinBars
+    bool wrSLHit = wrCanExit and (wrLong ? low <= wrSL : high >= wrSL)
+    bool wrTPHit = wrCanExit and (wrLong ? high >= wrTP : low <= wrTP)
+    bool wrTimedClose = wrCanExit and wrForceCloseNow and not wrSLHit and not wrTPHit
+
+    if wrCanExit and (wrSLHit or wrTPHit or wrTimedClose)
+        wrTPHitAlert := wrTPHit and not wrSLHit
+        wrSLHitAlert := wrSLHit
+
+        float wrExitPrice = wrTimedClose ? close : (wrTPHit and not wrSLHit ? wrTP : wrSL)
+        float wrSignedPts = wrLong ? wrExitPrice - wrEntry : wrEntry - wrExitPrice
+        float wrEffectivePointValue = p6Enabled ? 2.0 : i_wrPointValue
+        int wrEffectiveContracts = p6Enabled ? 1 : i_wrContracts
+        float wrTradePnL = wrSignedPts * wrEffectivePointValue * wrEffectiveContracts
+        bool wrWin = wrTradePnL >= 0
+
+        if p6Enabled
+            p6ExitExport := wrExitPrice
+            p6ExitReasonExport := wrTimedClose ? 0.0 : wrTPHit and not wrSLHit ? 1.0 : -1.0
+
+        if wrTPHitAlert
+            // ── DISCORD EMBED ──
+            alert('{"embeds":[{"title":"✅ TP Hit — ' + syminfo.ticker + '","color":3066993,"fields":[{"name":"Symbol","value":"' + syminfo.ticker + '","inline":true},{"name":"Dir","value":"' + wrActiveDir + '","inline":true},{"name":"Timeframe","value":"' + wrActiveTF + '","inline":true},{"name":"Test","value":"T' + str.tostring(na(wrActiveTests) ? 0 : wrActiveTests) + '","inline":true},{"name":"Entry","value":"' + f_fmt(wrEntry) + '","inline":true},{"name":"TP","value":"' + f_fmt(wrTP) + '","inline":true},{"name":"PnL","value":"' + f_money_short(wrTradePnL) + '","inline":true}]}]}', alert.freq_once_per_bar)
+        if wrSLHitAlert
+            // ── DISCORD EMBED ──
+            alert('{"embeds":[{"title":"🛑 SL Hit — ' + syminfo.ticker + '","color":15158332,"fields":[{"name":"Symbol","value":"' + syminfo.ticker + '","inline":true},{"name":"Dir","value":"' + wrActiveDir + '","inline":true},{"name":"Timeframe","value":"' + wrActiveTF + '","inline":true},{"name":"Test","value":"T' + str.tostring(na(wrActiveTests) ? 0 : wrActiveTests) + '","inline":true},{"name":"Entry","value":"' + f_fmt(wrEntry) + '","inline":true},{"name":"SL","value":"' + f_fmt(wrSL) + '","inline":true},{"name":"PnL","value":"' + f_money_short(wrTradePnL) + '","inline":true}]}]}', alert.freq_once_per_bar)
+
+        if wrWin
+            wrWins += 1
+        else
+            wrLosses += 1
+        wrTrades += 1
+        wrDailyTrades += 1
+        wrDailyPnL += wrTradePnL
+        int eodSession = f_wr_session_id(time)
+        if eodSession == 1
+            wrEODPnlAsia += wrTradePnL
+        else if eodSession == 2
+            wrEODPnlLondon += wrTradePnL
+        else
+            wrEODPnlNY += wrTradePnL
+        if wrWin
+            wrDailyWins += 1
+        else
+            wrDailyLosses += 1
+        string tradeEmoji = wrTimedClose ? "⏰" : wrWin ? "✅" : "🛑"
+        string entryTimeStr = not na(wrEntryTime) ? str.tostring(hour(wrEntryTime, WR_TZ), "00") + ":" + str.tostring(minute(wrEntryTime, WR_TZ), "00") : "?"
+        string exitTimeStr = str.tostring(hour(time, WR_TZ)) + ":" + (minute(time, WR_TZ) < 10 ? "0" : "") + str.tostring(minute(time, WR_TZ))
+        string tradeLogEntry = tradeEmoji + " " + wrActiveDir + " " + wrActiveTF + " T" + str.tostring(na(wrActiveTests) ? 1 : wrActiveTests) + " | " + entryTimeStr + "→" + exitTimeStr + " | " + f_money_short(wrTradePnL)
+        array.push(wrDailyTradeLog, tradeLogEntry)
+
+        if wrTradePnL > 0
+            wrGrossWinPnL += wrTradePnL
+        else if wrTradePnL < 0
+            wrGrossLossPnL += math.abs(wrTradePnL)
+
+        if wrLong
+            if wrWin
+                wrLongWins += 1
+            else
+                wrLongLosses += 1
+        else
+            if wrWin
+                wrShortWins += 1
+            else
+                wrShortLosses += 1
+
+        if wrActiveTF == "30m"
+            if wrWin
+                wr30mWins += 1
+            else
+                wr30mLosses += 1
+            wr30mFavSum += wrActiveFavPts
+            wr30mAdvSum += wrActiveAdvPts
+            wr30mPnL += wrTradePnL
+        else if wrActiveTF == "1h"
+            if wrWin
+                wr1hWins += 1
+            else
+                wr1hLosses += 1
+            wr1hFavSum += wrActiveFavPts
+            wr1hAdvSum += wrActiveAdvPts
+            wr1hPnL += wrTradePnL
+        else if wrActiveTF == "90m"
+            if wrWin
+                wr90mWins += 1
+            else
+                wr90mLosses += 1
+            wr90mFavSum += wrActiveFavPts
+            wr90mAdvSum += wrActiveAdvPts
+            wr90mPnL += wrTradePnL
+        else if wrActiveTF == "2h"
+            if wrWin
+                wr2hWins += 1
+            else
+                wr2hLosses += 1
+            wr2hFavSum += wrActiveFavPts
+            wr2hAdvSum += wrActiveAdvPts
+            wr2hPnL += wrTradePnL
+        else if wrActiveTF == "3h"
+            if wrWin
+                wr3hWins += 1
+            else
+                wr3hLosses += 1
+            wr3hFavSum += wrActiveFavPts
+            wr3hAdvSum += wrActiveAdvPts
+            wr3hPnL += wrTradePnL
+        else if wrActiveTF == "4h"
+            if wrWin
+                wr4hWins += 1
+            else
+                wr4hLosses += 1
+            wr4hFavSum += wrActiveFavPts
+            wr4hAdvSum += wrActiveAdvPts
+            wr4hPnL += wrTradePnL
+        else if wrActiveTF == "6h"
+            if wrWin
+                wr6hWins += 1
+            else
+                wr6hLosses += 1
+            wr6hFavSum += wrActiveFavPts
+            wr6hAdvSum += wrActiveAdvPts
+            wr6hPnL += wrTradePnL
+        else if wrActiveTF == "12h"
+            if wrWin
+                wr12hWins += 1
+            else
+                wr12hLosses += 1
+            wr12hFavSum += wrActiveFavPts
+            wr12hAdvSum += wrActiveAdvPts
+            wr12hPnL += wrTradePnL
+        else if wrActiveTF == "Daily"
+            if wrWin
+                wrDWins += 1
+            else
+                wrDLosses += 1
+            wrDFavSum += wrActiveFavPts
+            wrDAdvSum += wrActiveAdvPts
+            wrDPnL += wrTradePnL
+
+        wrRealizedPnL += wrTradePnL
+
+
+
+        int wrCloseDOW = f_wr_trade_dow(time)
+        if wrCloseDOW == dayofweek.monday
+            wrPnlMon += wrTradePnL
+        else if wrCloseDOW == dayofweek.tuesday
+            wrPnlTue += wrTradePnL
+        else if wrCloseDOW == dayofweek.wednesday
+            wrPnlWed += wrTradePnL
+        else if wrCloseDOW == dayofweek.thursday
+            wrPnlThu += wrTradePnL
+        else if wrCloseDOW == dayofweek.friday
+            wrPnlFri += wrTradePnL
+
+        if i_wrPeriod == "Daily"
+            int wrSession = f_wr_session_id(time)
+            if wrSession == 1
+                wrPnlAsia += wrTradePnL
+            else if wrSession == 2
+                wrPnlLondon += wrTradePnL
+            else
+                wrPnlNY += wrTradePnL
+
+        if i_wrPeriod == "Bi-Weekly"
+            int wrBiWeekStartDayTs = f_trading_week_start_day_midnight(time("2W"))
+            int wrBiTradeWeekStartTs = f_trading_week_start_day_midnight(time)
+            int wrBiBucket = int(math.floor((wrBiTradeWeekStartTs - wrBiWeekStartDayTs) / WR_WEEK_MS)) + 1
+            if wrBiBucket <= 1
+                wrPnlBiWk1 += wrTradePnL
+            else
+                wrPnlBiWk2 += wrTradePnL
+
+        bool wrUsePeriodWeekBuckets = i_wrPeriod == "Monthly" or i_wrPeriod == "WR Date Range"
+        int wrBucketStartDayTs = i_wrPeriod == "WR Date Range" ? f_calendar_day_midnight(i_wrStartTime) : f_trading_month_start_day_midnight(time)
+        int wrBucketEndDayTs = i_wrPeriod == "WR Date Range" ? f_calendar_day_midnight(i_wrEndTime) : f_trading_month_end_day_midnight(time)
+        int wrTradeDayTs = f_trading_day_midnight(time)
+        bool wrTradeInsideBucketRange = wrTradeDayTs >= wrBucketStartDayTs and wrTradeDayTs <= wrBucketEndDayTs
+        int wrBucketStartWeekTs = f_trading_week_start_day_midnight(wrBucketStartDayTs)
+        int wrTradeWeekStartTs = f_trading_week_start_day_midnight(time)
+        int wrWeekBucket = wrUsePeriodWeekBuckets ? int(math.floor((wrTradeWeekStartTs - wrBucketStartWeekTs) / WR_WEEK_MS)) + 1 : na
+        if wrUsePeriodWeekBuckets and wrTradeInsideBucketRange and not na(wrWeekBucket)
+            if wrWeekBucket <= 1
+                wrPnlWk1 += wrTradePnL
+            else if wrWeekBucket == 2
+                wrPnlWk2 += wrTradePnL
+            else if wrWeekBucket == 3
+                wrPnlWk3 += wrTradePnL
+            else if wrWeekBucket == 4
+                wrPnlWk4 += wrTradePnL
+            else
+                wrPnlWk5 += wrTradePnL
+
+        if i_wrPeriod == "Yearly"
+            int wrTradeMonth = month(f_trading_time(time), WR_TZ)
+            if wrTradeMonth == 1
+                wrPnlJan += wrTradePnL
+                wrJanTrades += 1
+            else if wrTradeMonth == 2
+                wrPnlFeb += wrTradePnL
+                wrFebTrades += 1
+            else if wrTradeMonth == 3
+                wrPnlMar += wrTradePnL
+                wrMarTrades += 1
+            else if wrTradeMonth == 4
+                wrPnlApr += wrTradePnL
+                wrAprTrades += 1
+            else if wrTradeMonth == 5
+                wrPnlMay += wrTradePnL
+                wrMayTrades += 1
+            else if wrTradeMonth == 6
+                wrPnlJun += wrTradePnL
+                wrJunTrades += 1
+            else if wrTradeMonth == 7
+                wrPnlJul += wrTradePnL
+                wrJulTrades += 1
+            else if wrTradeMonth == 8
+                wrPnlAug += wrTradePnL
+                wrAugTrades += 1
+            else if wrTradeMonth == 9
+                wrPnlSep += wrTradePnL
+                wrSepTrades += 1
+            else if wrTradeMonth == 10
+                wrPnlOct += wrTradePnL
+                wrOctTrades += 1
+            else if wrTradeMonth == 11
+                wrPnlNov += wrTradePnL
+                wrNovTrades += 1
+            else if wrTradeMonth == 12
+                wrPnlDec += wrTradePnL
+                wrDecTrades += 1
+
+        if not na(wrActiveEntryBadge)
+            label.delete(wrActiveEntryBadge)
+            wrActiveEntryBadge := na
+
+        if i_wrShowOutcomeLabels and not na(wrEntryBar) and not na(wrEntry)
+            string wrOutcomeTxt = (wrTimedClose ? "CLOSE " : "") + (wrWin ? "WIN " : "LOSS ") + wrActiveDir + (wrActiveTF == "" ? "" : " " + wrActiveTF) + (na(wrActiveTests) ? "" : " T" + str.tostring(wrActiveTests))
+            color wrOutcomeColor = wrWin ? color.new(dC, 0) : color.new(sC, 0)
+            label wrLb = label.new(wrEntryBar, wrEntry, wrOutcomeTxt,
+                 xloc=xloc.bar_index, yloc=yloc.price,
+                 style=wrLong ? label.style_label_up : label.style_label_down,
+                 color=wrOutcomeColor, textcolor=color.white,
+                 size=size.tiny, textalign=text.align_center)
+            array.unshift(wrOutcomeLb, wrLb)
+            f_wr_trim_outcome_labels()
+
+        wrActive := false
+        wrActiveDir := "-"
+        wrEntry := na
+        wrSL := na
+        wrTP := na
+        wrActiveTests := na
+        wrActiveTF := ""
+        wrEntryBar := na
+        wrActiveFavPts := 0.0
+        wrActiveAdvPts := 0.0
+        wrActiveNextZonePts := na
+        wrActiveZoneBox := na
+        wrActiveEntryBox := na
+        wrActiveTPLine := na
+        wrActiveSLLine := na
+
+if i_wrShow and wrPeriodActive and not wrActive and wrAllowPnLTrade
+    if wrNewLongRetest
+        [longTmpTP, longTmpSL] = f_wr_levels(true, wrLongEntry, wrLongZoneStop, wrLongTF)
+        if not na(longTmpTP) and not na(longTmpSL)
+            wrActive := true
+            wrLongStartedAlert := true
+            wrLong := true
+            wrActiveDir := "LONG"
+            wrEntry := wrLongEntry
+            wrTP := longTmpTP
+            wrSL := longTmpSL
+            wrActiveTests := wrLongTests
+            wrActiveTF := wrLongTF
+            wrEntryBar := bar_index
+            wrEntryTime := time
+            if p6Enabled
+                p6EntryExport := wrEntry
+                p6DirectionExport := 1.0
+                p6LastRoomR := f_p6_opposing_room_r(true, wrEntry, wrLongZoneStop)
+                p6RoomRExport := p6LastRoomR
+                p6LastTouchEpisode := 1
+                p6TouchEpisodeExport := 1.0
+                p6ZoneCreatedExport := wrLongZoneT / 1000.0
+                p6LastDecision := na(p6LastRoomR) ? "LONG · open sky" : "LONG · " + str.tostring(p6LastRoomR, "#.##") + "R room"
+            wrActiveFavPts := 0.0
+            wrActiveAdvPts := 0.0
+            float wrLongNextOppZone = f_nextSupAbove(wrEntry)
+            wrActiveNextZonePts := na(wrLongNextOppZone) ? na : math.abs(wrLongNextOppZone - wrEntry)
+            wrActiveZoneBox := f_wr_create_entry_box(true, wrLongZoneTop, wrLongZoneBot)
+            wrActiveEntryBox := na
+            wrActiveEntryBadge := f_wr_create_active_entry_badge(true, wrEntry, wrActiveDir, wrLongTF, wrLongTests)
+            wrActiveTPLine := f_wr_create_trade_line(wrTP, color.new(#4DA3FF, 0))
+            wrActiveSLLine := f_wr_create_trade_line(wrSL, color.new(#F59E0B, 0))
+            array.unshift(wrZoneBx, wrActiveZoneBox)
+            array.unshift(wrEntryBadgeLb, wrActiveEntryBadge)
+            array.unshift(wrTPLineArr, wrActiveTPLine)
+            array.unshift(wrSLLineArr, wrActiveSLLine)
+            f_wr_trim_trade_drawings()
+            // ── DISCORD EMBED ──
+            alert('{"embeds":[{"title":"🟢 Active LONG — ' + syminfo.ticker + '","color":3066993,"fields":[{"name":"Symbol","value":"' + syminfo.ticker + '","inline":true},{"name":"Timeframe","value":"' + wrLongTF + '","inline":true},{"name":"Test","value":"T' + str.tostring(wrLongTests) + '","inline":true},{"name":"Entry","value":"' + f_fmt(wrEntry) + '","inline":true},{"name":"TP","value":"' + f_fmt(wrTP) + '","inline":true},{"name":"SL","value":"' + f_fmt(wrSL) + '","inline":true}]}]}', alert.freq_once_per_bar)
+    else if wrNewShortRetest
+        [shortTmpTP, shortTmpSL] = f_wr_levels(false, wrShortEntry, wrShortZoneStop, wrShortTF)
+        if not na(shortTmpTP) and not na(shortTmpSL)
+            wrActive := true
+            wrShortStartedAlert := true
+            wrLong := false
+            wrActiveDir := "SHORT"
+            wrEntry := wrShortEntry
+            wrTP := shortTmpTP
+            wrSL := shortTmpSL
+            wrActiveTests := wrShortTests
+            wrActiveTF := wrShortTF
+            wrEntryBar := bar_index
+            wrEntryTime := time
+            if p6Enabled
+                p6EntryExport := wrEntry
+                p6DirectionExport := -1.0
+                p6LastRoomR := f_p6_opposing_room_r(false, wrEntry, wrShortZoneStop)
+                p6RoomRExport := p6LastRoomR
+                p6LastTouchEpisode := 1
+                p6TouchEpisodeExport := 1.0
+                p6ZoneCreatedExport := wrShortZoneT / 1000.0
+                p6LastDecision := na(p6LastRoomR) ? "SHORT · open sky" : "SHORT · " + str.tostring(p6LastRoomR, "#.##") + "R room"
+            wrActiveFavPts := 0.0
+            wrActiveAdvPts := 0.0
+            float wrShortNextOppZone = f_nextDemBelow(wrEntry)
+            wrActiveNextZonePts := na(wrShortNextOppZone) ? na : math.abs(wrEntry - wrShortNextOppZone)
+            wrActiveZoneBox := f_wr_create_entry_box(false, wrShortZoneTop, wrShortZoneBot)
+            wrActiveEntryBox := na
+            wrActiveEntryBadge := f_wr_create_active_entry_badge(false, wrEntry, wrActiveDir, wrShortTF, wrShortTests)
+            wrActiveTPLine := f_wr_create_trade_line(wrTP, color.new(#4DA3FF, 0))
+            wrActiveSLLine := f_wr_create_trade_line(wrSL, color.new(#F59E0B, 0))
+            array.unshift(wrZoneBx, wrActiveZoneBox)
+            array.unshift(wrEntryBadgeLb, wrActiveEntryBadge)
+            array.unshift(wrTPLineArr, wrActiveTPLine)
+            array.unshift(wrSLLineArr, wrActiveSLLine)
+            f_wr_trim_trade_drawings()
+            // ── DISCORD EMBED ──
+            alert('{"embeds":[{"title":"🔴 Active SHORT — ' + syminfo.ticker + '","color":15158332,"fields":[{"name":"Symbol","value":"' + syminfo.ticker + '","inline":true},{"name":"Timeframe","value":"' + wrShortTF + '","inline":true},{"name":"Test","value":"T' + str.tostring(wrShortTests) + '","inline":true},{"name":"Entry","value":"' + f_fmt(wrEntry) + '","inline":true},{"name":"TP","value":"' + f_fmt(wrTP) + '","inline":true},{"name":"SL","value":"' + f_fmt(wrSL) + '","inline":true}]}]}', alert.freq_once_per_bar)
+
+// ══════════════════════════════════════════════════════════════════════════
+// EOD REPORT — fires at 4:00 PM CT (market close)
+// ══════════════════════════════════════════════════════════════════════════
+// ── EOD REPORT ──
+bool wrEODTrigger = not na(time[1]) and
+     (wrPrevHour * 60 + wrPrevMinute) < (i_eodHour * 60 + i_eodMinute) and
+     (wrHour * 60 + wrMinute) >= (i_eodHour * 60 + i_eodMinute)
+
+if wrEODTrigger and wrDailyTrades > 0
+    float eodWR = wrDailyWins * 100.0 / wrDailyTrades
+    string eodDate = str.tostring(month(time, WR_TZ)) + "/" + str.tostring(dayofmonth(time, WR_TZ)) + "/" + str.tostring(year(time, WR_TZ))
+    string eodWRStr = str.tostring(eodWR, "#.##") + "%"
+    string eodRecordStr = str.tostring(wrDailyWins) + "W / " + str.tostring(wrDailyLosses) + "L"
+    string eodPnLStr = f_money_short(wrDailyPnL)
+    int eodColor = wrDailyPnL >= 0 ? 3066993 : 15158332
+    // ── DISCORD EMBED 1 — Summary ──
+    alert('{"embeds":[{"title":"📊 EOD Report — ' + syminfo.ticker + ' — ' + eodDate + '","color":' + str.tostring(eodColor) + ',"fields":[{"name":"Trades","value":"' + str.tostring(wrDailyTrades) + '","inline":true},{"name":"Record","value":"' + eodRecordStr + '","inline":true},{"name":"Win Rate","value":"' + eodWRStr + '","inline":true},{"name":"Asia","value":"' + f_money_short(wrEODPnlAsia) + '","inline":true},{"name":"London","value":"' + f_money_short(wrEODPnlLondon) + '","inline":true},{"name":"New York","value":"' + f_money_short(wrEODPnlNY) + '","inline":true},{"name":"Day PnL","value":"' + eodPnLStr + '","inline":false}]}]}', alert.freq_once_per_bar)
+
+    // ── DISCORD EMBED 2 — Trade Log (batched in groups of 8 per message) ──
+    int totalTrades = array.size(wrDailyTradeLog)
+    if totalTrades > 0
+        // Batch 1: trades 1-8
+        string batch1 = ""
+        int b1end = math.min(totalTrades, 8)
+        for i = 0 to b1end - 1
+            batch1 := batch1 + (i > 0 ? "\n" : "") + array.get(wrDailyTradeLog, i)
+        alert('{"embeds":[{"title":"📋 Trade Log — ' + syminfo.ticker + ' — ' + eodDate + ' (1-' + str.tostring(b1end) + ')","color":3447003,"fields":[{"name":"Trades","value":"' + batch1 + '","inline":false}]}]}', alert.freq_once_per_bar)
+
+    if totalTrades > 8
+        // Batch 2: trades 9-16
+        string batch2 = ""
+        int b2end = math.min(totalTrades, 16)
+        for i = 8 to b2end - 1
+            batch2 := batch2 + (i > 8 ? "\n" : "") + array.get(wrDailyTradeLog, i)
+        alert('{"embeds":[{"title":"📋 Trade Log — ' + syminfo.ticker + ' — ' + eodDate + ' (' + str.tostring(9) + '-' + str.tostring(b2end) + ')","color":3447003,"fields":[{"name":"Trades","value":"' + batch2 + '","inline":false}]}]}', alert.freq_once_per_bar)
+
+    if totalTrades > 16
+        // Batch 3: trades 17-24
+        string batch3 = ""
+        int b3end = math.min(totalTrades, 24)
+        for i = 16 to b3end - 1
+            batch3 := batch3 + (i > 16 ? "\n" : "") + array.get(wrDailyTradeLog, i)
+        alert('{"embeds":[{"title":"📋 Trade Log — ' + syminfo.ticker + ' — ' + eodDate + ' (' + str.tostring(17) + '-' + str.tostring(b3end) + ')","color":3447003,"fields":[{"name":"Trades","value":"' + batch3 + '","inline":false}]}]}', alert.freq_once_per_bar)
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// ALERTS
+// ══════════════════════════════════════════════════════════════════════════
+alertcondition(newDemandZone,       "New Demand Zone Created",   "A new demand zone was detected")
+alertcondition(newSupplyZone,       "New Supply Zone Created",   "A new supply zone was detected")
+alertcondition(newSRLine,           "Zone Broken → S/R Created", "A zone was broken and converted to a S/R level")
+alertcondition(srBounce,            "Price Bounced off S/R",     "Price candle touched a S/R level")
+alertcondition(nearDemandTapAlert,  "Demand Zone Near Tap",     "Price is approaching a demand zone within the near-zone alert distance")
+alertcondition(nearSupplyTapAlert,  "Supply Zone Near Tap",     "Price is approaching a supply zone within the near-zone alert distance")
+alertcondition(wrLongStartedAlert,  "Active Long Started",      "An active long retest trade started")
+alertcondition(wrShortStartedAlert, "Active Short Started",     "An active short retest trade started")
+alertcondition(wrTPHitAlert,        "TP Hit",                   "An active retest trade hit take profit")
+alertcondition(wrSLHitAlert,        "SL Hit",                   "An active retest trade hit stop loss")
+
+// Export these fields with TradingView's chart-data export for Python parity checks.
+plot(p6Enabled ? p6EntryExport : na, "P6 · entry", display=display.data_window)
+plot(p6Enabled ? p6ExitExport : na, "P6 · exit", display=display.data_window)
+plot(p6Enabled ? p6DirectionExport : na, "P6 · direction (+1/-1)", display=display.data_window)
+plot(p6Enabled ? p6RoomRExport : na, "P6 · opposing room R", display=display.data_window)
+plot(p6Enabled ? p6TouchEpisodeExport : na, "P6 · physical touch episode", display=display.data_window)
+plot(p6Enabled ? p6ZoneCreatedExport : na, "P6 · zone created Unix seconds", display=display.data_window)
+plot(p6Enabled ? p6ExitReasonExport : na, "P6 · exit reason (+1 TP/-1 SL/0 close)", display=display.data_window)
+
+// ══════════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════════════
+var table p6Audit = table.new(position.top_center, 2, 5, border_width=1)
+if barstate.islast
+    if i_p6ShowAudit
+        color p6Header = p6Enabled ? color.new(#4DA3FF, 15) : color.new(color.gray, 35)
+        table.cell(p6Audit, 0, 0, "PHASE 6", text_color=color.white, bgcolor=p6Header)
+        table.cell(p6Audit, 1, 0, p6Enabled ? "LOCKED" : "CONTROL", text_color=color.white, bgcolor=p6Header)
+        table.cell(p6Audit, 0, 1, "Chart", text_color=color.silver, bgcolor=color.new(color.black, 15))
+        table.cell(p6Audit, 1, 1, p6OneMinuteChart ? "1m · OK" : "USE 1m", text_color=p6OneMinuteChart ? color.lime : color.orange, bgcolor=color.new(color.black, 15))
+        table.cell(p6Audit, 0, 2, "Entry zones", text_color=color.silver, bgcolor=color.new(color.black, 15))
+        table.cell(p6Audit, 1, 2, p6Enabled ? "1h · first episode" : "Original", text_color=color.white, bgcolor=color.new(color.black, 15))
+        table.cell(p6Audit, 0, 3, "Room rule", text_color=color.silver, bgcolor=color.new(color.black, 15))
+        table.cell(p6Audit, 1, 3, p6Enabled ? "≥" + str.tostring(i_p6MinOpposingRoomR, "#.##") + "R / none" : "Off", text_color=color.white, bgcolor=color.new(color.black, 15))
+        table.cell(p6Audit, 0, 4, "Last entry", text_color=color.silver, bgcolor=color.new(color.black, 15))
+        table.cell(p6Audit, 1, 4, p6LastDecision, text_color=color.white, bgcolor=color.new(color.black, 15))
+    else
+        table.clear(p6Audit, 0, 0, 1, 4)
+
+if i_showDash
+    float ns = f_nearestSup(sK)
+    float nd = f_nearestDem(dK)
+    int ndTC = f_nearestDemTC()
+    int nsTC = f_nearestSupTC()
+
+    string nsStr   = na(ns)   ? "  -" : "  " + f_fmt(ns)
+    string ndStr   = na(nd)   ? "  -" : "  " + f_fmt(nd)
+    string ndTCStr = na(ndTC) ? "-"   : str.tostring(ndTC) + "x"
+    string nsTCStr = na(nsTC) ? "-"   : str.tostring(nsTC) + "x"
+
+    float wrRate = wrTrades > 0 ? wrWins * 100.0 / wrTrades : na
+    string wrRateStr = wrTrades > 0 ? str.tostring(wrRate, "#.##") + "%  " : "-  "
+    float wrProfitFactor = wrGrossLossPnL > 0 ? wrGrossWinPnL / wrGrossLossPnL : na
+    string wrProfitFactorStr = wrGrossLossPnL > 0 ? str.tostring(wrProfitFactor, "#.##") + "  " : wrGrossWinPnL > 0 ? "∞  " : "-  "
+    string wrRateOnlyStr = wrTrades > 0 ? str.tostring(wrRate, "#.##") + "%" : "-"
+    string wrProfitFactorOnlyStr = wrGrossLossPnL > 0 ? str.tostring(wrProfitFactor, "#.##") : wrGrossWinPnL > 0 ? "∞" : "-"
+    string wrRatePfStr = wrRateOnlyStr + " | PF " + wrProfitFactorOnlyStr + "  "
+    string wrCountStr = str.tostring(wrWins) + "W / " + str.tostring(wrLosses) + "L  "
+    int wrLongTrades = wrLongWins + wrLongLosses
+    int wrShortTrades = wrShortWins + wrShortLosses
+    string wrLongRateStr = wrLongTrades > 0 ? str.tostring(wrLongWins * 100.0 / wrLongTrades, "#.##") + "%" : "-"
+    string wrShortRateStr = wrShortTrades > 0 ? str.tostring(wrShortWins * 100.0 / wrShortTrades, "#.##") + "%" : "-"
+    string wrLongShortWRStr = "L " + wrLongRateStr + " | S " + wrShortRateStr + "  "
+    string wrPnLStr = f_money(wrRealizedPnL)
+    string wrActiveStr = wrActive ? wrActiveDir + " " + wrActiveTF + " | T" + str.tostring(wrActiveTests) + "  " : "-  "
+    float wrTPProgressPts = wrActive and not na(wrEntry) ? (wrLong ? close - wrEntry : wrEntry - close) : na
+    float wrTPTotalPts = wrActive and not na(wrTP) and not na(wrEntry) ? math.abs(wrTP - wrEntry) : na
+    string wrTPStr = wrActive and not na(wrTP) ? f_fmt(wrTP) : "-"
+    string wrTPProgressStr = wrActive and not na(wrTPProgressPts) ? str.tostring(wrTPProgressPts, "#.##") : "-"
+    string wrTPTotalStr = wrActive and not na(wrTPTotalPts) ? str.tostring(wrTPTotalPts, "#.##") : "-"
+    string wrTPTrackStr = wrActive and not na(wrTPTotalPts) ? wrTPStr + " | " + wrTPProgressStr + "/" + wrTPTotalStr + "pts  " : "-  "
+    float wrUnrealizedPts = wrActive ? (wrLong ? close - wrEntry : wrEntry - close) : na
+    float wrUnrealizedPnL = wrActive ? wrUnrealizedPts * (p6Enabled ? 2.0 : i_wrPointValue) * (p6Enabled ? 1 : i_wrContracts) : na
+    string wrUnrealizedPnLStr = wrActive ? f_money(wrUnrealizedPnL) : "-  "
+    string wrRangeStr = f_date_full(i_wrStartTime) + "-" + f_date_full(i_wrEndTime)
+    string wrPeriodStr = p6Enabled ? "P6 forward · all time  " : i_wrPeriod == "Daily" ? "Daily" : i_wrPeriod == "WR Date Range" ? wrRangeStr + "  " : i_wrPeriod + "  "
+    float wrWeeklyPnL = wrPnlMon + wrPnlTue + wrPnlWed + wrPnlThu + wrPnlFri
+    float wrDailySessionTotal = wrPnlAsia + wrPnlLondon + wrPnlNY
+    float wrBiWeeklyTotal = wrPnlBiWk1 + wrPnlBiWk2
+    float wrPeriodWeeksTotal = wrPnlWk1 + wrPnlWk2 + wrPnlWk3 + wrPnlWk4 + wrPnlWk5
+    float wrYearMonthsTotal = wrPnlJan + wrPnlFeb + wrPnlMar + wrPnlApr + wrPnlMay + wrPnlJun + wrPnlJul + wrPnlAug + wrPnlSep + wrPnlOct + wrPnlNov + wrPnlDec
+    string wrLoadedRangeStr = f_date_full(wrFirstLoadedTs) + "-" + f_date_full(time) + "  "
+    string wrLoadedBarsStr = str.tostring(bar_index + 1) + " bars  "
+
+    bool wrShowDailySessions = i_wrPeriod == "Daily"
+    bool wrShowBiWeeklyBuckets = i_wrPeriod == "Bi-Weekly"
+    bool wrShowPeriodWeeks = i_wrPeriod == "Monthly" or i_wrPeriod == "WR Date Range"
+    bool wrShowYearMonths = i_wrPeriod == "Yearly"
+    bool wrShowAllTimeLoadedData = i_wrPeriod == "All Time"
+    int wrYearMonthLimit = month(f_trading_time(time), WR_TZ)
+
+    int wrDashMonthlyStartTs = f_trading_month_start_day_midnight(time)
+    int wrDashMonthlyEndTs = f_trading_month_end_day_midnight(time)
+    int wrDashWeekStartTs = i_wrPeriod == "WR Date Range" ? f_calendar_day_midnight(i_wrStartTime) : wrDashMonthlyStartTs
+    int wrDashWeekEndTs = i_wrPeriod == "WR Date Range" ? f_calendar_day_midnight(i_wrEndTime) : wrDashMonthlyEndTs
+    string wrWk1Lbl = f_week_range_label(1, wrDashWeekStartTs, wrDashWeekEndTs)
+    string wrWk2Lbl = f_week_range_label(2, wrDashWeekStartTs, wrDashWeekEndTs)
+    string wrWk3Lbl = f_week_range_label(3, wrDashWeekStartTs, wrDashWeekEndTs)
+    string wrWk4Lbl = f_week_range_label(4, wrDashWeekStartTs, wrDashWeekEndTs)
+    string wrWk5Lbl = f_week_range_label(5, wrDashWeekStartTs, wrDashWeekEndTs)
+
+    int wrBiDashStartTs = f_trading_week_start_day_midnight(time("2W"))
+    int wrBiDashEndTs = wrBiDashStartTs + 13 * WR_ONE_DAY_MS
+    string wrBiWk1Lbl = f_week_range_label(1, wrBiDashStartTs, wrBiDashEndTs)
+    string wrBiWk2Lbl = f_week_range_label(2, wrBiDashStartTs, wrBiDashEndTs)
+
+    float wrRiskPts = wrActive and not na(wrEntry) and not na(wrSL) ? math.abs(wrEntry - wrSL) : na
+    float wrRewardPts = wrActive and not na(wrEntry) and not na(wrTP) ? math.abs(wrTP - wrEntry) : na
+    float wrRR = wrActive and not na(wrRiskPts) and wrRiskPts > 0 ? wrRewardPts / wrRiskPts : na
+    string wrRRStr = wrActive and not na(wrRR) ? "1:" + str.tostring(wrRR, "#.##") + " | " + str.tostring(wrRiskPts, "#.##") + " pts" : "-  "
+
+    color hBG   = #1C2333
+    color rBG   = color.new(#0D1117, 5)
+    color dimTx = #7A8099
+    color wrPFColor = wrTrades > 0 ? (wrGrossLossPnL == 0 and wrGrossWinPnL > 0 ? dC : wrProfitFactor >= 1.0 ? dC : sC) : dimTx
+    color wrTPTrackColor = wrActive and not na(wrTPProgressPts) ? (wrTPProgressPts >= 0 ? dC : sC) : dimTx
+    string sz   = f_lbl_size()
+
+    bool showSummaryDash = not i_compact or i_mobileDashMode != "TF Only"
+    bool showTFDash = not i_compact or i_mobileDashMode != "Summary Only"
+
+    table.clear(dash, 0, 0, 1, 27)
+    table.clear(tfWrDash, 0, 0, 5, 9)
+
+    if showSummaryDash and i_compact
+        string compactWrWl = (i_wrShow ? wrRateStr : "-") + " | " + (i_wrShow ? wrCountStr : "-")
+        string compactMTW = "M " + f_money(wrPnlMon) + " | T " + f_money(wrPnlTue) + " | W " + f_money(wrPnlWed)
+        string compactThF = "Th " + f_money(wrPnlThu) + " | F " + f_money(wrPnlFri)
+
+        table.cell(dash, 0, 0, "S&D", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 0, "Mobile", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 1, "Period", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 1, i_wrShow ? wrPeriodStr : "-  ", text_color=i_wrShow ? color.white : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 2, "PnL", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 2, i_wrShow and i_wrShowPnL ? wrPnLStr : "-  ", text_color=wrRealizedPnL >= 0 ? dC : sC, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 3, "WR | PF", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 3, i_wrShow ? wrRatePfStr : "-  ", text_color=i_wrShow and wrTrades > 0 ? color.white : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 4, "W/L", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 4, i_wrShow ? wrCountStr : "-  ", text_color=i_wrShow ? color.white : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 5, "L/S WR", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 5, i_wrShow ? wrLongShortWRStr : "-  ", text_color=i_wrShow and wrTrades > 0 ? color.white : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 6, "Active", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 6, i_wrShow ? wrActiveStr : "-  ", text_color=wrActive ? (wrLong ? dC : sC) : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 7, "TP | Pts", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 7, i_wrShow ? wrTPTrackStr : "-  ", text_color=wrTPTrackColor, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 8, "LivePnL", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 8, i_wrShow and wrActive ? wrUnrealizedPnLStr : "-  ", text_color=i_wrShow and wrActive ? (wrUnrealizedPnL >= 0 ? dC : sC) : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        if wrShowDailySessions
+            table.cell(dash, 0, 9, "Asia", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 9, f_money(wrPnlAsia), text_color=wrPnlAsia > 0 ? dC : wrPnlAsia < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 10, "London", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 10, f_money(wrPnlLondon), text_color=wrPnlLondon > 0 ? dC : wrPnlLondon < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 11, "New York", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 11, f_money(wrPnlNY), text_color=wrPnlNY > 0 ? dC : wrPnlNY < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 12, "Day", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 12, f_money(wrDailySessionTotal), text_color=wrDailySessionTotal > 0 ? dC : wrDailySessionTotal < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else if wrShowBiWeeklyBuckets
+            table.cell(dash, 0, 9, wrBiWk1Lbl, text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 9, f_money(wrPnlBiWk1), text_color=wrPnlBiWk1 > 0 ? dC : wrPnlBiWk1 < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 10, wrBiWk2Lbl, text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 10, f_money(wrPnlBiWk2), text_color=wrPnlBiWk2 > 0 ? dC : wrPnlBiWk2 < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 11, "Bi-Wk Total", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 11, f_money(wrBiWeeklyTotal), text_color=wrBiWeeklyTotal > 0 ? dC : wrBiWeeklyTotal < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else if wrShowPeriodWeeks
+            string compactWk12 = wrWk1Lbl + " " + f_money(wrPnlWk1) + " | " + wrWk2Lbl + " " + f_money(wrPnlWk2)
+            string compactWk34 = wrWk3Lbl + " " + f_money(wrPnlWk3) + " | " + wrWk4Lbl + " " + f_money(wrPnlWk4)
+            string compactWk5 = wrWk5Lbl + " " + f_money(wrPnlWk5)
+            table.cell(dash, 0, 9, "Wk1/2", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 9, compactWk12, text_color=wrPnlWk1 + wrPnlWk2 >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 10, "Wk3/4", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 10, compactWk34, text_color=wrPnlWk3 + wrPnlWk4 >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 11, "Wk5", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 11, compactWk5, text_color=wrPnlWk5 >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 12, "Total", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 12, f_money(wrPeriodWeeksTotal), text_color=wrPeriodWeeksTotal >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else if wrShowYearMonths
+            int yRow = 9
+            string compactM12 = f_year_month_pair_str(1, 2)
+            string compactM34 = f_year_month_pair_str(3, 4)
+            string compactM56 = f_year_month_pair_str(5, 6)
+            string compactM78 = f_year_month_pair_str(7, 8)
+            string compactM910 = f_year_month_pair_str(9, 10)
+            string compactM1112 = f_year_month_pair_str(11, 12)
+            if f_year_month_pair_has_trades(1, 2)
+                table.cell(dash, 0, yRow, "Jan/Feb", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+                table.cell(dash, 1, yRow, compactM12, text_color=wrPnlJan + wrPnlFeb >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+                yRow += 1
+            if f_year_month_pair_has_trades(3, 4)
+                table.cell(dash, 0, yRow, "Mar/Apr", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+                table.cell(dash, 1, yRow, compactM34, text_color=wrPnlMar + wrPnlApr >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+                yRow += 1
+            if f_year_month_pair_has_trades(5, 6)
+                table.cell(dash, 0, yRow, "May/Jun", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+                table.cell(dash, 1, yRow, compactM56, text_color=wrPnlMay + wrPnlJun >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+                yRow += 1
+            if f_year_month_pair_has_trades(7, 8)
+                table.cell(dash, 0, yRow, "Jul/Aug", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+                table.cell(dash, 1, yRow, compactM78, text_color=wrPnlJul + wrPnlAug >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+                yRow += 1
+            if f_year_month_pair_has_trades(9, 10)
+                table.cell(dash, 0, yRow, "Sep/Oct", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+                table.cell(dash, 1, yRow, compactM910, text_color=wrPnlSep + wrPnlOct >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+                yRow += 1
+            if f_year_month_pair_has_trades(11, 12)
+                table.cell(dash, 0, yRow, "Nov/Dec", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+                table.cell(dash, 1, yRow, compactM1112, text_color=wrPnlNov + wrPnlDec >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+                yRow += 1
+            table.cell(dash, 0, yRow, "Year", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, yRow, f_money(wrYearMonthsTotal), text_color=wrYearMonthsTotal >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else if wrShowAllTimeLoadedData
+            table.cell(dash, 0, 9, "Data", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 9, wrLoadedRangeStr, text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 10, "Bars", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 10, wrLoadedBarsStr, text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 11, "Total", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 11, wrPnLStr, text_color=wrRealizedPnL >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else
+            table.cell(dash, 0, 9, "M/T/W", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 9, compactMTW, text_color=wrPnlMon + wrPnlTue + wrPnlWed >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 10, "Th/F", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 10, compactThF, text_color=wrPnlThu + wrPnlFri >= 0 ? dC : sC, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 11, i_wrPeriod == "Daily" ? "Day" : "Week", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 11, f_money(wrWeeklyPnL), text_color=wrWeeklyPnL > 0 ? dC : wrWeeklyPnL < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+    else if showSummaryDash
+        table.cell(dash, 0, 0, "  S&D SUMMARY", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 0, "Status  ", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 1, "  Period", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 1, i_wrShow ? wrPeriodStr : "-  ", text_color=i_wrShow ? color.white : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 2, "  Realized PnL", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 2, i_wrShow and i_wrShowPnL ? wrPnLStr : "-  ", text_color=wrRealizedPnL >= 0 ? dC : sC, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 3, "  WR | PF", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 3, i_wrShow ? wrRatePfStr : "-  ", text_color=i_wrShow and wrTrades > 0 ? color.white : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 4, "  W/L", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 4, i_wrShow ? wrCountStr : "-  ", text_color=i_wrShow ? color.white : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 5, "  Long / Short WR", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 5, i_wrShow ? wrLongShortWRStr : "-  ", text_color=i_wrShow and wrTrades > 0 ? color.white : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 6, "  Active", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 6, i_wrShow ? wrActiveStr : "-  ", text_color=wrActive ? (wrLong ? dC : sC) : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 7, "  TP | PTS", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 7, i_wrShow ? wrTPTrackStr : "-  ", text_color=wrTPTrackColor, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 8, "  Live PnL", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 8, i_wrShow and wrActive ? wrUnrealizedPnLStr : "-  ", text_color=i_wrShow and wrActive ? (wrUnrealizedPnL >= 0 ? dC : sC) : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 9, "  NrSup", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 9, nsStr + "  ", text_color=sC, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 10, "  NrDem", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 10, ndStr + "  ", text_color=dC, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        table.cell(dash, 0, 11, "  Dem / Sup Tests", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+        table.cell(dash, 1, 11, ndTCStr + " / " + nsTCStr + "  ", text_color=color.white, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+
+        if wrShowDailySessions
+            table.cell(dash, 0, 12, "  Asia 5PM-2AM", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 12, f_money(wrPnlAsia), text_color=wrPnlAsia > 0 ? dC : wrPnlAsia < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 13, "  London 2AM-8:30AM", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 13, f_money(wrPnlLondon), text_color=wrPnlLondon > 0 ? dC : wrPnlLondon < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 14, "  NY 8:30AM-4PM", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 14, f_money(wrPnlNY), text_color=wrPnlNY > 0 ? dC : wrPnlNY < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 15, "  Day Total", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 15, f_money(wrDailySessionTotal), text_color=wrDailySessionTotal > 0 ? dC : wrDailySessionTotal < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else if wrShowBiWeeklyBuckets
+            table.cell(dash, 0, 12, "  " + wrBiWk1Lbl, text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 12, f_money(wrPnlBiWk1), text_color=wrPnlBiWk1 > 0 ? dC : wrPnlBiWk1 < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 13, "  " + wrBiWk2Lbl, text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 13, f_money(wrPnlBiWk2), text_color=wrPnlBiWk2 > 0 ? dC : wrPnlBiWk2 < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 14, "  Bi-Wk Total", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 14, f_money(wrBiWeeklyTotal), text_color=wrBiWeeklyTotal > 0 ? dC : wrBiWeeklyTotal < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else if wrShowPeriodWeeks
+            table.cell(dash, 0, 12, "  " + wrWk1Lbl, text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 12, f_money(wrPnlWk1), text_color=wrPnlWk1 > 0 ? dC : wrPnlWk1 < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 13, "  " + wrWk2Lbl, text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 13, f_money(wrPnlWk2), text_color=wrPnlWk2 > 0 ? dC : wrPnlWk2 < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 14, "  " + wrWk3Lbl, text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 14, f_money(wrPnlWk3), text_color=wrPnlWk3 > 0 ? dC : wrPnlWk3 < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 15, "  " + wrWk4Lbl, text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 15, f_money(wrPnlWk4), text_color=wrPnlWk4 > 0 ? dC : wrPnlWk4 < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 16, "  " + wrWk5Lbl, text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 16, f_money(wrPnlWk5), text_color=wrPnlWk5 > 0 ? dC : wrPnlWk5 < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 17, "  Period Total", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 17, f_money(wrPeriodWeeksTotal), text_color=wrPeriodWeeksTotal > 0 ? dC : wrPeriodWeeksTotal < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else if wrShowYearMonths
+            int yRow = 12
+            if f_year_month_has_trades(1)
+                f_year_month_cell(yRow, 1, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(2)
+                f_year_month_cell(yRow, 2, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(3)
+                f_year_month_cell(yRow, 3, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(4)
+                f_year_month_cell(yRow, 4, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(5)
+                f_year_month_cell(yRow, 5, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(6)
+                f_year_month_cell(yRow, 6, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(7)
+                f_year_month_cell(yRow, 7, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(8)
+                f_year_month_cell(yRow, 8, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(9)
+                f_year_month_cell(yRow, 9, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(10)
+                f_year_month_cell(yRow, 10, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(11)
+                f_year_month_cell(yRow, 11, sz, rBG, dimTx)
+                yRow += 1
+            if f_year_month_has_trades(12)
+                f_year_month_cell(yRow, 12, sz, rBG, dimTx)
+                yRow += 1
+            table.cell(dash, 0, yRow, "  Year Total", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, yRow, f_money(wrYearMonthsTotal), text_color=wrYearMonthsTotal > 0 ? dC : wrYearMonthsTotal < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else if wrShowAllTimeLoadedData
+            table.cell(dash, 0, 12, "  Loaded Range", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 12, wrLoadedRangeStr, text_color=color.white, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 13, "  Bars Loaded", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 13, wrLoadedBarsStr, text_color=color.white, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 14, "  Data Source", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 14, "Chart loaded bars  ", text_color=color.white, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 15, "  All Time Total", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 15, wrPnLStr, text_color=wrRealizedPnL > 0 ? dC : wrRealizedPnL < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        else
+            table.cell(dash, 0, 12, "  Mon", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 12, f_money(wrPnlMon), text_color=wrPnlMon > 0 ? dC : wrPnlMon < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 13, "  Tue", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 13, f_money(wrPnlTue), text_color=wrPnlTue > 0 ? dC : wrPnlTue < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 14, "  Wed", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 14, f_money(wrPnlWed), text_color=wrPnlWed > 0 ? dC : wrPnlWed < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 15, "  Thu", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 15, f_money(wrPnlThu), text_color=wrPnlThu > 0 ? dC : wrPnlThu < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 16, "  Fri", text_color=dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 16, f_money(wrPnlFri), text_color=wrPnlFri > 0 ? dC : wrPnlFri < 0 ? sC : dimTx, bgcolor=rBG, text_size=sz, text_halign=text.align_right)
+            table.cell(dash, 0, 17, i_wrPeriod == "Daily" ? "  Day" : "  Week", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+            table.cell(dash, 1, 17, f_money(wrWeeklyPnL), text_color=wrWeeklyPnL > 0 ? dC : wrWeeklyPnL < 0 ? sC : dimTx, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+
+    if showTFDash
+        table.cell(tfWrDash, 0, 0, i_compact ? "TF" : "  TF", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_left)
+        table.cell(tfWrDash, 1, 0, "WR  ", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        table.cell(tfWrDash, 2, 0, "W/L  ", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        table.cell(tfWrDash, 3, 0, "Avg+  ", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        table.cell(tfWrDash, 4, 0, "Avg-  ", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+        table.cell(tfWrDash, 5, 0, "PnL  ", text_color=color.white, bgcolor=hBG, text_size=sz, text_halign=text.align_right)
+
+        f_tf_cell(1, "30m",   wr30mWins,  wr30mLosses,  wr30mFavSum,  wr30mAdvSum,  wr30mPnL,  sz, rBG, dimTx)
+        f_tf_cell(2, "1h",    wr1hWins,   wr1hLosses,   wr1hFavSum,   wr1hAdvSum,   wr1hPnL,   sz, rBG, dimTx)
+        f_tf_cell(3, "90m",   wr90mWins,  wr90mLosses,  wr90mFavSum,  wr90mAdvSum,  wr90mPnL,  sz, rBG, dimTx)
+        f_tf_cell(4, "2h",    wr2hWins,   wr2hLosses,   wr2hFavSum,   wr2hAdvSum,   wr2hPnL,   sz, rBG, dimTx)
+        f_tf_cell(5, "3h",    wr3hWins,   wr3hLosses,   wr3hFavSum,   wr3hAdvSum,   wr3hPnL,   sz, rBG, dimTx)
+        f_tf_cell(6, "4h",    wr4hWins,   wr4hLosses,   wr4hFavSum,   wr4hAdvSum,   wr4hPnL,   sz, rBG, dimTx)
+        f_tf_cell(7, "6h",    wr6hWins,   wr6hLosses,   wr6hFavSum,   wr6hAdvSum,   wr6hPnL,   sz, rBG, dimTx)
+        f_tf_cell(8, "12h",   wr12hWins,  wr12hLosses,  wr12hFavSum,  wr12hAdvSum,  wr12hPnL,  sz, rBG, dimTx)
+        f_tf_cell(9, "Daily", wrDWins,    wrDLosses,    wrDFavSum,    wrDAdvSum,    wrDPnL,    sz, rBG, dimTx)
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// RISK CALCULATOR
+// ══════════════════════════════════════════════════════════════════════════
+float riskATR = ta.atr(i_riskATRLen)
+
+bool riskShow = i_showRisk and barstate.islast and wrActive
+
+if i_showRisk and barstate.islast
+    // Always clear on the last bar; repopulate below only if a trade is active.
+    table.clear(riskDash, 0, 0, 1, 11)
+    if not na(riskSLLn)
+        line.delete(riskSLLn)
+        riskSLLn := na
+    if not na(riskTP1Ln)
+        line.delete(riskTP1Ln)
+        riskTP1Ln := na
+    if not na(riskTP2Ln)
+        line.delete(riskTP2Ln)
+        riskTP2Ln := na
+    if not na(riskTP3Ln)
+        line.delete(riskTP3Ln)
+        riskTP3Ln := na
+
+if riskShow
+    // --- direction and entry come straight from the active trade ---
+    bool  rLong  = wrLong
+    float rEntry = wrEntry
+
+    // --- stop distance ---
+    float rATRStop = riskATR * i_riskATRMult
+    float rStopPts = i_riskUseActive and not na(wrSL) and not na(wrEntry) ? math.abs(wrEntry - wrSL) : rATRStop
+    rStopPts := math.max(rStopPts, syminfo.mintick)
+
+    float rSL  = rLong ? rEntry - rStopPts : rEntry + rStopPts
+    float rTP1 = rLong ? rEntry + rStopPts * i_riskTP1R : rEntry - rStopPts * i_riskTP1R
+    float rTP2 = rLong ? rEntry + rStopPts * i_riskTP2R : rEntry - rStopPts * i_riskTP2R
+    float rTP3 = rLong ? rEntry + rStopPts * i_riskTP3R : rEntry - rStopPts * i_riskTP3R
+
+    // --- position sizing ---
+    float rRisk1  = rStopPts * i_riskTickVal1
+    float rRisk2  = rStopPts * i_riskTickVal2
+    int   rQty1   = rRisk1 > 0 ? int(math.floor(i_riskDollars / rRisk1)) : 0
+    int   rQty2   = rRisk2 > 0 ? int(math.floor(i_riskDollars / rRisk2)) : 0
+    float rActual = rQty1 > 0 ? rQty1 * rRisk1 : rQty2 * rRisk2
+
+    // --- live progress on the open trade ---
+    float rOpenPts = rLong ? close - rEntry : rEntry - close
+    int   rQtyUsed = rQty1 > 0 ? rQty1 : rQty2
+    float rPtVal   = rQty1 > 0 ? i_riskTickVal1 : i_riskTickVal2
+    float rOpenPnL = rOpenPts * rPtVal * rQtyUsed
+
+    // --- nearest opposing zone as a reality check on TP ---
+    float rNextZone = rLong ? f_nextSupAbove(rEntry) : f_nextDemBelow(rEntry)
+    float rZonePts  = na(rNextZone) ? na : math.abs(rNextZone - rEntry)
+    string rZoneStr = na(rZonePts) ? "-  " : str.tostring(rZonePts, "#.##") + " pts  "
+
+    color rhBG   = #1C2333
+    color rrBG   = color.new(#0D1117, 5)
+    color rDim   = #7A8099
+    color rZoneCol = na(rZonePts) ? rDim : rZonePts >= rStopPts * i_riskTP1R ? dC : sC
+    string rsz   = f_lbl_size()
+    color rDirC  = rLong ? dC : sC
+
+    string rHdr = (rLong ? "LONG" : "SHORT") + (wrActiveTF == "" ? "" : " " + wrActiveTF) + "  "
+
+    table.cell(riskDash, 0, 0, "  RISK CALCULATOR", text_color=color.white, bgcolor=rhBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 0, rHdr, text_color=rDirC, bgcolor=rhBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 1, "  ATR(" + str.tostring(i_riskATRLen) + ")", text_color=rDim, bgcolor=rrBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 1, str.tostring(riskATR, "#.##") + " pts  ", text_color=color.white, bgcolor=rrBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 2, "  — LEVELS —", text_color=rDim, bgcolor=rhBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 2, "  ", text_color=rDim, bgcolor=rhBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 3, "  Entry", text_color=rDim, bgcolor=rrBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 3, f_fmt(rEntry) + "  ", text_color=color.white, bgcolor=rrBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 4, "  Stop", text_color=rDim, bgcolor=rrBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 4, f_fmt(rSL) + " | " + str.tostring(rStopPts, "#.##") + "  ", text_color=sC, bgcolor=rrBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 5, "  TP1 (1:" + str.tostring(i_riskTP1R, "#.##") + ")", text_color=rDim, bgcolor=rrBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 5, f_fmt(rTP1) + " | " + str.tostring(rStopPts * i_riskTP1R, "#.##") + "  ", text_color=dC, bgcolor=rrBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 6, "  TP2 (1:" + str.tostring(i_riskTP2R, "#.##") + ")", text_color=rDim, bgcolor=rrBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 6, f_fmt(rTP2) + " | " + str.tostring(rStopPts * i_riskTP2R, "#.##") + "  ", text_color=dC, bgcolor=rrBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 7, "  TP3 (1:" + str.tostring(i_riskTP3R, "#.##") + ")", text_color=rDim, bgcolor=rrBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 7, f_fmt(rTP3) + " | " + str.tostring(rStopPts * i_riskTP3R, "#.##") + "  ", text_color=dC, bgcolor=rrBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 8, "  Room to next zone", text_color=rDim, bgcolor=rrBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 8, rZoneStr, text_color=rZoneCol, bgcolor=rrBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 9, "  — CONTRACTS —", text_color=rDim, bgcolor=rhBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 9, "  ", text_color=rDim, bgcolor=rhBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 10, "  " + i_riskSym1 + " / " + i_riskSym2, text_color=rDim, bgcolor=rrBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 10, str.tostring(rQty1) + " / " + str.tostring(rQty2) + "  ", text_color=rQty1 > 0 or rQty2 > 0 ? color.white : sC, bgcolor=rrBG, text_size=rsz, text_halign=text.align_right)
+
+    table.cell(riskDash, 0, 11, "  At Risk | Open", text_color=color.white, bgcolor=rhBG, text_size=rsz, text_halign=text.align_left)
+    table.cell(riskDash, 1, 11, f_money_short(rActual) + " | " + f_money_short(rOpenPnL) + "  ", text_color=rOpenPnL >= 0 ? dC : sC, bgcolor=rhBG, text_size=rsz, text_halign=text.align_right)
+
+    // --- projection lines ---
+    if i_riskShowLines
+        riskSLLn  := line.new(bar_index - 5, rSL,  bar_index + 15, rSL,  xloc=xloc.bar_index, color=color.new(sC, 30), width=1, style=line.style_dotted)
+        riskTP1Ln := line.new(bar_index - 5, rTP1, bar_index + 15, rTP1, xloc=xloc.bar_index, color=color.new(dC, 50), width=1, style=line.style_dotted)
+        riskTP2Ln := line.new(bar_index - 5, rTP2, bar_index + 15, rTP2, xloc=xloc.bar_index, color=color.new(dC, 30), width=1, style=line.style_dotted)
+        riskTP3Ln := line.new(bar_index - 5, rTP3, bar_index + 15, rTP3, xloc=xloc.bar_index, color=color.new(dC, 10), width=1, style=line.style_dotted)

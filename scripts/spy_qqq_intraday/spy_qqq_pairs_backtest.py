@@ -22,7 +22,7 @@ from pwb_toolbox.performance.metrics import (
     sharpe_ratio, annualized_volatility, cagr, max_drawdown,
 )
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 
 
 def load(sym):

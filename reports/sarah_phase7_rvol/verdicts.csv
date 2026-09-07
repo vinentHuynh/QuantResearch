@@ -1,0 +1,6 @@
+factor_key,factor,best_bucket,trades,overall_pf,pf_4tick,train_pf,validation_pf,holdout_pf,verdict,timing
+formation_rvol,Formation 1h RVOL,Normal 0.75–1.25,1735,1.1689551239115874,1.109110818426856,1.0384454278897812,1.4459637840582162,1.1440988329508277,No robust filter yet,Known when the zone becomes available.
+prior_1m_rvol,Prior completed 1m RVOL,Normal 0.75–1.25,1055,1.2004102121228477,1.1376185976675253,1.1728915278043797,1.26079825041006,1.190511187326474,Stateful-test candidate,Known before the touch minute.
+prior_5m_rvol,Prior completed 5m RVOL,Normal 0.75–1.25,1387,1.2038360323886639,1.141716605639138,1.1676638210324686,1.2069868313078818,1.2506952978461936,Stateful-test candidate,Latest fully completed 5-minute bar.
+prior_session_cum_rvol,Prior session-cumulative RVOL,Normal 0.75–1.25,1978,1.1097454540208744,1.0504887795030626,1.0396521326371466,1.2077243406548543,1.1222092752272197,No robust filter yet,Session volume through the minute before touch.
+signal_1m_rvol,Signal-minute RVOL · next-open only,Normal 0.75–1.25,800,1.1542850489054495,1.087951561834577,1.173869300772854,1.2301780252529213,1.071732702542874,Diagnostic only · requires next-open resimulation,Known at the touch close; valid only before a next-bar entry.

@@ -34,7 +34,7 @@ from backtesting import Backtest, Strategy
 
 from mnq_exit_time_backtest import DPP, COST, sessions, pnl
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 TZ = "US/Eastern"
 HOLD = 12
 TP_DOLLARS = 200
@@ -173,7 +173,7 @@ def main() -> None:
     s = sessions("MNQ_5min_databento.parquet", [HOLD])
     hand = pnl(s, HOLD, None)
 
-    reports = Path(__file__).with_name("reports")
+    reports = (Path(__file__).resolve().parents[2] / "reports")
     bt_base = run(df, Block, arm, ext,
                   plot_to=reports / "bt_plot_baseline.html" if args.plot else None)
     compare(hand, bt_base["bt_pnl"], "PART 1 -- BASELINE 18:00 -> 06:00, identical rule")

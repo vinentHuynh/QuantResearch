@@ -1,0 +1,247 @@
+{
+  "sessions": 1893,
+  "profile_grade_sessions": 1823,
+  "first_session": "2019-05-06",
+  "last_session": "2026-09-03",
+  "rolls": [
+    {
+      "timestamp": "2019-06-19T00:00:00+00:00",
+      "from_instrument": 8078,
+      "to_instrument": 8084,
+      "gap_points": 26.5
+    },
+    {
+      "timestamp": "2019-09-16T00:00:00+00:00",
+      "from_instrument": 8084,
+      "to_instrument": 8107,
+      "gap_points": 25.0
+    },
+    {
+      "timestamp": "2019-12-16T00:00:00+00:00",
+      "from_instrument": 8107,
+      "to_instrument": 8196,
+      "gap_points": 28.25
+    },
+    {
+      "timestamp": "2020-03-16T00:01:00+00:00",
+      "from_instrument": 8196,
+      "to_instrument": 8204,
+      "gap_points": -15.0
+    },
+    {
+      "timestamp": "2020-06-17T00:00:00+00:00",
+      "from_instrument": 8204,
+      "to_instrument": 13081,
+      "gap_points": -14.75
+    },
+    {
+      "timestamp": "2020-09-16T00:00:00+00:00",
+      "from_instrument": 13081,
+      "to_instrument": 17706,
+      "gap_points": -19.75
+    },
+    {
+      "timestamp": "2020-12-14T00:00:00+00:00",
+      "from_instrument": 17706,
+      "to_instrument": 6227,
+      "gap_points": 2.0
+    },
+    {
+      "timestamp": "2021-03-17T00:00:00+00:00",
+      "from_instrument": 6227,
+      "to_instrument": 9485,
+      "gap_points": -10.0
+    },
+    {
+      "timestamp": "2021-06-14T00:00:00+00:00",
+      "from_instrument": 9485,
+      "to_instrument": 3601,
+      "gap_points": -3.0
+    },
+    {
+      "timestamp": "2021-09-13T00:00:00+00:00",
+      "from_instrument": 3601,
+      "to_instrument": 1447,
+      "gap_points": -9.5
+    },
+    {
+      "timestamp": "2021-12-13T00:00:00+00:00",
+      "from_instrument": 1447,
+      "to_instrument": 7575,
+      "gap_points": 7.75
+    },
+    {
+      "timestamp": "2022-03-16T00:00:00+00:00",
+      "from_instrument": 7575,
+      "to_instrument": 13505,
+      "gap_points": -2.75
+    },
+    {
+      "timestamp": "2022-06-15T00:00:00+00:00",
+      "from_instrument": 13505,
+      "to_instrument": 7688,
+      "gap_points": 32.75
+    },
+    {
+      "timestamp": "2022-09-14T00:00:00+00:00",
+      "from_instrument": 7688,
+      "to_instrument": 20332,
+      "gap_points": 77.0
+    },
+    {
+      "timestamp": "2022-12-14T00:00:00+00:00",
+      "from_instrument": 20332,
+      "to_instrument": 8071,
+      "gap_points": 122.75
+    },
+    {
+      "timestamp": "2023-03-15T00:00:00+00:00",
+      "from_instrument": 8071,
+      "to_instrument": 4973,
+      "gap_points": 128.5
+    },
+    {
+      "timestamp": "2023-06-14T00:00:00+00:00",
+      "from_instrument": 4973,
+      "to_instrument": 9235,
+      "gap_points": 184.0
+    },
+    {
+      "timestamp": "2023-09-13T00:00:00+00:00",
+      "from_instrument": 9235,
+      "to_instrument": 34070,
+      "gap_points": 193.5
+    },
+    {
+      "timestamp": "2023-12-14T00:00:00+00:00",
+      "from_instrument": 34070,
+      "to_instrument": 7101,
+      "gap_points": 212.25
+    },
+    {
+      "timestamp": "2024-03-13T00:00:00+00:00",
+      "from_instrument": 7101,
+      "to_instrument": 10,
+      "gap_points": 246.0
+    },
+    {
+      "timestamp": "2024-06-19T00:00:00+00:00",
+      "from_instrument": 10,
+      "to_instrument": 13941,
+      "gap_points": 275.0
+    },
+    {
+      "timestamp": "2024-09-18T00:00:00+00:00",
+      "from_instrument": 13941,
+      "to_instrument": 42008411,
+      "gap_points": 238.0
+    },
+    {
+      "timestamp": "2024-12-19T00:00:00+00:00",
+      "from_instrument": 42008411,
+      "to_instrument": 42003617,
+      "gap_points": 284.0
+    },
+    {
+      "timestamp": "2025-03-20T00:00:00+00:00",
+      "from_instrument": 42003617,
+      "to_instrument": 42009475,
+      "gap_points": 199.0
+    },
+    {
+      "timestamp": "2025-06-18T00:00:00+00:00",
+      "from_instrument": 42009475,
+      "to_instrument": 42003472,
+      "gap_points": 233.0
+    },
+    {
+      "timestamp": "2025-09-18T00:00:00+00:00",
+      "from_instrument": 42003472,
+      "to_instrument": 42001149,
+      "gap_points": 236.0
+    },
+    {
+      "timestamp": "2025-12-18T00:00:00+00:00",
+      "from_instrument": 42001149,
+      "to_instrument": 42004946,
+      "gap_points": 236.0
+    },
+    {
+      "timestamp": "2026-03-19T00:00:00+00:00",
+      "from_instrument": 42004946,
+      "to_instrument": 42004936,
+      "gap_points": 200.5
+    },
+    {
+      "timestamp": "2026-06-17T00:00:00+00:00",
+      "from_instrument": 42004936,
+      "to_instrument": 42004800,
+      "gap_points": 331.75
+    }
+  ],
+  "arguments": {
+    "one_minute": "/Users/vincenthuynh/Github/QuantResearch/data/mnq_dom_sample/full_history/ohlcv-1m/candles_1m.parquet",
+    "output_dir": "/Users/vincenthuynh/Github/QuantResearch/reports/mnq_market_profile",
+    "start": "None",
+    "end": "None",
+    "rth_start": "08:30",
+    "rth_end": "15:00",
+    "bracket_minutes": "30",
+    "min_rth_minutes": "380",
+    "price_step": "1.0",
+    "va_percent": "0.7",
+    "profile_mode": "volume",
+    "accept_mode": "close",
+    "confirm_brackets": "2",
+    "no_roll_adjust": "False",
+    "stop_buffer_points": "5.0",
+    "point_value": "2.0",
+    "commission_per_side": "1.25",
+    "slippage_ticks": "1.0",
+    "max_lag": "60",
+    "npoc_touch_scope": "full",
+    "npoc_max_distance": "100.0",
+    "npoc_stop_multiple": "1.0"
+  },
+  "eighty_rule": {
+    "trades": 400,
+    "trades_per_year": 54.966139954853276,
+    "win_rate": 0.435,
+    "avg_points": -2.8,
+    "total_points": -1120.0,
+    "total_dollars": -2240.0,
+    "profit_factor": 0.8757798419520311,
+    "max_drawdown_dollars": -4329.0,
+    "t_statistic": -0.9775397587089655
+  },
+  "eighty_rule_control": {
+    "matched_events": 400,
+    "coverage": 1.0,
+    "control_observations": 5324,
+    "observed_rate": 0.4675,
+    "expected_rate": 0.3965114371266477,
+    "lift": 0.07098856287335231,
+    "p_value": 0.04569593173717423
+  },
+  "eighty_rule_unconfirmed_control": {
+    "matched_events": 554,
+    "coverage": 1.0,
+    "control_observations": 5324,
+    "observed_rate": 0.49458483754512633,
+    "expected_rate": 0.3908398380442534,
+    "lift": 0.10374499950087296,
+    "p_value": 0.0005665135333369095
+  },
+  "npoc_trade": {
+    "trades": 1183,
+    "trades_per_year": 161.5292523364486,
+    "win_rate": 0.4725274725274725,
+    "avg_points": -0.02324598478444632,
+    "total_points": -27.5,
+    "total_dollars": -55.0,
+    "profit_factor": 0.9988576176134594,
+    "max_drawdown_dollars": -4010.0,
+    "t_statistic": -0.01628913082745736
+  },
+  "cost_points_round_trip": 1.75
+}

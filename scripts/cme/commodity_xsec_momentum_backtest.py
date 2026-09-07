@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-_env = Path(__file__).with_name(".env")
+_env = (Path(__file__).resolve().parents[2] / ".env")
 for _l in (_env.read_text().splitlines() if _env.exists() else []):
     _l = _l.strip()
     if _l and "=" in _l and not _l.startswith("#"):

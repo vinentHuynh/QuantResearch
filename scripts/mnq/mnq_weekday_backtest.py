@@ -41,7 +41,7 @@ import pandas as pd
 
 from mnq_exit_time_backtest import DPP, sessions, pnl
 
-REPORTS = Path(__file__).with_name("reports")
+REPORTS = (Path(__file__).resolve().parents[2] / "reports")
 HOLD = 12                                   # 18:00 -> 06:00
 DOW = {6: "Sun", 0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu"}
 PICK = [6, 1, 2]                            # Sunday, Tuesday, Wednesday

@@ -25,7 +25,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 DPP, TICK = 2.0, 0.25
 COST = TICK * DPP
 ENTRY_H, EXIT_H = 18, 5              # 18:00 -> 06:00 ET

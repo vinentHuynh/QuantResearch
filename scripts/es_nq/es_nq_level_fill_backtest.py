@@ -19,7 +19,7 @@ import pandas as pd
 
 
 # Load the workspace's PWB dataset key without requiring python-dotenv.
-_env = Path(__file__).with_name(".env")
+_env = (Path(__file__).resolve().parents[2] / ".env")
 if _env.exists():
     for _line in _env.read_text().splitlines():
         _line = _line.strip()

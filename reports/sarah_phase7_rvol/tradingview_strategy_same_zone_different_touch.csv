@@ -1,0 +1,3 @@
+tradingview_trade_number,reference_trade_id,direction,tradingview_signal_time,reference_signal_time,zone_time_delta_hours,zone_width_delta_points
+92,1380,short,2026-04-16 15:37:00+00:00,2026-04-15 19:05:00+00:00,1.0,0.0
+93,1381,short,2026-04-17 14:40:00+00:00,2026-04-15 19:35:00+00:00,1.0,0.0

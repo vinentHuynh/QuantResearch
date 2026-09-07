@@ -6,8 +6,8 @@ risk-target and cost machinery built in rather than bolted on.
 
 | File | Source backtest | Tested cell | SR_net | Clock |
 |---|---|---|---|---|
-| `OrbCarver.cs` | `orb_carver_backtest.py` | MNQ, OR15, stop + 2R, both directions, tau 12% | **+1.04** | RTH 09:30–16:00 ET |
-| `OvernightDriftCarver.cs` | `overnight_drift_carver_backtest.py` | MNQ, 18:00→06:00 ET, long only, tau 6% | **+0.88** | Globex 18:00–06:00 ET |
+| `OrbCarver.cs` | `scripts/orb/orb_carver_backtest.py` | MNQ, OR15, stop + 2R, both directions, tau 12% | **+1.04** | RTH 09:30–16:00 ET |
+| `OvernightDriftCarver.cs` | `scripts/overnight/overnight_drift_carver_backtest.py` | MNQ, 18:00→06:00 ET, long only, tau 6% | **+0.88** | Globex 18:00–06:00 ET |
 
 The two clocks are disjoint, so they can run on the same instrument
 simultaneously without netting each other. In the workspace's multi-rule book

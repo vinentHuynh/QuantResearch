@@ -41,7 +41,7 @@ from pwb_toolbox.performance.metrics import (
     sharpe_ratio, annualized_volatility, cagr, max_drawdown,
 )
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 SPECS = {"MNQ": (0.25, 2.0), "MES": (0.25, 5.0)}
 BLOCK_NAMES = {0: "Asia 18-00", 1: "London 00-06", 2: "NY am 06-12", 3: "NY pm 12-18"}
 MIN_BARS = 30          # of 72 possible 5-min bars; drops holidays and half sessions

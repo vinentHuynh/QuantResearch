@@ -31,7 +31,7 @@ from urllib.parse import urlparse
 import numpy as np
 import pandas as pd
 
-REPORTS = Path(__file__).with_name("reports")
+REPORTS = (Path(__file__).resolve().parents[2] / "reports")
 
 CAT = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--series-4)",
        "var(--series-5)", "var(--series-6)", "var(--series-7)", "var(--series-8)"]

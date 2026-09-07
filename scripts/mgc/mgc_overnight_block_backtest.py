@@ -35,7 +35,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 
 # MGC = 10 troy oz. 1 point ($1 of gold) = $10; min tick 0.10 = $1.00.
 DPP, TICK = 10.0, 0.10

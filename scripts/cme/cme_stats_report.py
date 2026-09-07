@@ -42,8 +42,8 @@ from statsmodels.tsa.stattools import adfuller
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-PANEL_PATH = Path(__file__).with_name("data") / "cme_daily.parquet"
-REPORT_DIR = Path(__file__).with_name("reports")
+PANEL_PATH = (Path(__file__).resolve().parents[2] / "data") / "cme_daily.parquet"
+REPORT_DIR = (Path(__file__).resolve().parents[2] / "reports")
 TRADING_DAYS = 252
 
 

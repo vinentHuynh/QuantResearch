@@ -17,7 +17,7 @@ credentials*.json
 secrets*.json
 service-account*.json
 .claude/settings.local.json
-
+.env.local
 # Generated/cache data
 __pycache__/
 *.pyc

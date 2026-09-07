@@ -1,0 +1,12 @@
+variant,total_pnl,best_three_months_pnl,pnl_without_best_three_months,positive_months,months,positive_month_rate
+Sarah baseline,-34489.0,6920.5,-41409.5,32,89,0.3595505617977528
+First physical touch core,11416.0,6532.5,4883.5,49,89,0.550561797752809
+First touch + width ≤0.5 ATR,7002.5,3929.0,3073.5,47,89,0.5280898876404494
+First touch + impulse volume <0.75,3420.5,2648.0,772.5,47,89,0.5280898876404494
+First touch + normal RVOL,7733.0,4351.5,3381.5,53,89,0.5955056179775281
+First touch + opposing room,12441.0,6679.5,5761.5,51,89,0.5730337078651685
+First touch + width + low volume,1456.0,1538.0,-82.0,43,89,0.48314606741573035
+Sensitivity · first touch + width ≤0.4,6916.5,3534.0,3382.5,48,89,0.5393258426966292
+Sensitivity · first touch + width ≤0.6,13641.5,4694.5,8947.0,53,89,0.5955056179775281
+Sensitivity · first touch + volume <0.5,1006.0,1447.0,-441.0,33,89,0.3707865168539326
+Sensitivity · first touch + volume <1.0,8799.5,4374.0,4425.5,47,89,0.5280898876404494

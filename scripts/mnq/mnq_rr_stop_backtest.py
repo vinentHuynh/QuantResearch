@@ -30,7 +30,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 TICK = 0.25
 SPECS = {"MNQ": 2.0, "NQ": 2.0, "MES": 5.0}   # NQ scored at micro $/pt for comparability
 GRID = [0.5, 1.0, 1.5, 2.0, np.inf]

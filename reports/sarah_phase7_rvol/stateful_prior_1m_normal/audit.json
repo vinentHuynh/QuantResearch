@@ -1,0 +1,11 @@
+{
+  "capacity_removed": 219,
+  "invalidated": 8395,
+  "tests_consumed": 1205,
+  "tests_outside_entry_period": 0,
+  "tests_in_no_trade_window": 32,
+  "opposite_side_tests_consumed": 0,
+  "range_end_trade_cancellations": 0,
+  "both_stop_and_target_hit": 0,
+  "open_trade_at_data_end": 0
+}

@@ -41,7 +41,7 @@ import pandas as pd
 
 
 # Load the workspace's dataset-only PWB key without printing it.
-_env_path = Path(__file__).with_name(".env")
+_env_path = (Path(__file__).resolve().parents[2] / ".env")
 if _env_path.exists():
     for _line in _env_path.read_text(encoding="utf-8").splitlines():
         _line = _line.strip()
@@ -52,7 +52,7 @@ if _env_path.exists():
 import pwb_toolbox.datasets as pwb_ds
 
 
-DATA_DIR = Path(__file__).with_name("data")
+DATA_DIR = (Path(__file__).resolve().parents[2] / "data")
 PANEL_PATH = DATA_DIR / "cme_daily.parquet"
 UNIVERSE_PATH = DATA_DIR / "cme_universe.csv"
 

@@ -22,7 +22,7 @@ import pandas as pd
 
 from pwb_toolbox.performance.metrics import sharpe_ratio, cagr, max_drawdown
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 SPECS = {"MES": (0.25, 5.0), "MNQ": (0.25, 2.0), "CL": (0.01, 1000.0), "GC": (0.10, 100.0)}
 RTH = ("09:30", "15:59")
 

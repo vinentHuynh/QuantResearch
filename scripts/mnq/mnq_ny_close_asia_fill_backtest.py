@@ -31,7 +31,7 @@ import numpy as np
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA = ROOT / "data" / "MNQ_5min_databento.parquet"
 DEFAULT_OUT = ROOT / "reports" / "mnq_ny_close_asia_fill"
 TICK_SIZE = 0.25

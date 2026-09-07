@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 # --- load .env (PWB_API_KEY) without extra deps ------------------------------
-_env = Path(__file__).with_name(".env")
+_env = (Path(__file__).resolve().parents[2] / ".env")
 if _env.exists():
     for _line in _env.read_text().splitlines():
         _line = _line.strip()

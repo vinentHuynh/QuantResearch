@@ -1,0 +1,1 @@
+signal_id,signal_time_utc,direction,zone_formed_time_utc,zone_proximal,zone_distal,opposing_room_r,opposing_zone_absent,physical_touch_episode,planned_entry,actual_entry,planned_stop,planned_target,exit_time_utc,actual_exit,exit_reason,contracts,commission,slippage_points,net_pnl,executed,skip_reason,notes

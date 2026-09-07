@@ -1,0 +1,21 @@
+{
+  "pine_parity": {
+    "status": "pending TradingView export",
+    "required": "exact entry/exit count, direction and timestamps; prices within 0.01 point on the same feed"
+  },
+  "execution_stress": {
+    "status": "pass historically",
+    "required": "profit factor > 1.0 at four ticks round trip"
+  },
+  "paper_forward": {
+    "status": "not started",
+    "interim_review_trades": 300,
+    "final_review_trades": 500,
+    "required": [
+      "no entry-rule changes during the sample",
+      "net profit factor > 1.0 after actual commissions and slippage",
+      "mean net P&L clustered-bootstrap 95% confidence interval lower bound > 0",
+      "signal-to-record reconciliation >= 95%"
+    ]
+  }
+}

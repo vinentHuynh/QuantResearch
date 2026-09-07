@@ -32,15 +32,17 @@ MNQ = $2.00/index point, 0.25pt tick = $0.50. A round trip of `c` ticks removes
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 # Reuse the proxy run's metric definitions so numbers are apples-to-apples.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "overnight"))
 from overnight_drift_backtest import perf, line
 
-CSV = Path(__file__).with_name("data") / "CME_MINI_MNQ1!, 360_58b55.csv"
+CSV = (Path(__file__).resolve().parents[2] / "data") / "CME_MINI_MNQ1!, 360_58b55.csv"
 TZ = "America/New_York"
 POINT_VALUE = 2.0      # MNQ: $2 per index point
 TICK = 0.25            # index points per tick ($0.50)

@@ -32,7 +32,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-_env = Path(__file__).with_name(".env")
+_env = (Path(__file__).resolve().parents[2] / ".env")
 if _env.exists():
     for _l in _env.read_text(encoding="utf-8").splitlines():
         _l = _l.strip()

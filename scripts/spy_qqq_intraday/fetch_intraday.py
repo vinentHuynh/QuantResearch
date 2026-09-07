@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
-_env = Path(__file__).with_name(".env")
+_env = (Path(__file__).resolve().parents[2] / ".env")
 if _env.exists():
     for _l in _env.read_text().splitlines():
         _l = _l.strip()
@@ -21,7 +21,7 @@ if _env.exists():
 
 import pwb_toolbox.datasets as pwb_ds
 
-OUT = Path(__file__).with_name("data")
+OUT = (Path(__file__).resolve().parents[2] / "data")
 OUT.mkdir(exist_ok=True)
 AGG = {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
 

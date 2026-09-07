@@ -31,7 +31,7 @@ import pandas as pd
 
 from lucid_container_scan import pipeline  # the Lucid 50K year sim
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 DPP = 2.0                      # micro $/pt, both eras
 COST_PTS = 0.25                # 1 tick RT
 TRACKS = {

@@ -1,0 +1,46 @@
+{
+  "phase": 7,
+  "name": "Relative-volume confluence screen",
+  "baseline_trades": 3915,
+  "baseline_gross_pf": 1.0880781878873909,
+  "baseline_four_tick_pf": 1.031313134742911,
+  "screen_candidates": [
+    "Prior completed 1m RVOL",
+    "Prior completed 5m RVOL"
+  ],
+  "stateful_variants": [
+    "Phase 6 + prior 1m RVOL 0.75\u20131.25",
+    "Phase 6 + prior 5m RVOL 0.75\u20131.25"
+  ],
+  "recommended_for_pine": "Phase 6 + prior 5m RVOL 0.75\u20131.25",
+  "decision": "Advance Phase 6 + prior 5m RVOL 0.75\u20131.25 to Pine verification",
+  "parity_window": {
+    "start": "2026-01-01 23:00:00+00:00",
+    "end": "2026-05-30 21:00:00+00:00",
+    "baseline_trades": 230,
+    "recommended_trades": 86
+  },
+  "recent_window_audit": {
+    "start": "2026-05-31 22:00:00+00:00",
+    "requested_end": "2026-09-05 21:00:00+00:00",
+    "data_available_through": "2026-09-03 23:59:00+00:00",
+    "decision": "Absolute gates pass; incremental RVOL gate fails",
+    "absolute_pass": true,
+    "incremental_pass": false,
+    "baseline_trades": 152,
+    "baseline_profit_factor": 1.4629020467836258,
+    "candidate_trades": 76,
+    "candidate_profit_factor": 1.3756285814524618
+  },
+  "warning": "Bucket curves are conditional screens, not stateful strategy simulations.",
+  "tradingview_verification": {
+    "source_file": "_P6_7_Strategy_CME_MINI_MNQ1!_2026-09-05.csv",
+    "trades": 116,
+    "profit_factor": 1.376767570964701,
+    "matched_signals": 64,
+    "exact_signal_minutes": 64,
+    "exact_zone_widths": 64,
+    "rvol_correlation": 0.9715398038770119,
+    "assessment": "Qualified implementation-parity pass; feed/path dependence remains."
+  }
+}

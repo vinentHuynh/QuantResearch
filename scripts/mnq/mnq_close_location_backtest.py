@@ -35,8 +35,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data")
-REPORTS = Path(__file__).with_name("reports")
+DATA = (Path(__file__).resolve().parents[2] / "data")
+REPORTS = (Path(__file__).resolve().parents[2] / "reports")
 DPP, TICK = 2.0, 0.25
 COST = TICK * DPP
 TZ = "US/Eastern"

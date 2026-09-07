@@ -17,7 +17,7 @@ the account while the profit target scales faster than the loss buffer
 (target/MLL is 1.25x on the 25K but 2.0x on the 100K and 150K). One lot is not
 the fair test of a bigger plan.
 
-MLL mechanics modelled (from lucid_container_scan.py / lucid_prop_year_sim.py,
+MLL mechanics modelled (from scripts/lucid/lucid_container_scan.py / lucid_prop_year_sim.py,
 which sourced them from the published LucidPro cards):
   * the limit trails the peak END-OF-DAY balance by the buffer
   * it stops trailing once it reaches the initial balance ("initial trail"),

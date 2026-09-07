@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pandas as pd
 
-_env = Path(__file__).with_name(".env")
+_env = (Path(__file__).resolve().parents[2] / ".env")
 for _l in (_env.read_text().splitlines() if _env.exists() else []):
     _l = _l.strip()
     if _l and "=" in _l and not _l.startswith("#"):
@@ -78,7 +78,7 @@ def main():
     if not key:
         raise SystemExit("DATABENTO_API_KEY not set in .env")
     client = db.Historical(key)
-    OUT = Path(__file__).with_name("data"); OUT.mkdir(exist_ok=True)
+    OUT = (Path(__file__).resolve().parents[2] / "data"); OUT.mkdir(exist_ok=True)
     cache = OUT / "_dbn_cache"; cache.mkdir(exist_ok=True)
     live_edge = available_end(client)
 

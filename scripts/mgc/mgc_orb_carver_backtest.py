@@ -46,7 +46,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).resolve().parents[2]
 DATA = HERE / "data"
 REPORTS = HERE / "reports"
 

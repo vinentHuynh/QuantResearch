@@ -14,10 +14,13 @@ would misrepresent what trading it actually feels like.
 from __future__ import annotations
 
 import functools
+import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "overnight"))
 from overnight_drift_carver_backtest import (
     INSTRUMENTS, TAU, carver_vol, cost_per_side, daily_closes, load_5m,
 )

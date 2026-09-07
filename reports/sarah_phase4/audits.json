@@ -1,0 +1,90 @@
+{
+  "1h reference": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 6196,
+    "tests_outside_entry_period": 0,
+    "tests_in_no_trade_window": 250,
+    "opposite_side_tests_consumed": 3,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 2,
+    "open_trade_at_data_end": 0
+  },
+  "1h \u00b7 no BOS": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 4489,
+    "tests_outside_entry_period": 0,
+    "tests_in_no_trade_window": 147,
+    "opposite_side_tests_consumed": 2,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 1,
+    "open_trade_at_data_end": 0
+  },
+  "1h \u00b7 RVOL 0.75\u20131.25": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 3054,
+    "tests_outside_entry_period": 0,
+    "tests_in_no_trade_window": 113,
+    "opposite_side_tests_consumed": 0,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 1,
+    "open_trade_at_data_end": 0
+  },
+  "1h \u00b7 impulse/prior volume <0.75": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 1236,
+    "tests_outside_entry_period": 0,
+    "tests_in_no_trade_window": 32,
+    "opposite_side_tests_consumed": 0,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 0,
+    "open_trade_at_data_end": 0
+  },
+  "1h \u00b7 first Sarah test": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 5272,
+    "tests_outside_entry_period": 0,
+    "tests_in_no_trade_window": 185,
+    "opposite_side_tests_consumed": 3,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 1,
+    "open_trade_at_data_end": 0
+  },
+  "1h \u00b7 first physical touch": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 5004,
+    "tests_outside_entry_period": 0,
+    "tests_in_no_trade_window": 149,
+    "opposite_side_tests_consumed": 1,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 1,
+    "open_trade_at_data_end": 0
+  },
+  "1h \u00b7 width \u22640.5 ATR": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 3491,
+    "tests_outside_entry_period": 0,
+    "tests_in_no_trade_window": 64,
+    "opposite_side_tests_consumed": 0,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 1,
+    "open_trade_at_data_end": 0
+  },
+  "1h \u00b7 opposing room \u22652R/open": {
+    "capacity_removed": 219,
+    "invalidated": 8395,
+    "tests_consumed": 5128,
+    "tests_outside_entry_period": 0,
+    "tests_in_no_trade_window": 157,
+    "opposite_side_tests_consumed": 0,
+    "range_end_trade_cancellations": 0,
+    "both_stop_and_target_hit": 2,
+    "open_trade_at_data_end": 0
+  }
+}

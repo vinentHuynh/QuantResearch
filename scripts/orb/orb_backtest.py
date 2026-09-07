@@ -25,7 +25,7 @@ from pwb_toolbox.performance.metrics import (
     sharpe_ratio, annualized_volatility, cagr, max_drawdown,
 )
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 RTH_START, RTH_END = "09:30", "16:00"   # regular session (Eastern), assumes ET bars
 
 

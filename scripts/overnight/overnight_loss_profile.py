@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 SPECS = {"MES": (0.25, 5.0), "MNQ": (0.25, 2.0)}
 RTH = ("09:30", "15:59")
 DOW = ["Mon", "Tue", "Wed", "Thu", "Fri"]

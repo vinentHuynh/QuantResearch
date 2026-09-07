@@ -41,7 +41,7 @@ from pwb_toolbox.performance.metrics import (
     sharpe_ratio, annualized_volatility, cagr, max_drawdown,
 )
 
-DATA = Path(__file__).with_name("data")
+DATA = (Path(__file__).resolve().parents[2] / "data")
 SPECS = {"MNQ": (0.25, 2.0), "MES": (0.25, 5.0)}
 # 18:00-anchored trading clock; 17:00 is the CME maintenance halt (no bars)
 CLOCK = [18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]

@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 REPORTS = ROOT / "reports"
 BASE_EQUITY = 100_000.0

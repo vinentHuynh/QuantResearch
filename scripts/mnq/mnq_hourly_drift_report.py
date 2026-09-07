@@ -31,8 +31,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path(__file__).with_name("data")
-REPORTS = Path(__file__).with_name("reports")
+DATA = (Path(__file__).resolve().parents[2] / "data")
+REPORTS = (Path(__file__).resolve().parents[2] / "reports")
 DPP = 2.0
 HOLDS = [1, 2, 3, 4, 6, 8, 12]
 NIGHT = [18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5]

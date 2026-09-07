@@ -41,7 +41,7 @@ import pandas as pd
 
 from mnq_takeprofit_backtest import DPP, TICK, COST, load_paths, stats
 
-REPORTS = Path(__file__).with_name("reports")
+REPORTS = (Path(__file__).resolve().parents[2] / "reports")
 TRAILS = [50, 100, 150, 200, 300, 400, 500, 750, None]      # $/contract; None = timed
 ARMS = [0, 100, 200, 300, 500]                              # $ profit before trail arms
 HEADLINE = [100, 200, 400]

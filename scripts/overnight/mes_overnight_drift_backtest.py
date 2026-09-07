@@ -30,7 +30,7 @@ from pathlib import Path
 # ----------------------------------------------------------------------------
 # config
 # ----------------------------------------------------------------------------
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data" / "MES_5min_databento.parquet"
 OUT = ROOT / "reports" / "mes_overnight_drift"
 OUT.mkdir(parents=True, exist_ok=True)
