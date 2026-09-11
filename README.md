@@ -20,12 +20,53 @@ existing `.venv` and write isolated outputs under `reports/dashboard_runs/<run-i
 overwrite the canonical report directories. CSV output can be inspected as a table or line chart,
 while JSON, text, images, and generated HTML are previewed in the same workspace.
 
+The visible pages are driven by the API rather than sample portfolio data. Portfolio shows the
+three independent research, health, and allocation states. Health keeps live, paper, reference,
+and backtest histories separate. Risk shows covariance-aware exposure and hedge-removal what-ifs.
+Decisions stores cutoff snapshots, reproduces sealed decisions, and manages grouped alerts.
+Allocation lab registers chronological comparisons and append-only promotion reviews. Registry
+manages versioned configuration, eligibility assessments, and CSV/JSON-compatible observations.
+The original Backtests, Run history, Run analysis, and Chart data pages remain available.
+
+All runner definitions initially enter the portfolio registry as **Provisional** with **Unknown**
+health and **No current proposal**. This is intentional: a successful backtest does not become
+research approval, and missing observations never become a target-zero instruction. Use Registry
+to import timestamped observations and record settings. Capital-changing proposals require a
+Qualified immutable strategy version, complete owner configuration, fresh current observations,
+and a policy explicitly approved for allocation proposals. Brokerage execution is outside this
+application.
+
+Return imports accept `event_time`, optional `availability_time`, `history_type`
+(`backtest`, `reference`, `paper`, or `live`), `net_return` or `equity`, optional `cash_flow`, and
+currency. Position, fill, market, and cash-flow rows use the same event/availability timestamps.
+Every configuration save creates a new version; decisions retain their input material and hash.
+Monitoring refreshes once per minute and marks scheduled reviews due from the configured cadence,
+the last sealed decision cutoff, and hard-risk events. It never creates an allocation decision or
+broker order automatically.
+
 Strategies and charts are separate inputs. The chart catalog currently reads the normalized,
 timezone-aware Databento one-minute archives for MNQ, NQ, ES, YM, and CL, together with their
 prepared 5m/30m/1h/4h/1d bars. Contract tick size and dollar point value come from the chart
 catalog, not from strategy code. Every run saves a reproducibility record containing the chart,
 dataset identity, contract economics, strategy parameters, and calculation time. TradingView
 exports are not inputs to this runner.
+
+The Backtests page lists implemented trading mechanisms rather than one entry per historical
+script, instrument, or timeframe. A run is selected in this order: strategy, chart, timeframe,
+then strategy parameters. The consolidated catalog contains:
+
+- supply-and-demand zones, opening trend-pullback, and Asia gap-fill;
+- multi-speed momentum and moving-average trend;
+- cross-sectional momentum and pairs mean reversion;
+- prior-range fill, opening-range breakout, and overnight session trading.
+
+The generic strategies run through `scripts/dashboard_compatible_strategy.py`, which resamples
+the selected chart's normalized one-minute archive to the chosen supported timeframe. Specialized
+strategies expose only the resolution their implementation actually supports. Consolidated legacy
+script paths and hashes remain in each run's reproducibility record. Existing run history keeps
+its original strategy IDs. Statistical studies, report generators, data fetchers, and timeframe
+builders are excluded from the runnable strategy count. The current classification and repository
+audit are available from `GET /api/catalog-audit`.
 
 The API only accepts workflows and parameters declared in `dashboard_api/main.py`; browser input
 is never interpreted as a shell command. The local API listens on `127.0.0.1:8000` and is not meant
@@ -43,6 +84,17 @@ to be exposed directly to the internet.
 - `ninjatrader/` — NinjaScript ports of the Carver-vetted backtests
 - `reports/` — generated CSV/PNG/HTML output (gitignored contents vary by script)
 - `scripts/misc/smoke_test.py` — verifies data access + metrics
+- `dashboard_api/portfolio.py` — portfolio registry, assessments, allocation, risk, decisions,
+  alerts, overrides, imports, exports, and allocation experiments
+- `tests/test_portfolio.py` — cutoff, accounting, state, versioning, and reproducibility invariants
+
+Run product checks with:
+
+```bash
+npm test
+npm run build
+npm run lint
+```
 
 ## Use
 
@@ -244,6 +296,27 @@ annual totals, and machine-readable configuration are written beside it.
 .\.venv\Scripts\python.exe .\scripts\mnq\mnq_opening_trend_pullback_backtest.py `
   --start 2023-01-01 --risk-dollars 200 --bias-flip-exit
 ```
+
+## Dashboard run registry and validation
+
+Runs started from the dashboard are automatically recorded in
+`data/strategy_dashboard.sqlite3`. The registry stores the chart and strategy,
+parameters, lifecycle state, artifact index, reproducibility hashes, and validation
+checks. The report files remain under `reports/dashboard_runs/<run-id>/`.
+
+After the strategy process exits, the API checks execution, Databento dataset
+coverage metadata, strategy and dataset fingerprints, report artifacts, a structured
+result, and basic sample coverage. A passing run is labeled `DATA VALIDATED`; a hard
+failure is `REJECTED`, and small samples or zero-trade windows are shown as warnings.
+This is a technical/data gate only. Research approval and live-trading eligibility
+remain separate decisions.
+
+Every completed run also receives an automated research analysis. It extracts all
+reported performance sections and evaluates reproducibility, evidence coverage,
+execution-cost assumptions, net edge, risk measurement, chronology, and robustness.
+The result is labeled Blocked, Negative evidence, Smoke test, Provisional, or
+Incomplete and includes an explanation plus a recommended next action. Unknown
+evidence stays Unknown; the analysis never promotes a strategy to approved status.
 
 ## CME Group data + statistical reports
 

@@ -34,6 +34,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import json
 import math
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -842,6 +843,34 @@ def main() -> None:
     deadlines.to_csv(args.out_dir / "deadline_sweep.csv", index=False)
     if not picks.empty:
         picks.to_csv(args.out_dir / "walk_forward.csv", index=False)
+
+    summary = {
+        "config": {
+            key: str(value) if isinstance(value, Path) else value
+            for key, value in vars(args).items()
+        },
+        "statistics": {
+            "start": str(rule_calendar.min()),
+            "end": str(rule_calendar.max()),
+            "sessions": int(len(rule_calendar)),
+        },
+        "performance": headline_stats,
+        "bootstrap": single,
+        "reality_check": check,
+        "out_of_sample": {
+            "selection": "walk_forward",
+            "test_years": int(len(picks)),
+            "performance": oos_stats,
+        },
+    }
+    (args.out_dir / "summary.json").write_text(
+        json.dumps(
+            summary,
+            indent=2,
+            default=lambda value: value.item() if isinstance(value, np.generic) else str(value),
+        ),
+        encoding="utf-8",
+    )
 
     write_report(
         args.out_dir / "report.md", args, headline_stats, annual, grid, check, single,

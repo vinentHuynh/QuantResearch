@@ -1,0 +1,4 @@
+interface:
+  display_name: "Safari Web App Smoke Test"
+  short_description: "Smoke-test local web apps in Safari"
+  default_prompt: "Use $safari-webapp-smoke-test to inspect this local app with responsive screenshots and reviewed UI interactions."

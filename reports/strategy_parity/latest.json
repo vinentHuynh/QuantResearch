@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-09T06:16:28.083599+00:00",
+  "harness": "strategy_engine/parity.py",
+  "harness_sha256": "bea895ceb16bbcfdf4e927781f957024e66adca031ffac85f4c764ea7b4b5b1b",
+  "all_comparisons_passed": true,
+  "full_parity_verified": 0,
+  "partial_parity_verified": 2,
+  "results": [
+    {
+      "legacy_id": "es-nq-trend",
+      "catalog_id": "moving-average-trend",
+      "passed": true,
+      "coverage": "signal_and_return",
+      "fixture": {
+        "id": "deterministic-daily-trend-v1",
+        "sha256": "0326981e78deb9869265fa9ee3c7909ddcdc271323fc9ea5d69d7aabba50335a",
+        "rows": 180
+      },
+      "legacy_source": "scripts/es_nq/es_nq_backtest.py",
+      "legacy_sha256": "ff45f35bfc2ff12c0171303f59578a762db9810e750f716724b35c4480b4a728",
+      "canonical_source": "strategy_engine/strategies/trend.py",
+      "canonical_sha256": "845bd40bc9b9f0ec5e3055a78f52ef8009e357cbae07894889e030f0ed736545",
+      "comparisons": {
+        "held_direction": {
+          "passed": true,
+          "rows": 180,
+          "mismatches": 0,
+          "max_absolute_error": 0.0,
+          "tolerance": 1e-12
+        },
+        "daily_gross_return": {
+          "passed": true,
+          "rows": 180,
+          "mismatches": 0,
+          "max_absolute_error": 1.0842021724855044e-16,
+          "tolerance": 1e-12
+        }
+      },
+      "full_parity_blockers": [
+        "Legacy portfolio parity still requires simultaneous ES/NQ sleeves and compounded NAV comparison.",
+        "Legacy research used SPX/NDX cash proxies; the canonical runner uses selected Databento futures charts."
+      ]
+    },
+    {
+      "legacy_id": "cme-tsmom",
+      "catalog_id": "multi-speed-momentum",
+      "passed": true,
+      "coverage": "signal",
+      "fixture": {
+        "id": "deterministic-daily-trend-v1",
+        "sha256": "0326981e78deb9869265fa9ee3c7909ddcdc271323fc9ea5d69d7aabba50335a",
+        "rows": 180
+      },
+      "legacy_source": "scripts/cme/cme_time_series_momentum_backtest.py",
+      "legacy_sha256": "6338c8a46aabf9b877b89af95eacc5c12528548376b3d136aef85e5d70bb116a",
+      "canonical_source": "strategy_engine/strategies/trend.py",
+      "canonical_sha256": "845bd40bc9b9f0ec5e3055a78f52ef8009e357cbae07894889e030f0ed736545",
+      "comparisons": {
+        "lagged_four_horizon_score": {
+          "passed": true,
+          "rows": 180,
+          "mismatches": 0,
+          "max_absolute_error": 0.0,
+          "tolerance": 1e-12
+        },
+        "held_direction": {
+          "passed": true,
+          "rows": 180,
+          "mismatches": 0,
+          "max_absolute_error": 0.0,
+          "tolerance": 1e-12
+        }
+      },
+      "full_parity_blockers": [
+        "Canonical sizing is fixed-capital contract normalization; the legacy model targets point volatility.",
+        "Legacy portfolio parity still requires its multi-market proxy universe and basis-point cost model."
+      ]
+    }
+  ]
+}

@@ -9,6 +9,7 @@
     "dev:full": "concurrently -k -n API,WEB -c magenta,cyan \"npm run api\" \"npm run dev\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": ".venv/bin/python -m unittest discover -s tests -v",
     "preview": "vite preview"
   },
   "dependencies": {
