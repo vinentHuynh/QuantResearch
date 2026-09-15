@@ -1,0 +1,2 @@
+# Optional static research charts; accounting dependencies are in requirements-workbench.txt.
+matplotlib==3.11.2

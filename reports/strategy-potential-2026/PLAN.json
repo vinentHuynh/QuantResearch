@@ -1,0 +1,12 @@
+{
+  "training": "2025-01-01 through 2025-12-31, 365 calendar days; exactly one frozen candidate, no parameter selection",
+  "test": "2026-01-01 through 2026-08-31, 243 calendar days",
+  "september": "2026-09-01 through 2026-09-03; separate baseline runs starting flat, descriptive only, not appended to the main evaluation",
+  "parameters": "Original frozen 2022 selections for all nine NQ strategies; no retuning",
+  "criteria": "Positive net P&L for shortlist consideration; evaluation rule return >=0, drawdown <=35%, original minimum trade counts retained conservatively despite shorter period",
+  "scenarios": "Baseline and doubled fees/slippage; one additional bar delay for signal strategies only",
+  "sizing": "$100000 capital; fixed one contract; fee $1.25 per side, slippage one tick; ORB risk budget $2500 and maximum one contract",
+  "regimes": "Trend and volatility, 20 preceding native-timeframe bars, threshold at 2025 median, seed 42. Attribution only, no regime filter.",
+  "exits": "ORB baseline trade-ledger attribution, opening-range initial risk, exit reasons, gross/net R multiples, holding duration, monthly concentration. No exit-rule optimization.",
+  "limitations": "Historical carry-forward research; not certified untouched. Unadjusted continuous roll gaps, no margin liquidation, one-minute bracket assumptions, no event delay stress. September is only a partial month."
+}

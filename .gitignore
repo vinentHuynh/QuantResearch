@@ -26,6 +26,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 reports/dashboard_runs/
+reports/workbench-validation/
 data/**
 !data/mnq_dom_sample/
 data/mnq_dom_sample/**

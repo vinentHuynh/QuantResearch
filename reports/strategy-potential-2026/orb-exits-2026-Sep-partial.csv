@@ -1,0 +1,2 @@
+entry_time,entry_bar_close,exit_time,quantity,entry,exit,gross_pnl,cost,net_pnl,exit_reason,initial_stop,initial_risk_usd,initial_target,gross_r,net_r,holding_minutes,exit_month,crossed_local_date,source_minutes_in_entry_day_flatten_window,direction
+2026-09-01T09:50:00-04:00,2026-09-01T09:50:00-04:00,2026-09-01T18:43:00+00:00,1,29143.25,29040.25,-2060.0,12.5,-2072.5,stop,29040.25,2060.0,29349.25,-1.0,-1.0060679611650485,293.0,2026-09,False,15,Long

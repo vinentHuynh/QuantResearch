@@ -1,0 +1,1304 @@
+{
+  "buy-hold": {
+    "run_id": "756800ea-91a7-4f4a-86de-7f3e1a2936eb",
+    "parameters": {
+      "contracts": 1
+    },
+    "eligible": false,
+    "selected_at": "2026-09-15T02:46:02.515Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -1.062975,
+      "net_pnl": -106297.5,
+      "max_drawdown": -1.1567727716154208,
+      "underwater_bars": 5868,
+      "current_underwater_bars": 5868,
+      "cagr": null,
+      "sharpe": null,
+      "volatility": null,
+      "trades": 1,
+      "observations": 5903,
+      "costs": 12.5,
+      "first": "2022-01-03T00:00:00+00:00",
+      "last": "2022-12-30T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.29766250000000005
+        },
+        {
+          "month": "2022-02",
+          "return": -0.18509619662911347
+        },
+        {
+          "month": "2022-03",
+          "return": 0.24321313910061804
+        },
+        {
+          "month": "2022-04",
+          "return": -0.5687683361734273
+        },
+        {
+          "month": "2022-05",
+          "return": -0.1279178718376991
+        },
+        {
+          "month": "2022-06",
+          "return": -0.8950343345634606
+        },
+        {
+          "month": "2022-07",
+          "return": 10.170004450378283
+        },
+        {
+          "month": "2022-08",
+          "return": -0.44479859755368745
+        },
+        {
+          "month": "2022-09",
+          "return": -1.342231790455687
+        },
+        {
+          "month": "2022-10",
+          "return": -1.3537429230446634
+        },
+        {
+          "month": "2022-11",
+          "return": 5.835210432720806
+        },
+        {
+          "month": "2022-12",
+          "return": -1.4369092012834965
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 1,
+      "turnover_contracts": 2
+    },
+    "ranking": [],
+    "note": "Diagnostic selection only: no candidate met all training criteria"
+  },
+  "moving-average": {
+    "run_id": "02a3fab8-aa52-4334-8926-1772accfcd54",
+    "parameters": {
+      "lookback": 80,
+      "contracts": 1
+    },
+    "eligible": false,
+    "selected_at": "2026-09-15T02:46:02.519Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.11569999999999991,
+      "net_pnl": 11570,
+      "max_drawdown": -0.35466755276387296,
+      "underwater_bars": 2076,
+      "current_underwater_bars": 284,
+      "cagr": null,
+      "sharpe": 0.433522035284955,
+      "volatility": 0.48105333702938236,
+      "trades": 110,
+      "observations": 5903,
+      "costs": 1375,
+      "first": "2022-01-03T00:00:00+00:00",
+      "last": "2022-12-30T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.03903749999999995
+        },
+        {
+          "month": "2022-02",
+          "return": -0.04701015908529205
+        },
+        {
+          "month": "2022-03",
+          "return": 0.21892360400202016
+        },
+        {
+          "month": "2022-04",
+          "return": -0.10277485386665475
+        },
+        {
+          "month": "2022-05",
+          "return": -0.008748939144326284
+        },
+        {
+          "month": "2022-06",
+          "return": -0.1629880513201466
+        },
+        {
+          "month": "2022-07",
+          "return": 0.3122988056199043
+        },
+        {
+          "month": "2022-08",
+          "return": 0.033368103715081476
+        },
+        {
+          "month": "2022-09",
+          "return": -0.11243483083749306
+        },
+        {
+          "month": "2022-10",
+          "return": 0.058277301472242415
+        },
+        {
+          "month": "2022-11",
+          "return": 0.13384980573237115
+        },
+        {
+          "month": "2022-12",
+          "return": -0.0703565216485611
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 0.4470608165339658,
+      "turnover_contracts": 220
+    },
+    "ranking": [
+      {
+        "id": "02a3fab8-aa52-4334-8926-1772accfcd54",
+        "parameters": {
+          "lookback": 80,
+          "contracts": 1
+        },
+        "sharpe": 0.433522035284955,
+        "net_pnl": 11570,
+        "drawdown": -0.35466755276387296,
+        "trades": 110
+      },
+      {
+        "id": "4d9b77fc-488a-4d66-9faf-0a58b8acfa64",
+        "parameters": {
+          "lookback": 40,
+          "contracts": 1
+        },
+        "sharpe": -0.12038162448881516,
+        "net_pnl": -33520,
+        "drawdown": -0.5291542115773414,
+        "trades": 188
+      },
+      {
+        "id": "e30b0025-0441-4000-ad00-70a6e6cfb03b",
+        "parameters": {
+          "lookback": 20,
+          "contracts": 1
+        },
+        "sharpe": -0.14418380510845688,
+        "net_pnl": -71792.5,
+        "drawdown": -0.7870212580697324,
+        "trades": 337
+      },
+      {
+        "id": "71f96e4b-8f44-42da-8e11-7dfd604b01c1",
+        "parameters": {
+          "lookback": 10,
+          "contracts": 1
+        },
+        "sharpe": -0.27466388418416937,
+        "net_pnl": -83272.5,
+        "drawdown": -0.8672695557507454,
+        "trades": 517
+      }
+    ],
+    "note": "Diagnostic selection only: no candidate met all training criteria"
+  },
+  "multi-speed-momentum": {
+    "run_id": "27739322-07e8-4fa1-ad92-4c41f3b89300",
+    "parameters": {
+      "lookback": 60,
+      "contracts": 1
+    },
+    "eligible": true,
+    "selected_at": "2026-09-15T02:46:02.521Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 1.3457750000000002,
+      "net_pnl": 134577.5,
+      "max_drawdown": -0.23278157303796632,
+      "underwater_bars": 1266,
+      "current_underwater_bars": 1266,
+      "cagr": null,
+      "sharpe": 1.935180808704424,
+      "volatility": 0.4274386756914381,
+      "trades": 277,
+      "observations": 5903,
+      "costs": 3462.5,
+      "first": "2022-01-03T00:00:00+00:00",
+      "last": "2022-12-30T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": 0.16113749999999993
+        },
+        {
+          "month": "2022-02",
+          "return": -0.036257549170533254
+        },
+        {
+          "month": "2022-03",
+          "return": 0.1643041453034415
+        },
+        {
+          "month": "2022-04",
+          "return": 0.16045935988947724
+        },
+        {
+          "month": "2022-05",
+          "return": 0.18259381433071264
+        },
+        {
+          "month": "2022-06",
+          "return": -0.009927084862593749
+        },
+        {
+          "month": "2022-07",
+          "return": 0.09189185372432451
+        },
+        {
+          "month": "2022-08",
+          "return": 0.14785594650698086
+        },
+        {
+          "month": "2022-09",
+          "return": 0.017949194652424394
+        },
+        {
+          "month": "2022-10",
+          "return": -0.008196494490472439
+        },
+        {
+          "month": "2022-11",
+          "return": 0.034379429260181116
+        },
+        {
+          "month": "2022-12",
+          "return": 0.012380844486882703
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 0.8207691004573946,
+      "turnover_contracts": 554
+    },
+    "ranking": [
+      {
+        "id": "27739322-07e8-4fa1-ad92-4c41f3b89300",
+        "parameters": {
+          "lookback": 60,
+          "contracts": 1
+        },
+        "sharpe": 1.935180808704424,
+        "net_pnl": 134577.5,
+        "drawdown": -0.23278157303796632,
+        "trades": 277
+      },
+      {
+        "id": "becf70c6-ab2c-4a16-898e-486bb43df930",
+        "parameters": {
+          "lookback": 40,
+          "contracts": 1
+        },
+        "sharpe": 1.3704972390326557,
+        "net_pnl": 83700,
+        "drawdown": -0.2603716107362891,
+        "trades": 378
+      },
+      {
+        "id": "6493b6bb-1410-4134-bb1e-b50d05c15219",
+        "parameters": {
+          "lookback": 20,
+          "contracts": 1
+        },
+        "sharpe": 1.198789549452558,
+        "net_pnl": 77022.5,
+        "drawdown": -0.3360066601914805,
+        "trades": 551
+      },
+      {
+        "id": "19bdf3da-5ba5-41d5-9c3d-57054bc70e91",
+        "parameters": {
+          "lookback": 10,
+          "contracts": 1
+        },
+        "sharpe": 0.430044740015516,
+        "net_pnl": 7430,
+        "drawdown": -0.4371155063739711,
+        "trades": 814
+      }
+    ],
+    "note": "Training criteria met"
+  },
+  "rsi2-reversion": {
+    "run_id": "22c108ec-91ad-4674-9c66-8ece4bc685c5",
+    "parameters": {
+      "trend_lookback": 100,
+      "entry_rsi": 10,
+      "exit_rsi": 70,
+      "contracts": 1
+    },
+    "eligible": false,
+    "selected_at": "2026-09-15T02:46:02.541Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.6368,
+      "net_pnl": -63680,
+      "max_drawdown": -0.6631319088908076,
+      "underwater_bars": 257,
+      "current_underwater_bars": 257,
+      "cagr": null,
+      "sharpe": -1.356647227598152,
+      "volatility": 0.5893861766342368,
+      "trades": 4,
+      "observations": 258,
+      "costs": 50,
+      "first": "2022-01-03T22:00:00+00:00",
+      "last": "2022-12-30T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.437775
+        },
+        {
+          "month": "2022-02",
+          "return": 0
+        },
+        {
+          "month": "2022-03",
+          "return": 0
+        },
+        {
+          "month": "2022-04",
+          "return": 0
+        },
+        {
+          "month": "2022-05",
+          "return": 0
+        },
+        {
+          "month": "2022-06",
+          "return": 0
+        },
+        {
+          "month": "2022-07",
+          "return": 0
+        },
+        {
+          "month": "2022-08",
+          "return": -0.26148339188047487
+        },
+        {
+          "month": "2022-09",
+          "return": -0.12526718246680912
+        },
+        {
+          "month": "2022-10",
+          "return": 0
+        },
+        {
+          "month": "2022-11",
+          "return": 0
+        },
+        {
+          "month": "2022-12",
+          "return": 0
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 0.17829457364341086,
+      "turnover_contracts": 8
+    },
+    "ranking": [
+      {
+        "id": "22c108ec-91ad-4674-9c66-8ece4bc685c5",
+        "parameters": {
+          "trend_lookback": 100,
+          "entry_rsi": 10,
+          "exit_rsi": 70,
+          "contracts": 1
+        },
+        "sharpe": -1.356647227598152,
+        "net_pnl": -63680,
+        "drawdown": -0.6631319088908076,
+        "trades": 4
+      },
+      {
+        "id": "0461f0d5-7aa9-4695-aca7-7221a9c91c36",
+        "parameters": {
+          "trend_lookback": 100,
+          "entry_rsi": 5,
+          "exit_rsi": 70,
+          "contracts": 1
+        },
+        "sharpe": -1.473843324047041,
+        "net_pnl": -70187.5,
+        "drawdown": -0.7264413663946687,
+        "trades": 3
+      },
+      {
+        "id": "1ec2d289-8c4f-4b0d-a636-1d73c2edbfff",
+        "parameters": {
+          "trend_lookback": 200,
+          "entry_rsi": 5,
+          "exit_rsi": 70,
+          "contracts": 1
+        },
+        "sharpe": -1.6866414511195733,
+        "net_pnl": -43777.5,
+        "drawdown": -0.5007357322664202,
+        "trades": 1
+      },
+      {
+        "id": "fa6cc846-a2ad-4146-81be-fafd52e87275",
+        "parameters": {
+          "trend_lookback": 200,
+          "entry_rsi": 10,
+          "exit_rsi": 70,
+          "contracts": 1
+        },
+        "sharpe": -1.6866414511195733,
+        "net_pnl": -43777.5,
+        "drawdown": -0.5007357322664202,
+        "trades": 1
+      }
+    ],
+    "note": "Diagnostic selection only: no candidate met all training criteria"
+  },
+  "vwap-reversion": {
+    "run_id": "537bb523-f236-4d6f-8ab9-876870ad8703",
+    "parameters": {
+      "band": 0.004,
+      "contracts": 1
+    },
+    "eligible": false,
+    "selected_at": "2026-09-15T02:46:02.542Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.012050000000000005,
+      "net_pnl": -1205,
+      "max_drawdown": -0.38095572486921103,
+      "underwater_bars": 9484,
+      "current_underwater_bars": 9484,
+      "cagr": null,
+      "sharpe": 0.3424779771655625,
+      "volatility": 0.7190926138726398,
+      "trades": 594,
+      "observations": 19839,
+      "costs": 7425,
+      "first": "2022-01-03T14:35:00+00:00",
+      "last": "2022-12-30T21:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.08106250000000004
+        },
+        {
+          "month": "2022-02",
+          "return": -0.08137114874515405
+        },
+        {
+          "month": "2022-03",
+          "return": -0.12758207098751717
+        },
+        {
+          "month": "2022-04",
+          "return": 0.08130081300813008
+        },
+        {
+          "month": "2022-05",
+          "return": 0.24207700880593963
+        },
+        {
+          "month": "2022-06",
+          "return": 0.14807466289223936
+        },
+        {
+          "month": "2022-07",
+          "return": -0.06709156154371132
+        },
+        {
+          "month": "2022-08",
+          "return": -0.022253424738351124
+        },
+        {
+          "month": "2022-09",
+          "return": 0.07979243347613596
+        },
+        {
+          "month": "2022-10",
+          "return": -0.19176995205471792
+        },
+        {
+          "month": "2022-11",
+          "return": 0.011905749605907179
+        },
+        {
+          "month": "2022-12",
+          "return": 0.08003662252832089
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 0.6642975956449417,
+      "turnover_contracts": 1188
+    },
+    "ranking": [
+      {
+        "id": "537bb523-f236-4d6f-8ab9-876870ad8703",
+        "parameters": {
+          "band": 0.004,
+          "contracts": 1
+        },
+        "sharpe": 0.3424779771655625,
+        "net_pnl": -1205,
+        "drawdown": -0.38095572486921103,
+        "trades": 594
+      },
+      {
+        "id": "e30442ff-b645-40a6-9384-21a437ec1d05",
+        "parameters": {
+          "band": 0.002,
+          "contracts": 1
+        },
+        "sharpe": 0.27186386013509184,
+        "net_pnl": -27367.5,
+        "drawdown": -0.703514042791286,
+        "trades": 943
+      },
+      {
+        "id": "5f4b5b33-366a-458c-a8c9-0b07f06f6a71",
+        "parameters": {
+          "band": 0.001,
+          "contracts": 1
+        },
+        "sharpe": 0.2147275130782144,
+        "net_pnl": -39710,
+        "drawdown": -0.6986683621207305,
+        "trades": 1160
+      }
+    ],
+    "note": "Diagnostic selection only: no candidate met all training criteria"
+  },
+  "pine-overnight-block": {
+    "run_id": "a1a678ca-cd31-4a3d-91bb-8ad398d53537",
+    "parameters": {
+      "entry_hour": 23,
+      "entry_minute": 0,
+      "exit_hour": 6,
+      "exit_minute": 0,
+      "contracts": 1,
+      "timezone": "America/New_York"
+    },
+    "eligible": true,
+    "selected_at": "2026-09-15T02:46:02.550Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.3022,
+      "net_pnl": 30220,
+      "max_drawdown": -0.12626154909270837,
+      "underwater_bars": 47910,
+      "current_underwater_bars": 47910,
+      "cagr": null,
+      "sharpe": 1.2498237804226968,
+      "volatility": 0.1855182870862352,
+      "trades": 258,
+      "observations": 70827,
+      "costs": 3225,
+      "first": "2022-01-02T23:05:00+00:00",
+      "last": "2022-12-30T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": 0.13192500000000007
+        },
+        {
+          "month": "2022-02",
+          "return": 0.10062504141175421
+        },
+        {
+          "month": "2022-03",
+          "return": 0.1006361246563523
+        },
+        {
+          "month": "2022-04",
+          "return": 0.055134189031505354
+        },
+        {
+          "month": "2022-05",
+          "return": -0.03023914846557918
+        },
+        {
+          "month": "2022-06",
+          "return": -0.050782224439613666
+        },
+        {
+          "month": "2022-07",
+          "return": 0.018490013515542802
+        },
+        {
+          "month": "2022-08",
+          "return": -0.019997419687782236
+        },
+        {
+          "month": "2022-09",
+          "return": 0.0027081922816520887
+        },
+        {
+          "month": "2022-10",
+          "return": -0.028940655713106778
+        },
+        {
+          "month": "2022-11",
+          "return": 0.03210167461804425
+        },
+        {
+          "month": "2022-12",
+          "return": -0.025208196874707545
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 0.30598500571815834,
+      "turnover_contracts": 516
+    },
+    "ranking": [
+      {
+        "id": "a1a678ca-cd31-4a3d-91bb-8ad398d53537",
+        "parameters": {
+          "entry_hour": 23,
+          "entry_minute": 0,
+          "exit_hour": 6,
+          "exit_minute": 0,
+          "contracts": 1,
+          "timezone": "America/New_York"
+        },
+        "sharpe": 1.2498237804226968,
+        "net_pnl": 30220,
+        "drawdown": -0.12626154909270837,
+        "trades": 258
+      },
+      {
+        "id": "58966abc-eb91-45c6-86ec-2c25ce2b6d80",
+        "parameters": {
+          "entry_hour": 23,
+          "entry_minute": 0,
+          "exit_hour": 4,
+          "exit_minute": 0,
+          "contracts": 1,
+          "timezone": "America/New_York"
+        },
+        "sharpe": 1.1327014802780238,
+        "net_pnl": 22580,
+        "drawdown": -0.15965952329503286,
+        "trades": 258
+      },
+      {
+        "id": "5727a7d2-988c-4eb0-a4df-a3cc905d5fc7",
+        "parameters": {
+          "entry_hour": 17,
+          "entry_minute": 0,
+          "exit_hour": 6,
+          "exit_minute": 0,
+          "contracts": 1,
+          "timezone": "America/New_York"
+        },
+        "sharpe": 0.3042910724174901,
+        "net_pnl": 5847.5,
+        "drawdown": -0.20567398553272187,
+        "trades": 257
+      },
+      {
+        "id": "ce08b434-0d9e-4e77-8e3a-938a78ea88cf",
+        "parameters": {
+          "entry_hour": 17,
+          "entry_minute": 0,
+          "exit_hour": 4,
+          "exit_minute": 0,
+          "contracts": 1,
+          "timezone": "America/New_York"
+        },
+        "sharpe": 0.10924872259026808,
+        "net_pnl": -1007.5,
+        "drawdown": -0.2213129336417008,
+        "trades": 257
+      }
+    ],
+    "note": "Training criteria met"
+  },
+  "pine-daily-tsmom": {
+    "run_id": "5286073f-f0d2-406b-8f82-c104b3808bcc",
+    "parameters": {
+      "fast_length": 10,
+      "medium_length": 60,
+      "slow_length": 90,
+      "annual_length": 252,
+      "sizing_mode": "Fixed contracts",
+      "contracts": 1,
+      "annual_risk": 0.2,
+      "maximum_leverage": 2,
+      "volatility_length": 60,
+      "sleeve_count": 1,
+      "rounding": "Nearest"
+    },
+    "eligible": false,
+    "selected_at": "2026-09-15T02:46:02.558Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.06540000000000001,
+      "net_pnl": -6540,
+      "max_drawdown": -0.45650894708918155,
+      "underwater_bars": 12811,
+      "current_underwater_bars": 12811,
+      "cagr": null,
+      "sharpe": 0.30799954240456834,
+      "volatility": 0.761197113403741,
+      "trades": 16,
+      "observations": 23609,
+      "costs": 200,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2022-12-30T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.22423749999999998
+        },
+        {
+          "month": "2022-02",
+          "return": -0.03683472712331415
+        },
+        {
+          "month": "2022-03",
+          "return": -0.09199498117942284
+        },
+        {
+          "month": "2022-04",
+          "return": 0.38096027710221825
+        },
+        {
+          "month": "2022-05",
+          "return": 0.04119915146825348
+        },
+        {
+          "month": "2022-06",
+          "return": 0.24161658615343207
+        },
+        {
+          "month": "2022-07",
+          "return": -0.22796371404687454
+        },
+        {
+          "month": "2022-08",
+          "return": 0.16371243717249495
+        },
+        {
+          "month": "2022-09",
+          "return": -0.1047383837803687
+        },
+        {
+          "month": "2022-10",
+          "return": -0.10036311379704121
+        },
+        {
+          "month": "2022-11",
+          "return": -0.16763887898452545
+        },
+        {
+          "month": "2022-12",
+          "return": 0.28112952142698044
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 0.8129103308060486,
+      "turnover_contracts": 32
+    },
+    "ranking": [
+      {
+        "id": "5286073f-f0d2-406b-8f82-c104b3808bcc",
+        "parameters": {
+          "fast_length": 10,
+          "medium_length": 60,
+          "slow_length": 90,
+          "annual_length": 252,
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 1,
+          "rounding": "Nearest"
+        },
+        "sharpe": 0.30799954240456834,
+        "net_pnl": -6540,
+        "drawdown": -0.45650894708918155,
+        "trades": 16
+      },
+      {
+        "id": "3f5e2517-b4af-4c47-9fb2-5dad91ba3086",
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 1,
+          "rounding": "Nearest"
+        },
+        "sharpe": 0.2940122688954727,
+        "net_pnl": -6457.5,
+        "drawdown": -0.45105124470486213,
+        "trades": 11
+      },
+      {
+        "id": "e78adcaa-4f9e-47fe-9b50-75e9d3a7e5c4",
+        "parameters": {
+          "fast_length": 10,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 1,
+          "rounding": "Nearest"
+        },
+        "sharpe": 0.27250738950761044,
+        "net_pnl": -10107.5,
+        "drawdown": -0.4750382590044224,
+        "trades": 13
+      },
+      {
+        "id": "b5e5a5c7-4a45-4d18-94da-7bb30245e43a",
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 90,
+          "annual_length": 252,
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 1,
+          "rounding": "Nearest"
+        },
+        "sharpe": 0.21167876528358334,
+        "net_pnl": -10585,
+        "drawdown": -0.4244172074020668,
+        "trades": 14
+      }
+    ],
+    "note": "Diagnostic selection only: no candidate met all training criteria"
+  },
+  "pine-overnight-drift": {
+    "run_id": "248372c3-d494-4e9d-943d-21d2e5f9ffd4",
+    "parameters": {
+      "sizing_mode": "Fixed contracts",
+      "contracts": 1,
+      "annual_risk": 0.2,
+      "maximum_leverage": 2,
+      "volatility_length": 60,
+      "sleeve_count": 4,
+      "timezone": "America/New_York",
+      "rth_start": 570,
+      "rth_end": 960,
+      "trade_weekend": false,
+      "close_rule": "Long after down close",
+      "strong_threshold": 0.6
+    },
+    "eligible": true,
+    "selected_at": "2026-09-15T02:46:02.563Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.011025000000000063,
+      "net_pnl": 1102.5,
+      "max_drawdown": -0.24549990595992788,
+      "underwater_bars": 45646,
+      "current_underwater_bars": 45646,
+      "cagr": null,
+      "sharpe": 0.17905845221308878,
+      "volatility": 0.2999839212591472,
+      "trades": 107,
+      "observations": 70827,
+      "costs": 1337.5,
+      "first": "2022-01-02T23:05:00+00:00",
+      "last": "2022-12-30T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": 0.04817500000000008
+        },
+        {
+          "month": "2022-02",
+          "return": -0.13399480048655998
+        },
+        {
+          "month": "2022-03",
+          "return": 0.07013412652510387
+        },
+        {
+          "month": "2022-04",
+          "return": 0.11150287604071485
+        },
+        {
+          "month": "2022-05",
+          "return": -0.013695934055756198
+        },
+        {
+          "month": "2022-06",
+          "return": -0.0016902797178172113
+        },
+        {
+          "month": "2022-07",
+          "return": -0.04036496607837836
+        },
+        {
+          "month": "2022-08",
+          "return": 0.02260586159576561
+        },
+        {
+          "month": "2022-09",
+          "return": -0.00945351721163179
+        },
+        {
+          "month": "2022-10",
+          "return": -0.1152143410102574
+        },
+        {
+          "month": "2022-11",
+          "return": 0.12072948993123434
+        },
+        {
+          "month": "2022-12",
+          "return": -0.013369440581619485
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 0.29827608115549153,
+      "turnover_contracts": 214
+    },
+    "ranking": [
+      {
+        "id": "248372c3-d494-4e9d-943d-21d2e5f9ffd4",
+        "parameters": {
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 4,
+          "timezone": "America/New_York",
+          "rth_start": 570,
+          "rth_end": 960,
+          "trade_weekend": false,
+          "close_rule": "Long after down close",
+          "strong_threshold": 0.6
+        },
+        "sharpe": 0.17905845221308878,
+        "net_pnl": 1102.5,
+        "drawdown": -0.24549990595992788,
+        "trades": 107
+      },
+      {
+        "id": "349d4479-0e36-425f-ba19-c93c09725223",
+        "parameters": {
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 4,
+          "timezone": "America/New_York",
+          "rth_start": 570,
+          "rth_end": 960,
+          "trade_weekend": false,
+          "close_rule": "Always (no filter)",
+          "strong_threshold": 0.6
+        },
+        "sharpe": -0.5078765204389221,
+        "net_pnl": -39410,
+        "drawdown": -0.5647697380167356,
+        "trades": 208
+      },
+      {
+        "id": "a862856f-8f3a-490f-86f5-5269b35b1be4",
+        "parameters": {
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 4,
+          "timezone": "America/New_York",
+          "rth_start": 570,
+          "rth_end": 960,
+          "trade_weekend": false,
+          "close_rule": "Long up / short down",
+          "strong_threshold": 0.6
+        },
+        "sharpe": -0.6617687694520686,
+        "net_pnl": -44290,
+        "drawdown": -0.6010136142303488,
+        "trades": 208
+      },
+      {
+        "id": "cab71d6f-77bf-4972-b4a4-a9f7a3021a35",
+        "parameters": {
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 4,
+          "timezone": "America/New_York",
+          "rth_start": 570,
+          "rth_end": 960,
+          "trade_weekend": false,
+          "close_rule": "Long after up close",
+          "strong_threshold": 0.6
+        },
+        "sharpe": -1.125180145304996,
+        "net_pnl": -40512.5,
+        "drawdown": -0.47603667051180865,
+        "trades": 101
+      },
+      {
+        "id": "1ea00513-7442-40ac-a4ad-1594b2a5643b",
+        "parameters": {
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 4,
+          "timezone": "America/New_York",
+          "rth_start": 570,
+          "rth_end": 960,
+          "trade_weekend": false,
+          "close_rule": "Strong close only (long)",
+          "strong_threshold": 0.6
+        },
+        "sharpe": -1.3697215414582504,
+        "net_pnl": -53970,
+        "drawdown": -0.6608336490169002,
+        "trades": 86
+      }
+    ],
+    "note": "Training criteria met"
+  },
+  "pine-tsmom-orb": {
+    "run_id": "19e74e47-afb9-4dbf-b3e1-3125df3b5e0a",
+    "parameters": {
+      "fast_length": 20,
+      "medium_length": 60,
+      "slow_length": 120,
+      "annual_length": 252,
+      "timezone": "America/New_York",
+      "minimum_score": 0.5,
+      "opening_start": 570,
+      "opening_end": 585,
+      "entry_start": 585,
+      "entry_end": 900,
+      "flatten_start": 945,
+      "flatten_end": 960,
+      "risk_budget": 2500,
+      "maximum_contracts": 1,
+      "reward_risk": 2,
+      "require_close_break": true
+    },
+    "eligible": true,
+    "selected_at": "2026-09-15T02:46:02.569Z",
+    "source_hash": "cc1a667195e280e2c43667d32e880da6bc9fef95ea4f1aa8386f94ab862ac26f",
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.2701,
+      "net_pnl": 27010,
+      "max_drawdown": -0.10681183431952668,
+      "underwater_bars": 15961,
+      "current_underwater_bars": 15961,
+      "cagr": null,
+      "sharpe": 1.1577244482236644,
+      "volatility": 0.18203061202564105,
+      "trades": 80,
+      "observations": 70827,
+      "costs": 905,
+      "first": "2022-01-02T23:05:00+00:00",
+      "last": "2022-12-30T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.02310000000000001
+        },
+        {
+          "month": "2022-02",
+          "return": 0.00035827617975225934
+        },
+        {
+          "month": "2022-03",
+          "return": 0.04187771808646712
+        },
+        {
+          "month": "2022-04",
+          "return": -0.04016991185208829
+        },
+        {
+          "month": "2022-05",
+          "return": 0.07763935432708302
+        },
+        {
+          "month": "2022-06",
+          "return": 0.09241323648103306
+        },
+        {
+          "month": "2022-07",
+          "return": 0.055390164931875985
+        },
+        {
+          "month": "2022-08",
+          "return": 0.033561192554768526
+        },
+        {
+          "month": "2022-09",
+          "return": 0.02109645802621629
+        },
+        {
+          "month": "2022-10",
+          "return": -0.030922605692880967
+        },
+        {
+          "month": "2022-11",
+          "return": 0.00940167498792066
+        },
+        {
+          "month": "2022-12",
+          "return": 0.013263128502762234
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+      "time_invested_bar_fraction": 0.040958956330213056,
+      "turnover_contracts": 160
+    },
+    "ranking": [
+      {
+        "id": "19e74e47-afb9-4dbf-b3e1-3125df3b5e0a",
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "timezone": "America/New_York",
+          "minimum_score": 0.5,
+          "opening_start": 570,
+          "opening_end": 585,
+          "entry_start": 585,
+          "entry_end": 900,
+          "flatten_start": 945,
+          "flatten_end": 960,
+          "risk_budget": 2500,
+          "maximum_contracts": 1,
+          "reward_risk": 2,
+          "require_close_break": true
+        },
+        "sharpe": 1.1577244482236644,
+        "net_pnl": 27010,
+        "drawdown": -0.10681183431952668,
+        "trades": 80
+      },
+      {
+        "id": "ed31e207-4613-4951-a629-83152b5a15e0",
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "timezone": "America/New_York",
+          "minimum_score": 0.25,
+          "opening_start": 570,
+          "opening_end": 585,
+          "entry_start": 585,
+          "entry_end": 900,
+          "flatten_start": 945,
+          "flatten_end": 960,
+          "risk_budget": 2500,
+          "maximum_contracts": 1,
+          "reward_risk": 2,
+          "require_close_break": true
+        },
+        "sharpe": 1.1577244482236644,
+        "net_pnl": 27010,
+        "drawdown": -0.10681183431952668,
+        "trades": 80
+      },
+      {
+        "id": "d868cba0-aa2c-40d1-bb81-c44b56b836a3",
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "timezone": "America/New_York",
+          "minimum_score": 0.5,
+          "opening_start": 570,
+          "opening_end": 585,
+          "entry_start": 585,
+          "entry_end": 900,
+          "flatten_start": 945,
+          "flatten_end": 960,
+          "risk_budget": 2500,
+          "maximum_contracts": 1,
+          "reward_risk": 1.5,
+          "require_close_break": true
+        },
+        "sharpe": 0.7991015935259181,
+        "net_pnl": 16087.5,
+        "drawdown": -0.1264138810705966,
+        "trades": 80
+      },
+      {
+        "id": "e795606a-f1a9-49a8-b3dd-6564515e6cc8",
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "timezone": "America/New_York",
+          "minimum_score": 0.25,
+          "opening_start": 570,
+          "opening_end": 585,
+          "entry_start": 585,
+          "entry_end": 900,
+          "flatten_start": 945,
+          "flatten_end": 960,
+          "risk_budget": 2500,
+          "maximum_contracts": 1,
+          "reward_risk": 1.5,
+          "require_close_break": true
+        },
+        "sharpe": 0.7991015935259181,
+        "net_pnl": 16087.5,
+        "drawdown": -0.1264138810705966,
+        "trades": 80
+      }
+    ],
+    "note": "Training criteria met"
+  }
+}

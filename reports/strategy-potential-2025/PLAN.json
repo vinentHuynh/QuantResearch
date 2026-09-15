@@ -1,0 +1,18 @@
+{
+  "calibration": "2024-01-01 to 2024-12-31",
+  "test": "2025-01-01 to 2025-12-31",
+  "parameters": "Frozen 2022 selections; one candidate per strategy, no retuning or exclusion based on 2024 profitability.",
+  "sizing": "Same one-contract settings, $100000 starting capital, $1.25 fee and one tick per side. ORB stop-risk cap $2500.",
+  "protocol": "One chronological fold: 366 training days, 365 test days. Training eligibility: finite net P&L, zero minimum trades so every fixed configuration is evaluated. Test: nonnegative net return, drawdown <=35%, original strategy-specific minimum trade count.",
+  "scenarios": "Baseline and doubled costs for all nine; one additional chart-bar delay for five signal strategies. Event-order delay unavailable.",
+  "regimes": {
+    "features": [
+      "volatility",
+      "trend"
+    ],
+    "lookback_bars": 20,
+    "training_quantile": 0.5,
+    "seed": 42
+  },
+  "interpretation": "Descriptive historical potential at tested sizing. Later history, not certified untouched data. Regime attribution does not simulate trading only in a selected state."
+}

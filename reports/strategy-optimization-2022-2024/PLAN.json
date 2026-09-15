@@ -1,0 +1,157 @@
+{
+  "strategies": [
+    {
+      "id": "buy-hold",
+      "tf": "1h",
+      "warmup": 60,
+      "sweep": {},
+      "min": 1
+    },
+    {
+      "id": "moving-average",
+      "tf": "1h",
+      "warmup": 60,
+      "sweep": {
+        "lookback": [
+          10,
+          20,
+          40,
+          80
+        ]
+      },
+      "min": 20
+    },
+    {
+      "id": "multi-speed-momentum",
+      "tf": "1h",
+      "warmup": 60,
+      "sweep": {
+        "lookback": [
+          10,
+          20,
+          40,
+          60
+        ]
+      },
+      "min": 20
+    },
+    {
+      "id": "rsi2-reversion",
+      "tf": "1d",
+      "warmup": 400,
+      "sweep": {
+        "trend_lookback": [
+          100,
+          200
+        ],
+        "entry_rsi": [
+          5,
+          10
+        ]
+      },
+      "min": 10
+    },
+    {
+      "id": "vwap-reversion",
+      "tf": "5m",
+      "session": "new-york-rth",
+      "warmup": 10,
+      "sweep": {
+        "band": [
+          0.001,
+          0.002,
+          0.004
+        ]
+      },
+      "min": 20
+    },
+    {
+      "id": "pine-overnight-block",
+      "tf": "5m",
+      "warmup": 10,
+      "sweep": {
+        "entry_hour": [
+          17,
+          23
+        ],
+        "exit_hour": [
+          4,
+          6
+        ]
+      },
+      "min": 20
+    },
+    {
+      "id": "pine-daily-tsmom",
+      "tf": "15m",
+      "warmup": 600,
+      "params": {
+        "sizing_mode": "Fixed contracts"
+      },
+      "sweep": {
+        "fast_length": [
+          10,
+          20
+        ],
+        "slow_length": [
+          90,
+          120
+        ]
+      },
+      "min": 5
+    },
+    {
+      "id": "pine-overnight-drift",
+      "tf": "5m",
+      "warmup": 180,
+      "params": {
+        "sizing_mode": "Fixed contracts"
+      },
+      "sweep": {
+        "close_rule": [
+          "Long after up close",
+          "Long after down close",
+          "Long up / short down",
+          "Strong close only (long)",
+          "Always (no filter)"
+        ]
+      },
+      "min": 20
+    },
+    {
+      "id": "pine-tsmom-orb",
+      "tf": "5m",
+      "warmup": 600,
+      "params": {
+        "risk_budget": 2500,
+        "maximum_contracts": 1
+      },
+      "sweep": {
+        "minimum_score": [
+          0.25,
+          0.5
+        ],
+        "reward_risk": [
+          1.5,
+          2
+        ]
+      },
+      "min": 20
+    }
+  ],
+  "development": "2022-01-01 to 2022-12-31",
+  "validation": "2023-01-01 to 2023-12-31",
+  "holdout": "2024-01-01 to 2024-12-31",
+  "selection": "Highest daily Sharpe among positive-net-PnL, finite-Sharpe candidates with sufficient trades and drawdown no worse than 35%. If none qualify, keep the highest finite-Sharpe candidate as a diagnostic only. No selection or retuning uses 2023/2024 results.",
+  "costs": {
+    "capital": 100000,
+    "fee_per_side": 1.25,
+    "slippage_ticks_per_side": 1
+  },
+  "exposure": "One contract. Pine daily and drift use fixed-contract mode; ORB maximum one contract with a $2500 stop-risk cap. No position-size optimization.",
+  "warmup_days": "Fixed per strategy in the declared grid",
+  "stress": "Double commission and slippage on frozen 2024 NQ settings",
+  "transfer": "Frozen settings on ES in 2024; ES uses its actual point/tick values",
+  "acceptance": "Positive net PnL in 2023 and 2024, 2024 drawdown <=35%, sufficient trades in both periods, positive stressed 2024 NQ PnL. ES reported separately, never used to retune.",
+  "caveat": "Chronological historical checks, not certified untouched out-of-sample evidence: earlier repository research may have inspected these periods."
+}

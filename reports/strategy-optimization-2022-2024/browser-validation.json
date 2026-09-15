@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-09-15T02:52:22.205Z",
+  "checks": [
+    "All 69 completed configurations accounted for; frozen parameters, sources, years and markets verified; doubled-cost P&L reconciles for all nine strategies",
+    "buy-hold: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "buy-hold: saved preset restores frozen parameters and validates",
+    "moving-average: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "moving-average: saved preset restores frozen parameters and validates",
+    "multi-speed-momentum: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "multi-speed-momentum: saved preset restores frozen parameters and validates",
+    "rsi2-reversion: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "rsi2-reversion: saved preset restores frozen parameters and validates",
+    "vwap-reversion: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "vwap-reversion: saved preset restores frozen parameters and validates",
+    "pine-overnight-block: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "pine-overnight-block: saved preset restores frozen parameters and validates",
+    "pine-daily-tsmom: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "pine-daily-tsmom: saved preset restores frozen parameters and validates",
+    "pine-overnight-drift: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "pine-overnight-drift: saved preset restores frozen parameters and validates",
+    "pine-tsmom-orb: chart, CSV downloads, evidence export, deletion preview cancellation",
+    "pine-tsmom-orb: saved preset restores frozen parameters and validates",
+    "Compatible holdout runs compare both as run and on an aligned interval",
+    "Interrupted runs support bulk deletion preview; comparison is disabled for mixed statuses"
+  ],
+  "errors": [],
+  "runs": 71
+}

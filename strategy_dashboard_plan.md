@@ -1,341 +1,303 @@
-# Strategy Health and Allocation Dashboard
+# Strategy Research Workbench
 
-Product specification and implementation plan | 6 September 2026
+Updated product specification and implementation plan | 14 September 2026
 
-## 1. Purpose and initial scope
+## 1. Purpose
 
-Help the owner of a portfolio of systematic strategies answer four questions:
+Build a local application that runs the owner's Python strategy scripts against separately acquired market datasets, exposes their parameters through a UI, and collects reproducible results for comparison. Use those results to investigate which configurations have worked across different markets and conditions, then track selected configurations on newly arriving data.
 
-1. Which strategy versions have credible evidence supporting their use?
-2. Are their current results, execution, and exposures consistent with that evidence?
-3. How much risk should each eligible strategy receive under the chosen portfolio policy?
-4. Does adapting allocations improve outcomes compared with simpler alternatives?
+The primary workflow is:
 
-“Currently valid” means eligible for allocation under a declared policy using information available now. It does not mean the next trade or month is predicted to be profitable. A strategy can remain valid during an ordinary drawdown, and a profitable strategy can become ineligible because of broken data or excessive risk.
+1. Register a Python strategy script.
+2. Select a dataset, timeframe, date range, and execution assumptions.
+3. Set parameters or define a bounded parameter sweep.
+4. Run the experiment and inspect progress, errors, and outputs.
+5. Compare configurations on consistent assumptions and evaluation periods.
+6. Evaluate selected configurations on data excluded from their selection.
+7. Freeze promising configurations in a watchlist and rerun them as new data become available.
 
-The initial product is a decision-support dashboard with reproducible allocation proposals and exports. Brokerage order execution is a later integration. No user strategy data has been supplied, so this specification makes no judgments about any existing strategy.
+The application describes results and records evidence. A successful script execution, profitable recent month, or high backtest Sharpe does not automatically establish trading eligibility or predict next month's performance.
 
-Initial assumptions:
+Implementation now uses the existing canonical moving-average signal and the four local Databento ZIP archives (NQ, ES, YM, CL). See [WORKBENCH_IMPLEMENTATION.md](WORKBENCH_IMPLEMENTATION.md) for implementation and validation status, and [WORKBENCH.md](WORKBENCH.md) for usage. Workflow validation makes no claim about strategy performance.
 
-- One portfolio owner, multiple strategy versions, and one reporting currency.
-- Daily marked-to-market returns are the preferred minimum for current-health analysis. Trade and position records unlock execution and exposure analysis.
-- Monitoring updates after each completed trading day. Data and operational checks run whenever new data arrive; the interface states the actual monitoring frequency.
-- Regular performance-allocation reviews occur at month-end and take effect at the next feasible trading time. Risk-limit checks can generate earlier proposals. Review cadence is configurable and versioned.
-- Month-to-date, previous months, and rolling periods are visible. Performance history and drawdowns continue across calendar boundaries.
-- TypeScript is used for application and calculation code.
+## 2. What changes from the previous plan
 
-## 2. The three independent assessments
-
-Avoid one opaque score that combines profitability, data integrity, and portfolio risk. Store and display these dimensions separately.
-
-| Dimension | States | Meaning |
-| --- | --- | --- |
-| Research eligibility | Qualified, Provisional, Rejected, Retired | Whether this exact strategy version meets its declared research acceptance criteria. |
-| Current health | Normal, Watch, Breached, Unknown | Whether current operations and behavior meet the applicable checks, and whether those checks can be evaluated. |
-| Allocation | Base, Reduced, Paused, No current proposal | The proposed exposure after approved policy rules and portfolio constraints. |
-
-Every status has an assessment time, data coverage, evidence strength, reason codes, relevant metric values, and the policy version that produced it. Unknown fields remain unknown rather than becoming zeros.
-
-Examples of the resulting user-facing combinations:
-
-| Situation | Display | Allocation implication |
-| --- | --- | --- |
-| Qualified strategy, normal execution, one losing month inside expected variation | Qualified / Normal | Base policy remains applicable. A negative month alone does not trigger a pause. |
-| Qualified strategy, unusually deep drawdown, no hard limit breach | Qualified / Watch | Review the evidence; apply existing risk limits. No automatic P&L penalty without an approved rule. |
-| Qualified strategy whose volatility or shared exposure consumes too much portfolio risk | Qualified / Normal or Watch / Reduced | Strategy remains eligible, with less exposure because of the portfolio budget. |
-| New strategy with an impressive but insufficiently validated backtest | Provisional | Research and paper trading; no new live allocation recommendation. |
-| Stale prices or missing positions prevent a reliable assessment | Unknown / No current proposal | Suppress new size increases, display existing exposure and its stale timestamp, and invoke the configured data-outage procedure. |
-| Known execution failure or hard risk breach | Breached / Paused or Reduced | Recommend the predefined containment action and show remaining actual exposure until resolved. |
-| An approved timing policy calls for no exposure | Qualified / Paused | A temporary allocation state; the strategy continues in simulation. |
-
-“No current proposal” is a null result, not an instruction to liquidate. “Paused” does not imply that existing positions have already been closed.
-
-## 3. How a strategy becomes eligible
-
-Qualification is attached to an immutable strategy version and a versioned acceptance profile. It is a research decision supported by recorded evidence; the dashboard does not automatically certify a strategy because its Sharpe is positive.
-
-The acceptance profile records the intended economic edge, holding horizon, assets, trading calendar, minimum economically useful net performance, evidence requirements, permitted risk, and stress assumptions. Those investment thresholds must be chosen before examining the evaluation results.
-
-The qualification checklist requires:
-
-1. **Reproducible definition.** Code or configuration hash, parameter set, instrument universe, sizing methodology, data versions, and cost model are recorded.
-2. **Credible chronology.** Development, validation, and untouched evaluation periods are identified. Document when the strategy was selected. A full-history winner cannot be presented as though it had been selected before that history occurred.
-3. **Complete economics.** Returns include fees, spread, realistic slippage, funding or borrowing where applicable, and unrealized P&L. Cost assumptions are also stressed.
-4. **Evidence of an economically useful edge.** Net evaluation performance meets the predeclared objective, with uncertainty intervals and dependence-aware inference. Evidence that cannot resolve economically important uncertainty produces Provisional status.
-5. **Robustness.** Reasonable neighboring parameters, implementation delays, subperiods, and relevant market conditions do not reveal a result wholly dependent on one fragile assumption. Success in every subperiod is not required.
-6. **Known risk behavior.** Drawdowns, time under water, leverage, exposure concentrations, liquidity requirements, and relevant jump or tail scenarios fit the stated risk limits.
-7. **Recorded research acceptance.** Store the reviewer, date, evidence snapshot, acceptance profile, and any limitations.
-
-Track all attempted strategy and allocation variants. Selection among many trials can inflate observed performance; a Deflated Sharpe Ratio may be useful when its assumptions and trial-history inputs are defensible. It is not a probability that a strategy is currently safe or will win next month. Unknown trial history must be disclosed. [Bailey and López de Prado, The Deflated Sharpe Ratio](https://www.davidhbailey.com/dhbpapers/deflated-sharpe.pdf)
-
-Material code, universe, signal, or cost-model changes create a new version requiring review. Preserve the old version and its decisions. Rejected and retired strategies remain in the research record to avoid hiding failures.
-
-## 4. Current-health engine
-
-### 4.1 Data and operational checks come first
-
-Validate timestamps, expected market sessions, duplicate observations, stale prices, missing positions, missing costs, currency conversion, and consistency between fills, P&L, and equity. Reconcile live positions with the strategy ledger when a live source exists.
-
-Missing critical inputs make the affected assessment Unknown. Noncritical missing inputs mark the relevant feature unavailable. An imported monthly return series can support monthly research, but it cannot support an invented intramonth drawdown, slippage report, or daily risk estimate.
-
-Use elapsed market time and expected trading sessions, not a single fixed freshness timeout for every market. Distinguish a legitimate no-trade day from missing data.
-
-### 4.2 Performance and behavior checks
-
-| Check | Metrics | Interpretation |
-| --- | --- | --- |
-| Recent performance | MTD and trailing 1, 3, 6, and 12 calendar-month net returns; rolling equity; longer-history Sharpe with uncertainty | Describe recent results. Short-window Sharpe is never the sole qualification or pause rule. |
-| Evidence coverage | Days observed, closed and open trades, independent exposure episodes where estimable, time invested | Show whether a window contains enough useful information for its intended comparison. A raw trade count is not an independence guarantee. |
-| Drawdown | Continuous peak-to-trough loss, duration, recovery progress, distance from risk limit | Compare current behavior with historical and simulated ranges; maintain the same continuous reference history across months. |
-| Risk | Realized and forecast volatility, downside variability, exposure, leverage, margin, relevant stress losses | Identify changes in risk even if average returns have not changed. |
-| Trading behavior | Hit rate, average win/loss, net expectancy, holding period, turnover, signal frequency | Flag departures from the behavior expected for the strategy and current opportunity set. |
-| Execution | Spread and slippage versus model, fees, funding/borrow, fill rate, rejected orders, execution delay | Separate implementation deterioration from the underlying signal’s performance. |
-
-There is no universal minimum of four years, 100 trades, or six months for every check. Estimating long-term return quality and detecting a broken fill feed require different evidence. Sharpe uncertainty depends on the return process and sample; use dependence-aware intervals rather than treating every observation as independent. [Two Sigma, Sharpe Ratio: Estimation, Confidence Intervals, and Hypothesis Testing](https://www.twosigma.com/wp-content/uploads/sharpe-tr-1.pdf)
-
-### 4.3 Build expected ranges without hindsight
-
-- Reference ranges come from data available before the assessment, preferably untouched evaluation history or chronological evaluation paths.
-- Compare drawdown depth and duration at comparable horizons and risk exposure. Include ongoing, unrecovered episodes; do not analyze only completed recoveries.
-- Where resampling is useful, preserve time dependence and resample the strategies together when estimating portfolio outcomes.
-- Display uncertainty and limited tail coverage. A bootstrap cannot establish that historical samples contain every possible future crisis.
-- Keep historical anomaly thresholds separate from hard capital, exposure, or liquidity limits. A historically normal drawdown can still exceed the owner’s risk budget.
-- Calibrate alert thresholds to an explicit false-alert budget under repeated monitoring. A daily 95th-percentile alert is not automatically a 95% reliable diagnosis of failure.
-
-A configured anomaly crossing creates a Watch alert. It records the observation, comparison range, evidence coverage, first occurrence, duration, and possible causes to investigate. It becomes a capital-changing rule only through an explicit risk limit or an independently validated allocation policy.
-
-### 4.4 Keep live and reference performance separate
-
-Maintain at least two labeled histories:
-
-1. **Live performance:** actual fills, cash-flow-adjusted returns, current positions, and real costs.
-2. **Continuous reference simulation:** the frozen strategy and a fixed reference sizing methodology, run whether or not it receives capital.
-
-Use the reference history for performance-based allocation signals so that previous size cuts do not mechanically alter the signal itself. Do not reset its high-water mark when a strategy pauses or a new month starts. Show the live-reference gap and its execution or exposure explanation.
-
-## 5. Decision and allocation rules
-
-### 5.1 Evaluation order
-
-For every scheduled decision, save a point-in-time input snapshot and evaluate in this order:
-
-1. Apply independently observable emergency or hard-risk constraints. An unavailable performance feed must not erase a known margin or position breach.
-2. Check critical data integrity. If inputs needed for a new proposal are missing, return No current proposal, block increases, and use the predefined outage procedure.
-3. Check research eligibility. Provisional, Rejected, and Retired versions receive no new allocation recommendation. Existing exposure in these versions is explicitly flagged for review.
-4. Compute current health and its reasons. Ordinary losses and Watch alerts do not automatically invalidate a Qualified strategy.
-5. Apply the base allocation policy and the strategy’s declared risk limits.
-6. Apply a performance or regime adjustment only when that specific policy version has passed its own validation. Otherwise its adjustment is neutral.
-7. Enforce aggregate portfolio constraints using all proposed positions and their interactions. Recompute risk after changes, including removal of hedges.
-8. Produce a recommendation with current exposure, target exposure, effective time, costs, reasons, and the conditions for its next review.
-
-Use the same deterministic evaluation engine in historical replay and current proposals. The engine reads no observation whose availability time is later than the decision cutoff.
-
-### 5.2 Base policy and portfolio constraints
-
-Include both fixed allocations and a volatility-scaled alternative in research. For an initial volatility-scaled proposal:
-
-**Preliminary sleeve exposure = standalone volatility budget × approved adjustment ÷ max(estimated volatility, configured volatility floor).**
-
-The adjustment equals 1 when no performance-timing rule has been approved. The floor and exposure caps prevent an apparently quiet strategy from receiving unbounded exposure. Treat sleeve exposure as a multiplier on the reference strategy; translate it into actual instrument positions and margin requirements.
-
-This construction balances standalone risk budgets. It does not automatically produce equal contributions to portfolio risk, which depend on covariances as well. Estimate portfolio volatility from the proposed exposure vector and covariance matrix, and report each strategy’s contribution alongside gross, net, and shared-factor exposures.
-
-Then constrain proposals against:
-
-- Portfolio volatility budget as an upper bound, not a requirement to spend every unit of risk.
-- Per-strategy and per-strategy-family exposure limits.
-- Gross and net exposure, leverage, margin, liquidity, and position limits.
-- Correlated exposures to the same asset, direction, or economic mechanism.
-- Relevant stress scenarios, including gap risk and nonlinear option exposure when applicable.
-- Turnover and execution-cost constraints for routine changes.
-
-When a strategy is reduced or paused, the initial policy leaves its released allocation unused. Do not automatically renormalize the remaining winners back to full exposure. Show unallocated capital explicitly. Any later policy that redistributes this allocation requires a separate comparison.
-
-Volatility management is a benchmark to evaluate, not an assumed improvement. Research across 103 equity strategies found mixed outcomes rather than systematic superiority of volatility-managed portfolios. [Cederburg and coauthors, On the Performance of Volatility-Managed Portfolios](https://www.lehigh.edu/~xuy219/research/COWY.pdf)
-
-### 5.3 Performance and regime adjustments
-
-Research candidate rules using each strategy’s own continuous reference returns. Begin with a small declared set: trailing 1, 3, 6, or 12 months; drawdown depth and duration; and a neutral always-on policy. A short lookback can be tested across a long history. Do not assume the sign of the useful adjustment from a strategy label such as trend or mean reversion.
-
-Compare continuous reductions with simple discrete states such as Base, Reduced, and Paused. Any numerical multipliers, thresholds, smoothing, or minimum holding periods are experimental parameters until validated. Keep the search small and log every tried configuration.
-
-Add market-state variables only when a specific mechanism is documented. For example, test whether a particular spread strategy becomes untradeable when spreads and execution costs widen. Store the variable’s actual publication/availability time and revision history. A plausible explanation does not exempt the rule from out-of-sample testing.
-
-### 5.4 Pause and restart behavior
-
-- **Operational pause:** require the root problem to be fixed, reconciliation checks to pass, and the resolution to be recorded.
-- **Risk pause or reduction:** use the predefined risk-clearance and re-entry conditions. A higher restart buffer or slower increase can be tested to limit repeated threshold crossings.
-- **Performance-policy pause:** keep the reference strategy running, and resume at the next allowed trading time when its approved re-entry rule is met.
-- **Research rejection or retirement:** require a new documented acceptance decision, usually for a new version.
-
-Routine smoothing never delays an independently required hard-risk response. Show pending exits, positions that remain open, and any difference between desired and actual exposure. A stop recommendation cannot guarantee execution at a loss threshold.
-
-## 6. Dashboard features and screens
-
-### A. Portfolio overview — default screen
-
-Top row: actual exposure, proposed exposure, portfolio risk estimate, current drawdown, unallocated capital, data freshness, and unresolved critical events.
-
-Strategy table columns:
-
-- Name and version; research eligibility; current health; allocation state.
-- MTD and recent completed-month returns; trailing 3- and 12-month returns.
-- Current drawdown and duration; comparison with the reference range.
-- Volatility; portfolio risk contribution; shared exposure group.
-- Current and proposed exposure; reason for the proposed change.
-- Evidence coverage, most recent data timestamp, and next review time.
-
-Sorting and filters: actionable issues, research status, health, asset class, strategy family, allocation state, and stale data. Color is accompanied by a text label. A green row means specified checks passed, not guaranteed profitability.
-
-### B. Strategy detail
-
-- Continuous live and reference equity curves, with distinct development, evaluation, and live periods.
-- Drawdown chart, time-under-water chart, and historical/reference bands.
-- Monthly return heatmap and rolling performance, with coverage and uncertainty.
-- Execution-cost and behavior diagnostics.
-- Position, asset, direction, and factor exposures where available.
-- Qualification evidence and limits for the exact version.
-- Timeline of status changes, pauses, restarts, overrides, and code changes.
-- Explanation panel: observed metric, applicable rule, resulting state, and what would change that state.
-
-### C. Portfolio risk workspace
-
-- Correlation matrix with window, data coverage, and uncertainty warnings.
-- Strategy and exposure-group risk contributions.
-- Gross/net exposure, margin, liquidity, and stress scenarios.
-- Actual versus proposed risk and unallocated capital.
-- What-if reductions and pauses, including the effects of removing hedges.
-- A target-versus-actual panel showing constraints that prevent an intended allocation.
-
-### D. Allocation research lab
-
-- Select a fixed strategy universe and evaluation dates.
-- Register an experimental rule and its intended mechanism before running it.
-- Inspect forward-return and forward-risk buckets for each strategy.
-- Run chronological portfolio comparisons with realistic entry, exit, and resizing costs.
-- Inspect uncertainty, parameter sensitivity, regime results, and the performance of rejected trades.
-- Save every experiment, including failed and inconclusive results.
-- Mark a policy Exploratory, In validation, Approved for paper proposals, or Approved for allocation proposals.
-
-### E. Decisions and alerts
-
-- Queue of new issues, grouped to avoid repetitive notifications from one ongoing event.
-- Immutable decision record with inputs, policy, previous state, new state, effective time, and explanation.
-- Acknowledgment, investigation notes, resolution, and override expiry.
-- Manual overrides preserve both the original engine recommendation and the actual action. Do not rewrite the model’s performance to include discretionary decisions silently.
-- In-app notifications in the initial version; external delivery channels can be added later.
-
-### F. Data and strategy registry
-
-- CSV/JSON imports, field mapping, calendar and currency settings, and reconciliation reports.
-- Strategy version registration and research acceptance profiles.
-- Data-source health and missing-field reports.
-- Cost models, portfolio limits, policy versions, and review schedule.
-- Exports of decisions, metrics, and research results.
-
-## 7. Validation lab: proving the allocation layer adds value
-
-### First diagnostic
-
-For each strategy and candidate rule, use only information available at each historical cutoff to assign a state. Compare the subsequent review-period returns, volatility, severe losses, and portfolio contribution across those states.
-
-Report sample sizes and uncertainty, including dependence between observations. Treat statistically inconclusive results as inconclusive. Equal mean returns do not imply equal risk. Per-strategy results must remain visible even when reporting portfolio aggregates.
-
-This is a research screen. It is followed by a full simulation of allocations and execution.
-
-### Required portfolio comparisons
-
-| Comparator | Question answered |
+| Area | Updated decision |
 | --- | --- |
-| Always-on fixed allocations across the qualified strategies | What does simple diversification achieve? |
-| The same allocations at a consistently lower exposure, calibrated on earlier data | Could simpler exposure reduction achieve the risk objective? |
-| Always-on volatility-scaled allocations | Does adjusting to estimated risk explain the improvement? |
-| Proposed performance or regime allocation policy | Does the added timing rule improve the trade-off after costs? |
+| Primary product | Python strategy runner and experiment manager. |
+| First screen | Runs and experiments, with progress and saved comparisons. |
+| Strategy configuration | UI forms generated from a registered parameter schema. |
+| Market data | Acquired separately; the application catalogs and validates local dataset versions. |
+| Strategy computation | Python subprocesses, launched and supervised by a TypeScript application backend. |
+| Evidence tracking | Distinguish exploration, evaluation, and frozen forward tracking. |
+| Recent performance | A descriptive watchlist, with sample size, drawdown, and data coverage. |
+| Regime research | A later research module that tests predefined market-state hypotheses. |
+| Allocation, risk parity, and contract proposals | Deferred until the experiment and tracking foundation works. |
+| Brokerage execution | Outside the initial scope; the runner produces research artifacts, not orders. |
 
-Use the same data, cash return assumptions, accounting, and feasible risk constraints. Set risk targets and benchmark scaling from earlier information; do not use future realized volatility to construct supposedly live weights. Report realized risk differences explicitly.
+Retain the previous plan's requirements for versioned evidence, honest data chronology, realistic costs, continuous drawdown histories, and fair comparisons. Its capital-changing rules become future work rather than dependencies of the first release.
 
-### Chronological evaluation protocol
+## 3. Core concepts and statuses
 
-1. Establish which strategies and versions would have been known and eligible at each date. If that cannot be reconstructed, label the historical exercise retrospective and exploratory.
-2. Select or calibrate strategy and allocation parameters using a training period.
-3. Freeze those choices and evaluate subsequent periods. If comparing or tuning candidates, use an inner validation period and keep an outer evaluation period untouched.
-4. Prevent training outcomes or labels from extending into evaluation periods. Handle overlapping holding periods, indicator warmup, open positions, and execution delays explicitly.
-5. Simulate the next feasible trades after each decision. Do not credit returns earned before the decision could be acted on. Include the cost of entering, exiting, or resizing positions; simple multiplication of an existing P&L series can miss those costs.
-6. Repeat chronologically without using a completed evaluation period to rewrite decisions already scored.
-7. Preserve failed and retired strategies and all tried policy variants in the research ledger.
+Use distinct records so that similar-looking results remain traceable.
 
-### Success criteria
+| Record | Meaning |
+| --- | --- |
+| Strategy | The named trading method, its description, and intended mechanism. |
+| Strategy version | A preserved code snapshot and its parameter/output schema. |
+| Configuration | One strategy version with fixed parameter values and declared instrument/timeframe settings. |
+| Dataset version | An immutable market-data snapshot and metadata. |
+| Experiment | A question and a group of related runs, including its evaluation rules. |
+| Run | One execution with exact inputs, accounting assumptions, logs, and outputs. |
+| Evaluation record | Results for a selected configuration under a recorded chronological evaluation protocol. |
+| Watchlist entry | A frozen configuration and its ongoing data/update policy. |
+| Tracking snapshot | An append-only record of what was known and computed at a particular time. |
 
-Choose the primary objective before the experiment: for example, improve a specified downside-risk measure while keeping the annualized return reduction within a declared tolerance. Record the minimum economically meaningful improvement, acceptable return sacrifice, cost stress, and risk limits as explicit configuration values.
+Keep three status fields separate:
 
-Evaluate net compound return, Sharpe with uncertainty, downside loss measures, maximum drawdown, recovery duration, turnover, market exposure, and stress behavior. Compare the paired differences between policies. Resample aligned time blocks across strategies and policies where appropriate, rather than treating the portfolios as independent samples.
+- **Execution:** Queued, Running, Succeeded, Failed, Canceled, Interrupted.
+- **Research stage:** Exploratory, Evaluation, Tracking, Archived. Record evaluation outcomes separately as Meets criteria, Inconclusive, or Does not meet criteria.
+- **Tracking/data status:** Current, Stale, Incomplete, Error, or No new data.
 
-An allocation policy advances only when the untouched evaluation supports the declared objective, results remain credible under reasonable cost and parameter changes, and a forward paper run confirms that decisions and fills can be reproduced. No fixed calendar duration alone establishes readiness. Insufficient evidence keeps the policy in research or paper mode.
+A run can succeed technically while failing research criteria. An archived configuration remains available in historical comparisons. Missing metrics remain null with a reason, rather than becoming zero.
 
-## 8. Data model and calculation architecture
+Do not introduce an opaque 0–100 strategy score or automatic Eligible/Ineligible trading verdict in the MVP.
 
-### Required inputs
+## 4. User interface
 
-| Input | Required content | What it enables |
+### Scripts
+
+Register trusted local Python entrypoints and inspect their available versions. Show description, parameter fields, accepted datasets, output capabilities, environment profile, and the last successful run.
+
+An adapter can wrap an existing script. The owner should not have to rewrite every strategy into a new trading engine just to use the application.
+
+### Datasets
+
+Catalog the files produced by the separate data-pulling process. A chart selection resolves to instrument or instrument set, source/venue, timeframe, session/calendar, timezone, and dataset version.
+
+Show coverage, row count, data quality, last market timestamp, and acquisition time. Let the owner register a newer version after pulling data. Keep the original dataset versions used by earlier runs.
+
+### New Run
+
+Choose script version, dataset, date range, research stage, parameters, costs, and sizing/accounting settings. Load a saved preset or a previous run's settings.
+
+Support a single run and a grid of selected parameter values. Preview the number of jobs and require an explicit launch action before starting a batch. Provide a configurable maximum batch size and concurrency limit.
+
+Example: one strategy across three instruments, two timeframes, and four lookbacks creates 24 runs. Each run remains individually inspectable within the same experiment.
+
+### Runs & Compare — default landing page
+
+Show recent experiments and the job queue. Useful columns include strategy version, instrument, timeframe, date range, stage, execution status, net return, drawdown, trade count, runtime, and tags.
+
+Allow filtering, sorting, saved views, notes, reruns, and side-by-side comparisons. Do not default to ranking every run by full-history Sharpe; show the evaluation period and research stage prominently.
+
+A run-detail drawer or page contains:
+
+- Exact inputs and a difference view against another run.
+- Equity, drawdown, monthly returns, and trade records where available.
+- Metrics, accounting definitions, costs, and data coverage.
+- Logs, warnings, execution environment, and downloadable artifacts.
+- Development/evaluation boundaries and selection history.
+
+### Watchlist
+
+Show frozen configurations on recent data: MTD, last completed month, trailing 3/6/12 months when available, continuous drawdown, time underwater, trade count, and last covered timestamp.
+
+Include a manual **Run on latest data** action. “Latest” is resolved to a specific dataset version when the job is created. Previous tracking snapshots remain unchanged.
+
+Use readable body text, compact reasons, and details on demand. Place tables before large charts. Label units, date windows, missing values, and source types directly in the UI.
+
+## 5. Python script interface
+
+### Input contract
+
+Each registered script supplies a machine-readable parameter schema. Support numeric, integer, Boolean, enum, and string parameters; descriptions; defaults; permitted ranges; and conditional requirements where needed.
+
+The run request records:
+
+| Field group | Required information |
+| --- | --- |
+| Identity | Run ID, experiment ID, strategy version, and configuration ID. |
+| Data | Dataset version IDs, instruments, timeframe, session, timezone, and date bounds. |
+| Parameters | Resolved values, including defaults; never just fields changed in the UI. |
+| Simulation | Initial capital, sizing method, fees, spread/slippage, relevant funding, execution timing, and currency conventions. |
+| Chronology | Warmup, development, validation, and evaluation boundaries; as-of cutoff where applicable. |
+| Reproducibility | Code snapshot/hash, dependency/environment identity, and random seed if used. |
+| Execution | Output directory, timeout, and resource/concurrency settings. |
+
+Validate the request before queuing and again at the Python boundary. Unsupported parameter/dataset combinations should fail preflight with a useful explanation.
+
+### Output contract
+
+Use a small versioned protocol: an input JSON file, an output manifest, and standardized artifact files. JSON and CSV are sufficient for the first adapter; allow Parquet for larger series.
+
+For full result comparison, require dated marked-to-market equity or returns, with defined treatment of initial capital, open P&L, fees, and cash flows. Include a final validation step before a run becomes Succeeded.
+
+Optional artifacts include trades, fills, positions, signals, exposures, and custom diagnostics. Record capabilities so the UI can disable unsupported features. A summary-only script may be imported, but cannot supply an invented equity curve, intraperiod drawdown, or execution analysis.
+
+Compute common comparison metrics through one versioned Python metrics module. Retain script-provided metrics as separately labeled diagnostics. Record the accounting and sampling basis of every metric; distinguish CAGR from arithmetic annualized return and define the Sharpe risk-free-rate assumption.
+
+Retain stdout/stderr and structured warnings. Failure should identify the stage, error, and log location. Partial outputs are available for diagnosis but excluded from successful-run comparisons by default.
+
+## 6. Execution and reproducibility
+
+Use a persistent job queue supervised by the TypeScript backend. Run each job in a separate Python process using a registered environment and a dedicated output directory. The UI should remain responsive during long backtests.
+
+Required behavior:
+
+- Bound concurrent jobs, capture start/end times, and enforce configured timeouts.
+- Cancel the job and its child processes; preserve the cancellation record.
+- Persist queued/running state. After restart, reconcile worker liveness and mark lost jobs Interrupted rather than pretending they completed.
+- Retry as a new attempt linked to the original run; retain failed attempt logs.
+- Write artifacts to a temporary location and publish a complete manifest only after validation.
+- Record immutable inputs at enqueue time, including for jobs waiting in the queue.
+- Allow deliberate reruns with identical inputs. Deduplication may flag an existing match but must not silently replace it.
+
+A Git commit alone is insufficient if a run used uncommitted changes. Preserve the actual relevant source snapshot, configuration, dependency lock/environment description, and local imports. Record sources of nondeterminism when exact replay is not possible.
+
+Only registered trusted local scripts can execute in the MVP. Pass validated arguments without constructing a shell command from UI text. Separate subprocesses provide job isolation but are not a security sandbox for untrusted code. Keep the local service bound to the local machine by default and credentials outside run manifests and exports.
+
+## 7. Dataset management
+
+Market-data fetching remains a separate process. Register its outputs through one repeat-safe catalog/validation path; future automation can call the same path.
+
+Each dataset version stores source, instrument mapping, timeframe, timezone, session/calendar, currency, coverage, acquisition time, content checksum, schema, and relevant preprocessing rules. Record adjustments, resampling, and futures rollover conventions when applicable.
+
+Never identify a historical run solely by a mutable filename. Preserve an immutable copy or enforce immutable source versions. A changed file becomes a new dataset version.
+
+Validate timestamp ordering, duplicates, expected session gaps, missing fields, and basic price/volume consistency. Distinguish market closures, legitimate no-trade periods, and missing observations.
+
+Multi-timeframe strategies must declare all dependencies. Align observations by their availability and bar completion time. A bar's closing price cannot support an earlier fill. For data without historical publication/revision information, disclose the limitation instead of claiming point-in-time validity.
+
+Warmup observations may initialize indicators but are excluded from scored returns. Specify how open positions and overlapping holding periods are handled at evaluation boundaries. When OHLC data cannot determine intrabar fill ordering, apply a declared assumption and flag sensitive results.
+
+Do not silently forward-fill missing returns, mix calendars, or reinterpret timestamps to make comparisons line up.
+
+## 8. Experiments, comparison, and evaluation
+
+### Fair comparison
+
+Provide two explicit comparison modes:
+
+- **As run:** display each run's original window and assumptions, with differences highlighted.
+- **Aligned comparison:** use a stated common evaluation interval and compatible accounting, costs, sizing, and currencies. Recompute displayed metrics on that interval using a declared boundary convention.
+
+Aligned metrics are derived views, not silent changes to saved runs. If a valid comparison requires different simulation assumptions or position initialization, launch new runs.
+
+Show net return, drawdown depth/duration, volatility, trade count, time invested, turnover, and costs where supported. Report uncertainty for research claims when the implemented method supports it. Undefined Sharpe or zero-trade statistics must not appear as successful zero-risk outcomes.
+
+### Robustness and selection history
+
+Group parameter sweeps by hypothesis. Include sensitivity tables or heatmaps that expose neighboring results and retain failures and losing configurations. Save the number of attempted variants, not only the chosen winner.
+
+Add cost stress and implementation-delay scenarios before relying on a result. Different symbols and timeframes provide useful comparisons but are not automatically independent evidence.
+
+Repeated selection among many trials can inflate apparent performance; trial history is therefore part of the product's evidence record. [Bailey and López de Prado, The Deflated Sharpe Ratio](https://www.davidhbailey.com/dhbpapers/deflated-sharpe.pdf)
+
+### Chronological evaluation
+
+The MVP records development and evaluation periods and configuration selection time. A later phase adds automated walk-forward experiments with training, optional inner validation, and subsequent evaluation folds.
+
+Select parameters using only earlier permitted data. Once evaluation results influence another selection, those observations are no longer untouched for that decision. Show this lineage; do not label a rerun on previously inspected data as fresh evidence.
+
+Walk-forward results should form a chronological evaluation path under a recorded selection rule. Handle indicator warmup, overlapping labels, open positions, and execution delays explicitly. Evaluation criteria are saved before scoring rather than chosen to fit the winner.
+
+Freezing a configuration is an organizational action, not proof of a trading edge. Record the owner's reason for adding it to the watchlist, its evidence limitations, and the date it was frozen.
+
+## 9. Frozen tracking and recent performance
+
+Separate these result sources throughout the interface:
+
+| Source | What it represents |
+| --- | --- |
+| Historical backtest | A simulation on an identified historical dataset. |
+| Updated historical replay | The same frozen configuration recomputed through a newer data endpoint. |
+| Forward paper tracking | Signals or decisions recorded before outcomes, with simulated execution. |
+| Actual trading | Imported real fills, positions, and costs. |
+
+The first watchlist implementation uses updated historical replays. Do not call them prospective paper trading merely because the job ran recently. Add forward paper tracking only when decisions can be timestamped and preserved before outcomes.
+
+Freeze code, parameters, sizing, and cost assumptions. Extending the dataset is an expected tracking update; changing the trading definition creates a new configuration/version. Preserve corrected-data replays alongside original snapshots.
+
+Start with full deterministic reruns if affordable. Add incremental execution only after its state, indicator warmup, positions, and results are verified against a full replay. Show the newest genuinely out-of-selection interval separately from the older research history.
+
+Track paused or unfunded configurations in simulation so that observation does not disappear when capital is withdrawn. Do not reset equity peaks or drawdowns at month boundaries.
+
+## 10. Regime research — subsequent phase
+
+The first release answers “what has worked recently?” A regime module investigates whether a market condition helps explain and potentially anticipate differences in results.
+
+Begin with a small, explicit set of measurable conditions such as trailing volatility or a defined trend measure. Record feature formula, input window, availability time, and threshold-calibration period. Labels must be computable at the decision time; thresholds chosen using the full future sample are exploratory.
+
+For each frozen configuration, compare subsequent returns, costs, drawdown/risk, trade count, time invested, and the number of distinct regime episodes. Include uncertainty and sparse-sample warnings. Many adjacent observations in one long regime do not equal many independent episodes.
+
+Keep descriptive same-period performance separate from a predictive test where a known state conditions subsequent outcomes. Do not introduce automatic monthly winner rotation or an opaque machine-learning classifier in the first version.
+
+Before a regime signal changes allocations, test its entire switching policy chronologically, including transitions and costs, against always-on configurations and a simpler lower-exposure comparator. Record all candidate rules and their selection history. Inconclusive results remain inconclusive.
+
+## 11. Architecture and storage
+
+| Component | Initial implementation responsibility |
+| --- | --- |
+| React + TypeScript UI | Forms, datasets, queue, tables, charts, comparisons, and watchlist. |
+| Node.js + TypeScript backend | API, registry, schema validation, queue supervision, and database writes. |
+| Python strategy processes | Execute existing scripts through adapters and produce standard artifacts. |
+| Versioned Python metrics module | Validate accounting and compute shared comparison metrics. |
+| SQLite | Experiment metadata, jobs, artifact references, versions, notes, and tracking records. |
+| Local artifact storage | Immutable source/data snapshots, large result series, and logs. |
+
+Use the backend as the initial database writer; Python workers produce artifacts and completion messages. This avoids multiple independent script implementations modifying application tables.
+
+Suggested logical repository areas: web application, backend, shared contracts, Python runner/adapters, strategy examples, database migrations, and documentation. This is a suggested organization, not a requirement to move every existing script immediately.
+
+Store application code, adapter code, schemas, migrations, environment lockfiles, configuration templates, and small non-sensitive fixtures in Git. Store large market data, the database, run outputs, and credentials outside tracked Git paths.
+
+Back up the database and referenced immutable artifacts together; a repository backup alone cannot reproduce the experiment history. Defer PostgreSQL, remote workers, and distributed queues until actual concurrency or deployment needs justify them.
+
+## 12. Build sequence and acceptance criteria
+
+| Phase | Deliverable | Acceptance criteria |
 | --- | --- | --- |
-| Strategy definition | Identifier, version, selection date, mechanism, universe, parameters, sizing, calendar | Reproducibility and eligibility history. |
-| Return/equity history | Event time, availability time, currency, gross/net P&L, fees, equity, cash flows, source type | Performance, drawdown, chronology, and reconciliation. |
-| Trades and fills | Signals, orders, fills, side, quantity, price, instrument, time, costs | Execution and behavior diagnostics; accurate replay. |
-| Position snapshots | Marked value, notional, direction, instrument exposures, margin when relevant | Portfolio risk, unrealized P&L, and actual-versus-target exposure. |
-| Market data | Prices, FX, rates and funding, calendar, any declared regime variables | Valuation, risk, simulation, and regime research. |
-| Research metadata | Data split, experiment history, acceptance criteria, results and limitations | Evidence strength and policy promotion. |
+| 1. One-script vertical slice | Register one existing Python strategy and one dataset; launch through UI; save one result. | Inputs, code, data, logs, and outputs are traceable; displayed metrics reconcile with a known fixture. |
+| 2. Useful MVP | Parameter forms, dataset versions, queue/cancel/retry, presets, saved runs, bounded sweeps, comparisons, and export. | A batch survives UI refresh; failures remain visible; assumptions and date-window differences are explicit; previous runs cannot be overwritten. |
+| 3. Frozen watchlist | Pin configurations, run on newer dataset versions, show recent and continuous performance. | Original snapshots remain reproducible; code/parameter changes create new configurations; result source labels are accurate. |
+| 4. Evaluation tools | Walk-forward orchestration, sensitivity views, cost stress, and research lineage. | Training cannot access later evaluation data; all attempted variants and selection decisions remain visible. |
+| 5. Regime investigation | Declared state features, historical conditional comparisons, and prospective tracking. | State labels use available information; episode counts and uncertainty are shown; descriptive and predictive claims are separated. |
+| 6. Optional portfolio layer | Combined strategy exposures, risk monitoring, and manual allocation proposals. | Proposals meet separately declared accounting, risk, and validation requirements. |
 
-Use cash-flow-adjusted returns so deposits and withdrawals do not become trading profits or losses. Define currency conversion, cost timing, and treatment of idle cash consistently. Annualize according to the declared return calendar and inference method. Keep backtest, reference simulation, and live observations visibly separate.
+Phases 1–2 are the initial release. Phase 3 makes the application useful for continuing observation. The product remains useful if no regime-timing policy proves beneficial.
 
-### Suggested TypeScript architecture
+## 13. Checks that matter before relying on results
 
-- React with TypeScript for the interface.
-- Node.js with TypeScript for ingestion, API endpoints, and scheduled calculations.
-- PostgreSQL for strategy definitions, observations, versioned evidence, policies, and decision records.
-- Background TypeScript workers for replay, resampling, and portfolio calculations; these run outside interactive requests.
-- Shared, deterministic calculation modules used by current assessment and historical replay.
+- A rerun from the same preserved inputs reproduces results within declared numerical tolerance.
+- Editing a script or replacing a data file creates new lineage rather than rewriting history.
+- Parameter validation and dataset capability checks reject invalid combinations before execution.
+- Queue restart, cancellation, timeout, and retry behavior cannot mislabel partial output as success.
+- Known fixtures cover fees, open P&L, no-trade runs, missing data, and continuous drawdowns.
+- Common metrics reconcile with the stored series and their stated date/currency/sizing basis.
+- Changing future observations cannot alter an earlier decision in a strategy's claimed point-in-time replay; test representative adapters and disclose limitations.
+- Sweeps and comparisons preserve evaluation boundaries and selection history.
+- Corrected data do not silently replace the original tracking record.
+- A database-and-artifact backup can restore a representative experiment.
 
-Core records: Strategy, StrategyVersion, ResearchEvidence, ReturnObservation, TradeFill, PositionSnapshot, MetricSnapshot, PolicyVersion, DecisionRun, AllocationProposal, Alert, and ExperimentRun.
+These are targeted implementation gates. Add further tests when a new engine, adapter, or feature introduces a concrete additional risk.
 
-Each observation stores both when the event happened and when its value was available. Each decision stores its input snapshot identity, strategy and policy versions, calculation version, cutoff, effective time, output, and reasons. Corrections create new revisions; they do not overwrite the evidence used by a prior decision.
+## 14. Deferred portfolio requirements
 
-Avoid a machine-learning regime classifier in the first implementation. Establish the accounting, baselines, and simple policy evidence first.
+If allocation tools are added, preserve the safeguards from the earlier plan:
 
-## 9. Build phases and acceptance criteria
+- Separate research evidence, current health, and allocation state.
+- Treat ordinary losses as observations; apply only explicit, evaluated timing rules or declared risk constraints.
+- Compare adaptive policies with fixed/always-on and lower-exposure alternatives after realistic costs.
+- Use paired resampling of policy returns when estimating differences: sample identical time blocks, recompute each metric, then subtract.
+- Define denominators for budget shares, deployed exposure, and covariance-based risk contribution.
+- Reconcile allocated, reserved, and unused budget, while distinguishing that bookkeeping from estimated portfolio volatility.
+- Separate current positions, ideal targets, rounded feasible targets, and orders; recalculate portfolio constraints after rounding.
+- Do not claim that proportional downsizing fixes cost drag in Sharpe units without a supporting size-dependent cost model.
+- Preserve actual execution separately from simulations and manual overrides separately from model recommendations.
 
-| Phase | Deliverable | Acceptance condition |
-| --- | --- | --- |
-| 1. Data foundation | Import, registry, versioning, marked-to-market equity, and continuous reference histories | A sample strategy reconciles to its source; missing inputs and unavailable features are explicit. |
-| 2. Monitoring dashboard | Overview, detail, qualification record, health checks, and alert history | Every status has an as-of time and reason; one negative month alone does not pause a qualified strategy. |
-| 3. Portfolio risk proposals | Fixed and volatility-based policies, exposure limits, correlation and stress views | Proposed positions satisfy configured constraints; released risk is not automatically reallocated. |
-| 4. Research lab | Conditional diagnostics, chronological replay, baseline comparisons, and experiment ledger | Decisions use only available data and include switching costs; failed experiments remain visible. |
-| 5. Forward paper operation | Proposals logged before outcomes, reference trading during pauses, restart logic | No retroactive decisions; proposed and realized execution differences can be explained. |
-| 6. Validated adaptive proposals | Approved performance or regime adjustments attached to exact policy versions | The policy meets its predeclared evidence and risk criteria; other candidates remain experimental. |
+## 15. Immediate next implementation task
 
-Phases 1–3 form the useful initial dashboard. Phases 4–6 determine whether performance-based allocation deserves a role. The initial product has value even if no timing rule passes validation.
+Take one representative existing Python strategy and one locally pulled dataset. Document the script's parameters, dependencies, data format, simulation assumptions, and current outputs. Implement the smallest adapter that can run it from a validated JSON request and return a standardized result manifest with equity/returns and logs.
 
-### Important implementation checks
-
-- Changing future observations cannot alter an earlier decision from the same saved snapshot.
-- Missing or stale data cannot produce a fresh Normal assessment or be converted into a zero-return day.
-- Deposits, FX conversions, financing, and open P&L reconcile correctly.
-- A paused strategy continues to generate reference trades and can meet a restart rule.
-- Current-month information never affects allocations before it became available.
-- Strategy and policy changes do not rewrite their historical versions.
-- Portfolio risk is recalculated after reducing a strategy or hedge.
-- Unknown proposals cannot be mistaken for target-zero orders.
-- Manual intervention is distinguishable from the model’s recommendations in performance attribution.
-- Every recommendation can be reproduced from its stored inputs and versions.
-
-## 10. Configuration required before capital-changing use
-
-The dashboard can be built with configuration fields before these investment choices are finalized. They are not to be filled with invented “optimal” defaults:
-
-- Markets, trading calendars, base currency, typical holding periods, and available data granularity.
-- Per-strategy and portfolio risk budgets, loss limits, exposure caps, and liquidity assumptions.
-- Minimum acceptable net edge, evidence criteria, and permitted performance degradation under stress.
-- The downside-risk objective and acceptable return sacrifice for an allocation overlay.
-- Staleness limits, review cadence, execution delay, and outage behavior.
-- Pause, re-entry, and override rules; responsible decision owner.
-
-The first implementation task is to import one or two representative strategies with daily marked-to-market equity, trade/fill records where available, and their research metadata. That establishes whether the data can support the intended checks before extending the interface to the full strategy portfolio.
+Only then extend the UI and batch engine to additional strategies. This establishes the contract around real scripts before building a larger application around assumed outputs.

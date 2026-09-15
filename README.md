@@ -3,7 +3,54 @@
 Local environment for running [Papers With Backtest](https://paperswithbacktest.com/) strategies.
 Data and code come from PWB; **execution runs on this machine** — no run endpoint, no per-run limit.
 
-## Strategy dashboard
+## Strategy Workbench (current application)
+
+The default app now follows `strategy_dashboard_plan.md`: runs and experiments,
+versioned ZIP datasets, generated Python parameter forms, comparisons, and a
+frozen historical replay watchlist. See [WORKBENCH.md](WORKBENCH.md) for setup,
+accounting conventions, and validation commands.
+
+```powershell
+npm install
+.venv/Scripts/python.exe -m pip install -r requirements-workbench.txt
+npm run dev:full
+```
+
+Open **http://127.0.0.1:5173**. To add a strategy, copy
+[`strategies/_template.py`](strategies/_template.py), assign a unique ID, and
+implement its signal function. It is discovered automatically without editing
+the frontend or backend catalog.
+
+**Scripts → Consolidated strategy library** includes 91 Python and 17 Pine
+sources, searchable by family, filename, and rule function. Five signal adapters
+and four Pine event ports are runnable; other entries show their requirements.
+See [STRATEGY_LIBRARY.md](STRATEGY_LIBRARY.md) and [PINE_AUDIT.md](PINE_AUDIT.md).
+
+**Evaluation & Regimes** now provides rolling walk-forward experiments, parameter
+sensitivity, cost/delay stress, and training-calibrated historical state studies.
+See [PHASES_4_5.md](PHASES_4_5.md) for the new workflow and validation evidence.
+
+**Run cleanup and optimization:** remove obsolete runs from their detail panel
+or select them in the ledger for deletion. A preview explains linked records
+and a local backup retains removed evidence. The nine-strategy chronological
+campaign is available via `npm run research:optimize`; see its
+[plan and results](reports/strategy-optimization-2022-2024/).
+
+**2025 evaluation and regimes:** all nine selected configurations now have
+chronological evaluations and volatility/trend studies in the app. Read the
+[strategy potential overview](reports/strategy-potential-2025/OVERVIEW.md).
+
+**Dashboard** brings the latest evaluation for each strategy and market into
+one scorecard. It shows research candidates, conditional candidates, review
+reasons, profit, drawdown, realized and target R:R, profit factor, win rate,
+expectancy, equity/cost charts, and regime contributions. Statistics use the
+complete verified trade ledgers. Test dates and newer available data remain
+visible; these are historical research statuses, not live signals.
+
+## Previous strategy dashboard (legacy reference)
+
+The following describes the previous Python API and portfolio UI, retained as
+source. It is no longer the default application or the `npm run dev:full` API.
 
 The React/Redux/Mantine dashboard includes a local, allowlisted Python runner. Install once, then
 start the web UI and API together:

@@ -1,0 +1,473 @@
+[
+  {
+    "period": "2025",
+    "run_id": "9f4a4794-67dc-4be0-a14c-95085b4e9654",
+    "trades": 104,
+    "wins": 54,
+    "losses": 50,
+    "breakeven": 0,
+    "net_pnl": 8265.0,
+    "gross_pnl": 9510.0,
+    "costs": 1245.0,
+    "win_rate": 0.5192307692307693,
+    "average_win": 1507.7777777777778,
+    "average_loss": 1463.1,
+    "payoff_ratio": 1.0305363801365444,
+    "profit_factor": 1.1129792905474678,
+    "expectancy": 79.47115384615384,
+    "target_rr": 2,
+    "mean_gross_r": 0.07001215996670773,
+    "mean_net_r": 0.06236121631026673,
+    "net_excluding_best_5": -11692.5,
+    "best_5_net_pnl": 19957.5,
+    "best_trade_count": 5,
+    "exit_groups": [
+      {
+        "exit_reason": "force-flat window",
+        "trades": 50,
+        "wins": 42,
+        "losses": 8,
+        "breakeven": 0,
+        "net_pnl": 45340.0,
+        "gross_pnl": 45965.0,
+        "costs": 625.0,
+        "win_rate": 0.84,
+        "average_win": 1148.095238095238,
+        "average_loss": 360.0,
+        "payoff_ratio": 3.189153439153439,
+        "profit_factor": 16.743055555555557,
+        "expectancy": 906.8,
+        "mean_gross_r": 0.5436252927307521,
+        "mean_net_r": 0.5361003988638859,
+        "mean_initial_risk": 1751.6,
+        "median_holding_minutes": 332.5
+      },
+      {
+        "exit_reason": "limit",
+        "trades": 11,
+        "wins": 11,
+        "losses": 0,
+        "breakeven": 0,
+        "net_pnl": 33107.5,
+        "gross_pnl": 33190.0,
+        "costs": 82.5,
+        "win_rate": 1.0,
+        "average_win": 3009.7727272727275,
+        "average_loss": null,
+        "payoff_ratio": null,
+        "profit_factor": null,
+        "expectancy": 3009.7727272727275,
+        "mean_gross_r": 2.0,
+        "mean_net_r": 1.994351969926001,
+        "mean_initial_risk": 1508.6363636363637,
+        "median_holding_minutes": 140.0
+      },
+      {
+        "exit_reason": "overnight safety",
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "breakeven": 0,
+        "net_pnl": 92.5,
+        "gross_pnl": 105.0,
+        "costs": 12.5,
+        "win_rate": 1.0,
+        "average_win": 92.5,
+        "average_loss": null,
+        "payoff_ratio": null,
+        "profit_factor": null,
+        "expectancy": 92.5,
+        "mean_gross_r": 0.1,
+        "mean_net_r": 0.0880952380952381,
+        "mean_initial_risk": 1050.0,
+        "median_holding_minutes": 1350.0
+      },
+      {
+        "exit_reason": "stop",
+        "trades": 42,
+        "wins": 0,
+        "losses": 42,
+        "breakeven": 0,
+        "net_pnl": -70275.0,
+        "gross_pnl": -69750.0,
+        "costs": 525.0,
+        "win_rate": 0.0,
+        "average_win": null,
+        "average_loss": 1673.2142857142858,
+        "payoff_ratio": null,
+        "profit_factor": 0.0,
+        "expectancy": -1673.2142857142858,
+        "mean_gross_r": -1.0,
+        "mean_net_r": -1.008224294147805,
+        "mean_initial_risk": 1660.7142857142858,
+        "median_holding_minutes": 96.5
+      }
+    ],
+    "monthly": [
+      {
+        "exit_month": "2025-01",
+        "trades": 7,
+        "net_pnl": -3937.5
+      },
+      {
+        "exit_month": "2025-02",
+        "trades": 8,
+        "net_pnl": 1135.0
+      },
+      {
+        "exit_month": "2025-03",
+        "trades": 1,
+        "net_pnl": 4072.5
+      },
+      {
+        "exit_month": "2025-04",
+        "trades": 3,
+        "net_pnl": -162.5
+      },
+      {
+        "exit_month": "2025-05",
+        "trades": 8,
+        "net_pnl": -335.0
+      },
+      {
+        "exit_month": "2025-06",
+        "trades": 14,
+        "net_pnl": -3090.0
+      },
+      {
+        "exit_month": "2025-07",
+        "trades": 14,
+        "net_pnl": 15.0
+      },
+      {
+        "exit_month": "2025-08",
+        "trades": 11,
+        "net_pnl": 2452.5
+      },
+      {
+        "exit_month": "2025-09",
+        "trades": 13,
+        "net_pnl": -3372.5
+      },
+      {
+        "exit_month": "2025-10",
+        "trades": 12,
+        "net_pnl": 4320.0
+      },
+      {
+        "exit_month": "2025-11",
+        "trades": 5,
+        "net_pnl": 942.5
+      },
+      {
+        "exit_month": "2025-12",
+        "trades": 8,
+        "net_pnl": 6225.0
+      }
+    ],
+    "overnight_trades": [
+      {
+        "entry_time": "2025-02-17T11:05:00-05:00",
+        "exit_time": "2025-02-18T09:35:00-05:00",
+        "exit_reason": "overnight safety",
+        "net_pnl": 92.5,
+        "source_minutes_in_entry_day_flatten_window": 0
+      },
+      {
+        "entry_time": "2025-07-03T09:55:00-04:00",
+        "exit_time": "2025-07-04T08:16:00+00:00",
+        "exit_reason": "stop",
+        "net_pnl": -1287.5,
+        "source_minutes_in_entry_day_flatten_window": 0
+      },
+      {
+        "entry_time": "2025-07-04T09:55:00-04:00",
+        "exit_time": "2025-07-06T22:02:00+00:00",
+        "exit_reason": "limit",
+        "net_pnl": 1682.5,
+        "source_minutes_in_entry_day_flatten_window": 0
+      },
+      {
+        "entry_time": "2025-11-28T11:10:00-05:00",
+        "exit_time": "2025-12-01T00:46:00+00:00",
+        "exit_reason": "stop",
+        "net_pnl": -2087.5,
+        "source_minutes_in_entry_day_flatten_window": 0
+      },
+      {
+        "entry_time": "2025-12-24T10:15:00-05:00",
+        "exit_time": "2025-12-26T13:41:00+00:00",
+        "exit_reason": "limit",
+        "net_pnl": 1762.5,
+        "source_minutes_in_entry_day_flatten_window": 0
+      }
+    ],
+    "long_short": {
+      "Long": {
+        "trades": 100,
+        "wins": 52,
+        "losses": 48,
+        "breakeven": 0,
+        "net_pnl": 4355.0,
+        "gross_pnl": 5560.0,
+        "costs": 1205.0,
+        "win_rate": 0.52,
+        "average_win": 1402.9807692307693,
+        "average_loss": 1429.1666666666667,
+        "payoff_ratio": 0.9816775061673021,
+        "profit_factor": 1.0634839650145773,
+        "expectancy": 43.55
+      },
+      "Short": {
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "breakeven": 0,
+        "net_pnl": 3910.0,
+        "gross_pnl": 3950.0,
+        "costs": 40.0,
+        "win_rate": 0.5,
+        "average_win": 4232.5,
+        "average_loss": 2277.5,
+        "payoff_ratio": 1.858397365532382,
+        "profit_factor": 1.858397365532382,
+        "expectancy": 977.5
+      }
+    }
+  },
+  {
+    "period": "2026-Jan-Aug",
+    "run_id": "02fdc136-7166-4213-8d4e-67cf1fdadd7d",
+    "trades": 29,
+    "wins": 16,
+    "losses": 13,
+    "breakeven": 0,
+    "net_pnl": 11552.5,
+    "gross_pnl": 11885.0,
+    "costs": 332.5,
+    "win_rate": 0.5517241379310345,
+    "average_win": 2300.9375,
+    "average_loss": 1943.2692307692307,
+    "payoff_ratio": 1.1840549233052944,
+    "profit_factor": 1.4572983671449777,
+    "expectancy": 398.36206896551727,
+    "target_rr": 2,
+    "mean_gross_r": 0.20880938472556504,
+    "mean_net_r": 0.2026380328540896,
+    "net_excluding_best_5": -7070.0,
+    "best_5_net_pnl": 18622.5,
+    "best_trade_count": 5,
+    "exit_groups": [
+      {
+        "exit_reason": "force-flat window",
+        "trades": 11,
+        "wins": 10,
+        "losses": 1,
+        "breakeven": 0,
+        "net_pnl": 14947.5,
+        "gross_pnl": 15085.0,
+        "costs": 137.5,
+        "win_rate": 0.9090909090909091,
+        "average_win": 1560.0,
+        "average_loss": 652.5,
+        "payoff_ratio": 2.3908045977011496,
+        "profit_factor": 23.908045977011493,
+        "expectancy": 1358.8636363636363,
+        "mean_gross_r": 0.6490573248075429,
+        "mean_net_r": 0.6430469135372624,
+        "mean_initial_risk": 2100.0,
+        "median_holding_minutes": 350.0
+      },
+      {
+        "exit_reason": "limit",
+        "trades": 6,
+        "wins": 6,
+        "losses": 0,
+        "breakeven": 0,
+        "net_pnl": 21215.0,
+        "gross_pnl": 21260.0,
+        "costs": 45.0,
+        "win_rate": 1.0,
+        "average_win": 3535.8333333333335,
+        "average_loss": null,
+        "payoff_ratio": null,
+        "profit_factor": null,
+        "expectancy": 3535.8333333333335,
+        "mean_gross_r": 2.0,
+        "mean_net_r": 1.9956727278736912,
+        "mean_initial_risk": 1771.6666666666667,
+        "median_holding_minutes": 163.0
+      },
+      {
+        "exit_reason": "stop",
+        "trades": 12,
+        "wins": 0,
+        "losses": 12,
+        "breakeven": 0,
+        "net_pnl": -24610.0,
+        "gross_pnl": -24460.0,
+        "costs": 150.0,
+        "win_rate": 0.0,
+        "average_win": null,
+        "average_loss": 2050.8333333333335,
+        "payoff_ratio": null,
+        "profit_factor": 0.0,
+        "expectancy": -2050.8333333333335,
+        "mean_gross_r": -1.0903465346534653,
+        "mean_net_r": -1.0975874552819531,
+        "mean_initial_risk": 1947.0833333333333,
+        "median_holding_minutes": 51.0
+      }
+    ],
+    "monthly": [
+      {
+        "exit_month": "2026-01",
+        "trades": 5,
+        "net_pnl": -912.5
+      },
+      {
+        "exit_month": "2026-03",
+        "trades": 3,
+        "net_pnl": 8542.5
+      },
+      {
+        "exit_month": "2026-04",
+        "trades": 11,
+        "net_pnl": 16252.5
+      },
+      {
+        "exit_month": "2026-05",
+        "trades": 6,
+        "net_pnl": -3610.0
+      },
+      {
+        "exit_month": "2026-06",
+        "trades": 2,
+        "net_pnl": -4350.0
+      },
+      {
+        "exit_month": "2026-08",
+        "trades": 2,
+        "net_pnl": -4370.0
+      }
+    ],
+    "overnight_trades": [
+      {
+        "entry_time": "2026-01-19T10:00:00-05:00",
+        "exit_time": "2026-01-20T08:07:00+00:00",
+        "exit_reason": "stop",
+        "net_pnl": -1527.5,
+        "source_minutes_in_entry_day_flatten_window": 0
+      },
+      {
+        "entry_time": "2026-06-19T10:00:00-04:00",
+        "exit_time": "2026-06-21T22:00:00+00:00",
+        "exit_reason": "stop",
+        "net_pnl": -2117.5,
+        "source_minutes_in_entry_day_flatten_window": 0
+      }
+    ],
+    "long_short": {
+      "Long": {
+        "trades": 26,
+        "wins": 13,
+        "losses": 13,
+        "breakeven": 0,
+        "net_pnl": 3010.0,
+        "gross_pnl": 3310.0,
+        "costs": 300.0,
+        "win_rate": 0.5,
+        "average_win": 2174.8076923076924,
+        "average_loss": 1943.2692307692307,
+        "payoff_ratio": 1.119148936170213,
+        "profit_factor": 1.1191489361702127,
+        "expectancy": 115.76923076923077
+      },
+      "Short": {
+        "trades": 3,
+        "wins": 3,
+        "losses": 0,
+        "breakeven": 0,
+        "net_pnl": 8542.5,
+        "gross_pnl": 8575.0,
+        "costs": 32.5,
+        "win_rate": 1.0,
+        "average_win": 2847.5,
+        "average_loss": null,
+        "payoff_ratio": null,
+        "profit_factor": null,
+        "expectancy": 2847.5
+      }
+    }
+  },
+  {
+    "period": "2026-Sep-partial",
+    "run_id": "5447bf71-862c-4a2e-883c-a7a72dbfef1a",
+    "trades": 1,
+    "wins": 0,
+    "losses": 1,
+    "breakeven": 0,
+    "net_pnl": -2072.5,
+    "gross_pnl": -2060.0,
+    "costs": 12.5,
+    "win_rate": 0.0,
+    "average_win": null,
+    "average_loss": 2072.5,
+    "payoff_ratio": null,
+    "profit_factor": 0.0,
+    "expectancy": -2072.5,
+    "target_rr": 2,
+    "mean_gross_r": -1.0,
+    "mean_net_r": -1.0060679611650485,
+    "net_excluding_best_5": 0.0,
+    "best_5_net_pnl": -2072.5,
+    "best_trade_count": 1,
+    "exit_groups": [
+      {
+        "exit_reason": "stop",
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "breakeven": 0,
+        "net_pnl": -2072.5,
+        "gross_pnl": -2060.0,
+        "costs": 12.5,
+        "win_rate": 0.0,
+        "average_win": null,
+        "average_loss": 2072.5,
+        "payoff_ratio": null,
+        "profit_factor": 0.0,
+        "expectancy": -2072.5,
+        "mean_gross_r": -1.0,
+        "mean_net_r": -1.0060679611650485,
+        "mean_initial_risk": 2060.0,
+        "median_holding_minutes": 293.0
+      }
+    ],
+    "monthly": [
+      {
+        "exit_month": "2026-09",
+        "trades": 1,
+        "net_pnl": -2072.5
+      }
+    ],
+    "overnight_trades": [],
+    "long_short": {
+      "Long": {
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "breakeven": 0,
+        "net_pnl": -2072.5,
+        "gross_pnl": -2060.0,
+        "costs": 12.5,
+        "win_rate": 0.0,
+        "average_win": null,
+        "average_loss": 2072.5,
+        "payoff_ratio": null,
+        "profit_factor": 0.0,
+        "expectancy": -2072.5
+      }
+    }
+  }
+]

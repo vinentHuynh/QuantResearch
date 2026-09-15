@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-09-15T03:24:03.972Z",
+  "checks": [
+    "Snapshot tsconfig creation does not reload the application",
+    "buy-hold: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates",
+    "moving-average: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates",
+    "multi-speed-momentum: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates",
+    "rsi2-reversion: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates",
+    "vwap-reversion: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates",
+    "pine-overnight-block: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates",
+    "pine-daily-tsmom: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates",
+    "pine-overnight-drift: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates",
+    "pine-tsmom-orb: unchanged 2024 economics, declared scenarios, frozen source, cost reconciliation, charts, two regime tables, downloads, entry/P&L reconciliation and threshold dates"
+  ],
+  "errors": [],
+  "evaluations": 9,
+  "regimes": 18,
+  "child_runs": 32
+}

@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-09-15T04:33:04.242Z",
+  "checks": [
+    "buy-hold: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download",
+    "moving-average: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download",
+    "multi-speed-momentum: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download",
+    "rsi2-reversion: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download",
+    "vwap-reversion: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download",
+    "pine-overnight-block: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download",
+    "pine-daily-tsmom: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download",
+    "pine-overnight-drift: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download",
+    "pine-tsmom-orb: frozen inputs, full artifact checksums and accounting, current dashboard metrics/status, evaluation chart, both regime studies and artifact download"
+  ],
+  "errors": [],
+  "evaluations": 9,
+  "child_runs": 32,
+  "september_runs": 9,
+  "regimes": 18,
+  "prior_runs_preserved": 103
+}

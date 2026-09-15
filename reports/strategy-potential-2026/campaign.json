@@ -1,0 +1,1789 @@
+{
+  "id": "potential-2026-v1",
+  "created_at": "2026-09-15T04:27:10.107Z",
+  "evaluations": {
+    "buy-hold": "4f783072-6753-4554-a763-5f3aaeb6a2a5",
+    "moving-average": "bf5e2f1d-793e-4320-ae6a-291c4c85eb2e",
+    "multi-speed-momentum": "b949ec04-f71a-4c66-9d15-2419aba54961",
+    "rsi2-reversion": "e615c063-85df-49be-9485-b7b7e7ca9cce",
+    "vwap-reversion": "7dd29b9d-2b0a-4894-8018-dc5d2dbe0e21",
+    "pine-overnight-block": "40974654-75be-4a44-85d2-eccc700a70ad",
+    "pine-daily-tsmom": "e7bddcc5-4a1b-4db4-ac12-0b336b159d33",
+    "pine-overnight-drift": "c91c6d07-8992-4975-9b34-1a906b241fdd",
+    "pine-tsmom-orb": "905727ba-d52e-45a4-9992-04bda6223d51"
+  },
+  "september": {
+    "buy-hold": "cb828124-df9d-4429-9db4-9c0ca4891635",
+    "moving-average": "56bca4bd-2bbb-48b0-b1ca-5d45587785b2",
+    "multi-speed-momentum": "a738eb14-28ad-44ad-b20c-4aab6f739bcd",
+    "rsi2-reversion": "6a088218-7983-493a-9150-515c3fce875c",
+    "vwap-reversion": "eaba2502-928f-4911-ae5b-2810bf3226b7",
+    "pine-overnight-block": "cdcbc6b6-f2cd-4e63-9f1f-eff8926e502a",
+    "pine-daily-tsmom": "fa29aec3-5211-4469-94c7-b5da829b806b",
+    "pine-overnight-drift": "20738b30-b975-470a-87fd-91d2036ecea7",
+    "pine-tsmom-orb": "5447bf71-862c-4a2e-883c-a7a72dbfef1a"
+  },
+  "regimes": {
+    "buy-hold": {
+      "volatility": "b82cdc4f-09c4-4b14-ac18-c040bb792990",
+      "trend": "553fabaf-a376-403d-9a4a-4e8ce45a465b"
+    },
+    "moving-average": {
+      "volatility": "cb1a55c9-c95b-4736-bfd5-26121df3a186",
+      "trend": "ed968fd9-3e5d-4f8d-9df4-3feae238cb9f"
+    },
+    "multi-speed-momentum": {
+      "volatility": "45513a18-c31b-46b6-b68d-6a69822a75c8",
+      "trend": "31efc4c0-bdb5-423f-a77b-6b7b50ad8494"
+    },
+    "rsi2-reversion": {
+      "volatility": "a85c0e73-7e66-4aae-8879-feeb965e658f",
+      "trend": "e590da8c-e9b8-4789-a7a0-f51d9c120b17"
+    },
+    "vwap-reversion": {
+      "volatility": "f6a816fd-73a5-451d-8730-501a84090cae",
+      "trend": "72449d76-0899-4353-b55f-2b2621549149"
+    },
+    "pine-overnight-block": {
+      "volatility": "2ba21529-79ae-44f9-b0c0-92707e2bb2b2",
+      "trend": "30a23fbb-8eb6-4548-8b34-8f88825771ab"
+    },
+    "pine-daily-tsmom": {
+      "volatility": "31a6d6d3-035f-44f0-8872-6be439504589",
+      "trend": "62461427-0959-4096-a689-3508e9e7ca6b"
+    },
+    "pine-overnight-drift": {
+      "volatility": "0491251b-5177-4ca6-8ce1-4593bfd99660",
+      "trend": "fb0e826f-9bef-4226-8c85-d110803fdaba"
+    },
+    "pine-tsmom-orb": {
+      "volatility": "2835adb2-8eb9-4049-a6f5-c4f7973a6176",
+      "trend": "6e1bec3c-f3df-4a66-89c9-b13017ffc39c"
+    }
+  },
+  "prior_run_ids": [
+    "90ccace6-c59d-46aa-87a7-925d10f40511",
+    "9f4a4794-67dc-4be0-a14c-95085b4e9654",
+    "5aed8af8-b68f-44fd-9541-7ee664ada93a",
+    "b1404822-0d24-4567-9213-3a9e22990661",
+    "22eef775-df80-47e0-b6ad-cd00ccab80e2",
+    "c560ebb5-855f-4d11-b89e-c6a418b5a674",
+    "1d12e64b-de4f-40a7-bab3-16a13350a6ab",
+    "ddaf8c4a-3ca6-406c-88e6-95cd96b0f924",
+    "079bc90b-ed42-494c-b3de-29c57820c5ec",
+    "88cae160-360a-4661-a6be-16cc56ffd54e",
+    "642f880c-d1b0-403a-970d-7603cda1e30d",
+    "03025264-df17-4900-a3f5-386b7cebfa0c",
+    "8acbc351-1187-4e7d-87e5-b8f8125c593f",
+    "dbef500e-32fe-4cfa-943d-1af83216425a",
+    "47798373-5a4b-47eb-9e14-d8330a552f3f",
+    "299c7f80-57bd-4149-9940-60aab996b8c1",
+    "f76c2e00-abb0-4498-8a64-e414ff69b239",
+    "902c3eeb-9f7a-4d05-b646-e41175721898",
+    "d35df8b8-576e-43bf-97cc-592fa799b0f6",
+    "28728fec-95a5-48e3-ad02-a904cd842fdc",
+    "f7755777-964b-4651-a097-284742ad7c42",
+    "20aaff8f-3871-4d6b-b25b-6782b094f909",
+    "01609246-82f1-44bc-909c-a31395159660",
+    "fdd55086-b245-4731-a05a-72954fcc408c",
+    "f2618483-bd29-4d20-a50f-07c861b05dd9",
+    "dd75b844-a25e-47f0-b101-9676081df889",
+    "6af12d98-003f-4f1d-960e-480bad3997af",
+    "7f78bc77-4d6f-4a8c-b9d4-601e6f322a00",
+    "cf42ae2d-55a4-412d-b9e0-d76fe8af040d",
+    "684c00d1-4a0a-4053-8389-8a2ea9cc0628",
+    "bef5f83b-de2c-466f-a3f7-1f221c5e442c",
+    "680a514a-6b36-4e71-b106-71c8101c5843",
+    "d9bd47ea-8c38-41e9-8ac2-f87fb2e57e2f",
+    "6dd022fb-7daa-4244-9c7a-a0a30d38f2d9",
+    "68b86f68-0335-40fd-a6b4-dc45ccd325ca",
+    "1330d8b4-3614-4921-abdf-4eeed7beab32",
+    "2c24cce5-bfc0-446d-9209-924cb2dde77c",
+    "3fded744-a2fc-45f2-8a3a-31ead7c8f8ce",
+    "5b5d7ce3-9dd2-4fa5-8fea-da90e60bc158",
+    "90d7d053-c03f-440a-9dfb-2d208b64899f",
+    "fe90973a-50f3-4645-aef3-ec5835775ba7",
+    "b630996c-7986-48e2-a310-36370bbd3050",
+    "2843f19a-f36c-458d-9234-5e51fd01ea34",
+    "28b61955-19ff-47fe-9a42-785d6b801d50",
+    "cfc35201-9594-4695-aad7-33c190fff94a",
+    "7a6de9cb-65dc-4470-9bfe-b2588d7fa8a6",
+    "7311f475-149d-4b26-a30c-31caf672ea02",
+    "147c2897-1146-4328-ada3-30ec3d64fe8b",
+    "86e15ff8-75f5-4864-8fa3-24450cad4e15",
+    "fdc9d164-3c91-4a25-af26-457e63e82292",
+    "269c1391-43fa-46da-a29d-b02bc722544e",
+    "5c2c2a12-fe29-48f0-97e1-9600f0036feb",
+    "b92c3dc6-ca6c-4c67-aae0-38290f91a8d9",
+    "175b4eb0-942d-4f19-b23d-1c9c2a5b7b69",
+    "edd96783-b520-4aa8-bfef-8f210269afba",
+    "51248938-359a-4829-8cf0-fb8860d1d3a8",
+    "1a85df0c-bbb4-4775-84c9-5705e4e91691",
+    "2db718c5-35b0-425c-9680-4b92afa93b1e",
+    "a6562315-7e23-465b-8b88-7167ab202ee5",
+    "5522e94d-4d20-4cc5-ab67-da14d62f88e7",
+    "327f954b-4d58-4fb4-a47e-1340b29165ec",
+    "fe5a154c-3b6d-44e1-971c-f55ecc0b86b3",
+    "dbd5c3d8-136d-483c-97cc-704582108d9a",
+    "6b518a34-4349-4667-8999-46e99265a70b",
+    "83693584-9598-443f-9ca0-13e2d53e9c6c",
+    "acc5fb74-9cbe-499b-b796-a48d3813b5ec",
+    "377d9dbd-38ab-461d-9c41-2ff520cd872c",
+    "bd48deeb-7274-4bb1-bb93-876afae62e90",
+    "d868cba0-aa2c-40d1-bb81-c44b56b836a3",
+    "ed31e207-4613-4951-a629-83152b5a15e0",
+    "19e74e47-afb9-4dbf-b3e1-3125df3b5e0a",
+    "ae1cd198-acae-4fd4-b895-1deb81583523",
+    "eaea37e4-9246-458a-b38f-b8718a963108",
+    "e795606a-f1a9-49a8-b3dd-6564515e6cc8",
+    "349d4479-0e36-425f-ba19-c93c09725223",
+    "1ea00513-7442-40ac-a4ad-1594b2a5643b",
+    "a862856f-8f3a-490f-86f5-5269b35b1be4",
+    "248372c3-d494-4e9d-943d-21d2e5f9ffd4",
+    "cab71d6f-77bf-4972-b4a4-a9f7a3021a35",
+    "3f5e2517-b4af-4c47-9fb2-5dad91ba3086",
+    "b5e5a5c7-4a45-4d18-94da-7bb30245e43a",
+    "e78adcaa-4f9e-47fe-9b50-75e9d3a7e5c4",
+    "5286073f-f0d2-406b-8f82-c104b3808bcc",
+    "a1a678ca-cd31-4a3d-91bb-8ad398d53537",
+    "58966abc-eb91-45c6-86ec-2c25ce2b6d80",
+    "5727a7d2-988c-4eb0-a4df-a3cc905d5fc7",
+    "ce08b434-0d9e-4e77-8e3a-938a78ea88cf",
+    "537bb523-f236-4d6f-8ab9-876870ad8703",
+    "e30442ff-b645-40a6-9384-21a437ec1d05",
+    "5f4b5b33-366a-458c-a8c9-0b07f06f6a71",
+    "fa6cc846-a2ad-4146-81be-fafd52e87275",
+    "1ec2d289-8c4f-4b0d-a636-1d73c2edbfff",
+    "22c108ec-91ad-4674-9c66-8ece4bc685c5",
+    "0461f0d5-7aa9-4695-aca7-7221a9c91c36",
+    "27739322-07e8-4fa1-ad92-4c41f3b89300",
+    "becf70c6-ab2c-4a16-898e-486bb43df930",
+    "6493b6bb-1410-4134-bb1e-b50d05c15219",
+    "19bdf3da-5ba5-41d5-9c3d-57054bc70e91",
+    "02a3fab8-aa52-4334-8926-1772accfcd54",
+    "4d9b77fc-488a-4d66-9faf-0a58b8acfa64",
+    "e30b0025-0441-4000-ad00-70a6e6cfb03b",
+    "71f96e4b-8f44-42da-8e11-7dfd604b01c1",
+    "756800ea-91a7-4f4a-86de-7f3e1a2936eb"
+  ],
+  "preexisting_2026_runs": [],
+  "plan": {
+    "training": "2025-01-01 through 2025-12-31, 365 calendar days; exactly one frozen candidate, no parameter selection",
+    "test": "2026-01-01 through 2026-08-31, 243 calendar days",
+    "september": "2026-09-01 through 2026-09-03; separate baseline runs starting flat, descriptive only, not appended to the main evaluation",
+    "parameters": "Original frozen 2022 selections for all nine NQ strategies; no retuning",
+    "criteria": "Positive net P&L for shortlist consideration; evaluation rule return >=0, drawdown <=35%, original minimum trade counts retained conservatively despite shorter period",
+    "scenarios": "Baseline and doubled fees/slippage; one additional bar delay for signal strategies only",
+    "sizing": "$100000 capital; fixed one contract; fee $1.25 per side, slippage one tick; ORB risk budget $2500 and maximum one contract",
+    "regimes": "Trend and volatility, 20 preceding native-timeframe bars, threshold at 2025 median, seed 42. Attribution only, no regime filter.",
+    "exits": "ORB baseline trade-ledger attribution, opening-range initial risk, exit reasons, gross/net R multiples, holding duration, monthly concentration. No exit-rule optimization.",
+    "limitations": "Historical carry-forward research; not certified untouched. Unadjusted continuous roll gaps, no margin liquidation, one-minute bracket assumptions, no event delay stress. September is only a partial month."
+  },
+  "summary": [
+    {
+      "strategy": "buy-hold",
+      "evaluation_id": "4f783072-6753-4554-a763-5f3aaeb6a2a5",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.802875,
+            "net_pnl": 80287.5,
+            "max_drawdown": -0.5604083947816223,
+            "underwater_bars": 1262,
+            "current_underwater_bars": 1154,
+            "cagr": null,
+            "sharpe": 1.2561600411314442,
+            "volatility": 0.9342805964271278,
+            "trades": 1,
+            "observations": 3930,
+            "costs": 12.5,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.03208750000000005
+              },
+              {
+                "month": "2026-02",
+                "return": -0.13303135635302243
+              },
+              {
+                "month": "2026-03",
+                "return": -0.22234329379880702
+              },
+              {
+                "month": "2026-04",
+                "return": 1.0409758025401046
+              },
+              {
+                "month": "2026-05",
+                "return": 0.4049817365664745
+              },
+              {
+                "month": "2026-06",
+                "return": 0.005462735000971053
+              },
+              {
+                "month": "2026-07",
+                "return": -0.2216088573760584
+              },
+              {
+                "month": "2026-08",
+                "return": 0.1544772714538425
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.8027500000000001,
+            "net_pnl": 80275,
+            "max_drawdown": -0.5604383843140612,
+            "underwater_bars": 1262,
+            "current_underwater_bars": 1154,
+            "cagr": null,
+            "sharpe": 1.2560376868850995,
+            "volatility": 0.9343473860440424,
+            "trades": 1,
+            "observations": 3930,
+            "costs": 25,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.03202499999999997
+              },
+              {
+                "month": "2026-02",
+                "return": -0.13303941280492237
+              },
+              {
+                "month": "2026-03",
+                "return": -0.22235882533739415
+              },
+              {
+                "month": "2026-04",
+                "return": 1.0410693111997413
+              },
+              {
+                "month": "2026-05",
+                "return": 0.4049995598978964
+              },
+              {
+                "month": "2026-06",
+                "return": 0.005462906115698329
+              },
+              {
+                "month": "2026-07",
+                "return": -0.22161576133687244
+              },
+              {
+                "month": "2026-08",
+                "return": 0.1544434305108624
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Delayed execution",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.802875,
+            "net_pnl": 80287.5,
+            "max_drawdown": -0.5604083947816223,
+            "underwater_bars": 1262,
+            "current_underwater_bars": 1154,
+            "cagr": null,
+            "sharpe": 1.2561600411314442,
+            "volatility": 0.9342805964271278,
+            "trades": 1,
+            "observations": 3930,
+            "costs": 12.5,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.03208750000000005
+              },
+              {
+                "month": "2026-02",
+                "return": -0.13303135635302243
+              },
+              {
+                "month": "2026-03",
+                "return": -0.22234329379880702
+              },
+              {
+                "month": "2026-04",
+                "return": 1.0409758025401046
+              },
+              {
+                "month": "2026-05",
+                "return": 0.4049817365664745
+              },
+              {
+                "month": "2026-06",
+                "return": 0.005462735000971053
+              },
+              {
+                "month": "2026-07",
+                "return": -0.2216088573760584
+              },
+              {
+                "month": "2026-08",
+                "return": 0.1544772714538425
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        }
+      ],
+      "september": {
+        "run_id": "cb828124-df9d-4429-9db4-9c0ca4891635",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": 0.0009749999999999481,
+          "net_pnl": 97.5,
+          "max_drawdown": -0.11630234655924476,
+          "underwater_bars": 58,
+          "current_underwater_bars": 3,
+          "cagr": null,
+          "sharpe": 0.45815858878809634,
+          "volatility": 1.1521612866257886,
+          "trades": 1,
+          "observations": 68,
+          "costs": 12.5,
+          "first": "2026-09-01T01:00:00+00:00",
+          "last": "2026-09-03T23:00:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": 0.0009749999999999481
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 1,
+          "turnover_contracts": 2
+        }
+      }
+    },
+    {
+      "strategy": "moving-average",
+      "evaluation_id": "bf5e2f1d-793e-4320-ae6a-291c4c85eb2e",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.33087500000000003,
+            "net_pnl": 33087.5,
+            "max_drawdown": -0.6017740952238768,
+            "underwater_bars": 1828,
+            "current_underwater_bars": 1244,
+            "cagr": null,
+            "sharpe": 0.8544621964100756,
+            "volatility": 0.7674800992232345,
+            "trades": 93,
+            "observations": 3930,
+            "costs": 1162.5,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.14695000000000003
+              },
+              {
+                "month": "2026-02",
+                "return": -0.13437078717542938
+              },
+              {
+                "month": "2026-03",
+                "return": -0.383603615803907
+              },
+              {
+                "month": "2026-04",
+                "return": 0.9447724713701151
+              },
+              {
+                "month": "2026-05",
+                "return": 0.40584621902139384
+              },
+              {
+                "month": "2026-06",
+                "return": 0.053096278439053846
+              },
+              {
+                "month": "2026-07",
+                "return": -0.22035272460201638
+              },
+              {
+                "month": "2026-08",
+                "return": 0.30256058919242945
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.31925000000000003,
+            "net_pnl": 31925,
+            "max_drawdown": -0.6069126832060119,
+            "underwater_bars": 1834,
+            "current_underwater_bars": 1244,
+            "cagr": null,
+            "sharpe": 0.8393553787913866,
+            "volatility": 0.7732589862874576,
+            "trades": 93,
+            "observations": 3930,
+            "costs": 2325,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.1482
+              },
+              {
+                "month": "2026-02",
+                "return": -0.13647569852077956
+              },
+              {
+                "month": "2026-03",
+                "return": -0.38824689008225133
+              },
+              {
+                "month": "2026-04",
+                "return": 0.9526084782487916
+              },
+              {
+                "month": "2026-05",
+                "return": 0.40745482999004135
+              },
+              {
+                "month": "2026-06",
+                "return": 0.0525219852420904
+              },
+              {
+                "month": "2026-07",
+                "return": -0.22311430382421293
+              },
+              {
+                "month": "2026-08",
+                "return": 0.3046703092936436
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Delayed execution",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.3882749999999999,
+            "net_pnl": 38827.5,
+            "max_drawdown": -0.6800875,
+            "underwater_bars": 1990,
+            "current_underwater_bars": 1154,
+            "cagr": null,
+            "sharpe": 0.9165190193633871,
+            "volatility": 0.8347675761112454,
+            "trades": 93,
+            "observations": 3930,
+            "costs": 1162.5,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.16095000000000004
+              },
+              {
+                "month": "2026-02",
+                "return": -0.28356474584351354
+              },
+              {
+                "month": "2026-03",
+                "return": -0.37623206487835303
+              },
+              {
+                "month": "2026-04",
+                "return": 1.4043404340434043
+              },
+              {
+                "month": "2026-05",
+                "return": 0.4270482370395019
+              },
+              {
+                "month": "2026-06",
+                "return": 0.1350329858243542
+              },
+              {
+                "month": "2026-07",
+                "return": -0.20347369051797193
+              },
+              {
+                "month": "2026-08",
+                "return": 0.1935605205747386
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        }
+      ],
+      "september": {
+        "run_id": "56bca4bd-2bbb-48b0-b1ca-5d45587785b2",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": 0.025900000000000034,
+          "net_pnl": 2590,
+          "max_drawdown": -0.012718447771260633,
+          "underwater_bars": 55,
+          "current_underwater_bars": 3,
+          "cagr": null,
+          "sharpe": 5.849180089582294,
+          "volatility": 0.37674373537596606,
+          "trades": 2,
+          "observations": 68,
+          "costs": 25,
+          "first": "2026-09-01T01:00:00+00:00",
+          "last": "2026-09-03T23:00:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": 0.025900000000000034
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 0.1323529411764706,
+          "turnover_contracts": 4
+        }
+      }
+    },
+    {
+      "strategy": "multi-speed-momentum",
+      "evaluation_id": "b949ec04-f71a-4c66-9d15-2419aba54961",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": -0.5589,
+            "net_pnl": -55890,
+            "max_drawdown": -1.0153375,
+            "underwater_bars": 2528,
+            "current_underwater_bars": 1326,
+            "cagr": null,
+            "sharpe": null,
+            "volatility": null,
+            "trades": 236,
+            "observations": 3930,
+            "costs": 2950,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.5219625
+              },
+              {
+                "month": "2026-02",
+                "return": -0.03862144706220749
+              },
+              {
+                "month": "2026-03",
+                "return": -0.6575640537453082
+              },
+              {
+                "month": "2026-04",
+                "return": 2.465687053216839
+              },
+              {
+                "month": "2026-05",
+                "return": 0.6349322760296106
+              },
+              {
+                "month": "2026-06",
+                "return": -0.1977094635322484
+              },
+              {
+                "month": "2026-07",
+                "return": -0.31377002778117524
+              },
+              {
+                "month": "2026-08",
+                "return": -0.10151495862507953
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": -0.5884,
+            "net_pnl": -58840,
+            "max_drawdown": -1.031275,
+            "underwater_bars": 2529,
+            "current_underwater_bars": 1326,
+            "cagr": null,
+            "sharpe": null,
+            "volatility": null,
+            "trades": 236,
+            "observations": 3930,
+            "costs": 5900,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.526775
+              },
+              {
+                "month": "2026-02",
+                "return": -0.0497120819905964
+              },
+              {
+                "month": "2026-03",
+                "return": -0.6825661552145875
+              },
+              {
+                "month": "2026-04",
+                "return": 2.7003502626970226
+              },
+              {
+                "month": "2026-05",
+                "return": 0.6522788584410053
+              },
+              {
+                "month": "2026-06",
+                "return": -0.205723124516628
+              },
+              {
+                "month": "2026-07",
+                "return": -0.33012369721230483
+              },
+              {
+                "month": "2026-08",
+                "return": -0.1136473755047106
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Delayed execution",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": -0.15725,
+            "net_pnl": -15725,
+            "max_drawdown": -1.0264375,
+            "underwater_bars": 2531,
+            "current_underwater_bars": 1326,
+            "cagr": null,
+            "sharpe": null,
+            "volatility": null,
+            "trades": 236,
+            "observations": 3930,
+            "costs": 2950,
+            "first": "2026-01-02T00:00:00+00:00",
+            "last": "2026-08-31T23:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.4985625
+              },
+              {
+                "month": "2026-02",
+                "return": -0.22186214632930323
+              },
+              {
+                "month": "2026-03",
+                "return": -0.6795450905013616
+              },
+              {
+                "month": "2026-04",
+                "return": 2.8473457962611217
+              },
+              {
+                "month": "2026-05",
+                "return": 0.8849162011173184
+              },
+              {
+                "month": "2026-06",
+                "return": -0.09688314194731251
+              },
+              {
+                "month": "2026-07",
+                "return": -0.23567841497107445
+              },
+              {
+                "month": "2026-08",
+                "return": 0.34643420605915365
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        }
+      ],
+      "september": {
+        "run_id": "a738eb14-28ad-44ad-b20c-4aab6f739bcd",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": -0.04202499999999998,
+          "net_pnl": -4202.5,
+          "max_drawdown": -0.11093838818575186,
+          "underwater_bars": 35,
+          "current_underwater_bars": 35,
+          "cagr": null,
+          "sharpe": -3.486158174170812,
+          "volatility": 0.9411327869761611,
+          "trades": 5,
+          "observations": 68,
+          "costs": 62.5,
+          "first": "2026-09-01T01:00:00+00:00",
+          "last": "2026-09-03T23:00:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": -0.04202499999999998
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 0.8529411764705882,
+          "turnover_contracts": 10
+        }
+      }
+    },
+    {
+      "strategy": "rsi2-reversion",
+      "evaluation_id": "e615c063-85df-49be-9485-b7b7e7ca9cce",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.43979999999999997,
+            "net_pnl": 43980,
+            "max_drawdown": -0.3220655533590363,
+            "underwater_bars": 80,
+            "current_underwater_bars": 12,
+            "cagr": null,
+            "sharpe": 1.071316196864379,
+            "volatility": 0.7852048861355964,
+            "trades": 12,
+            "observations": 172,
+            "costs": 150,
+            "first": "2026-01-02T22:00:00+00:00",
+            "last": "2026-08-31T21:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.018687499999999968
+              },
+              {
+                "month": "2026-02",
+                "return": -0.07471624026013868
+              },
+              {
+                "month": "2026-03",
+                "return": 0
+              },
+              {
+                "month": "2026-04",
+                "return": 0.15825000663077216
+              },
+              {
+                "month": "2026-05",
+                "return": 0.24220565841147712
+              },
+              {
+                "month": "2026-06",
+                "return": 0.1353267031052694
+              },
+              {
+                "month": "2026-07",
+                "return": -0.13879439821392325
+              },
+              {
+                "month": "2026-08",
+                "return": 0.08583225709141296
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.4382999999999999,
+            "net_pnl": 43830,
+            "max_drawdown": -0.3221535167260253,
+            "underwater_bars": 80,
+            "current_underwater_bars": 12,
+            "cagr": null,
+            "sharpe": 1.0691909776652944,
+            "volatility": 0.7856724804669555,
+            "trades": 12,
+            "observations": 172,
+            "costs": 300,
+            "first": "2026-01-02T22:00:00+00:00",
+            "last": "2026-08-31T21:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.01837500000000003
+              },
+              {
+                "month": "2026-02",
+                "return": -0.0748005400761016
+              },
+              {
+                "month": "2026-03",
+                "return": 0
+              },
+              {
+                "month": "2026-04",
+                "return": 0.1581139885374656
+              },
+              {
+                "month": "2026-05",
+                "return": 0.24221595985978417
+              },
+              {
+                "month": "2026-06",
+                "return": 0.13530312252162524
+              },
+              {
+                "month": "2026-07",
+                "return": -0.13903013565104383
+              },
+              {
+                "month": "2026-08",
+                "return": 0.08557088137064373
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        },
+        {
+          "name": "Delayed execution",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.5256000000000001,
+            "net_pnl": 52560,
+            "max_drawdown": -0.3115445161699295,
+            "underwater_bars": 80,
+            "current_underwater_bars": 12,
+            "cagr": null,
+            "sharpe": 1.1992730613742577,
+            "volatility": 0.7497533933613417,
+            "trades": 12,
+            "observations": 172,
+            "costs": 150,
+            "first": "2026-01-02T22:00:00+00:00",
+            "last": "2026-08-31T21:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.05733750000000004
+              },
+              {
+                "month": "2026-02",
+                "return": -0.06631042595197845
+              },
+              {
+                "month": "2026-03",
+                "return": 0
+              },
+              {
+                "month": "2026-04",
+                "return": 0.062308490972169395
+              },
+              {
+                "month": "2026-05",
+                "return": 0.3338538004028653
+              },
+              {
+                "month": "2026-06",
+                "return": 0.0977401281398278
+              },
+              {
+                "month": "2026-07",
+                "return": -0.10556220339121025
+              },
+              {
+                "month": "2026-08",
+                "return": 0.11074909673367972
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        }
+      ],
+      "september": {
+        "run_id": "6a088218-7983-493a-9150-515c3fce875c",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": 0.0730249999999999,
+          "net_pnl": 7302.5,
+          "max_drawdown": 0,
+          "underwater_bars": 0,
+          "current_underwater_bars": 0,
+          "cagr": null,
+          "sharpe": 11.488710911377286,
+          "volatility": 0.8002237030220518,
+          "trades": 1,
+          "observations": 2,
+          "costs": 12.5,
+          "first": "2026-09-02T21:00:00+00:00",
+          "last": "2026-09-03T21:00:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": 0.0730249999999999
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 1,
+          "turnover_contracts": 2
+        }
+      }
+    },
+    {
+      "strategy": "vwap-reversion",
+      "evaluation_id": "7dd29b9d-2b0a-4894-8018-dc5d2dbe0e21",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.47772499999999996,
+            "net_pnl": 47772.5,
+            "max_drawdown": -0.35591003941571997,
+            "underwater_bars": 4687,
+            "current_underwater_bars": 1744,
+            "cagr": null,
+            "sharpe": 1.2031471343455626,
+            "volatility": 0.6556367244410823,
+            "trades": 209,
+            "observations": 13158,
+            "costs": 2612.5,
+            "first": "2026-01-02T14:35:00+00:00",
+            "last": "2026-08-31T20:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.10426249999999992
+              },
+              {
+                "month": "2026-02",
+                "return": 0.013753523279111723
+              },
+              {
+                "month": "2026-03",
+                "return": 0.15988878467104373
+              },
+              {
+                "month": "2026-04",
+                "return": -0.1714368231046931
+              },
+              {
+                "month": "2026-05",
+                "return": -0.023737320924396066
+              },
+              {
+                "month": "2026-06",
+                "return": 0.2428472817290297
+              },
+              {
+                "month": "2026-07",
+                "return": 0.22413314309243604
+              },
+              {
+                "month": "2026-08",
+                "return": -0.07522978839910821
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.4516,
+            "net_pnl": 45160,
+            "max_drawdown": -0.36003361658418154,
+            "underwater_bars": 5009,
+            "current_underwater_bars": 1744,
+            "cagr": null,
+            "sharpe": 1.1574777827197982,
+            "volatility": 0.6627967443095681,
+            "trades": 209,
+            "observations": 13158,
+            "costs": 5225,
+            "first": "2026-01-02T14:35:00+00:00",
+            "last": "2026-08-31T20:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.10207499999999992
+              },
+              {
+                "month": "2026-02",
+                "return": 0.01077512873443287
+              },
+              {
+                "month": "2026-03",
+                "return": 0.15658243188652987
+              },
+              {
+                "month": "2026-04",
+                "return": -0.17471621228291456
+              },
+              {
+                "month": "2026-05",
+                "return": -0.026310220780136895
+              },
+              {
+                "month": "2026-06",
+                "return": 0.24159663865546221
+              },
+              {
+                "month": "2026-07",
+                "return": 0.2242060019059844
+              },
+              {
+                "month": "2026-08",
+                "return": -0.0775438875208515
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Delayed execution",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.23897499999999994,
+            "net_pnl": 23897.5,
+            "max_drawdown": -0.32766885300894255,
+            "underwater_bars": 6326,
+            "current_underwater_bars": 1744,
+            "cagr": null,
+            "sharpe": 0.8042184660810242,
+            "volatility": 0.670024574738502,
+            "trades": 209,
+            "observations": 13158,
+            "costs": 2612.5,
+            "first": "2026-01-02T14:35:00+00:00",
+            "last": "2026-08-31T20:00:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.11831250000000004
+              },
+              {
+                "month": "2026-02",
+                "return": 0.09575811769965914
+              },
+              {
+                "month": "2026-03",
+                "return": 0.13117145421903054
+              },
+              {
+                "month": "2026-04",
+                "return": -0.16798477784491073
+              },
+              {
+                "month": "2026-05",
+                "return": -0.0727377171780671
+              },
+              {
+                "month": "2026-06",
+                "return": 0.08113194314568917
+              },
+              {
+                "month": "2026-07",
+                "return": 0.2546571091866412
+              },
+              {
+                "month": "2026-08",
+                "return": -0.14588054839849374
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        }
+      ],
+      "september": {
+        "run_id": "eaba2502-928f-4911-ae5b-2810bf3226b7",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": 0.02507499999999996,
+          "net_pnl": 2507.5,
+          "max_drawdown": -0.035893481999881405,
+          "underwater_bars": 158,
+          "current_underwater_bars": 158,
+          "cagr": null,
+          "sharpe": 3.6349974778466088,
+          "volatility": 0.6078185984950991,
+          "trades": 3,
+          "observations": 234,
+          "costs": 37.5,
+          "first": "2026-09-01T13:35:00+00:00",
+          "last": "2026-09-03T20:00:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": 0.02507499999999996
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 0.36324786324786323,
+          "turnover_contracts": 6
+        }
+      }
+    },
+    {
+      "strategy": "pine-overnight-block",
+      "evaluation_id": "40974654-75be-4a44-85d2-eccc700a70ad",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.4517500000000001,
+            "net_pnl": 45175,
+            "max_drawdown": -0.13863273356218175,
+            "underwater_bars": 9096,
+            "current_underwater_bars": 177,
+            "cagr": null,
+            "sharpe": 1.5418143629180054,
+            "volatility": 0.32816265687264934,
+            "trades": 172,
+            "observations": 47162,
+            "costs": 2150,
+            "first": "2026-01-01T23:05:00+00:00",
+            "last": "2026-08-31T23:55:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.02132500000000004
+              },
+              {
+                "month": "2026-02",
+                "return": 0.09737655503614584
+              },
+              {
+                "month": "2026-03",
+                "return": -0.020717428245536462
+              },
+              {
+                "month": "2026-04",
+                "return": 0.05471962727899404
+              },
+              {
+                "month": "2026-05",
+                "return": 0.10409952446417714
+              },
+              {
+                "month": "2026-06",
+                "return": 0.1369259032455603
+              },
+              {
+                "month": "2026-07",
+                "return": -0.012513914323674102
+              },
+              {
+                "month": "2026-08",
+                "return": 0.05579898547299145
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.43025,
+            "net_pnl": 43025,
+            "max_drawdown": -0.14137050854113486,
+            "underwater_bars": 9101,
+            "current_underwater_bars": 177,
+            "cagr": null,
+            "sharpe": 1.4771975737668614,
+            "volatility": 0.33087319055435094,
+            "trades": 172,
+            "observations": 47162,
+            "costs": 4300,
+            "first": "2026-01-01T23:05:00+00:00",
+            "last": "2026-08-31T23:55:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.023950000000000027
+              },
+              {
+                "month": "2026-02",
+                "return": 0.09507709646022233
+              },
+              {
+                "month": "2026-03",
+                "return": -0.0233896243626327
+              },
+              {
+                "month": "2026-04",
+                "return": 0.05249796426689657
+              },
+              {
+                "month": "2026-05",
+                "return": 0.10271697082783415
+              },
+              {
+                "month": "2026-06",
+                "return": 0.13615352868345032
+              },
+              {
+                "month": "2026-07",
+                "return": -0.014748083838860837
+              },
+              {
+                "month": "2026-08",
+                "return": 0.05463997345426397
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        }
+      ],
+      "september": {
+        "run_id": "cdcbc6b6-f2cd-4e63-9f1f-eff8926e502a",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": -0.08777500000000005,
+          "net_pnl": -8777.5,
+          "max_drawdown": -0.10922763977069594,
+          "underwater_bars": 755,
+          "current_underwater_bars": 755,
+          "cagr": null,
+          "sharpe": -20.139993531624246,
+          "volatility": 0.37494622970639135,
+          "trades": 3,
+          "observations": 827,
+          "costs": 37.5,
+          "first": "2026-09-01T00:05:00+00:00",
+          "last": "2026-09-03T23:55:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": -0.08777500000000005
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 0.3047158403869408,
+          "turnover_contracts": 6
+        }
+      }
+    },
+    {
+      "strategy": "pine-daily-tsmom",
+      "evaluation_id": "e7bddcc5-4a1b-4db4-ac12-0b336b159d33",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": -0.39127500000000004,
+            "net_pnl": -39127.5,
+            "max_drawdown": -1.0416407847034774,
+            "underwater_bars": 15084,
+            "current_underwater_bars": 15084,
+            "cagr": null,
+            "sharpe": null,
+            "volatility": null,
+            "trades": 17,
+            "observations": 15720,
+            "costs": 212.5,
+            "first": "2026-01-01T23:15:00+00:00",
+            "last": "2026-08-31T23:45:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.16543750000000002
+              },
+              {
+                "month": "2026-02",
+                "return": -0.6813899498240096
+              },
+              {
+                "month": "2026-03",
+                "return": -0.22748213614140655
+              },
+              {
+                "month": "2026-04",
+                "return": 0.9416418182924602
+              },
+              {
+                "month": "2026-05",
+                "return": 1.4335412291973548
+              },
+              {
+                "month": "2026-06",
+                "return": 0.012878797635452743
+              },
+              {
+                "month": "2026-07",
+                "return": -0.5201597009421848
+              },
+              {
+                "month": "2026-08",
+                "return": 0.2904234458635857
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": -0.39339999999999997,
+            "net_pnl": -39340,
+            "max_drawdown": -1.0431679053061962,
+            "underwater_bars": 15084,
+            "current_underwater_bars": 15084,
+            "cagr": null,
+            "sharpe": null,
+            "volatility": null,
+            "trades": 17,
+            "observations": 15720,
+            "costs": 425,
+            "first": "2026-01-01T23:15:00+00:00",
+            "last": "2026-08-31T23:45:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.16562500000000002
+              },
+              {
+                "month": "2026-02",
+                "return": -0.6828164794007491
+              },
+              {
+                "month": "2026-03",
+                "return": -0.23020971093897602
+              },
+              {
+                "month": "2026-04",
+                "return": 0.9488280770646704
+              },
+              {
+                "month": "2026-05",
+                "return": 1.440085636924627
+              },
+              {
+                "month": "2026-06",
+                "return": 0.012902892828572154
+              },
+              {
+                "month": "2026-07",
+                "return": -0.5211841736516267
+              },
+              {
+                "month": "2026-08",
+                "return": 0.291050335213366
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Does not meet criteria"
+        }
+      ],
+      "september": {
+        "run_id": "fa29aec3-5211-4469-94c7-b5da829b806b",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": 0.06372500000000003,
+          "net_pnl": 6372.5,
+          "max_drawdown": -0.029684784082643967,
+          "underwater_bars": 20,
+          "current_underwater_bars": 18,
+          "cagr": null,
+          "sharpe": 9.260392264271147,
+          "volatility": 0.5777914205770943,
+          "trades": 1,
+          "observations": 275,
+          "costs": 12.5,
+          "first": "2026-09-01T00:15:00+00:00",
+          "last": "2026-09-03T23:45:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": 0.06372500000000003
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 0.3563636363636364,
+          "turnover_contracts": 2
+        }
+      }
+    },
+    {
+      "strategy": "pine-overnight-drift",
+      "evaluation_id": "c91c6d07-8992-4975-9b34-1a906b241fdd",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.13082499999999997,
+            "net_pnl": 13082.5,
+            "max_drawdown": -0.25141547456030455,
+            "underwater_bars": 15716,
+            "current_underwater_bars": 14369,
+            "cagr": null,
+            "sharpe": 0.5541486432096357,
+            "volatility": 0.453178451984622,
+            "trades": 69,
+            "observations": 47162,
+            "costs": 862.5,
+            "first": "2026-01-01T23:05:00+00:00",
+            "last": "2026-08-31T23:55:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.04027500000000006
+              },
+              {
+                "month": "2026-02",
+                "return": -0.01319362668525148
+              },
+              {
+                "month": "2026-03",
+                "return": -0.04312990112512782
+              },
+              {
+                "month": "2026-04",
+                "return": 0.08414140642895318
+              },
+              {
+                "month": "2026-05",
+                "return": 0.08308096814329646
+              },
+              {
+                "month": "2026-06",
+                "return": -0.08639674007282816
+              },
+              {
+                "month": "2026-07",
+                "return": 0.08975088967971523
+              },
+              {
+                "month": "2026-08",
+                "return": -0.015239588095704582
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.12220000000000009,
+            "net_pnl": 12220,
+            "max_drawdown": -0.2539930183123038,
+            "underwater_bars": 15728,
+            "current_underwater_bars": 14369,
+            "cagr": null,
+            "sharpe": 0.5333688250225374,
+            "volatility": 0.45505289253294007,
+            "trades": 69,
+            "observations": 47162,
+            "costs": 1725,
+            "first": "2026-01-01T23:05:00+00:00",
+            "last": "2026-08-31T23:55:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": 0.03915000000000002
+              },
+              {
+                "month": "2026-02",
+                "return": -0.014290525910599983
+              },
+              {
+                "month": "2026-03",
+                "return": -0.044322952260080095
+              },
+              {
+                "month": "2026-04",
+                "return": 0.08392072734702216
+              },
+              {
+                "month": "2026-05",
+                "return": 0.08279534423448465
+              },
+              {
+                "month": "2026-06",
+                "return": -0.08782313517277396
+              },
+              {
+                "month": "2026-07",
+                "return": 0.0886927480916031
+              },
+              {
+                "month": "2026-08",
+                "return": -0.016433673692975104
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        }
+      ],
+      "september": {
+        "run_id": "20738b30-b975-470a-87fd-91d2036ecea7",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": 0,
+          "net_pnl": 0,
+          "max_drawdown": 0,
+          "underwater_bars": 0,
+          "current_underwater_bars": 0,
+          "cagr": null,
+          "sharpe": null,
+          "volatility": 0,
+          "trades": 0,
+          "observations": 827,
+          "costs": 0,
+          "first": "2026-09-01T00:05:00+00:00",
+          "last": "2026-09-03T23:55:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": 0
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 0,
+          "turnover_contracts": 0
+        }
+      }
+    },
+    {
+      "strategy": "pine-tsmom-orb",
+      "evaluation_id": "905727ba-d52e-45a4-9992-04bda6223d51",
+      "scenarios": [
+        {
+          "name": "Baseline",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.1155250000000001,
+            "net_pnl": 11552.5,
+            "max_drawdown": -0.11808362403771089,
+            "underwater_bars": 19833,
+            "current_underwater_bars": 19833,
+            "cagr": null,
+            "sharpe": 1.0958783162041055,
+            "volatility": 0.12830626099648482,
+            "trades": 29,
+            "observations": 47162,
+            "costs": 332.5,
+            "first": "2026-01-01T23:05:00+00:00",
+            "last": "2026-08-31T23:55:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.00912500000000005
+              },
+              {
+                "month": "2026-02",
+                "return": 0
+              },
+              {
+                "month": "2026-03",
+                "return": 0.08621168159455017
+              },
+              {
+                "month": "2026-04",
+                "return": 0.15100343770324254
+              },
+              {
+                "month": "2026-05",
+                "return": -0.02914051621496172
+              },
+              {
+                "month": "2026-06",
+                "return": -0.036167868797937985
+              },
+              {
+                "month": "2026-07",
+                "return": 0
+              },
+              {
+                "month": "2026-08",
+                "return": -0.037697599689447636
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        },
+        {
+          "name": "Higher costs",
+          "metrics": {
+            "version": "1.0.0",
+            "net_return": 0.11220000000000008,
+            "net_pnl": 11220,
+            "max_drawdown": -0.11896227349242494,
+            "underwater_bars": 19833,
+            "current_underwater_bars": 19833,
+            "cagr": null,
+            "sharpe": 1.0670468196217624,
+            "volatility": 0.12839354629151886,
+            "trades": 29,
+            "observations": 47162,
+            "costs": 665,
+            "first": "2026-01-01T23:05:00+00:00",
+            "last": "2026-08-31T23:55:00+00:00",
+            "monthly": [
+              {
+                "month": "2026-01",
+                "return": -0.009750000000000036
+              },
+              {
+                "month": "2026-02",
+                "return": 0
+              },
+              {
+                "month": "2026-03",
+                "return": 0.08593789447109312
+              },
+              {
+                "month": "2026-04",
+                "return": 0.15004417166503936
+              },
+              {
+                "month": "2026-05",
+                "return": -0.02975661033395327
+              },
+              {
+                "month": "2026-06",
+                "return": -0.036461371780981744
+              },
+              {
+                "month": "2026-07",
+                "return": 0
+              },
+              {
+                "month": "2026-08",
+                "return": -0.038014098516628514
+              }
+            ],
+            "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+            "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+          },
+          "outcome": "Meets criteria"
+        }
+      ],
+      "september": {
+        "run_id": "5447bf71-862c-4a2e-883c-a7a72dbfef1a",
+        "metrics": {
+          "version": "1.0.0",
+          "net_return": -0.020724999999999993,
+          "net_pnl": -2072.5,
+          "max_drawdown": -0.052639216397605715,
+          "underwater_bars": 637,
+          "current_underwater_bars": 637,
+          "cagr": null,
+          "sharpe": -9.165151389911681,
+          "volatility": 0.1899477625559195,
+          "trades": 1,
+          "observations": 827,
+          "costs": 12.5,
+          "first": "2026-09-01T00:05:00+00:00",
+          "last": "2026-09-03T23:55:00+00:00",
+          "monthly": [
+            {
+              "month": "2026-09",
+              "return": -0.020724999999999993
+            }
+          ],
+          "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+          "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization.",
+          "time_invested_bar_fraction": 0.07134220072551391,
+          "turnover_contracts": 2
+        }
+      }
+    }
+  ],
+  "source_hash": "9cb2ff01e5ac252c51294fbb809f2654c6febba3a3632e018f1b3bc4af5c380f",
+  "completed_at": "2026-09-15T04:32:07.971Z"
+}

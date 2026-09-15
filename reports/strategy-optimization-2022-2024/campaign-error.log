@@ -1,0 +1,9 @@
+file:///C:/Users/sarah/OneDrive/Documents/New%20folder/QuantResearch/scripts/optimize-workbench.mjs:438
+    assert(annotation.ok(), `Failed to annotate ${series.holdout.id}`);
+                      ^
+
+TypeError: annotation.ok is not a function
+    at file:///C:/Users/sarah/OneDrive/Documents/New%20folder/QuantResearch/scripts/optimize-workbench.mjs:438:23
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.20.0
