@@ -24,7 +24,8 @@ async function post(route, body, expected = 201) {
 }
 try {
   await page.goto(origin, { waitUntil: "domcontentloaded", timeout: 90000 });
-  await page.getByRole("button", { name: "Scripts", exact: true }).click();
+  await page.getByRole("link", { name: "Scripts & library", exact: true }).click();
+  await page.getByRole("link", { name: "Library", exact: true }).click();
   await page
     .getByRole("heading", { name: "Consolidated strategy library" })
     .waitFor();
@@ -76,10 +77,6 @@ try {
       .inputValue(),
     "Full Globex day",
   );
-  assert.equal(
-    await page.getByLabel("Warmup calendar days", { exact: true }).inputValue(),
-    "600",
-  );
   await page
     .getByRole("textbox", { name: "Dataset version", exact: true })
     .click();
@@ -88,12 +85,19 @@ try {
   await page
     .getByLabel("End date (UTC, inclusive)", { exact: true })
     .fill("2026-08-31");
+  await page.getByRole("button", { name: /Parameters/ }).click();
   await page.getByLabel("risk budget", { exact: true }).fill("3000");
+  await page.getByRole("button", { name: /Assumptions & record/ }).click();
+  assert.equal(
+    await page.getByLabel("Warmup calendar days", { exact: true }).inputValue(),
+    "600",
+  );
   await page
     .getByLabel("Question / hypothesis", { exact: true })
     .fill(
       "Pine port validation: exercise full-size NQ bracket fills with an explicit $3000 test budget",
     );
+  await page.getByRole("button", { name: /Preview & launch/ }).click();
   await page.getByRole("button", { name: "Validate & preview" }).click();
   await page.getByText("1 job ready", { exact: true }).waitFor();
   const launched = page.waitForResponse(
@@ -107,7 +111,7 @@ try {
   assert.equal(response.status(), 201, JSON.stringify(result));
   runs.push(result[0]);
   await page
-    .getByRole("heading", { name: "Run ledger", exact: true })
+    .getByRole("region", { name: "Run ledger", exact: true })
     .waitFor();
   checks.push(
     "Pine sources/counterparts visible; ORB form selects full session and warmup; real-data bracket run launched through UI",
@@ -201,7 +205,8 @@ try {
     animations: "disabled",
   });
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Scripts", exact: true }).click();
+  await page.getByRole("link", { name: "Scripts & library", exact: true }).click();
+  await page.getByRole("link", { name: "Library", exact: true }).click();
   await page.getByLabel("Search strategy library").fill(".pine");
   await page
     .getByRole("heading", { name: "Consolidated strategy library" })

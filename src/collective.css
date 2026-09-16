@@ -1,15 +1,16 @@
 .collective-dashboard {
   min-width: 0;
 }
-.collective-dashboard .mantine-Paper-root {
-  min-width: 0;
-}
-.collective-dashboard details {
-  max-width: 340px;
+.collective-dashboard details,
+.collective-picker details {
   font-size: 12px;
 }
-.collective-dashboard summary {
+.collective-dashboard summary,
+.collective-picker summary {
   cursor: pointer;
+  font-weight: 500;
+  color: #4b5c53;
+  padding: 0;
 }
 .collective-chart svg {
   width: 100%;
@@ -20,95 +21,227 @@
 .collective-hover {
   min-height: 18px;
 }
+.collective-bar {
+  height: 6px;
+  border-radius: 2px;
+  opacity: 0.75;
+  min-width: 2px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* calendar */
+.collective-month {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 600;
+  min-width: 130px;
+  text-align: center;
+  margin: 0;
+}
 .collective-calendar {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 7px;
+  gap: 4px;
 }
 .calendar-heading {
-  text-align: center;
-  color: #6a7a71;
-  font-size: 12px;
-  padding: 5px;
+  font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #66756c;
+  padding: 0 6px 3px;
 }
 .calendar-day {
-  border: 1px solid #dae5dd;
-  border-radius: 7px;
+  border: 1px solid #e9eee9;
+  border-radius: 5px;
   min-width: 0;
-  min-height: 98px;
+  min-height: 76px;
+  padding: 6px 7px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   text-align: left;
-  padding: 10px;
   cursor: pointer;
-  background: #f6f8f6;
-  color: #234d3c;
+  background: #fff;
+  color: #1b2521;
+  font: inherit;
 }
-.calendar-day span,
-.calendar-day strong,
-.calendar-day small {
-  display: block;
+.calendar-day:hover:not(:disabled) {
+  border-color: #9fb5a8;
 }
-.calendar-day .calendar-amount-short {
-  display: none;
-}
-.calendar-day .calendar-amount-full {
-  font-size: inherit;
-}
-.calendar-day span {
-  font-size: 12px;
+.calendar-day .calendar-date {
+  font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: #3f4d45;
 }
 .calendar-day strong {
-  margin: 8px 0 5px;
-  font-size: 14px;
-  overflow-wrap: anywhere;
+  display: block;
+  text-align: right;
+  font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .calendar-day small {
+  display: block;
+  text-align: right;
+  font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
   font-size: 10px;
-  opacity: 0.8;
-}
-.calendar-day.gain {
-  background: #e4f3eb;
-  color: #126446;
-}
-.calendar-day.loss {
-  background: #fbe9e4;
-  color: #a33b31;
+  color: #3f4d45;
+  min-height: 14px;
 }
 .calendar-day.uncovered {
-  background: #f4f4f3;
-  color: #a2aaa4;
+  background: repeating-linear-gradient(45deg, #e4e9e5 0 3px, #fff 3px 6px);
+  color: #66756c;
   cursor: default;
 }
 .calendar-day.selected {
-  outline: 2px solid #2a7560;
+  outline: 2px solid #1b2521;
   outline-offset: 1px;
 }
-.collective-kpi {
-  overflow-wrap: anywhere;
+.calendar-day:focus-visible {
+  outline: 2px solid #1e7a62;
+  outline-offset: 1px;
 }
-@media (max-width: 650px) {
-  .calendar-day .calendar-amount-full {
+.wb-legend .hatch {
+  background: repeating-linear-gradient(45deg, #e4e9e5 0 3px, #fff 3px 6px);
+}
+
+/* pause & sizing */
+.collective-policy-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: sticky;
+  top: 12px;
+}
+.collective-policy-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.collective-stats {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+.collective-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.collective-stats span {
+  font-size: 11px;
+  color: #6b4a43;
+  line-height: 1.25;
+}
+.wb-verdict.cluster .collective-stats span {
+  color: #3f5c50;
+}
+.collective-stats b {
+  font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  font-size: 13px;
+}
+
+/* strategy picker drawer */
+.collective-drawer-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+.collective-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.collective-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.collective-picker-table {
+  max-height: calc(100vh - 380px);
+}
+.collective-picker-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #fafbfa;
+  border-top: 1px solid #dce3dd;
+  margin: 0 -16px -16px;
+  padding: 12px 16px;
+}
+.collective-sheet .wb-rail-head h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+.collective-sheet .wb-rail-section,
+.collective-sheet .wb-books {
+  margin-top: 12px;
+}
+.collective-sheet .wb-rail-foot {
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .collective-month-input {
     display: none;
   }
-  .calendar-day .calendar-amount-short {
-    display: block;
-    font-size: 9px;
-    white-space: nowrap;
+  .collective-month {
+    min-width: 0;
+    flex: 1;
+    font-size: 16px;
+  }
+  .collective-month-nav {
+    width: 100%;
   }
   .collective-calendar {
     gap: 3px;
   }
   .calendar-day {
-    padding: 5px;
-    min-height: 79px;
+    padding: 4px;
+    min-height: 62px;
   }
   .calendar-day strong {
-    font-size: 10px;
+    font-size: 9.5px;
   }
   .calendar-day small {
-    font-size: 8px;
+    display: none;
   }
-  .collective-dashboard .collective-kpi {
-    font-size: 20px;
+  .collective-stats {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .collective-policy-settings {
+    position: static;
+  }
+  .collective-picker-table {
+    max-height: none;
+  }
+  .collective-filter-fields {
+    flex-wrap: wrap;
   }
   .collective-chart svg {
     min-height: 150px;

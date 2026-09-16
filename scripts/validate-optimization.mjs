@@ -66,7 +66,7 @@ page.on("pageerror", (e) => errors.push(e.message));
 try {
   for (const [strategy, id] of Object.entries(campaign.holdout)) {
     const run = state.runs.find((r) => r.id === id);
-    await page.goto(origin);
+    await page.goto(origin + "/#/runs");
     await page.getByLabel("Search runs", { exact: true }).fill(id);
     await page.getByRole("button", { name: "Inspect", exact: true }).click();
     const drawer = page.getByRole("dialog", { name: "Run evidence" });
@@ -106,8 +106,9 @@ try {
       `${strategy}: chart, CSV downloads, evidence export, deletion preview cancellation`,
     );
     // A saved preset must restore the selected configuration and pass preflight.
-    await page.goto(origin);
-    await page.getByRole("button", { name: "New Run", exact: true }).click();
+    await page.goto(origin + "/#/new-run");
+    await page.getByRole("button", { name: /Parameters/ }).click();
+
     await page
       .getByRole("textbox", { name: "Load saved preset", exact: true })
       .click();
@@ -118,6 +119,7 @@ try {
     const preview = page.waitForResponse(
       (r) => r.url().endsWith("/preview") && r.request().method() === "POST",
     );
+    await page.getByRole("button", { name: /Preview & launch/ }).click();
     await page
       .getByRole("button", { name: "Validate & preview", exact: true })
       .click();
@@ -132,7 +134,7 @@ try {
     );
     console.log(`Validated ${strategy}`);
   }
-  await page.goto(origin);
+  await page.goto(origin + "/#/runs");
   for (const strategy of ["moving-average", "multi-speed-momentum"]) {
     await page
       .getByRole("checkbox", {
@@ -162,7 +164,7 @@ try {
   });
   const interrupted = state.runs.find((r) => r.status === "Interrupted");
   if (interrupted) {
-    await page.goto(origin);
+    await page.goto(origin + "/#/runs");
     for (const id of [interrupted.id, campaign.holdout["buy-hold"]])
       await page
         .getByRole("checkbox", { name: `Compare ${id}`, exact: true })

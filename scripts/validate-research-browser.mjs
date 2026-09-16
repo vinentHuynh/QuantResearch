@@ -13,7 +13,11 @@ page.on("pageerror", (e) => errors.push(e.message));
 try {
   await page.goto(base);
   await page
-    .getByRole("button", { name: "Evaluation & Regimes", exact: true })
+    .getByRole("link", { name: "Evaluations & regimes", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Plan walk-forward evaluation", exact: true })
+    .first()
     .click();
   await page
     .getByRole("heading", {
@@ -77,7 +81,7 @@ try {
   assert.equal(response.status(), 201, JSON.stringify(evaluation));
   await page.reload();
   await page
-    .getByRole("button", { name: "Evaluation & Regimes", exact: true })
+    .getByRole("link", { name: "Evaluations & regimes", exact: true })
     .click();
   let record;
   for (let i = 0; i < 120; i++) {
@@ -93,6 +97,16 @@ try {
   }
   assert.equal(record.status, "Succeeded");
   assert.equal(record.runs.length, 10);
+  await page
+    .locator(".wb-ledger-item")
+    .filter({
+      has: page.getByText("NQ phase 4 browser validation", { exact: true }),
+    })
+    .first()
+    .click();
+  await page
+    .getByRole("button", { name: "Joined test path", exact: true })
+    .click();
   await page
     .getByRole("heading", { name: "Joined subsequent test path", exact: true })
     .waitFor();
@@ -111,6 +125,7 @@ try {
       r.url().endsWith(`/evaluations/${evaluation.id}/regimes`) &&
       r.request().method() === "POST",
   );
+  await page.getByRole("button", { name: "Regime study", exact: true }).click();
   await page
     .getByRole("button", { name: "Run regime investigation", exact: true })
     .click();

@@ -16,17 +16,24 @@ npm install
 npm run dev:full
 ```
 
-Open **http://127.0.0.1:5173**. To add a strategy, copy
+Open **http://127.0.0.1:5173**. The left sidebar groups the app by task:
+**Portfolio** (Combined portfolio, Strategy scorecards), **Research** (Runs &
+compare, Evaluations & regimes, Watchlist) and **Sources** (Scripts & library,
+Datasets). **New run** and **Search** (Ctrl K) are available on every page, and
+each view has its own address, for example `#/portfolio/calendar`. On phones
+the sidebar becomes a bottom bar.
+
+To add a strategy, copy
 [`strategies/_template.py`](strategies/_template.py), assign a unique ID, and
 implement its signal function. It is discovered automatically without editing
 the frontend or backend catalog.
 
-**Scripts → Consolidated strategy library** includes 91 Python and 17 Pine
+**Scripts & library → Library** includes 91 Python and 17 Pine
 sources, searchable by family, filename, and rule function. Five signal adapters
 and four Pine event ports are runnable; other entries show their requirements.
 See [STRATEGY_LIBRARY.md](STRATEGY_LIBRARY.md) and [PINE_AUDIT.md](PINE_AUDIT.md).
 
-**Evaluation & Regimes** now provides rolling walk-forward experiments, parameter
+**Evaluations & regimes** now provides rolling walk-forward experiments, parameter
 sensitivity, cost/delay stress, and training-calibrated historical state studies.
 See [PHASES_4_5.md](PHASES_4_5.md) for the new workflow and validation evidence.
 
@@ -50,7 +57,7 @@ visible; these are historical research statuses, not live signals.
 **Combined portfolio** adds an all-market strategy picker, working and full
 research-checklist filters, combined P&L and market curves, daily calendar,
 configuration weights, and CSV exports. It includes the expanded and fresh SND
-campaigns. An optional loss-pattern pause/resume replay compares with always-on
+campaigns. An optional loss-pattern pause/resume replay, a loss-clustering check and a volatility-scaling alternative compare with always-on
 trading using only prior closed outcomes. See [the workflow, accounting and
 validation details](COLLECTIVE_DASHBOARD.md).
 
@@ -443,4 +450,4 @@ Variants are free locally — that is how noise becomes a fake edge. Log every v
 including discards. Read `deflatedSharpeRatio` (via `get_strategy_lineage`): <0.5 means the search
 explains the result, not the strategy.
 
-SND is runnable through Scripts or New Run with four variants and native workbench artifacts. See [SND setup, variants and execution scope](SND_WORKBENCH.md).
+SND is runnable through Scripts & library or New run with four variants and native workbench artifacts. See [SND setup, variants and execution scope](SND_WORKBENCH.md).

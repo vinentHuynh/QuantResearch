@@ -24,8 +24,10 @@ page.on("pageerror", (e) => errors.push(e.message));
 page.setDefaultTimeout(60000);
 try {
   await page.goto(origin);
+  // The app lands on the combined portfolio; the ledger lives under Runs & compare.
+  await page.getByRole("link", { name: "Runs & compare", exact: true }).click();
   await page
-    .getByRole("heading", { name: "Run ledger", exact: true })
+    .getByRole("region", { name: "Run ledger", exact: true })
     .waitFor();
   let navigations = 0;
   page.on("framenavigated", (frame) => {
@@ -72,14 +74,16 @@ try {
     assert(Math.abs(stress.net_pnl - (base.net_pnl - base.costs)) < 0.01);
     await page.goto(origin);
     await page
-      .getByRole("button", { name: "Evaluation & Regimes", exact: true })
+      .getByRole("link", { name: "Evaluations & regimes", exact: true })
       .click();
     await page
-      .getByRole("row")
+      .locator(".wb-ledger-item")
       .filter({ has: page.getByText(e.name, { exact: true }) })
-      .getByRole("button", { name: "Open evaluation", exact: true })
       .click();
     await page.getByRole("heading", { name: e.name, exact: true }).waitFor();
+    await page
+      .getByRole("button", { name: "Joined test path", exact: true })
+      .click();
     const chart = page.getByRole("img", {
       name: "Walk-forward test equity",
       exact: true,
@@ -90,6 +94,7 @@ try {
       path: `${folder}/${summary.strategy}-evaluation.png`,
       animations: "disabled",
     });
+    await page.getByRole("button", { name: "Regime study", exact: true }).click();
     assert.equal(
       await page
         .getByText("Historical conditional attribution", { exact: true })

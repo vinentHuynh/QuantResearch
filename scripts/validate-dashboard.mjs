@@ -31,8 +31,9 @@ async function select(label, value) {
 }
 try {
   await page.goto(origin);
-  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
-  await page.getByText('Individual evaluations', { exact: true }).click();
+  await page
+    .getByRole("link", { name: "Strategy scorecards", exact: true })
+    .click();
   await page
     .getByRole("button", { name: `Select ${orb.name}`, exact: true })
     .click();
@@ -98,7 +99,9 @@ try {
   await expect(
     page.getByRole("heading", { name: orb.evaluation_name, exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Strategy scorecards", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Inspect baseline run", exact: true })
     .click();

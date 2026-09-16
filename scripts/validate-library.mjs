@@ -14,7 +14,8 @@ const errors = [],
 page.on("pageerror", (error) => errors.push(error.message));
 try {
   await page.goto(origin, { waitUntil: "domcontentloaded", timeout: 90000 });
-  await page.getByRole("button", { name: "Scripts", exact: true }).click();
+  await page.getByRole("link", { name: "Scripts & library", exact: true }).click();
+  await page.getByRole("link", { name: "Library", exact: true }).click();
   await page
     .getByRole("heading", { name: "Consolidated strategy library" })
     .waitFor();
@@ -62,6 +63,7 @@ try {
       exact: true,
     })
     .click();
+  await page.getByRole("button", { name: /Assumptions & record/ }).click();
   await page.getByLabel("Warmup calendar days", { exact: true }).waitFor();
   assert.equal(
     await page.getByLabel("Warmup calendar days", { exact: true }).inputValue(),
@@ -71,7 +73,9 @@ try {
     "Rule collection retains functions and links its RSI adapter to a form with sufficient default warmup",
   );
   for (const strategy of signalStrategies) {
-    await page.getByRole("button", { name: "Scripts", exact: true }).click();
+    await page
+      .getByRole("link", { name: "Scripts & library", exact: true })
+      .click();
     const card = page
       .getByRole("heading", { name: strategy.name, exact: true })
       .locator("..")
@@ -98,11 +102,13 @@ try {
     await page
       .getByLabel("End date (UTC, inclusive)", { exact: true })
       .fill(strategy.id === "rsi2-reversion" ? "2025-12-31" : "2026-08-31");
+    await page.getByRole("button", { name: /Assumptions & record/ }).click();
     await page
       .getByLabel("Question / hypothesis", { exact: true })
       .fill(
         `Strategy consolidation validation: ${strategy.id}; ported signals with workbench accounting`,
       );
+    await page.getByRole("button", { name: /Preview & launch/ }).click();
     await page.getByRole("button", { name: "Validate & preview" }).click();
     await page.getByText("1 job ready", { exact: true }).waitFor();
     const launched = page.waitForResponse(
@@ -118,7 +124,7 @@ try {
     assert.equal(response.status(), 201, JSON.stringify(result));
     runs.push({ id: result[0].id, strategy: strategy.id });
     await page
-      .getByRole("heading", { name: "Run ledger", exact: true })
+      .getByRole("region", { name: "Run ledger", exact: true })
       .waitFor();
   }
   for (const run of runs) {
@@ -140,7 +146,8 @@ try {
       `${run.strategy}: real-data run succeeded with ${run.trades} trades, preserved source, and migration scope in results`,
     );
   }
-  await page.getByRole("button", { name: "Scripts", exact: true }).click();
+  await page.getByRole("link", { name: "Scripts & library", exact: true }).click();
+  await page.getByRole("link", { name: "Library", exact: true }).click();
   await page.getByLabel("Search strategy library").fill("");
   await page
     .getByRole("heading", { name: "Consolidated strategy library" })
@@ -149,9 +156,7 @@ try {
     path: `${output}/strategy-library.png`,
     fullPage: false,
   });
-  await page
-    .getByRole("button", { name: "Runs & Compare", exact: true })
-    .click();
+  await page.getByRole("link", { name: "Runs & compare", exact: true }).click();
   await page.screenshot({
     path: `${output}/consolidated-runs.png`,
     fullPage: true,

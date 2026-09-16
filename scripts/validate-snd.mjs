@@ -21,18 +21,21 @@ const errors = [], runs = [];
 page.on('pageerror', e => errors.push(e.message));
 try {
   await page.goto(base);
-  await page.getByRole('button', { name: 'Scripts', exact: true }).click();
+  await page.getByRole('link', { name: 'Scripts & library', exact: true }).click();
+  await page.getByRole('link', { name: 'Library', exact: true }).click();
   await page.getByLabel('Search strategy library').fill('SND');
   await page.getByRole('button', { name: 'Inspect scripts/mnq/SND_baseline_backtest.py', exact: true }).click();
   await page.getByRole('button', { name: 'Configure SND - Supply and demand', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Timeframe', exact: true })).toHaveValue('1m');
-  await expect(page.getByLabel('Warmup calendar days', { exact: true })).toHaveValue('60');
   await page.getByRole('textbox', { name: 'Dataset version', exact: true }).click();
   await page.getByRole('option', { name: /^MNQ / }).first().click();
   await page.getByLabel('Start date (UTC)', { exact: true }).fill('2026-01-01');
   await page.getByLabel('End date (UTC, inclusive)', { exact: true }).fill('2026-01-31');
+  await page.getByRole('button', { name: /Assumptions & record/ }).click();
+  await expect(page.getByLabel('Warmup calendar days', { exact: true })).toHaveValue('60');
   await page.getByLabel('Question / hypothesis', { exact: true }).fill('SND native adapter integration check: January 2026, fixed one contract; not an eligibility evaluation.');
   await page.screenshot({ path: folder + '/new-run.png', fullPage: true });
+  await page.getByRole('button', { name: /Preview & launch/ }).click();
   await page.getByRole('button', { name: 'Validate & preview' }).click();
   await page.getByText('1 job ready', { exact: true }).waitFor();
   const responsePromise = page.waitForResponse(r => r.url().endsWith('/api/workbench/runs') && r.request().method() === 'POST');
@@ -70,7 +73,8 @@ try {
   }
   const after = await json('/state');
   for (const old of before.runs) assert.equal(after.runs.find(r => r.id === old.id)?.status, old.status);
-  await page.getByRole('button', { name: 'Scripts', exact: true }).click();
+  await page.getByRole('link', { name: 'Scripts & library', exact: true }).click();
+  await page.getByRole('link', { name: 'Library', exact: true }).click();
   await page.getByLabel('Search strategy library').fill('SND');
   await page.screenshot({ path: folder + '/scripts.png', fullPage: true });
   assert.deepEqual(errors, []);

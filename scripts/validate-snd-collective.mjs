@@ -19,34 +19,39 @@ const page = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
 page.setDefaultTimeout(30000);
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
+const eligibility = async (prefix) => page.locator('.collective-picker label').filter({ hasText: new RegExp('^' + prefix) }).click();
 const select = async (label, option) => {
   await page.getByRole('textbox', { name: label, exact: true }).click();
   await page.getByRole('option', { name: option, exact: true }).click();
 };
 try {
   await page.goto(base);
-  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
-  await select('Eligibility filter', 'All tested configurations');
+  await page.getByRole('link', { name: 'Combined portfolio', exact: true }).click();
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await eligibility('All tested configurations');
   await page.getByLabel('Find a strategy', { exact: true }).fill('SND');
   await select('Chart timeframe', '1m');
   await expect(page.getByTestId('strategy-picker').locator('tbody tr')).toHaveCount(20);
   await page.getByRole('button', { name: 'Apply visible strategies (20)', exact: true }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   await page.getByRole('button', { name: 'Use common tested window', exact: true }).click();
-  await expect(page.getByTestId('selected-count')).toHaveText('20 selected');
+  await expect(page.getByTestId('selected-count')).toHaveText('20 books');
   await expect(page.getByTestId('portfolio-metrics').getByText(expected.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }), { exact: true })).toBeVisible();
   await expect(page.getByTestId('market-contributions').locator('tbody tr')).toHaveCount(5);
   await page.getByTestId('portfolio-metrics').scrollIntoViewIfNeeded();
   await page.screenshot({ path: folder + '/collective-all-markets.png' });
-  await page.getByRole('heading', { name: 'Daily P&L calendar', exact: true }).scrollIntoViewIfNeeded();
+  await page.getByRole('link', { name: 'Calendar', exact: true }).click();
   await page.getByRole('button', { name: /^2026-01-05:/ }).click();
   await page.screenshot({ path: folder + '/collective-calendar.png' });
+  await page.getByRole('link', { name: 'Overview', exact: true }).click();
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
   await page.getByRole('button', { name: 'Clear combination', exact: true }).click();
   for (const variant of ['phase6', 'original multi tf']) {
     await page.getByRole('checkbox', { name: `Include SND - Supply and demand / ${variant} MNQ 1m Current workbench`, exact: true }).check();
   }
   await expect(page.getByTestId('portfolio-metrics').getByText('$1,228.50', { exact: true })).toBeVisible();
-  await expect(page.getByTestId('selected-count')).toHaveText('2 selected');
-  await select('Eligibility filter', /^Working/);
+  await expect(page.getByTestId('selected-count')).toHaveText('2 books');
+  await eligibility('Working');
   await expect(page.getByTestId('strategy-picker').locator('tbody tr')).toHaveCount(0);
   assert.deepEqual(errors, []);
   writeFileSync(folder + '/collective-validation.json', JSON.stringify({ status: 'PASS', imported: items.length, total_catalog: catalog.items.length,

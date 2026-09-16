@@ -18,11 +18,13 @@ the platform's virtual environment automatically.
 
 ## Run an experiment
 
-1. **Datasets → Import data ZIPs** scans `data/` recursively. The supplied NQ,
+1. **Datasets → Import data ZIPs** (sidebar, Sources) scans `data/` recursively. The supplied NQ,
    ES, YM, and CL Databento archives have already been registered locally.
    Imports report progress and errors. Reimporting the same archive reuses its
    version; replacing an archive creates a new version.
-2. **Scripts → Configure run** selects a discovered strategy. Nine adapters are
+2. **Scripts & library → Configure run** (or **New run** on any page)
+   selects a discovered strategy. New run is a four-step flow: script &
+   dataset, parameters, assumptions & record, preview & launch. Nine adapters are
    included: five signal strategies and four Pine event strategies. Their cards
    and run results state the migration scope; see [PINE_AUDIT.md](PINE_AUDIT.md).
 3. Select a dataset version, timeframe, session, UTC date interval, parameters,
@@ -45,7 +47,7 @@ never inspected that data; evaluation outcomes remain a research judgment.
 
 ### Existing Python strategies
 
-**Scripts → Consolidated strategy library** indexes 91 original Python sources
+**Scripts & library → Library** indexes 91 original Python sources
 and 17 Pine sources, grouped by family and role. Search by filename,
 description, or function; inspect original Python, command-line declarations,
 requirements, and links to signal adapters. Discovery parses source without
@@ -165,7 +167,7 @@ datasets. These replays are not prospective paper trading.
 
 ## Evaluation and regime research
 
-**Evaluation & Regimes** adds rolling walk-forward selection, complete candidate
+**Evaluations & regimes** adds rolling walk-forward selection, complete candidate
 sensitivity tables, subsequent baseline/cost/delay tests, and a joined test equity
 path. Selection uses only training results and is recorded before test jobs.
 Criteria are frozen before launch. Successful execution and research outcome

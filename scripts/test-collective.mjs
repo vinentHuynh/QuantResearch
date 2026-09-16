@@ -8,6 +8,7 @@ import {
   defaultPolicy,
   replayGate,
   calendarDates,
+  tradeDependence,
 } from "../src/collectiveModel.ts";
 import { createCollective } from "../server/collective.ts";
 
@@ -268,8 +269,80 @@ try {
   assert(basename(folder).startsWith("collective-test-"));
   rmSync(folder, { recursive: true, force: true });
 }
+// Loss-clustering diagnostic: streaks, alternation, window fallback, small samples.
+const iso = (y, m, d, h = 0) => new Date(Date.UTC(y, m - 1, d, h)).toISOString();
+const seq = (pnls) =>
+  pnls.map((pnl, i) => ({ entry: iso(2025, 1, 1 + i, 9), exit: iso(2025, 1, 1 + i, 15), pnl }));
+const streaky = seq(Array.from({ length: 40 }, (_, i) => (i % 10 < 5 ? 1 : -1)));
+const alternating = seq(Array.from({ length: 40 }, (_, i) => (i % 2 ? -1 : 1)));
+const clustered = tradeDependence(streaky, "2026-01-01", "2026-12-31");
+assert.equal(clustered.verdict, "cluster");
+assert.equal(clustered.trades, 40);
+assert.equal(clustered.prior, true);
+assert(clustered.runsZ < -1.96 && clustered.autocorrelation > 0.5);
+const alternate = tradeDependence(alternating, "2026-01-01", "2026-12-31");
+assert.equal(alternate.verdict, "alternate");
+assert(alternate.runsZ > 1.96 && alternate.autocorrelation < -0.5);
+assert.equal(alternate.afterLoss, 1);
+assert.equal(alternate.afterWin, -1);
+const inWindow = tradeDependence(alternating, "2025-01-01", "2025-12-31");
+assert.equal(inWindow.prior, false);
+assert.equal(inWindow.trades, 40);
+assert.equal(tradeDependence(streaky.slice(0, 10), "2026-01-01", "2026-12-31").verdict, "insufficient");
+const random = tradeDependence(seq([3, -1, 2, -2, -1, 4, 1, -3, 2, 1, -2, 3, -1, -1, 2, 1, -2, 1, 3, -1, -2, 2, 1, -1, -3, 2, 1, -1, 2, -2, 1, 1]), "2026-01-01", "2026-12-31");
+assert.equal(random.verdict, "none");
+
+// Volatility scaling: sigma from marks strictly before entry, target from entries before the window, capped, causal.
+const marks = [];
+for (let i = 0; i < 40; i++) marks.push({ date: iso(2025, 11, 1 + i).slice(0, 10), pnl: i % 2 ? -10 : 10 });
+const volTrades = [];
+for (let i = 0; i < 12; i++) volTrades.push({ entry: iso(2025, 12, 11 + i, 9), exit: iso(2025, 12, 11 + i, 15), pnl: 5 });
+for (let i = 0; i < 14; i++) marks.push({ date: iso(2025, 12, 23 + i).slice(0, 10), pnl: i % 2 ? -40 : 40 });
+volTrades.push({ entry: iso(2026, 1, 6, 9), exit: iso(2026, 1, 6, 15), pnl: 100 });
+volTrades.push({ entry: iso(2026, 1, 7, 9), exit: iso(2026, 1, 7, 15), pnl: -50 });
+const volPolicy = { ...defaultPolicy, enabled: true, mode: "volatility" };
+const vol = replayGate(volTrades, volPolicy, "2026-01-10", marks, "2026-01-01");
+const stdev = (xs) => {
+  const m = xs.reduce((a, b) => a + b, 0) / xs.length;
+  return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1));
+};
+const before = (date) => marks.filter((p) => p.date < date).map((p) => p.pnl).slice(-25);
+const target = stdev(before("2025-12-11"));
+for (let i = 0; i < 12; i++) assert(Math.abs(vol.weights.get(i) - 1) < 1e-9);
+assert(Math.abs(vol.weights.get(12) - target / stdev(before("2026-01-06"))) < 1e-9);
+assert(vol.weights.get(12) < 0.5 && vol.weights.get(13) < 0.5);
+assert.equal(vol.accepted.size, 14);
+assert.equal(vol.state, "Reduced");
+assert.deepEqual(vol.events.map((e) => [e.state, e.timestamp]), [["Reduced", volTrades[12].entry]]);
+const later = replayGate(
+  [...volTrades, { entry: iso(2026, 1, 9, 9), exit: iso(2026, 1, 9, 15), pnl: -9999 }],
+  volPolicy,
+  "2026-01-10",
+  [...marks, { date: "2026-01-08", pnl: -5000 }],
+  "2026-01-01",
+);
+for (let i = 0; i < 14; i++) assert.equal(later.weights.get(i), vol.weights.get(i));
+assert.equal(replayGate(volTrades, { ...volPolicy, volCap: 0.25 }, "2026-01-10", marks, "2026-01-01").weights.get(0), 0.25);
+const unsized = replayGate(volTrades, volPolicy, "2026-01-10", marks, "2025-12-01");
+assert(volTrades.every((_, i) => unsized.weights.get(i) === 1));
+assert.match(unsized.events[0].reason, /Fewer than 10/);
+const volSeries = { id: "a", daily: marks, trades: volTrades, coverage: item("a").coverage };
+const scaled = calculatePortfolio([item("a")], [volSeries], { a: 1 }, "2026-01-01", "2026-01-10", "closed", volPolicy);
+assert(Math.abs(scaled.net - (100 * vol.weights.get(12) - 50 * vol.weights.get(13))) < 1e-9);
+assert.equal(scaled.baseline, 50);
+assert.equal(scaled.components[0].trades, 2);
+assert.equal(scaled.components[0].skipped, 0);
+assert.equal(scaled.components[0].state, "Reduced");
+assert(Math.abs(scaled.exposure - (vol.weights.get(12) + vol.weights.get(13)) / 2) < 1e-9);
+assert.equal(scaled.events.length, 1);
+assert.equal(scaled.dependence[0].verdict, "insufficient");
+assert.throws(
+  () => calculatePortfolio([item("a")], [volSeries], { a: 1 }, "2026-01-01", "2026-01-10", "marked", volPolicy),
+  /closed-trade/,
+);
+
 console.log(
-  "Collective checks passed: aggregation, capital/copies, coverage gaps, leap dates, prior-only gates, shadow recovery, open trades, prefix invariance, and verified history access.",
+  "Collective checks passed: aggregation, capital/copies, coverage gaps, leap dates, prior-only gates, shadow recovery, open trades, prefix invariance, loss-clustering diagnostic, causal volatility scaling, and verified history access.",
 );
 
 if (process.argv.includes("--real")) {
@@ -325,6 +398,32 @@ if (process.argv.includes("--real")) {
     gated.points.filter((p) => p.date <= "2025-12-31"),
     partial.points,
   );
+  const volatility = { ...defaultPolicy, enabled: true, mode: "volatility" };
+  const sized = calculatePortfolio(
+    working,
+    histories,
+    copies,
+    "2024-01-01",
+    "2026-08-31",
+    "closed",
+    volatility,
+  );
+  const sizedPartial = calculatePortfolio(
+    working,
+    histories,
+    copies,
+    "2024-01-01",
+    "2025-12-31",
+    "closed",
+    volatility,
+  );
+  assert.deepEqual(
+    sized.points.filter((p) => p.date <= "2025-12-31"),
+    sizedPartial.points,
+  );
+  assert.equal(sized.trades, closed.trades, "Volatility scaling never skips an entry");
+  assert(sized.exposure > 0 && sized.exposure < defaultPolicy.volCap);
+  assert.equal(gated.dependence.length, working.length);
   console.log(
     JSON.stringify(
       {
@@ -338,6 +437,11 @@ if (process.argv.includes("--real")) {
         pause_net: gated.net,
         pause_delta: gated.net - result.net,
         pause_events: gated.events.length,
+        loss_clustering_books: gated.dependence.filter((d) => d.verdict === "cluster").length,
+        volatility_net: sized.net,
+        volatility_drawdown_dollars: sized.maxDrawdownDollars,
+        volatility_exposure: sized.exposure,
+        volatility_score: sized.recoveryFactor,
       },
       null,
       2,

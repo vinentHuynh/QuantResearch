@@ -74,7 +74,7 @@ export function StrategyLibrary({
     }
   }
   return (
-    <Paper p="lg" mt="xl" withBorder>
+    <Paper p="lg" withBorder>
       <Title order={3}>Consolidated strategy library</Title>
       <Text c="dimmed" size="sm" my="sm">
         {library.total} Python and Pine sources, grouped by family. Rule
@@ -82,7 +82,7 @@ export function StrategyLibrary({
         files stay at their existing paths.
       </Text>
       <Alert color="blue" mb="md">
-        The runnable adapters above use workbench accounting. An adapter link
+        Runnable scripts use workbench accounting. An adapter link
         covers only the stated signal rules; it does not certify the original
         script's execution, sizing, or research results.
       </Alert>

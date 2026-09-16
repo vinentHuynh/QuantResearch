@@ -13,16 +13,21 @@ const checks = [];
 try {
   await page.goto(base);
   await page
-    .getByRole("heading", { name: "Every experiment, in context." })
+    .getByRole("heading", { name: "Combined portfolio", level: 1 })
     .waitFor();
-  checks.push("Runs & Compare is the landing page");
-  await page.getByRole("button", { name: "Datasets", exact: true }).click();
+  await page.getByRole("complementary", { name: "Combination" }).waitFor();
+  checks.push("Combined portfolio is the landing page");
+  await page.getByRole("link", { name: "Runs & compare", exact: true }).click();
+  await page
+    .getByRole("heading", { name: "Runs & compare", level: 1 })
+    .waitFor();
+  await page.getByRole("link", { name: "Datasets", exact: true }).click();
   await page.getByText("Local archive ingestion", { exact: true }).waitFor();
   for (const symbol of ["NQ", "ES", "YM", "CL"])
     await page.getByText(symbol, { exact: true }).waitFor();
   await page.screenshot({ path: `${output}/datasets.png`, fullPage: true });
   checks.push("All four ZIP datasets are registered and visible");
-  await page.getByRole("button", { name: "Scripts", exact: true }).click();
+  await page.getByRole("link", { name: "Scripts & library", exact: true }).click();
   await page
     .getByRole("heading", { name: "Moving-average trend", exact: true })
     .locator("..")
@@ -37,11 +42,13 @@ try {
   await page
     .getByLabel("End date (UTC, inclusive)", { exact: true })
     .fill("2026-08-31");
+  await page.getByRole("button", { name: /Assumptions & record/ }).click();
   await page
     .getByLabel("Question / hypothesis", { exact: true })
     .fill(
       "Application validation: neighboring moving-average lookbacks across NQ, ES, YM and CL",
     );
+  await page.getByRole("button", { name: /Preview & launch/ }).click();
   for (const symbol of ["ES", "YM", "CL"]) {
     await page
       .getByRole("textbox", {
@@ -77,7 +84,9 @@ try {
     "Generated form previews and launches eight runs across four real markets and two lookbacks",
   );
   await page.reload();
-  await page.getByRole("heading", { name: "Run ledger" }).waitFor();
+  // The app lands on the combined portfolio; the ledger lives under Runs & compare.
+  await page.getByRole("link", { name: "Runs & compare", exact: true }).click();
+  await page.getByRole("region", { name: "Run ledger" }).waitFor();
   for (const run of runs) {
     for (let i = 0; i < 90; i++) {
       const result = await page.request.get(
@@ -93,6 +102,7 @@ try {
   }
   checks.push("Queued jobs survive page refresh and succeed on real ZIP data");
   await page.reload();
+  await page.getByRole("link", { name: "Runs & compare", exact: true }).click();
   for (const run of runs.slice(0, 2))
     await page.getByRole("checkbox", { name: `Compare ${run.id}` }).check();
   await page
@@ -129,7 +139,7 @@ try {
     "Equity, logs, research notes, artifacts and watchlist freeze work",
   );
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Watchlist", exact: true }).click();
+  await page.getByRole("link", { name: "Watchlist", exact: true }).click();
   await page
     .getByText(
       "Validate frozen replay workflow; no trading eligibility claim.",
@@ -146,9 +156,7 @@ try {
     "Frozen configuration can be queued through the latest data endpoint",
   );
   await page.setViewportSize({ width: 390, height: 844 });
-  await page
-    .getByRole("button", { name: "Runs & Compare", exact: true })
-    .click();
+  await page.getByRole("link", { name: "Runs", exact: true }).click();
   await page.screenshot({ path: `${output}/mobile.png`, fullPage: true });
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth > window.innerWidth,

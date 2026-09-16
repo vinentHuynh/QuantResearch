@@ -8,7 +8,6 @@ import {
   Loader,
   Paper,
   ScrollArea,
-  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
@@ -28,7 +27,6 @@ import type {
   DashboardScenario,
   DashboardStatus,
 } from "./dashboardTypes";
-import { CollectiveDashboard } from './CollectiveDashboard';
 
 const cash = (v: number | null | undefined) =>
   v == null
@@ -50,6 +48,20 @@ const tone = (s: DashboardStatus) =>
       : s === "Needs review" || s === "Incomplete"
         ? "red"
         : "gray";
+function remembered(key: string) {
+  try {
+    return sessionStorage.getItem(`quant-scorecards-${key}`) || "";
+  } catch {
+    return "";
+  }
+}
+function remember(key: string, value: string) {
+  try {
+    sessionStorage.setItem(`quant-scorecards-${key}`, value);
+  } catch {
+    /* Storage may be unavailable; the scorecards still work. */
+  }
+}
 const baseline = (r: DashboardRow) =>
   r.scenarios.find((s) => s.name === "Baseline");
 
@@ -301,11 +313,12 @@ function Stress({ scenarios }: { scenarios: DashboardScenario[] }) {
     </ScrollArea>
   );
 }
-export function StrategyDashboard({
-  refreshKey, openEvaluation, inspectRun,
-}: { refreshKey: number; openEvaluation: (id: string) => void; inspectRun: (id: string) => void }) {
-  const [view, setView] = useState('collective');
-  return <Stack gap="lg"><SegmentedControl aria-label="Dashboard view" value={view} onChange={setView} data={[{ value: 'collective', label: 'Combined portfolio' }, { value: 'individual', label: 'Individual evaluations' }]}/>{view === 'collective' ? <CollectiveDashboard refreshKey={refreshKey}/> : <IndividualDashboard refreshKey={refreshKey} openEvaluation={openEvaluation} inspectRun={inspectRun}/>}</Stack>;
+export function StrategyScorecards(props: {
+  refreshKey: number;
+  openEvaluation: (id: string) => void;
+  inspectRun: (id: string) => void;
+}) {
+  return <IndividualDashboard {...props} />;
 }
 function IndividualDashboard({
   refreshKey,
@@ -316,11 +329,17 @@ function IndividualDashboard({
   openEvaluation: (id: string) => void;
   inspectRun: (id: string) => void;
 }) {
-  const [market, setMarket] = useState(""),
+  // Remember the market and selected strategy for this browser tab, so
+  // returning from an evaluation or run lands on the same scorecard.
+  const [market, setMarket] = useState(() => remembered("market")),
     [data, setData] = useState<DashboardData | null>(null),
     [error, setError] = useState("");
-  const [selection, setSelection] = useState(""),
+  const [selection, setSelection] = useState(() => remembered("selection")),
     [filter, setFilter] = useState("All strategies");
+  useEffect(() => {
+    remember("market", market);
+    remember("selection", selection);
+  }, [market, selection]);
   useEffect(() => {
     let alive = true;
     let controller: AbortController | undefined;

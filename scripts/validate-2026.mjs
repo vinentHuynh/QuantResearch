@@ -53,17 +53,19 @@ try{
     assert.deepEqual(row.parameters[0],base.input.parameters);
     assert.equal(row.trades.net_pnl,test.metrics.net_pnl);
     await page.goto(origin);
-    await page.getByRole('button',{name:'Evaluation & Regimes',exact:true}).click();
-    await page.getByRole('row').filter({has:page.getByText(e.name,{exact:true})}).getByRole('button',{name:'Open evaluation',exact:true}).click();
+    await page.getByRole('link',{name:'Evaluations & regimes',exact:true}).click();
+    await page.locator('.wb-ledger-item').filter({has:page.getByText(e.name,{exact:true})}).click();
     await expect(page.getByRole('heading',{name:e.name,exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Joined test path',exact:true}).click();
     const chart=page.getByRole('img',{name:'Walk-forward test equity',exact:true});
     await expect(chart).toBeVisible(); await chart.scrollIntoViewIfNeeded();
     await page.screenshot({path:`${folder}/${strategy}-evaluation.png`,animations:'disabled'});
+    await page.getByRole('button',{name:'Regime study',exact:true}).click();
     assert.equal(await page.getByText('Historical conditional attribution',{exact:true}).count(),2);
     const link=page.locator(`a[href="/api/workbench/research-artifact?kind=regimes&id=${detail.studies.volatility.id}&name=observations.csv"]`);
     await expect(link).toHaveCount(1);
     const response=await page.request.get(await link.getAttribute('href')); assert(response.ok());
-    await page.getByRole('button',{name:'Dashboard',exact:true}).click();
+    await page.getByRole('link',{name:'Strategy scorecards',exact:true}).click();
     await page.getByRole('button',{name:`Select ${row.name}`,exact:true}).click();
     await expect(page.getByRole('heading',{name:row.name,exact:true})).toBeVisible();
     await expect(page.getByRole('img',{name:`${row.name} evaluation equity`,exact:true})).toBeVisible();
@@ -77,7 +79,7 @@ try{
   }
   await page.getByRole('button',{name:'Open evaluation',exact:true}).click();
   await expect(page.getByRole('heading',{name:'potential-2026-v1 | pine-tsmom-orb',exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Dashboard',exact:true}).click();
+  await page.getByRole('link',{name:'Strategy scorecards',exact:true}).click();
   await page.getByRole('button',{name:'Inspect baseline run',exact:true}).click();
   await expect(page.getByRole('dialog',{name:'Run evidence'})).toBeVisible();
   await page.keyboard.press('Escape');

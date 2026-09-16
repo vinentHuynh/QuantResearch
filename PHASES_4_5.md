@@ -50,8 +50,9 @@ establish a trading edge.
 
 ## Running the new workflow
 
-1. Open **Evaluation & Regimes** and select a successful run to reuse its
-   settings. A new current source snapshot is preserved at launch, including
+1. Open **Evaluations & regimes → Plan walk-forward evaluation** and select a
+   successful run to reuse its settings. A new current source snapshot is
+   preserved at launch, including
    the TypeScript selection code and package lock.
 2. Set the research interval, rolling training days, subsequent test days,
    fold count, and candidate grid. Training ends strictly before each test;
