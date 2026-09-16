@@ -16,6 +16,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { createResearch } from "./research.ts";
 import { createRunDeletion } from "./runDeletion.ts";
 import { createDashboard } from "./dashboard.ts";
+import { createCollective } from "./collective.ts";
 
 // Node 24 executes TypeScript directly. No shell commands contain UI input.
 type RecordValue = Record<string, unknown>;
@@ -779,6 +780,7 @@ const dashboard = createDashboard({
   strategies: () => catalog.strategies,
   runDir,
 });
+const collective = createCollective(root, state, python);
 const server = createServer(async (req, res) => {
   // Same-origin browser writes only. Bind loopback; reject cross-site form posts.
   const origin = req.headers.origin;
@@ -820,6 +822,12 @@ const server = createServer(async (req, res) => {
       return;
     }
     const action = parts[2];
+    if (action === 'collective') {
+      if (req.method === 'GET' && parts[3] === 'status') return json(res, collective.status());
+      if (req.method === 'GET') return json(res, collective.catalog());
+      if (req.method === 'POST' && parts[3] === 'series') return json(res, collective.series((await body(req)).ids));
+      if (req.method === 'POST' && parts[3] === 'refresh') return json(res, collective.rebuild());
+    }
     if (req.method === "GET" && action === "dashboard")
       return json(res, dashboard(url.searchParams.get("symbol") || undefined));
     if (

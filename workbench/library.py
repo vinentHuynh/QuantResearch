@@ -132,7 +132,8 @@ def inventory(root, strategies):
                 'role': category, 'file_hash': hashlib.sha256(raw).hexdigest(),
                 'functions': functions, 'arguments': cli, 'adapters': adapters,
                 'status': 'Workbench adapter available' if adapters else 'Adapter required' if category in ('Strategy', 'Rule collection', 'Research study') else 'Supporting source',
-                'requirements': requirements(path, category),
+                'requirements': ('SND adapter available. Configure one-minute execution and choose one of the four supported research variants; other rules in this source collection remain outside that adapter.'
+                                 if path.stem.startswith('SND_') and adapters else requirements(path, category)),
             })
         except (OSError, UnicodeError, SyntaxError) as exc:
             errors.append({'file': relative, 'error': str(exc)})

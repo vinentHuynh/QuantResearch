@@ -1,0 +1,116 @@
+.collective-dashboard {
+  min-width: 0;
+}
+.collective-dashboard .mantine-Paper-root {
+  min-width: 0;
+}
+.collective-dashboard details {
+  max-width: 340px;
+  font-size: 12px;
+}
+.collective-dashboard summary {
+  cursor: pointer;
+}
+.collective-chart svg {
+  width: 100%;
+  height: auto;
+  min-height: 200px;
+  display: block;
+}
+.collective-hover {
+  min-height: 18px;
+}
+.collective-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+.calendar-heading {
+  text-align: center;
+  color: #6a7a71;
+  font-size: 12px;
+  padding: 5px;
+}
+.calendar-day {
+  border: 1px solid #dae5dd;
+  border-radius: 7px;
+  min-width: 0;
+  min-height: 98px;
+  text-align: left;
+  padding: 10px;
+  cursor: pointer;
+  background: #f6f8f6;
+  color: #234d3c;
+}
+.calendar-day span,
+.calendar-day strong,
+.calendar-day small {
+  display: block;
+}
+.calendar-day .calendar-amount-short {
+  display: none;
+}
+.calendar-day .calendar-amount-full {
+  font-size: inherit;
+}
+.calendar-day span {
+  font-size: 12px;
+}
+.calendar-day strong {
+  margin: 8px 0 5px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.calendar-day small {
+  font-size: 10px;
+  opacity: 0.8;
+}
+.calendar-day.gain {
+  background: #e4f3eb;
+  color: #126446;
+}
+.calendar-day.loss {
+  background: #fbe9e4;
+  color: #a33b31;
+}
+.calendar-day.uncovered {
+  background: #f4f4f3;
+  color: #a2aaa4;
+  cursor: default;
+}
+.calendar-day.selected {
+  outline: 2px solid #2a7560;
+  outline-offset: 1px;
+}
+.collective-kpi {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 650px) {
+  .calendar-day .calendar-amount-full {
+    display: none;
+  }
+  .calendar-day .calendar-amount-short {
+    display: block;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+  .collective-calendar {
+    gap: 3px;
+  }
+  .calendar-day {
+    padding: 5px;
+    min-height: 79px;
+  }
+  .calendar-day strong {
+    font-size: 10px;
+  }
+  .calendar-day small {
+    font-size: 8px;
+  }
+  .collective-dashboard .collective-kpi {
+    font-size: 20px;
+  }
+  .collective-chart svg {
+    min-height: 150px;
+  }
+}

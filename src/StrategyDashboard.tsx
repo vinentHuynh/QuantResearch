@@ -8,6 +8,7 @@ import {
   Loader,
   Paper,
   ScrollArea,
+  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
@@ -27,6 +28,7 @@ import type {
   DashboardScenario,
   DashboardStatus,
 } from "./dashboardTypes";
+import { CollectiveDashboard } from './CollectiveDashboard';
 
 const cash = (v: number | null | undefined) =>
   v == null
@@ -300,6 +302,12 @@ function Stress({ scenarios }: { scenarios: DashboardScenario[] }) {
   );
 }
 export function StrategyDashboard({
+  refreshKey, openEvaluation, inspectRun,
+}: { refreshKey: number; openEvaluation: (id: string) => void; inspectRun: (id: string) => void }) {
+  const [view, setView] = useState('collective');
+  return <Stack gap="lg"><SegmentedControl aria-label="Dashboard view" value={view} onChange={setView} data={[{ value: 'collective', label: 'Combined portfolio' }, { value: 'individual', label: 'Individual evaluations' }]}/>{view === 'collective' ? <CollectiveDashboard refreshKey={refreshKey}/> : <IndividualDashboard refreshKey={refreshKey} openEvaluation={openEvaluation} inspectRun={inspectRun}/>}</Stack>;
+}
+function IndividualDashboard({
   refreshKey,
   openEvaluation,
   inspectRun,

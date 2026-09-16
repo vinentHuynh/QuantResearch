@@ -47,6 +47,13 @@ expectancy, equity/cost charts, and regime contributions. Statistics use the
 complete verified trade ledgers. Test dates and newer available data remain
 visible; these are historical research statuses, not live signals.
 
+**Combined portfolio** adds an all-market strategy picker, working and full
+research-checklist filters, combined P&L and market curves, daily calendar,
+configuration weights, and CSV exports. It includes the expanded and fresh SND
+campaigns. An optional loss-pattern pause/resume replay compares with always-on
+trading using only prior closed outcomes. See [the workflow, accounting and
+validation details](COLLECTIVE_DASHBOARD.md).
+
 ## Previous strategy dashboard (legacy reference)
 
 The following describes the previous Python API and portfolio UI, retained as
@@ -435,3 +442,5 @@ MCP tools: `create_strategy` (register with hypothesis + cutoff, **before** the 
 Variants are free locally — that is how noise becomes a fake edge. Log every variant tested,
 including discards. Read `deflatedSharpeRatio` (via `get_strategy_lineage`): <0.5 means the search
 explains the result, not the strategy.
+
+SND is runnable through Scripts or New Run with four variants and native workbench artifacts. See [SND setup, variants and execution scope](SND_WORKBENCH.md).

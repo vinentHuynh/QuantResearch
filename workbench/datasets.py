@@ -13,7 +13,7 @@ import pyarrow.parquet as pq
 
 from .contract import checksum
 
-ECONOMICS = {'NQ': (.25, 20), 'ES': (.25, 50), 'YM': (1, 5), 'CL': (.01, 1000)}
+ECONOMICS = {'MNQ': (.25, 2), 'NQ': (.25, 20), 'ES': (.25, 50), 'YM': (1, 5), 'CL': (.01, 1000)}
 IMPORT_VERSION = '1'
 
 
@@ -105,6 +105,12 @@ def ingest(root, destination):
         except Exception as exc:
             errors.append({'archive': str(archive), 'error': str(exc)})
             print(f'Import error: {archive.name}: {exc}', flush=True)
+    # Preserve explicitly registered local cache versions when rescanning ZIPs.
+    known = {record['id'] for record in records}
+    for manifest in sorted(destination.glob('*-mnq-cache-v1/dataset.json')):
+        record = json.loads(manifest.read_text(encoding='utf-8'))
+        if record['id'] not in known:
+            records.append(record)
     result = {'datasets': records, 'errors': errors}
     (destination / 'catalog.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
     return result

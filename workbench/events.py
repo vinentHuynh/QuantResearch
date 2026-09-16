@@ -103,7 +103,8 @@ def simulate_events(bars, model, request, execution_bars=None):
                     fill(0, value, when, 'limit' if is_limit else 'stop', limit=is_limit)
                     break
         mark(float(bar.close))
-        decision = model.on_close(i, bar, {'position': held, 'equity': balance, 'tradable': True})
+        decision = model.on_close(i, bar, {'position': held, 'position_at_open': intrabar_contracts,
+                                         'equity': balance, 'tradable': True})
         if decision is not None:
             timing = decision.get('timing', 'close')
             if timing == 'close':

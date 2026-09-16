@@ -27,7 +27,7 @@ def inventory(root, strategies):
         for filename in existing:
             if not (root / filename).is_file():
                 raise ValueError(f'Missing Python counterpart: {filename}')
-        requirement = ('Existing supply/demand engine, Phase 6 release, Phase 7 RVOL filtering, and Strategy Tester comparison tooling. Reuse these implementations; full Phase 6/7 workbench execution remains separate. No new duplicate engine created.' if relative == 'SND_phase6_strategy.pine' else
+        requirement = ('SND workbench adapter available: original, Phase 6 and Phase 7 RVOL variants on 1m charts. Uses next-open entries and fixed contracts; Pine percent-risk sizing and TradingView parity are not certified.' if relative == 'SND_phase6_strategy.pine' and adapters else
                        'Python port available. See the adapter scope for daily feed, fill, and sizing differences; TradingView trade-export parity is not certified.' if adapters else
                        'Indicator with related Python research logic. Its drawings/alerts are not an independently specified entry-and-exit strategy.' if existing else
                        'Display/analysis indicator. No complete entry, exit, and sizing rules to port as a backtest; no trading strategy invented.')

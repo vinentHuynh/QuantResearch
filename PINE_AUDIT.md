@@ -3,9 +3,9 @@
 ## Result
 
 Reviewed all **17 Pine files: 5 strategies and 12 indicators**. Four Pine-specific
-execution variants now have Python scripts and workbench registrations. The fifth
-strategy already has Python supply/demand, release, RVOL, and comparison tooling;
-that engine was retained. None of these new ports has certified TradingView
+execution variants have Python scripts and workbench registrations. SND now also
+has a native [workbench adapter](SND_WORKBENCH.md) reusing its original zone rules,
+with original, Phase 6 and Phase 7 research variants. None of these new ports has certified TradingView
 trade-export parity.
 
 | Pine strategy | Python implementation | Finding |
@@ -14,7 +14,7 @@ trade-export parity.
 | [Daily TSMOM](pine/cme_tsmom_single_market_strategy.pine) | [pine_daily_tsmom.py](strategies/pine_daily_tsmom.py) | Existing daily proxy model; new port implements its daily 20/60/120/252 inputs, population point volatility, whole-contract equity sizing, and first-15-minute-close rebalance. |
 | [Filtered overnight drift](pine/overnight_drift_strategy.pine) | [pine_overnight_drift.py](strategies/pine_overnight_drift.py) | Existing proxy-return research; new port implements Pine's session filter, actual close-fill timing, and volatility/equity sizing. |
 | [TSMOM intraday ORB](pine/cme_tsmom_intraday_orb_strategy.pine) | [pine_tsmom_orb.py](strategies/pine_tsmom_orb.py) | Existing related ORB research; new port implements configurable windows, risk-rejected attempts, close entries, working brackets, and force-flat behavior. |
-| [SND Phase 6/7](SND_phase6_strategy.pine) | [SND_baseline_backtest.py](scripts/mnq/SND_baseline_backtest.py), [SND_phase6_release.py](scripts/mnq/SND_phase6_release.py), [SND_phase7_relative_volume.py](scripts/mnq/SND_phase7_relative_volume.py), [SND_phase6_strategy_parity.py](scripts/mnq/SND_phase6_strategy_parity.py) | Existing stateful engine and RVOL/TradingView reference workflows. No duplicate engine created; full workbench integration remains pending. Existing research code is not proof of every Pine sizing option's parity. |
+| [SND Phase 6/7](SND_phase6_strategy.pine) | [SND_baseline_backtest.py](scripts/mnq/SND_baseline_backtest.py), [SND_phase6_release.py](scripts/mnq/SND_phase6_release.py), [SND_phase7_relative_volume.py](scripts/mnq/SND_phase7_relative_volume.py), [SND_phase6_strategy_parity.py](scripts/mnq/SND_phase6_strategy_parity.py) | Native [snd.py](strategies/snd.py) adapter reuses original zone helpers. Four variants, 1m next-open execution and fixed contracts; Pine percentage-risk sizing and TradingView parity remain uncertified. See [usage and scope](SND_WORKBENCH.md). |
 
 ## Run the new ports
 

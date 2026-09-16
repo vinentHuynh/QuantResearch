@@ -2,7 +2,7 @@
 
 Generated from local Python and Pine source using static parsing; discovery does not execute scripts.
 
-108 Python and Pine sources; 9 runnable workbench adapters.
+112 Python and Pine sources; 10 runnable workbench adapters.
 
 ## Runnable adapters
 
@@ -16,6 +16,7 @@ Generated from local Python and Pine source using static parsing; discovery does
 | [Pine · Filtered overnight drift](strategies/pine_overnight_drift.py) | sizing_mode, contracts, annual_risk, maximum_leverage, volatility_length, sleeve_count, timezone, rth_start, rth_end, trade_weekend, close_rule, strong_threshold | Preserves actual Pine bar-close timing, which differs from the header's ideal RTH-close/RTH-open trades. Uses selected-dataset daily prices and economics; no TradingView margin-call simulation. |
 | [Pine · TSMOM intraday ORB](strategies/pine_tsmom_orb.py) | fast_length, medium_length, slow_length, annual_length, timezone, minimum_score, opening_start, opening_end, entry_start, entry_end, flatten_start, flatten_end, risk_budget, maximum_contracts, reward_risk, require_close_break | Pine rules port with one-minute bracket execution. Stop wins ties within a minute; gap fills use the opening price. No TradingView sub-minute Bar Magnifier or order-fill recalculation emulation. A rejected risk-sized attempt still consumes the session. |
 | [RSI(2) trend-filtered reversion](strategies/rsi2_reversion.py) | trend_lookback, entry_rsi, exit_rsi, contracts | Ports s_rsi2 decisions, including its zero-loss RSI convention. Uses selected futures, fixed whole contracts and next-open fills; original cash-index NAV differs. |
+| [SND - Supply and demand](strategies/snd.py) | variant, contracts | Source-derived next-open research adapter, not certified Pine parity. Fixed contracts; original 100/200/400 PRICE POINT targets, 100-point stop cap and 1-point distal buffer retained on every market. Phase 6/7 require first physical touch and 2 structural R opposing room; Phase 7 freezes prior completed-bar RVOL at first touch (20 slot observations, minimum 10, band 0.75 <= RVOL < 1.25). Warmup consumes eligible zone tests without positions. Workbench session filtering, flat start, final liquidation and commission-only limit exits differ from the standalone research ledger. No Pine percent-risk sizing or touch-price entries. |
 | [Session VWAP reversion](strategies/vwap_reversion.py) | band, contracts | Ports s_vwap_rev decision state. Uses selected futures and next-open accounting; positions can carry across excluded-session gaps until the next available fill. Original ETF session returns differ. |
 
 ## Original source inventory
@@ -27,6 +28,8 @@ Adapter links cover only the documented rules. Other variants within the same sc
 | [ninjatrader/export_for_nt.py](ninjatrader/export_for_nt.py) | Platform validation | Data utility | Supporting source | — |
 | [ninjatrader/prop_fit_check.py](ninjatrader/prop_fit_check.py) | Platform validation | Validation | Supporting source | — |
 | [ninjatrader/sizing_check.py](ninjatrader/sizing_check.py) | Platform validation | Validation | Supporting source | — |
+| [scripts/analyze-orb-exits.py](scripts/analyze-orb-exits.py) | Support | Support | Supporting source | — |
+| [scripts/build-collective.py](scripts/build-collective.py) | Support | Data utility | Supporting source | — |
 | [scripts/cme/cme_stats_report.py](scripts/cme/cme_stats_report.py) | Momentum and portfolios | Report | Supporting source | — |
 | [scripts/cme/cme_time_series_momentum_backtest.py](scripts/cme/cme_time_series_momentum_backtest.py) | Momentum and portfolios | Strategy | Workbench adapter available | multi-speed-momentum, pine-daily-tsmom |
 | [scripts/cme/commodity_xsec_momentum_backtest.py](scripts/cme/commodity_xsec_momentum_backtest.py) | Momentum and portfolios | Strategy | Adapter required | — |
@@ -76,17 +79,17 @@ Adapter links cover only the documented rules. Other variants within the same sc
 | [scripts/mnq/mnq_trailing_stop_backtest.py](scripts/mnq/mnq_trailing_stop_backtest.py) | MNQ overnight variants | Strategy | Adapter required | — |
 | [scripts/mnq/mnq_weekday_backtest.py](scripts/mnq/mnq_weekday_backtest.py) | MNQ overnight variants | Strategy | Adapter required | — |
 | [scripts/mnq/mnq_window_scan_backtest.py](scripts/mnq/mnq_window_scan_backtest.py) | MNQ overnight variants | Rule collection | Workbench adapter available | pine-overnight-block |
-| [scripts/mnq/SND_baseline_backtest.py](scripts/mnq/SND_baseline_backtest.py) | Supply and demand | Strategy | Adapter required | — |
+| [scripts/mnq/SND_baseline_backtest.py](scripts/mnq/SND_baseline_backtest.py) | Supply and demand | Strategy | Workbench adapter available | snd |
 | [scripts/mnq/SND_html_report.py](scripts/mnq/SND_html_report.py) | Supply and demand | Report | Supporting source | — |
 | [scripts/mnq/SND_phase2_dataset.py](scripts/mnq/SND_phase2_dataset.py) | Supply and demand | Data utility | Supporting source | — |
 | [scripts/mnq/SND_phase3_screen.py](scripts/mnq/SND_phase3_screen.py) | Supply and demand | Research study | Adapter required | — |
-| [scripts/mnq/SND_phase4_backtest.py](scripts/mnq/SND_phase4_backtest.py) | Supply and demand | Rule collection | Adapter required | — |
+| [scripts/mnq/SND_phase4_backtest.py](scripts/mnq/SND_phase4_backtest.py) | Supply and demand | Rule collection | Workbench adapter available | snd |
 | [scripts/mnq/SND_phase5_combinations.py](scripts/mnq/SND_phase5_combinations.py) | Supply and demand | Rule collection | Adapter required | — |
 | [scripts/mnq/SND_phase6_forward_check.py](scripts/mnq/SND_phase6_forward_check.py) | Supply and demand | Validation | Supporting source | — |
 | [scripts/mnq/SND_phase6_parity.py](scripts/mnq/SND_phase6_parity.py) | Supply and demand | Validation | Supporting source | — |
 | [scripts/mnq/SND_phase6_release.py](scripts/mnq/SND_phase6_release.py) | Supply and demand | Validation | Supporting source | — |
 | [scripts/mnq/SND_phase6_strategy_parity.py](scripts/mnq/SND_phase6_strategy_parity.py) | Supply and demand | Validation | Supporting source | — |
-| [scripts/mnq/SND_phase7_relative_volume.py](scripts/mnq/SND_phase7_relative_volume.py) | Supply and demand | Rule collection | Adapter required | — |
+| [scripts/mnq/SND_phase7_relative_volume.py](scripts/mnq/SND_phase7_relative_volume.py) | Supply and demand | Rule collection | Workbench adapter available | snd |
 | [scripts/mnq/verify_dom_sample.py](scripts/mnq/verify_dom_sample.py) | MNQ overnight variants | Validation | Supporting source | — |
 | [scripts/orb/orb_asia_carver_backtest.py](scripts/orb/orb_asia_carver_backtest.py) | Opening range | Strategy | Adapter required | — |
 | [scripts/orb/orb_backtest.py](scripts/orb/orb_backtest.py) | Opening range | Strategy | Adapter required | — |
@@ -101,6 +104,7 @@ Adapter links cover only the documented rules. Other variants within the same sc
 | [scripts/overnight/overnight_drift_carver_backtest.py](scripts/overnight/overnight_drift_carver_backtest.py) | Overnight | Strategy | Adapter required | — |
 | [scripts/overnight/overnight_filtered_backtest.py](scripts/overnight/overnight_filtered_backtest.py) | Overnight | Strategy | Adapter required | — |
 | [scripts/overnight/overnight_loss_profile.py](scripts/overnight/overnight_loss_profile.py) | Overnight | Report | Supporting source | — |
+| [scripts/register-mnq-workbench.py](scripts/register-mnq-workbench.py) | Support | Support | Supporting source | — |
 | [scripts/spy_qqq_intraday/build_intraday.py](scripts/spy_qqq_intraday/build_intraday.py) | ETF intraday | Data utility | Supporting source | — |
 | [scripts/spy_qqq_intraday/fetch_intraday.py](scripts/spy_qqq_intraday/fetch_intraday.py) | ETF intraday | Data utility | Supporting source | — |
 | [scripts/spy_qqq_intraday/intraday_bakeoff.py](scripts/spy_qqq_intraday/intraday_bakeoff.py) | ETF intraday | Rule collection | Workbench adapter available | buy-hold, vwap-reversion |
@@ -110,6 +114,7 @@ Adapter links cover only the documented rules. Other variants within the same sc
 | [scripts/spy_qqq_intraday/probe_order.py](scripts/spy_qqq_intraday/probe_order.py) | ETF intraday | Data utility | Supporting source | — |
 | [scripts/spy_qqq_intraday/probe_shards.py](scripts/spy_qqq_intraday/probe_shards.py) | ETF intraday | Data utility | Supporting source | — |
 | [scripts/spy_qqq_intraday/spy_qqq_pairs_backtest.py](scripts/spy_qqq_intraday/spy_qqq_pairs_backtest.py) | ETF intraday | Strategy | Adapter required | — |
+| [scripts/validate-snd-reference.py](scripts/validate-snd-reference.py) | Support | Support | Supporting source | — |
 | [strategy_engine/strategies/opening_range_breakout.py](strategy_engine/strategies/opening_range_breakout.py) | Canonical engine | Strategy | Adapter required | — |
 | [strategy_engine/strategies/prior_range_fill.py](strategy_engine/strategies/prior_range_fill.py) | Canonical engine | Strategy | Adapter required | — |
 | [strategy_engine/strategies/relative_value.py](strategy_engine/strategies/relative_value.py) | Canonical engine | Strategy | Adapter required | — |
@@ -130,8 +135,8 @@ Adapter links cover only the documented rules. Other variants within the same sc
 | [pine/overnight_hl.pine](pine/overnight_hl.pine) | Pine indicators | Pine indicator | Indicator only | — |
 | [pine/prior_levels.pine](pine/prior_levels.pine) | Pine indicators | Pine indicator | Indicator only | — |
 | [pine/vwap_bands.pine](pine/vwap_bands.pine) | Pine indicators | Pine indicator | Indicator only | — |
-| [SND.pine](SND.pine) | Pine indicators | Pine indicator | Indicator only | — |
-| [SND_phase6_strategy.pine](SND_phase6_strategy.pine) | Pine strategies | Pine strategy | Existing Python engine | — |
+| [SND.pine](SND.pine) | Pine indicators | Pine indicator | Python port available | snd |
+| [SND_phase6_strategy.pine](SND_phase6_strategy.pine) | Pine strategies | Pine strategy | Python port available | snd |
 
 ## Remaining execution contracts
 

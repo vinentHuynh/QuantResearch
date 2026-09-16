@@ -44,7 +44,7 @@ class PinePortTests(unittest.TestCase):
         entries = {e['path']: e for e in result['library']['entries'] if e['path'].endswith('.pine')}
         self.assertEqual(len(entries), 17)
         self.assertEqual(sum(e['role'] == 'Pine strategy' for e in entries.values()), 5)
-        self.assertEqual(entries['SND_phase6_strategy.pine']['status'], 'Existing Python engine')
+        self.assertEqual(entries['SND_phase6_strategy.pine']['status'], 'Python port available')
         self.assertTrue(entries['SND_phase6_strategy.pine']['python_counterparts'])
         self.assertEqual(entries['pine/ib.pine']['status'], 'Indicator only')
         for entry in entries.values():
