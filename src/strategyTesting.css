@@ -1,0 +1,28 @@
+.strategy-testing { margin-top: 16px; padding-top: 14px; border-top: 1px solid #dce5de; min-width: 0; }
+.testing-stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; list-style: none; padding: 0; margin: 12px 0 8px; }
+.testing-stages li { border-top: 3px solid #dce5de; padding: 6px 4px; font-size: 11px; color: #607168; background: #f7f9f7; }
+.testing-stages li[data-done="true"] { border-color: #258369; }
+.testing-stages li[data-blocked="true"] { border-color: #c04747; background: #fff5f5; }
+.testing-stages span, .testing-stages strong { display: block; overflow-wrap: anywhere; }
+.testing-stages strong { margin-top: 3px; font-weight: 600; }
+.testing-job-progress, .testing-issues { margin-top: 10px; }
+.testing-review { margin-top: 10px; padding: 9px; border-left: 3px solid #258369; background: #f3f8f5; overflow-wrap: anywhere; }
+.strategy-testing details { font-size: 12px; margin-top: 7px; }
+.strategy-testing summary { cursor: pointer; color: #435d51; padding: 3px 0; }
+.testing-issue-list { max-height: 320px; overflow: auto; margin-top: 6px; }
+.testing-issue { padding: 8px; margin-bottom: 6px; border-left: 2px solid #c04747; background: #fff7f7; overflow-wrap: anywhere; }
+.testing-best { padding: 11px; margin-top: 12px; border: 1px solid #dce5de; border-radius: 6px; background: #f7faf8; }
+.testing-parameters { overflow-wrap: anywhere; margin-top: 6px; }
+.testing-markets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.testing-markets > div { display: grid; gap: 3px; border: 1px solid #dce5de; border-radius: 5px; padding: 7px 9px; font-size: 11px; }
+.testing-market-finding { color: #915018; }
+.testing-configuration-list { max-height: 380px; overflow: auto; }
+.testing-configuration { border-top: 1px solid #dce5de; padding: 9px 0; }
+.strategy-testing-compact { margin-top: 7px; border-top: 0; padding-top: 0; min-width: 360px; max-width: 520px; }
+.strategy-testing-compact + .strategy-testing-compact { border-top: 1px solid #dce5de; }
+.testing-summary > details > .strategy-testing { margin-top: 8px; }
+.script-source-details { margin-top: 10px; font-size: 12px; }
+.script-source-details summary { cursor: pointer; color: #607168; }
+.strategy-library-table td { vertical-align: top; }
+.strategy-library-table td:first-child { min-width: 240px; max-width: 350px; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .testing-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

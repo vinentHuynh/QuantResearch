@@ -1,0 +1,374 @@
+//@version=6
+indicator("SND Reference - Zones and First Retest", "SND Zone Guide", overlay = true,
+     max_boxes_count = 500, max_lines_count = 50, max_bars_back = 200)
+
+// Visual guide to the frozen MNQ research rules in SND_FORWARD_TEST.md.
+// It marks confirmed five-minute zones and candidate first-retest plans.
+// It does not reconstruct one-minute fills, position/order blocking,
+// contract rolls, session completeness, or P&L.
+// A candidate is geometric only, not an executable TradingView order.
+
+int pivotLength = 2
+int maximumAge = 288
+float minimumRoomR = 2.0
+
+string displayGroup = "Display"
+bool showContext = input.bool(false, "Also show unaligned context zones", group = displayGroup,
+     tooltip = "Dotted boxes show geometric zones that did not qualify as aligned strategy zones when created. They are opposing-zone context only.")
+bool showText = input.bool(true, "Text inside zones", group = displayGroup)
+bool showMarkers = input.bool(true, "Mark the confirming candle", group = displayGroup)
+bool showPlans = input.bool(true, "Show next-bar entry / stop / target", group = displayGroup)
+bool showSkipped = input.bool(false, "Mark rejected first touches", group = displayGroup)
+bool showPanel = input.bool(true, "Show setup checklist", group = displayGroup)
+bool keepHistory = input.bool(true, "Keep invalidated / expired zones", group = displayGroup)
+int historyLimit = input.int(150, "Retired boxes to keep", minval = 0, maxval = 250, group = displayGroup)
+color demandColor = input.color(color.rgb(0, 230, 118), "Demand color", group = displayGroup)
+color supplyColor = input.color(color.rgb(255, 61, 87), "Supply color", group = displayGroup)
+int freshOpacity = input.int(45, "Fresh zone fill opacity (%)", minval = 0, maxval = 100, group = displayGroup,
+     tooltip = "Higher values make the colored fill stronger. 0 hides the fill; 100 is fully opaque.")
+int touchedOpacity = input.int(32, "Touched zone fill opacity (%)", minval = 0, maxval = 100, group = displayGroup)
+int retiredOpacity = input.int(24, "Retired zone fill opacity (%)", minval = 0, maxval = 100, group = displayGroup)
+
+int barMilliseconds = 5 * 60 * 1000
+int activeLimit = 100
+float epsilon = syminfo.mintick * 0.0000001
+
+bool validChart = timeframe.isminutes and timeframe.multiplier == 5 and chart.is_standard
+
+// Strict confirmed swings: ties are excluded and each swing breaks only once.
+// This function has independent persistent state in the chart and hourly calls.
+f_direction(int length) =>
+    var float swingHigh = na
+    var float swingLow = na
+    var bool highUsed = false
+    var bool lowUsed = false
+    var int direction = 0
+    bool strictHigh = bar_index >= length * 2
+    bool strictLow = bar_index >= length * 2
+    if bar_index >= length * 2
+        for offset = 0 to length * 2
+            if offset != length
+                strictHigh := strictHigh and high[length] > high[offset]
+                strictLow := strictLow and low[length] < low[offset]
+    if strictHigh
+        swingHigh := high[length]
+        highUsed := false
+    if strictLow
+        swingLow := low[length]
+        lowUsed := false
+    if not highUsed and not na(swingHigh) and close > swingHigh
+        direction := 1
+        highUsed := true
+    if not lowUsed and not na(swingLow) and close < swingLow
+        direction := -1
+        lowUsed := true
+    direction
+
+int fiveMinuteBias = f_direction(pivotLength)
+int hourlyBias = request.security(syminfo.tickerid, "60", f_direction(pivotLength)[1],
+     gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
+
+type Zone
+    int side
+    float upper
+    float lower
+    int born
+    bool aligned
+    bool touched
+    int firstTouchBar
+    box drawing
+
+// Separate caps prevent optional context from crowding out strategy zones.
+// Aligned formations also enter context, with no duplicate drawing.
+var array<Zone> entryZones = array.new<Zone>()
+var array<Zone> contextZones = array.new<Zone>()
+var array<box> retiredBoxes = array.new<box>()
+
+f_name(Zone zone) =>
+    (zone.aligned ? "" : "Context ") + (zone.side == 1 ? "DEMAND" : "SUPPLY")
+
+f_retire(Zone zone, string reason) =>
+    if not na(zone.drawing)
+        if keepHistory and historyLimit > 0
+            color zoneColor = zone.side == 1 ? demandColor : supplyColor
+            box.set_extend(zone.drawing, extend.none)
+            box.set_right(zone.drawing, time_close)
+            box.set_bgcolor(zone.drawing, color.new(zoneColor, 100 - retiredOpacity))
+            box.set_border_color(zone.drawing, color.new(zoneColor, 25))
+            box.set_border_style(zone.drawing, line.style_dotted)
+            box.set_border_width(zone.drawing, zone.aligned ? 2 : 1)
+            box.set_text_color(zone.drawing, color.new(chart.fg_color, 10))
+            box.set_text(zone.drawing, showText ? f_name(zone) + " - " + reason : "")
+            array.push(retiredBoxes, zone.drawing)
+            while array.size(retiredBoxes) > historyLimit
+                box.delete(array.shift(retiredBoxes))
+        else
+            box.delete(zone.drawing)
+    0
+
+f_update(array<Zone> zones) =>
+    int index = array.size(zones) - 1
+    while index >= 0
+        Zone zone = array.get(zones, index)
+        bool broken = zone.side == 1 ? low < zone.lower - epsilon : high > zone.upper + epsilon
+        bool expired = bar_index - zone.born > maximumAge
+        if broken or expired
+            f_retire(zone, broken ? "invalidated" : "expired")
+            array.remove(zones, index)
+        else if not zone.touched and bar_index > zone.born and low <= zone.upper + epsilon and high >= zone.lower - epsilon
+            // Touches consume freshness even if direction has since changed.
+            zone.touched := true
+            zone.firstTouchBar := bar_index
+            if not na(zone.drawing)
+                color zoneColor = zone.side == 1 ? demandColor : supplyColor
+                box.set_bgcolor(zone.drawing, color.new(zoneColor, 100 - touchedOpacity))
+                box.set_border_color(zone.drawing, color.new(zoneColor, 15))
+                box.set_border_style(zone.drawing, zone.aligned ? line.style_dashed : line.style_dotted)
+                box.set_border_width(zone.drawing, zone.aligned ? 2 : 1)
+                box.set_text(zone.drawing, showText ? f_name(zone) + " - touched" : "")
+        index -= 1
+    0
+
+f_add(array<Zone> zones, int side, float upper, float lower, bool aligned, bool drawBox) =>
+    box drawing = na
+    if drawBox
+        color zoneColor = side == 1 ? demandColor : supplyColor
+        string title = (aligned ? "" : "Context ") + (side == 1 ? "DEMAND" : "SUPPLY") + " - fresh"
+        drawing := box.new(left = time_close, top = upper, right = time_close + barMilliseconds, bottom = lower,
+             xloc = xloc.bar_time, extend = extend.right,
+             border_color = color.new(zoneColor, aligned ? 0 : 25),
+             border_style = aligned ? line.style_solid : line.style_dotted,
+             border_width = aligned ? 3 : 1, bgcolor = color.new(zoneColor, 100 - (aligned ? freshOpacity : retiredOpacity)),
+             text = showText ? title : "", text_color = chart.fg_color,
+             text_size = size.small, text_halign = text.align_left, text_valign = text.align_top)
+    array.push(zones, Zone.new(side, upper, lower, bar_index, aligned, false, na, drawing))
+    if array.size(zones) > activeLimit
+        Zone oldest = array.shift(zones)
+        f_retire(oldest, "display limit")
+    0
+
+// The nearest opposing proximal boundary is context, including unaligned zones.
+// An unknown opposing zone is different from a measured room of zero.
+f_roomR(int side, float trigger, float risk) =>
+    float nearest = na
+    if array.size(contextZones) > 0
+        for index = 0 to array.size(contextZones) - 1
+            Zone other = array.get(contextZones, index)
+            if other.side == -side
+                if side == 1 and other.upper >= trigger - epsilon
+                    nearest := na(nearest) ? other.lower : math.min(nearest, other.lower)
+                if side == -1 and other.lower <= trigger + epsilon
+                    nearest := na(nearest) ? other.upper : math.max(nearest, other.upper)
+    na(nearest) ? float(na) : math.max(0.0, side * (nearest - trigger)) / risk
+
+f_biasText(int bias) =>
+    bias == 1 ? "UP" : bias == -1 ? "DOWN" : "UNSET"
+
+var line entryGuide = na
+var line stopGuide = na
+var line targetGuide = na
+var array<line> guideHistory = array.new<line>()
+var int planExpiresAt = na
+var int planSide = 0
+var float planEntry = na
+var float planStop = na
+var float planTarget = na
+var float planRoomR = na
+var string lastTouchStatus = "Waiting for first retest"
+var string lastTouchSide = "-"
+
+bool newDemand = false
+bool newSupply = false
+bool watchDemand = false
+bool watchSupply = false
+bool skippedTouch = false
+float createdUpper = na
+float createdLower = na
+float candidateEntry = na
+float candidateStop = na
+float candidateTarget = na
+float candidateRoom = na
+
+// On the first live ticks of a new hour, shorten a canceled guide immediately.
+// Historical bars make the same change in the confirmed block below.
+if validChart and not barstate.isconfirmed and not na(planExpiresAt) and time < planExpiresAt and hourlyBias != planSide
+    if not na(entryGuide)
+        line.set_x2(entryGuide, time)
+    if not na(stopGuide)
+        line.set_x2(stopGuide, time)
+    if not na(targetGuide)
+        line.set_x2(targetGuide, time)
+
+if validChart and barstate.isconfirmed
+    // The displayed stop-entry reference lasts for one elapsed five-minute bar.
+    if not na(planExpiresAt) and time_close >= planExpiresAt
+        bool hourlyCancelled = time < planExpiresAt and hourlyBias != planSide
+        if hourlyCancelled
+            // A newly closed hour can cancel the pending reference at this
+            // bar's open. Shorten its historical guide to that instant.
+            if not na(entryGuide)
+                line.set_x2(entryGuide, time)
+            if not na(stopGuide)
+                line.set_x2(stopGuide, time)
+            if not na(targetGuide)
+                line.set_x2(targetGuide, time)
+        lastTouchStatus := hourlyCancelled ? "CANCEL: closed-hour bias changed" : "WINDOW ENDED: outcome unknown"
+        entryGuide := na
+        stopGuide := na
+        targetGuide := na
+        planExpiresAt := na
+        planSide := 0
+        planEntry := na
+        planStop := na
+        planTarget := na
+        planRoomR := na
+
+    // Update old zones before forming new ones. Invalidation wins a same-bar
+    // touch, and the confirming formation candle cannot touch its own zone.
+    f_update(entryZones)
+    f_update(contextZones)
+
+    bool consecutive = bar_index >= 2 and time - time[1] == barMilliseconds and time[1] - time[2] == barMilliseconds
+    // Relaxed FVG: the confirming CLOSE clears the first candle's wick.
+    // A full low/high wick gap is not required in the frozen reference.
+    bool demandPattern = consecutive and close[2] < open[2] and close[1] > open[1] and close > high[2]
+    bool supplyPattern = consecutive and close[2] > open[2] and close[1] < open[1] and close < low[2]
+    int side = demandPattern ? 1 : supplyPattern ? -1 : 0
+
+    if side != 0
+        float upper = side == 1 ? high[2] : math.max(high, math.max(high[1], high[2]))
+        float lower = side == 1 ? math.min(low, math.min(low[1], low[2])) : low[2]
+        bool aligned = fiveMinuteBias == side and hourlyBias == side
+        f_add(contextZones, side, upper, lower, false, showContext and not aligned)
+        if aligned
+            f_add(entryZones, side, upper, lower, true, true)
+            newDemand := side == 1
+            newSupply := side == -1
+            createdUpper := upper
+            createdLower := lower
+
+    // Every first physical touch was consumed above. Among those touches,
+    // inspect newest aligned zones first. No Pine position model is assumed.
+    bool chosen = false
+    bool inspectedTouch = false
+    int cursor = array.size(entryZones) - 1
+    while cursor >= 0
+        Zone zone = array.get(entryZones, cursor)
+        if not na(zone.firstTouchBar) and zone.firstTouchBar == bar_index and not chosen
+            if not inspectedTouch
+                lastTouchSide := zone.side == 1 ? "DEMAND" : "SUPPLY"
+            float trigger = zone.side == 1 ? high + syminfo.mintick : low - syminfo.mintick
+            float stop = zone.side == 1 ? zone.lower - syminfo.mintick : zone.upper + syminfo.mintick
+            float risk = zone.side * (trigger - stop)
+            float room = risk > epsilon ? f_roomR(zone.side, trigger, risk) : na
+            bool biasOkay = fiveMinuteBias == zone.side and hourlyBias == zone.side
+            bool roomOkay = na(room) or room >= minimumRoomR
+            if risk <= epsilon
+                if not inspectedTouch
+                    lastTouchStatus := "SKIP: no valid stop distance"
+                skippedTouch := true
+            else if not biasOkay
+                if not inspectedTouch
+                    lastTouchStatus := "SKIP: 5m / closed-hour bias"
+                skippedTouch := true
+            else if not roomOkay
+                if not inspectedTouch
+                    lastTouchStatus := "SKIP: opposing room under 2R"
+                skippedTouch := true
+            else
+                chosen := true
+                skippedTouch := false
+                lastTouchSide := zone.side == 1 ? "DEMAND" : "SUPPLY"
+                watchDemand := zone.side == 1
+                watchSupply := zone.side == -1
+                lastTouchStatus := "GEOMETRIC WATCH: next 5m"
+                planSide := zone.side
+                planEntry := trigger
+                planStop := stop
+                planTarget := trigger + zone.side * risk
+                planRoomR := room
+                planExpiresAt := time_close + barMilliseconds
+                candidateEntry := planEntry
+                candidateStop := planStop
+                candidateTarget := planTarget
+                candidateRoom := planRoomR
+                entryGuide := na
+                stopGuide := na
+                targetGuide := na
+                if showPlans
+                    entryGuide := line.new(time_close, planEntry, planExpiresAt, planEntry,
+                         xloc = xloc.bar_time, color = color.yellow, width = 2)
+                    stopGuide := line.new(time_close, planStop, planExpiresAt, planStop,
+                         xloc = xloc.bar_time, color = color.red, style = line.style_dashed, width = 2)
+                    targetGuide := line.new(time_close, planTarget, planExpiresAt, planTarget,
+                         xloc = xloc.bar_time, color = color.lime, style = line.style_dashed, width = 2)
+                    array.push(guideHistory, entryGuide)
+                    array.push(guideHistory, stopGuide)
+                    array.push(guideHistory, targetGuide)
+                    while array.size(guideHistory) > 36
+                        line.delete(array.shift(guideHistory))
+            inspectedTouch := true
+        cursor -= 1
+
+plotshape(showMarkers and newDemand, title = "Demand creation candle", style = shape.triangleup,
+     location = location.belowbar, color = demandColor, size = size.small, text = "D", textcolor = demandColor)
+plotshape(showMarkers and newSupply, title = "Supply creation candle", style = shape.triangledown,
+     location = location.abovebar, color = supplyColor, size = size.small, text = "S", textcolor = supplyColor)
+plotshape(watchDemand, title = "Demand geometric candidate", style = shape.labelup,
+     location = location.belowbar, color = demandColor, text = "WATCH D*", textcolor = color.black, size = size.tiny)
+plotshape(watchSupply, title = "Supply geometric candidate", style = shape.labeldown,
+     location = location.abovebar, color = supplyColor, text = "WATCH S*", textcolor = color.white, size = size.tiny)
+plotshape(showSkipped and skippedTouch, title = "Rejected first touch", style = shape.xcross,
+     location = location.abovebar, color = color.orange, text = "SKIP", textcolor = color.orange, size = size.tiny)
+
+var table checklist = table.new(position.top_right, 2, 9, bgcolor = color.new(chart.bg_color, 5),
+     frame_color = color.new(chart.fg_color, 50), frame_width = 1)
+if barstate.islast and not validChart
+    table.cell(checklist, 0, 0, "SND ZONE GUIDE", text_color = chart.fg_color, bgcolor = color.new(color.orange, 75))
+    table.cell(checklist, 1, 0, chart.is_standard ? "Switch chart to 5-minute candles" : "Use standard 5-minute candles",
+         text_color = chart.fg_color, bgcolor = color.new(color.orange, 75))
+if barstate.islast and showPanel and validChart
+    int freshCount = 0
+    if array.size(entryZones) > 0
+        for index = 0 to array.size(entryZones) - 1
+            Zone zone = array.get(entryZones, index)
+            if not zone.touched
+                freshCount += 1
+    int shownBias = barstate.isconfirmed ? fiveMinuteBias : fiveMinuteBias[1]
+    bool activePlan = not na(planExpiresAt) and time < planExpiresAt and hourlyBias == planSide
+    string activeSide = activePlan ? (planSide == 1 ? "DEMAND" : "SUPPLY") : "-"
+    string entryText = activePlan ? str.tostring(planEntry, format.mintick) : "-"
+    string stopText = activePlan ? str.tostring(planStop, format.mintick) : "-"
+    string targetText = activePlan ? str.tostring(planTarget, format.mintick) : "-"
+    string roomText = not activePlan ? "-" : na(planRoomR) ? "No known opposing zone" : str.tostring(planRoomR, "#.##") + "R (need 2R)"
+    string touchText = not activePlan and not na(planExpiresAt) ? (time >= planExpiresAt ? "WINDOW ENDED: outcome unknown" : "CANCEL: closed-hour bias changed") : lastTouchStatus
+    color headColor = color.new(color.blue, 65)
+    table.cell(checklist, 0, 0, "SND REFERENCE", text_color = chart.fg_color, bgcolor = headColor)
+    table.cell(checklist, 1, 0, "MNQ-tested rules", text_color = chart.fg_color, bgcolor = headColor)
+    table.cell(checklist, 0, 1, "5m / closed 1h", text_color = chart.fg_color)
+    table.cell(checklist, 1, 1, f_biasText(shownBias) + " / " + f_biasText(hourlyBias), text_color = chart.fg_color)
+    table.cell(checklist, 0, 2, "Fresh aligned zones", text_color = chart.fg_color)
+    table.cell(checklist, 1, 2, str.tostring(freshCount), text_color = chart.fg_color)
+    table.cell(checklist, 0, 3, "Last first touch", text_color = chart.fg_color)
+    table.cell(checklist, 1, 3, lastTouchSide + " | " + touchText, text_color = chart.fg_color)
+    table.cell(checklist, 0, 4, "Active candidate", text_color = chart.fg_color)
+    table.cell(checklist, 1, 4, activeSide, text_color = chart.fg_color)
+    table.cell(checklist, 0, 5, "Entry / stop", text_color = chart.fg_color)
+    table.cell(checklist, 1, 5, entryText + " / " + stopText, text_color = chart.fg_color)
+    table.cell(checklist, 0, 6, "1R target*", text_color = chart.fg_color)
+    table.cell(checklist, 1, 6, targetText, text_color = chart.fg_color)
+    table.cell(checklist, 0, 7, "Opposing room", text_color = chart.fg_color)
+    table.cell(checklist, 1, 7, roomText, text_color = chart.fg_color)
+    table.cell(checklist, 0, 8, "*Geometric only", text_color = chart.fg_color)
+    table.cell(checklist, 1, 8, "Check position, order and fill", text_color = chart.fg_color)
+
+plot(createdUpper, "New zone upper", display = display.none)
+plot(createdLower, "New zone lower", display = display.none)
+plot(candidateEntry, "Candidate entry", display = display.none)
+plot(candidateStop, "Candidate stop", display = display.none)
+plot(candidateTarget, "Candidate target", display = display.none)
+plot(candidateRoom, "Candidate opposing room R", display = display.none)
+alertcondition(newDemand, "New demand zone", 'SND demand zone confirmed on {{ticker}} {{interval}}. Upper={{plot("New zone upper")}}, lower={{plot("New zone lower")}}.')
+alertcondition(newSupply, "New supply zone", 'SND supply zone confirmed on {{ticker}} {{interval}}. Upper={{plot("New zone upper")}}, lower={{plot("New zone lower")}}.')
+alertcondition(watchDemand, "Demand geometric candidate", 'SND demand geometric candidate on {{ticker}} {{interval}}. Reference entry={{plot("Candidate entry")}}, stop={{plot("Candidate stop")}}, target={{plot("Candidate target")}}. Next five-minute bar only. Check position/order blocking, new-hour bias, and room after any fill.')
+alertcondition(watchSupply, "Supply geometric candidate", 'SND supply geometric candidate on {{ticker}} {{interval}}. Reference entry={{plot("Candidate entry")}}, stop={{plot("Candidate stop")}}, target={{plot("Candidate target")}}. Next five-minute bar only. Check position/order blocking, new-hour bias, and room after any fill.')

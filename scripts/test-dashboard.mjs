@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdtempSync, writeFileSync, unlinkSync, rmdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { dashboardActionStatus } from "../src/dashboardTypes.ts";
 import {
   createDashboard,
   parseCsv,
@@ -11,6 +12,11 @@ import {
 } from "../server/dashboard.ts";
 
 const stats = tradeStatistics([200, 100, -50, -100, 0]);
+assert.equal(dashboardActionStatus({status:'Needs review',reasons:[]}), 'Failed criteria');
+assert.equal(dashboardActionStatus({status:'Needs review',reasons:['The strategy adapter has changed or is no longer registered.']}), 'Retest required');
+assert.equal(dashboardActionStatus({status:'Needs review',reasons:[],trade_error:'Checksum mismatch'}), 'Evidence repair needed');
+assert.equal(dashboardActionStatus({status:'Needs review',reasons:['Higher costs: declared scenario evidence is missing.']}), 'Further testing needed');
+assert.equal(dashboardActionStatus({status:'Conditional',reasons:[]}), 'Conditional');
 assert.equal(stats.payoff_ratio, 2);
 assert.equal(stats.profit_factor, 2);
 assert.equal(stats.win_rate, 0.4);
@@ -172,20 +178,21 @@ try {
   assert.equal(row.scenarios.length, 0);
   records.evaluation.pop();
   scenarios[1].outcome = "Does not meet criteria";
-  assert.equal(dashboard().rows[0].status, "Needs review");
+  assert.equal(dashboard().rows[0].status, "Failed criteria");
   scenarios[1].outcome = "Meets criteria";
   scenarios[1].metrics = { ...metrics, net_pnl: -1 };
-  assert.equal(dashboard().rows[0].status, "Needs review");
+  assert.equal(dashboard().rows[0].status, "Failed criteria");
   scenarios[1].metrics = metrics;
   const missing = scenarios.pop();
+  assert.equal(dashboard().rows[0].status, "Further testing needed");
   assert.match(dashboard().rows[0].reasons.join(" "), /evidence is missing/);
   scenarios.push(missing);
   registered[0] = { ...strategy, file_hash: "changed" };
-  assert.equal(dashboard().rows[0].status, "Needs review");
+  assert.equal(dashboard().rows[0].status, "Retest required");
   registered[0] = strategy;
   writeFileSync(path, csv + "\n123,bad");
   row = dashboard().rows[0];
-  assert.equal(row.status, "Needs review");
+  assert.equal(row.status, "Evidence repair needed");
   assert.equal(row.trades, null);
   assert.match(row.trade_error, /checksum/);
   writeFileSync(path, csv);

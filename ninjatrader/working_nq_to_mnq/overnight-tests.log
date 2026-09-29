@@ -1,0 +1,11 @@
+test_block_matches_python_regular_boundaries_and_weekend (test_ninjatrader_overnight_ports.NinjaTraderOvernightPorts) ... ok
+test_block_preserves_observed_transitions_without_invented_filters (test_ninjatrader_overnight_ports.NinjaTraderOvernightPorts) ... ok
+test_eastern_conversion_uses_dst_and_platform_timezone (test_ninjatrader_overnight_ports.NinjaTraderOvernightPorts) ... ok
+test_session_does_not_chase_or_repeat_entry (test_ninjatrader_overnight_ports.NinjaTraderOvernightPorts) ... ok
+test_session_matches_frozen_conservative_entry_schedule (test_ninjatrader_overnight_ports.NinjaTraderOvernightPorts) ... ok
+test_session_missing_exit_bar_flattens_first_observed_later_bar (test_ninjatrader_overnight_ports.NinjaTraderOvernightPorts) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.832s
+
+OK

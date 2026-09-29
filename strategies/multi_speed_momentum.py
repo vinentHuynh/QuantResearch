@@ -1,8 +1,10 @@
 """Canonical four-speed trend decisions with workbench execution."""
 STRATEGY = {
-    'id': 'multi-speed-momentum', 'name': 'Multi-speed momentum', 'version': '1.0.0',
+    'id': 'multi-speed-momentum', 'name': 'Multi-speed momentum', 'version': '1.1.0',
     'description': 'Long/short consensus of four completed-bar momentum horizons. Fixed contracts and next-open fills.',
     'timeframes': ['30m', '1h', '4h', '1d'], 'capabilities': ['equity', 'trades', 'positions'],
+    'default_warmup_days': 600,
+    'warmup_bars': {'parameter': 'lookback', 'multiplier': 4, 'offset': 1},
     'legacy_sources': ['scripts/cme/cme_time_series_momentum_backtest.py', 'strategy_engine/strategies/trend.py'],
     'migration_scope': 'Uses the canonical engine four-speed signal. Original CME proxy portfolio, lookbacks, volatility sizing, and NAV accounting are not reproduced.',
     'parameters': {

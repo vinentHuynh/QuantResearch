@@ -699,6 +699,36 @@
   border-radius: 6px;
   padding: 4px 8px;
 }
+.wb-sort-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wb-sort-header svg {
+  flex-shrink: 0;
+}
+.wb-sort-numeric {
+  justify-content: flex-end;
+}
+.wb-sort-header:hover,
+th[aria-sort="ascending"] .wb-sort-header,
+th[aria-sort="descending"] .wb-sort-header {
+  color: var(--teal-ink);
+}
+.wb-sort-header:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
 .wb-run-row {
   cursor: pointer;
 }

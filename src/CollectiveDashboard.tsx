@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ActionIcon,
   Alert,
@@ -31,7 +31,9 @@ import {
 } from "@tabler/icons-react";
 import {
   calculatePortfolio,
+  DEFAULT_PORTFOLIO_CAPITAL,
   commonWindow,
+  PortfolioCoverageError,
   defaultPolicy,
   type CollectiveCatalog,
   type CollectiveSeries,
@@ -41,8 +43,16 @@ import {
   type GateState,
 } from "./collectiveModel";
 import { PageHeader } from "./Shell";
+import { StrategyConditionPanel } from "./StrategyConditionPanel";
 import { href } from "./navigation";
+import { strategyTitle } from "./strategyTitle";
+import { collectiveProgress, stageColor } from "./researchProgress";
 import "./collective.css";
+import {
+  defaultSizing,
+  sizingSettings,
+  type SizingSettings,
+} from "./riskSizing";
 
 const money = (n: number) =>
   n.toLocaleString("en-US", {
@@ -67,23 +77,23 @@ const stateColor: Record<GateState, string> = {
   Raised: "blue",
 };
 const verdicts: Record<Dependence["verdict"], [string, string]> = {
-  cluster: ["Losses cluster — a pause can help", "teal"],
-  alternate: ["Outcomes alternate — a pause skips recoveries", "red"],
-  none: ["No dependence — a pause costs expected return", "gray"],
+  cluster: ["Clustering detected in sample", "teal"],
+  alternate: ["Alternation detected in sample", "red"],
+  none: ["No clustering detected", "gray"],
   insufficient: ["Under 30 trades", "gray"],
 };
 const verdictCopy: Record<Dependence["verdict"], [string, string]> = {
   cluster: [
     "Losses cluster in this book",
-    "Outcomes persist, so a loss-triggered pause has a statistical basis here. Check the comparison below before reading it as evidence.",
+    "This sample shows outcome persistence. It is a reason to investigate a pause rule, not proof that the rule improves future results. Compare the replay below.",
   ],
   alternate: [
-    "Losses don’t cluster in this book",
-    "Outcomes alternate, so a loss-triggered pause mostly skips recoveries. A worse result below is the expected outcome, not bad luck.",
+    "Outcomes alternate in this sample",
+    "The sample shows alternation, which can make loss-triggered pauses skip recoveries. Check the actual replay and its skipped trades below.",
   ],
   none: [
-    "No loss dependence in this book",
-    "Without persistence, a loss-triggered pause is expected to give up return.",
+    "No loss clustering detected in this sample",
+    "This test did not detect clustering. That does not prove independence or tell us whether a pause rule will work on future data.",
   ],
   insufficient: [
     "Too few trades to judge this book",
@@ -93,16 +103,19 @@ const verdictCopy: Record<Dependence["verdict"], [string, string]> = {
 const VIEWS = ["overview", "calendar", "contributions", "pause"] as const;
 type ViewName = (typeof VIEWS)[number];
 type Settings = {
+  capital: number;
   copies: Record<string, number>;
   start: string;
   end: string;
   basis: "marked" | "closed";
   policy: GatePolicy;
 };
-function saved(): Settings | null {
+const SETTINGS_KEY = "quant-collective-v1";
+const PREVIOUS_SETTINGS_KEY = "quant-collective-previous-v1";
+function saved(key = SETTINGS_KEY): Settings | null {
   try {
     const value = JSON.parse(
-      localStorage.getItem("quant-collective-v1") || "null",
+      localStorage.getItem(key) || "null",
     );
     if (
       !value ||
@@ -113,8 +126,16 @@ function saved(): Settings | null {
       return null;
     return {
       ...value,
+      capital: typeof value.capital === "number" && Number.isFinite(value.capital) && value.capital > 0
+        ? value.capital : DEFAULT_PORTFOLIO_CAPITAL,
       basis: value.basis === "closed" ? "closed" : "marked",
-      policy: { ...defaultPolicy, ...value.policy },
+      policy: {
+        ...defaultPolicy,
+        ...value.policy,
+        ...(value.policy?.mode === "volatility" && !value.policy?.sizing
+          ? { sizing: { ...defaultSizing, estimator: "legacy" } }
+          : {}),
+      },
     };
   } catch {
     return null;
@@ -410,7 +431,9 @@ function Calendar({
         {Array.from({ length: days }, (_, i) => {
           const day = `${month}-${String(i + 1).padStart(2, "0")}`,
             p = lookup.get(day);
-          const strength = p ? 0.07 + 0.5 * Math.min(1, Math.abs(p.pnl) / scale) : 0;
+          const strength = p
+            ? 0.07 + 0.5 * Math.min(1, Math.abs(p.pnl) / scale)
+            : 0;
           return (
             <button
               key={day}
@@ -482,21 +505,34 @@ export function CollectiveDashboard({
     : "overview";
   const isMobile = useMediaQuery("(max-width: 900px)");
   const [initial] = useState(saved);
+  const [previousSettings, setPreviousSettings] = useState(() => saved(PREVIOUS_SETTINGS_KEY));
+  const latestLinkApplied = useRef(false);
   const initialized = useRef(Boolean(initial));
   const [catalog, setCatalog] = useState<CollectiveCatalog | null>(null),
     [error, setError] = useState("");
   const [settings, setSettings] = useState<Settings>(
     initial || {
+      capital: DEFAULT_PORTFOLIO_CAPITAL,
       copies: {},
       start: "2024-01-01",
       end: "2026-08-31",
       basis: "marked",
-      policy: { ...defaultPolicy },
+      policy: {
+        ...defaultPolicy,
+        mode: "fixed",
+        volCap: 1,
+        sizing: { ...defaultSizing },
+      },
     },
   );
   const [histories, setHistories] = useState<CollectiveSeries[]>([]),
     [loading, setLoading] = useState(false),
     [refreshing, setRefreshing] = useState(false);
+  const [manualBook, setManualBook] = useState<string | null>(null);
+  const [manualTime, setManualTime] = useState("");
+  const [manualAction, setManualAction] = useState("pause");
+  const [manualReason, setManualReason] = useState("");
+  const [manualError, setManualError] = useState("");
   const [filter, setFilter] = useState("working"),
     [markets, setMarkets] = useState<string[]>([]),
     [timeframe, setTimeframe] = useState("all"),
@@ -526,7 +562,10 @@ export function CollectiveDashboard({
         return d as CollectiveCatalog;
       })
       .then((d) => {
-        setCatalog(d);
+        setCatalog({
+          ...d,
+          items: d.items.map((item) => ({ ...item, name: strategyTitle(item.name) })),
+        });
         setError("");
         setHistories([]);
         const seedDefaults = !initialized.current;
@@ -555,7 +594,7 @@ export function CollectiveDashboard({
     // Persist only after the catalog has seeded or reconciled the selection.
     if (!initialized.current) return;
     try {
-      localStorage.setItem("quant-collective-v1", JSON.stringify(settings));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     } catch {
       /* Storage may be unavailable; the current combination still works. */
     }
@@ -568,6 +607,7 @@ export function CollectiveDashboard({
   useEffect(() => {
     const controller = new AbortController();
     if (!catalog || !ids) return () => controller.abort();
+    setHistories([]);
     fetch("/api/workbench/collective/series", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -633,22 +673,80 @@ export function CollectiveDashboard({
     () => (catalog?.items || []).filter((i) => settings.copies[i.id] > 0),
     [catalog, settings.copies],
   );
+  const latestEsNq = useMemo(
+    () => (catalog?.items || []).filter((item) =>
+      item.working && item.latest_replay && (item.symbol === "ES" || item.symbol === "NQ"),
+    ),
+    [catalog],
+  );
+  const latestEsNqWindow = useMemo(() => commonWindow(latestEsNq), [latestEsNq]);
+  const latestEsNqAvailable = latestEsNq.length >= 2 &&
+    latestEsNq.some((item) => item.symbol === "ES") &&
+    latestEsNq.some((item) => item.symbol === "NQ") &&
+    Boolean(latestEsNqWindow.end);
+  const showingLatestEsNq = latestEsNqAvailable &&
+    selected.length === latestEsNq.length &&
+    latestEsNq.every((item) => settings.copies[item.id] > 0) &&
+    settings.end === latestEsNqWindow.end;
+  const viewLatestEsNq = useCallback(() => {
+    if (!latestEsNqAvailable) return;
+    if (!previousSettings) {
+      setPreviousSettings(settings);
+      try {
+        localStorage.setItem(PREVIOUS_SETTINGS_KEY, JSON.stringify(settings));
+      } catch {
+        /* The restore action still works in this session. */
+      }
+    }
+    const start = settings.start >= latestEsNqWindow.start &&
+      settings.start <= latestEsNqWindow.end
+      ? settings.start : latestEsNqWindow.start;
+    setLoading(true);
+    setSettings((current) => ({
+      ...current,
+      copies: Object.fromEntries(latestEsNq.map((item) => [item.id, 1])),
+      start,
+      end: latestEsNqWindow.end,
+    }));
+    setMonth(latestEsNqWindow.end.slice(0, 7));
+    setDay("");
+  }, [latestEsNqAvailable, previousSettings, settings, latestEsNqWindow.start, latestEsNqWindow.end, latestEsNq]);
+  function restorePreviousCombination() {
+    if (!previousSettings) return;
+    setLoading(true);
+    setSettings(previousSettings);
+    setMonth(previousSettings.end.slice(0, 7));
+    setDay("");
+    setPreviousSettings(null);
+    try {
+      localStorage.removeItem(PREVIOUS_SETTINGS_KEY);
+    } catch {
+      /* The restored settings still work in this session. */
+    }
+  }
+  useEffect(() => {
+    if (!catalog || latestLinkApplied.current) return;
+    if (new URLSearchParams(window.location.search).get("portfolio") !== "latest-es-nq") return;
+    if (!latestEsNqAvailable) return;
+    latestLinkApplied.current = true;
+    viewLatestEsNq();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("portfolio");
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+  }, [catalog, latestEsNqAvailable, viewLatestEsNq]);
   const visible = useMemo(
     () =>
       (catalog?.items || []).filter(
         (i) =>
-          (filter === "all" ||
-            (filter === "working"
-              ? i.working
-              : filter === "feasible"
-                ? i.feasible
-                : !i.tested)) &&
+          (filter === "all" || (filter === "working" ? i.working
+            : filter === "feasible" ? i.feasible
+            : !i.working && !i.benchmark)) &&
           (!markets.length || markets.includes(i.symbol)) &&
           (timeframe === "all" || i.timeframe === timeframe) &&
           `${i.name} ${i.symbol} ${i.timeframe} ${i.session} ${i.source}`
             .toLowerCase()
             .includes(search.toLowerCase()),
-      ),
+      ).sort((a, b) => Number(a.benchmark) - Number(b.benchmark) || collectiveProgress(b).stage - collectiveProgress(a).stage || a.name.localeCompare(b.name) || a.symbol.localeCompare(b.symbol)),
     [catalog, filter, markets, timeframe, search],
   );
   const computed = useMemo(() => {
@@ -662,20 +760,22 @@ export function CollectiveDashboard({
           settings.end,
           settings.basis,
           settings.policy,
+          settings.capital,
         ),
         error: "",
+        coverageGap: false,
       };
     } catch (e) {
-      return { value: null, error: String(e instanceof Error ? e.message : e) };
+      return { value: null, error: String(e instanceof Error ? e.message : e), coverageGap: e instanceof PortfolioCoverageError };
     }
   }, [selected, histories, settings]);
   const result = computed.value,
     hidden = selected.filter((i) => !visible.some((v) => v.id === i.id));
+  const testedWindow = useMemo(() => commonWindow(selected.map((item) =>
+    histories.find((history) => history.id === item.id) || item,
+  )), [selected, histories]);
   const selectedDay = result?.points.find((p) => p.date === day);
-  const capital = selected.reduce(
-    (n, i) => n + i.capital * (settings.copies[i.id] || 0),
-    0,
-  );
+  const capital = settings.capital;
   const totals =
     result?.points.reduce(
       (a, p) => {
@@ -695,7 +795,7 @@ export function CollectiveDashboard({
     ) || {};
   const marketCount = new Set(selected.map((i) => i.symbol)).size;
   function useCommon() {
-    const w = commonWindow(selected);
+    const w = testedWindow;
     if (w.start && w.end && w.start <= w.end) {
       setSettings((s) => ({ ...s, ...w }));
       setMonth(w.end.slice(0, 7));
@@ -706,7 +806,7 @@ export function CollectiveDashboard({
       download(
         "combined-daily-pnl.csv",
         [
-          "date,pnl,always_on_pnl,cumulative_pnl,always_on_cumulative_pnl,equity,drawdown,closed_trades",
+          "date,pnl,always_on_pnl,cumulative_pnl,always_on_cumulative_pnl,equity,drawdown,closed_trades,starting_capital",
           ...result.points.map((p) =>
             [
               p.date,
@@ -717,6 +817,7 @@ export function CollectiveDashboard({
               p.equity,
               p.drawdown,
               p.trades,
+              result.capital,
             ].join(","),
           ),
         ].join("\n"),
@@ -727,9 +828,12 @@ export function CollectiveDashboard({
       "strategy-combination.json",
       JSON.stringify(
         {
-          version: 1,
+          version: 2,
+          capital_model: "shared",
           catalog_at: catalog?.generated_at,
+          replay_version: 4,
           ...settings,
+          capital,
           selected: selected.map((i) => ({
             id: i.id,
             name: i.name,
@@ -742,6 +846,9 @@ export function CollectiveDashboard({
                 pnl: result.net,
                 max_drawdown: result.maxDrawdown,
                 capital: result.capital,
+                benchmarks: result.benchmarks,
+                execution: result.execution,
+                correlations: result.correlations,
               }
             : null,
         },
@@ -753,7 +860,9 @@ export function CollectiveDashboard({
   }
   const accountingLabel =
     settings.basis === "marked" ? "daily marked P&L" : "closed-trade P&L";
-  const volatility = settings.policy.mode === "volatility";
+  const volatility = ["volatility", "portfolio", "fixed"].includes(
+    settings.policy.mode,
+  );
 
   // ---------- combination rail ----------
   const railBody = (
@@ -803,6 +912,9 @@ export function CollectiveDashboard({
                 <div className="wb-book-meta">
                   {i.symbol} · {i.timeframe} · {i.session}
                 </div>
+                <div className="wb-book-meta">
+                  Tested: {i.coverage.map((span) => `${span.start} to ${span.end}`).join("; ") || "No covered dates"}
+                </div>
               </div>
               <NumberInput
                 aria-label={`Copies of ${i.name} ${i.symbol} ${i.timeframe}`}
@@ -846,6 +958,18 @@ export function CollectiveDashboard({
         </Text>
       )}
       <div className="wb-rail-section">
+        <NumberInput
+          label="Starting capital (USD)"
+          description="One balance shared across all selected strategies."
+          size="xs"
+          min={1}
+          decimalScale={2}
+          allowNegative={false}
+          value={capital}
+          onChange={(value) => setSettings((s) => ({ ...s, capital: Number(value) }))}
+        />
+      </div>
+      <div className="wb-rail-section">
         <SimpleGrid cols={2} spacing={6}>
           <TextInput
             type="date"
@@ -873,10 +997,17 @@ export function CollectiveDashboard({
           type="button"
           className="wb-link-button"
           onClick={useCommon}
-          disabled={!selected.length}
+          disabled={!testedWindow.start}
         >
           Use common tested window
         </button>
+        {selected.length > 0 && (
+          <Text size="xs" c="dimmed">
+            {testedWindow.start
+              ? `Common continuous window: ${testedWindow.start} to ${testedWindow.end}.`
+              : "These configurations have no common tested window. Remove a configuration or choose different histories."}
+          </Text>
+        )}
       </div>
       <div className="wb-rail-section">
         <span className="wb-rail-label">Accounting</span>
@@ -906,8 +1037,8 @@ export function CollectiveDashboard({
         </Text>
       </div>
       <Text size="xs" c="dimmed">
-        Copies repeat each recorded book and its capital; they do not rerun
-        sizing.
+        Copies multiply recorded P&L and exposure. Starting capital stays fixed
+        when adding strategies or copies; shared margin and liquidation are not simulated.
       </Text>
       <div className="wb-rail-foot">
         <Button
@@ -940,12 +1071,23 @@ export function CollectiveDashboard({
   );
   const emptyState = (
     <section className="wb-card">
-      <h2>{selected.length ? "Combined book unavailable" : "No books selected"}</h2>
+      <h2>
+        {selected.length ? "Combined book unavailable" : "No books selected"}
+      </h2>
       <p className="wb-card-sub">
         {selected.length
-          ? "Adjust the window in the combination panel to a period every selected book covers."
+          ? computed.coverageGap
+            ? testedWindow.start
+              ? `All selected books cover ${testedWindow.start} to ${testedWindow.end}. Apply this continuous tested window to calculate the combined book.`
+              : "These configurations have no common tested window. Remove a configuration or choose different histories."
+            : "Review the message above, then adjust the dates, calibration, or replay settings."
           : "Add tested strategies to see their combined P&L, calendar and contributions."}
       </p>
+      {computed.coverageGap && (
+        <Button mt="md" variant="light" onClick={testedWindow.start ? useCommon : () => setPickerOpen(true)}>
+          {testedWindow.start ? "Apply common tested window" : "Review configurations"}
+        </Button>
+      )}
       {!selected.length && (
         <Button
           mt="md"
@@ -968,7 +1110,7 @@ export function CollectiveDashboard({
             {money(result.net)}
           </span>
           <span className="wb-kpi-note">
-            {pct(result.returnOnCapital)} on represented capital
+            {pct(result.returnOnCapital)} on total portfolio capital
           </span>
         </div>
         <div className="wb-kpi">
@@ -978,7 +1120,9 @@ export function CollectiveDashboard({
           </span>
           <span className="wb-kpi-note">
             {pct(Math.abs(result.maxDrawdown))} ·{" "}
-            {settings.basis === "marked" ? "daily closes" : "closed trades only"}
+            {settings.basis === "marked"
+              ? "daily closes"
+              : "closed trades only"}
           </span>
         </div>
         <div className="wb-kpi">
@@ -1009,11 +1153,13 @@ export function CollectiveDashboard({
           </b>
         </span>
         <span>
-          Capital represented <b>{money(result.capital)}</b>, no netting
+          Total portfolio capital <b>{money(result.capital)}</b>
         </span>
         {settings.policy.enabled && (
           <span>
-            {volatility ? "Effect of volatility scaling" : "Effect of pause rule"}{" "}
+            {volatility
+              ? "Effect of volatility scaling"
+              : "Effect of pause rule"}{" "}
             <b className={signed(result.net - result.baseline)}>
               {money(result.net - result.baseline)}
             </b>{" "}
@@ -1150,7 +1296,8 @@ export function CollectiveDashboard({
     emptyState
   );
 
-  const dayIndex = result && day ? result.points.findIndex((p) => p.date === day) : -1;
+  const dayIndex =
+    result && day ? result.points.findIndex((p) => p.date === day) : -1;
   const calendarView = result ? (
     <div className="wb-calendar-layout">
       <Calendar
@@ -1166,7 +1313,10 @@ export function CollectiveDashboard({
             <h2 className="wb-day-label">
               {weekday(day)} {day}
             </h2>
-            <div className="wb-day-total" style={{ color: tone(selectedDay.pnl) }}>
+            <div
+              className="wb-day-total"
+              style={{ color: tone(selectedDay.pnl) }}
+            >
               {money(selectedDay.pnl)}
             </div>
             <Text size="sm" c="dimmed">
@@ -1201,7 +1351,11 @@ export function CollectiveDashboard({
                             {i.symbol} · {i.timeframe}
                           </Text>
                         </Table.Td>
-                        <Table.Td ta="right" c={v ? tone(v) : "dimmed"} className="mono">
+                        <Table.Td
+                          ta="right"
+                          c={v ? tone(v) : "dimmed"}
+                          className="mono"
+                        >
                           {money(v)}
                         </Table.Td>
                       </Table.Tr>
@@ -1262,11 +1416,14 @@ export function CollectiveDashboard({
         </Text>
       </div>
       <ScrollArea>
-        <Table miw={820} data-testid="strategy-contributions" highlightOnHover>
+        <Table miw={1040} data-testid="strategy-contributions" highlightOnHover>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Strategy / chart</Table.Th>
+              <Table.Th>Strategy</Table.Th>
+              <Table.Th>Chart</Table.Th>
               <Table.Th ta="right">Net P&L</Table.Th>
+              <Table.Th ta="right">Maximum drawdown</Table.Th>
+              <Table.Th ta="right">Return contribution</Table.Th>
               <Table.Th ta="right">Always on</Table.Th>
               <Table.Th ta="right">Closed trades</Table.Th>
               <Table.Th ta="right">Skipped</Table.Th>
@@ -1278,15 +1435,23 @@ export function CollectiveDashboard({
               <Table.Tr key={c.id}>
                 <Table.Td>
                   <Text size="sm" fw={600}>
-                    {c.name} / {c.symbol}
+                    {c.name}
                   </Text>
+                </Table.Td>
+                <Table.Td>
+                  <Text size="sm">{c.symbol} · {c.timeframe}</Text>
                   <Text size="xs" c="dimmed">
-                    {selected.find((i) => i.id === c.id)?.timeframe} ·{" "}
-                    {selected.find((i) => i.id === c.id)?.session}
+                    {c.session}
                   </Text>
                 </Table.Td>
                 <Table.Td ta="right" c={tone(c.pnl)} className="mono">
                   {money(c.pnl)}
+                </Table.Td>
+                <Table.Td ta="right" c={c.maxDrawdownDollars > 0 ? "red" : undefined} className="mono">
+                  {money(c.maxDrawdownDollars)}
+                </Table.Td>
+                <Table.Td ta="right" c={tone(c.pnl)} className="mono">
+                  {pct(c.pnl / result.capital)}
                 </Table.Td>
                 <Table.Td ta="right" className="mono">
                   {money(c.baseline)}
@@ -1294,8 +1459,16 @@ export function CollectiveDashboard({
                 <Table.Td ta="right">{c.trades}</Table.Td>
                 <Table.Td ta="right">{c.skipped}</Table.Td>
                 <Table.Td>
-                  <Badge color={stateColor[c.state]} radius="xs" variant="light">
-                    {settings.policy.enabled ? c.state : "Always on"}
+                  <Badge
+                    color={stateColor[c.state]}
+                    radius="xs"
+                    variant="light"
+                  >
+                    {settings.policy.enabled
+                      ? c.state === "Active"
+                        ? "Enabled"
+                        : c.state
+                      : "Always on"}
                   </Badge>
                   {volatility && settings.policy.enabled && (
                     <Text size="xs" c="dimmed">
@@ -1308,6 +1481,11 @@ export function CollectiveDashboard({
           </Table.Tbody>
         </Table>
       </ScrollArea>
+      <Text size="xs" c="dimmed" mt="sm">
+        Maximum drawdown is each strategy's largest peak-to-trough dollar loss
+        over the selected dates, using {accountingLabel}, selected copies and
+        active replay settings. Individual drawdowns do not add up to portfolio drawdown.
+      </Text>
     </section>
   ) : (
     emptyState
@@ -1317,7 +1495,12 @@ export function CollectiveDashboard({
     label: string,
     value: number,
     set: (n: number) => void,
-    props: { min?: number; max?: number; step?: number; decimal?: boolean } = {},
+    props: {
+      min?: number;
+      max?: number;
+      step?: number;
+      decimal?: boolean;
+    } = {},
   ) => (
     <NumberInput
       label={label}
@@ -1332,6 +1515,10 @@ export function CollectiveDashboard({
     />
   );
   const p = settings.policy;
+  const sizing = sizingSettings(p);
+  function changeSizing(next: Partial<SizingSettings>) {
+    policy({ sizing: { ...sizing, ...next } });
+  }
   const settingsCard = (
     <section className="wb-card collective-policy-settings">
       <Switch
@@ -1342,14 +1529,35 @@ export function CollectiveDashboard({
       {p.enabled ? (
         <>
           <Select
-            label="Losing pattern"
+            label="Replay mode"
             size="xs"
             value={p.mode}
             onChange={(v) =>
-              policy({ mode: (v || "rolling") as GatePolicy["mode"] })
+              policy({
+                mode: (v || "fixed") as GatePolicy["mode"],
+                sizing: {
+                  ...sizing,
+                  estimator:
+                    v === "volatility" && sizing.estimator === "legacy"
+                      ? "legacy"
+                      : sizing.estimator === "legacy"
+                        ? "ewma"
+                        : sizing.estimator,
+                },
+              })
             }
             data={[
+              { value: "fixed", label: "Constant size (no pause)" },
+              {
+                value: "portfolio",
+                label: "Portfolio-aware volatility sizing",
+              },
+              {
+                value: "deterioration",
+                label: "Sustained deterioration / manual review",
+              },
               { value: "rolling", label: "Rolling closed-trade losses" },
+              { value: "manual", label: "Manual pause / resume schedule" },
               { value: "streak", label: "Consecutive losing trades" },
               { value: "drawdown", label: "Shadow equity drawdown" },
               {
@@ -1358,71 +1566,250 @@ export function CollectiveDashboard({
               },
             ]}
           />
-          <div className="wb-policy-group">
-            <h3>{volatility ? "Size by" : "Pause when"}</h3>
-            <SimpleGrid cols={2} spacing={8}>
-              {p.mode === "rolling" ? (
-                <>
-                  {numberField("Lookback trades", p.lookback, (n) =>
-                    policy({ lookback: Math.max(2, n || 2) }),
-                    { min: 2, max: 100 },
-                  )}
-                  {numberField(
-                    "Rolling loss threshold ($ / copy)",
-                    p.lossLimit,
-                    (n) => policy({ lossLimit: Math.max(0, n || 0) }),
-                    { min: 0 },
-                  )}
-                </>
-              ) : p.mode === "streak" ? (
-                numberField("Consecutive losses to pause", p.streak, (n) =>
-                  policy({ streak: Math.max(1, n || 1) }),
-                  { min: 1, max: 50 },
-                )
-              ) : p.mode === "drawdown" ? (
-                numberField(
-                  "Drawdown threshold ($ / copy)",
-                  p.drawdown,
-                  (n) => policy({ drawdown: Math.max(1, n || 1) }),
-                  { min: 1 },
-                )
-              ) : (
-                <>
-                  {numberField(
-                    "Volatility lookback (positioned days)",
-                    p.volLookback,
+          {p.mode !== "manual" && p.mode !== "deterioration" && (
+            <div className="wb-policy-group">
+              <h3>{volatility ? "Size by" : "Pause when"}</h3>
+              <SimpleGrid cols={2} spacing={8}>
+                {p.mode === "fixed" ? (
+                  numberField(
+                    "Constant size multiple",
+                    sizing.fixedSize,
                     (n) =>
-                      policy({ volLookback: Math.min(250, Math.max(10, n || 10)) }),
-                    { min: 10, max: 250 },
-                  )}
-                  {numberField(
-                    "Maximum size multiple",
-                    p.volCap,
-                    (n) => policy({ volCap: Math.min(4, Math.max(0.25, n || 1)) }),
-                    { min: 0.25, max: 4, step: 0.25, decimal: true },
-                  )}
-                </>
-              )}
-            </SimpleGrid>
-          </div>
-          {!volatility && (
+                      changeSizing({ fixedSize: Math.max(0, Math.min(4, n)) }),
+                    { min: 0, max: 4, step: 0.25, decimal: true },
+                  )
+                ) : p.mode === "rolling" ? (
+                  <>
+                    {numberField(
+                      "Lookback trades",
+                      p.lookback,
+                      (n) => policy({ lookback: Math.max(2, n || 2) }),
+                      { min: 2, max: 100 },
+                    )}
+                    {numberField(
+                      "Rolling loss threshold ($ / copy)",
+                      p.lossLimit,
+                      (n) => policy({ lossLimit: Math.max(0, n || 0) }),
+                      { min: 0 },
+                    )}
+                  </>
+                ) : p.mode === "streak" ? (
+                  numberField(
+                    "Consecutive losses to pause",
+                    p.streak,
+                    (n) => policy({ streak: Math.max(1, n || 1) }),
+                    { min: 1, max: 50 },
+                  )
+                ) : p.mode === "drawdown" ? (
+                  numberField(
+                    "Drawdown threshold ($ / copy)",
+                    p.drawdown,
+                    (n) => policy({ drawdown: Math.max(1, n || 1) }),
+                    { min: 1 },
+                  )
+                ) : (
+                  <>
+                    {numberField(
+                      "Volatility lookback (observations)",
+                      p.volLookback,
+                      (n) =>
+                        policy({
+                          volLookback: Math.min(250, Math.max(10, n || 10)),
+                        }),
+                      { min: 10, max: 250 },
+                    )}
+                    {numberField(
+                      "Maximum size multiple",
+                      p.volCap,
+                      (n) =>
+                        policy({ volCap: Math.min(4, Math.max(0.25, n || 1)) }),
+                      { min: 0.25, max: 4, step: 0.25, decimal: true },
+                    )}
+                  </>
+                )}
+              </SimpleGrid>
+            </div>
+          )}
+          {!volatility && p.mode !== "manual" && p.mode !== "deterioration" && (
             <div className="wb-policy-group">
               <h3>Resume after</h3>
               <SimpleGrid cols={2} spacing={8}>
-                {numberField("Cooldown (calendar days)", p.cooldown, (n) =>
-                  policy({ cooldown: Math.max(1, n || 1) }),
+                {numberField(
+                  "Cooldown (calendar days)",
+                  p.cooldown,
+                  (n) => policy({ cooldown: Math.max(1, n || 1) }),
                   { min: 1, max: 365 },
                 )}
-                {numberField("Shadow recovery trades", p.recovery, (n) =>
-                  policy({ recovery: Math.max(1, n || 1) }),
+                {numberField(
+                  "Shadow recovery trades",
+                  p.recovery,
+                  (n) => policy({ recovery: Math.max(1, n || 1) }),
                   { min: 1, max: 100 },
                 )}
               </SimpleGrid>
             </div>
           )}
+          {(p.mode === "volatility" ||
+            p.mode === "portfolio" ||
+            p.mode === "deterioration" ||
+            sizing.portfolioVolLimit > 0 ||
+            sizing.equityVolLimit > 0 ||
+            sizing.lossLimit > 0) && (
+            <div className="wb-policy-group">
+              <h3>Frozen risk calibration</h3>
+              <TextInput
+                size="xs"
+                type="date"
+                label="Calibration end (UTC)"
+                value={sizing.calibrationEnd}
+                onChange={(e) =>
+                  changeSizing({ calibrationEnd: e.currentTarget.value })
+                }
+              />
+              <Select
+                size="xs"
+                label="Volatility estimator"
+                value={p.sizing ? sizing.estimator : "legacy"}
+                onChange={(value) =>
+                  changeSizing({
+                    estimator: value as SizingSettings["estimator"],
+                  })
+                }
+                data={[
+                  {
+                    value: "ewma",
+                    label: "Exponentially weighted observed sessions",
+                  },
+                  {
+                    value: "session",
+                    label: "Observed sessions, including zero P&L",
+                  },
+                  ...(p.mode === "volatility"
+                    ? [
+                        {
+                          value: "legacy",
+                          label: "Legacy nonzero days / chart-window target",
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+              <SimpleGrid cols={2} spacing={8} mt="xs">
+                {numberField(
+                  "Volatility floor / target",
+                  sizing.floorFraction,
+                  (n) => changeSizing({ floorFraction: n }),
+                  { min: 0.01, max: 1, step: 0.1, decimal: true },
+                )}
+                {numberField(
+                  "Max size change per entry",
+                  sizing.maxChange,
+                  (n) => changeSizing({ maxChange: n }),
+                  { min: 0.01, max: 4, step: 0.05, decimal: true },
+                )}
+              </SimpleGrid>
+              <Text size="xs" c="dimmed">
+                {p.mode === "volatility" &&
+                (!p.sizing || sizing.estimator === "legacy")
+                  ? "Legacy sizing uses nonzero days and recalibrates from the chart start. The frozen date, floor and step controls do not change legacy book sizing; portfolio limits still use the frozen calibration. Choose a session estimator for the revised sizing method."
+                  : "The calibration date stays fixed when chart dates change. Observed zero-P&L sessions count; missing dates do not. These dates have already been researched."}
+              </Text>
+            </div>
+          )}
+          {p.mode === "deterioration" && (
+            <div className="wb-policy-group">
+              <h3>Review trigger</h3>
+              {numberField(
+                "Monitoring trades",
+                sizing.monitorWindow,
+                (n) => changeSizing({ monitorWindow: n }),
+                { min: 20, max: 250 },
+              )}
+              {numberField(
+                "Consecutive confirmations",
+                sizing.monitorConfirm,
+                (n) => changeSizing({ monitorConfirm: n }),
+                { min: 2, max: 50 },
+              )}
+              {numberField(
+                "Normalized shortfall threshold",
+                sizing.monitorThreshold,
+                (n) => changeSizing({ monitorThreshold: n }),
+                { min: 1, max: 10, step: 0.5, decimal: true },
+              )}
+              <Text size="xs" c="dimmed">
+                Requires 50 calibration trades. A sustained shortfall against
+                the frozen normalized mean pauses entries until a dated manual
+                resume below. The threshold is a research setting, not a
+                statistical confidence level.
+              </Text>
+            </div>
+          )}
+          <div className="wb-policy-group">
+            <h3>Portfolio limits</h3>
+            {numberField(
+              "Portfolio daily risk cap ($; 0 = auto/off)",
+              sizing.portfolioVolLimit,
+              (n) => changeSizing({ portfolioVolLimit: n }),
+              { min: 0 },
+            )}
+            {numberField(
+              "Equity-index daily risk cap ($; 0 = off)",
+              sizing.equityVolLimit,
+              (n) => changeSizing({ equityVolLimit: n }),
+              { min: 0 },
+            )}
+            {numberField(
+              "Portfolio closed-loss limit ($; 0 = off)",
+              sizing.lossLimit,
+              (n) => changeSizing({ lossLimit: n }),
+              { min: 0 },
+            )}
+            <Text size="xs" c="dimmed">
+              Portfolio mode derives its risk cap from frozen calibration when
+              zero. Other modes leave it off. The equity cap groups ES, NQ, YM,
+              RTY and their micros. A closed-loss breach blocks new entries for
+              the rest of the replay; existing positions retain their exits.
+            </Text>
+          </div>
+          <div className="wb-policy-group">
+            <h3>Contract feasibility</h3>
+            <Switch
+              size="xs"
+              label="Round down to recorded whole contracts"
+              checked={sizing.wholeContracts}
+              onChange={(e) =>
+                changeSizing({ wholeContracts: e.currentTarget.checked })
+              }
+            />
+            {sizing.wholeContracts && (
+              <>
+                {numberField(
+                  "Assumed margin per contract ($)",
+                  sizing.marginPerContract,
+                  (n) => changeSizing({ marginPerContract: n }),
+                  { min: 0 },
+                )}
+                {numberField(
+                  "Shared margin budget ($; 0 = off)",
+                  sizing.marginBudget,
+                  (n) => changeSizing({ marginBudget: n }),
+                  { min: 0 },
+                )}
+                <Text size="xs" c="dimmed">
+                  Uses a user-supplied uniform margin assumption. One recorded
+                  contract at 75% rounds to zero. Micro contracts require their
+                  own data, fees and rerun.
+                </Text>
+              </>
+            )}
+          </div>
           <Text size="xs" c="dimmed">
-            Each decision uses only outcomes closed before it. Fields change
-            with the pattern you pick.
+            {volatility
+              ? "Sizing is fixed at entry; pause recovery rules do not apply."
+              : p.mode === "manual" || p.mode === "deterioration"
+                ? "Schedule entry pauses and resumes below. A pause stays in effect until a manual resume."
+                : "Recovery counts only completed shadow trades entered after the pause. The cooldown and positive recovery must both pass. Existing positions keep their exits."}
           </Text>
         </>
       ) : (
@@ -1457,6 +1844,371 @@ export function CollectiveDashboard({
     <div className="wb-policy">
       {settingsCard}
       <div className="collective-policy-results">
+        <StrategyConditionPanel
+          catalog={catalog}
+          items={selected}
+          histories={histories}
+          end={settings.end}
+          enabled={p.enabled}
+          permissions={result?.components || []}
+        />
+        {result && (
+          <section className="wb-card" data-testid="sizing-benchmarks">
+            <div className="wb-card-head">
+              <h2>Fixed-size benchmarks</h2>
+              <Button
+                size="compact-sm"
+                variant="default"
+                onClick={() =>
+                  download(
+                    "sizing-comparison.csv",
+                    [
+                      "variant,net_pnl,max_drawdown,worst_day,recovery_factor",
+                      ...[
+                        { label: "Selected policy", ...result.comparison },
+                        ...result.benchmarks.map((b) => ({
+                          label: `Constant ${b.size * 100}%`,
+                          ...b,
+                        })),
+                      ].map((r) =>
+                        [
+                          r.label,
+                          r.net,
+                          r.drawdown,
+                          r.worstDay,
+                          r.recovery ?? "",
+                        ]
+                          .map(csvCell)
+                          .join(","),
+                      ),
+                    ].join("\n"),
+                  )
+                }
+              >
+                Export comparison
+              </Button>
+            </div>
+            <Text size="sm" c="dimmed">
+              Same dates, books and {accountingLabel}. Constant benchmarks scale
+              recorded net P&amp;L and costs proportionally, with fractional
+              exposure and no pause or portfolio cap. Capital is held fixed.
+            </Text>
+            <ScrollArea>
+              <Table miw={610}>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Variant</Table.Th>
+                    <Table.Th>Net P&amp;L</Table.Th>
+                    <Table.Th>Max drawdown</Table.Th>
+                    <Table.Th>Worst day</Table.Th>
+                    <Table.Th>Recovery</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {[
+                    { label: "Selected policy", ...result.comparison },
+                    ...result.benchmarks.map((b) => ({
+                      label: `Constant ${b.size * 100}%`,
+                      ...b,
+                    })),
+                  ].map((row) => (
+                    <Table.Tr key={row.label}>
+                      <Table.Td>{row.label}</Table.Td>
+                      <Table.Td>{money(row.net)}</Table.Td>
+                      <Table.Td>{money(row.drawdown)}</Table.Td>
+                      <Table.Td>{money(row.worstDay)}</Table.Td>
+                      <Table.Td>{row.recovery?.toFixed(2) ?? "—"}</Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </ScrollArea>
+          </section>
+        )}
+        {p.enabled && result && (
+          <section className="wb-card" data-testid="sizing-validation">
+            <h2>Exposure and execution checks</h2>
+            <Button
+              size="compact-sm"
+              variant="default"
+              mb="sm"
+              onClick={() =>
+                download(
+                  "entry-sizing.csv",
+                  [
+                    "configuration_id,entry,accepted,size_multiple,represented_contracts",
+                    ...result.sizingDecisions.map((d) =>
+                      [d.id, d.entry, d.accepted, d.multiple, d.contracts ?? ""]
+                        .map(csvCell)
+                        .join(","),
+                    ),
+                  ].join("\n"),
+                )
+              }
+            >
+              Export entry sizes
+            </Button>
+            <Text size="sm">
+              Recorded contract quantities:{" "}
+              {result.execution.quantitiesAvailable
+                ? "available"
+                : "missing — refresh evidence; unsupported ledgers remain unavailable"}
+              . Whole-contract rounding:{" "}
+              {result.execution.wholeContracts ? "on" : "off"}. Shared margin
+              assumption:{" "}
+              {result.execution.marginConfigured
+                ? "configured"
+                : "not configured"}
+              .
+            </Text>
+            <Text size="sm" c="dimmed" mt="xs">
+              Risk caps use lagged daily book P&amp;L and concurrent recorded
+              entries. They are an exposure estimate, not a stop-loss budget or
+              an intraday open-loss limit. Stateful execution, per-trade stop
+              risk, changing margin and micro-contract fills still require a
+              full strategy rerun.
+            </Text>
+            <h3>Book correlations through {sizing.calibrationEnd}</h3>
+            <ScrollArea h={210}>
+              <Table miw={580}>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Books</Table.Th>
+                    <Table.Th>Shared observations</Table.Th>
+                    <Table.Th>Correlation</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {result.correlations.map((row) => (
+                    <Table.Tr key={row.a + row.b}>
+                      <Table.Td>
+                        {[row.a, row.b]
+                          .map((id) => {
+                            const item = selected.find((i) => i.id === id);
+                            return `${item?.name} / ${item?.symbol}`;
+                          })
+                          .join(" ↔ ")}
+                      </Table.Td>
+                      <Table.Td>{row.observations}</Table.Td>
+                      <Table.Td>
+                        {row.correlation?.toFixed(3) ??
+                          "Insufficient variation / history"}
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </ScrollArea>
+            <Text size="xs" c="dimmed">
+              Portfolio caps use trailing correlations available before entry,
+              shrink them toward +1 and give no negative-correlation hedge
+              credit. Existing positions are not resized if risk later rises.
+            </Text>
+          </section>
+        )}
+        {p.enabled && (p.mode === "manual" || p.mode === "deterioration") && (
+          <section className="wb-card" data-testid="manual-schedule">
+            <h2>Manual pause / resume</h2>
+            <p className="wb-card-sub">
+              Apply a dated decision to one selected book. The timestamp is UTC;
+              entries at or after it follow the decision. Existing positions
+              keep their recorded exits. This schedule replays history and does
+              not control live orders.
+            </p>
+            <SimpleGrid cols={{ base: 1, sm: 2 }}>
+              <Select
+                label="Strategy to control"
+                value={manualBook}
+                onChange={setManualBook}
+                data={selected.map((i) => ({
+                  value: i.id,
+                  label: `${i.name} / ${i.symbol} / ${i.timeframe}`,
+                }))}
+                searchable
+              />
+              <TextInput
+                label="Effective time (UTC)"
+                type="datetime-local"
+                value={manualTime}
+                onChange={(e) => setManualTime(e.currentTarget.value)}
+              />
+              <Select
+                label="Manual action"
+                value={manualAction}
+                onChange={(v) => setManualAction(v || "pause")}
+                data={[
+                  { value: "pause", label: "Pause new entries" },
+                  { value: "resume", label: "Resume new entries" },
+                ]}
+              />
+              <TextInput
+                label="Decision reason"
+                value={manualReason}
+                onChange={(e) => setManualReason(e.currentTarget.value)}
+              />
+            </SimpleGrid>
+            {manualError && (
+              <Alert color="red" mt="sm">
+                {manualError}
+              </Alert>
+            )}
+            <Button
+              mt="sm"
+              onClick={() => {
+                const time = Date.parse(manualTime + "Z");
+                if (
+                  !manualBook ||
+                  !selected.some((i) => i.id === manualBook) ||
+                  !Number.isFinite(time) ||
+                  !manualReason.trim()
+                ) {
+                  setManualError(
+                    "Choose a selected strategy, UTC time and decision reason.",
+                  );
+                  return;
+                }
+                const timestamp = new Date(time).toISOString();
+                const book = selected.find((i) => i.id === manualBook)!;
+                if (
+                  timestamp.slice(0, 10) < book.start ||
+                  timestamp.slice(0, 10) > book.end
+                ) {
+                  setManualError(
+                    "Choose a time within this strategy's tested history.",
+                  );
+                  return;
+                }
+                const current = p.manual?.[manualBook] || [];
+                if (current.some((d) => Date.parse(d.timestamp) === time)) {
+                  setManualError(
+                    "A decision already exists at that time. Remove it before replacing it.",
+                  );
+                  return;
+                }
+                policy({
+                  manual: {
+                    ...p.manual,
+                    [manualBook]: [
+                      ...current,
+                      {
+                        timestamp,
+                        action: manualAction as "pause" | "resume",
+                        reason: manualReason.trim(),
+                      },
+                    ].sort((a, b) => a.timestamp.localeCompare(b.timestamp)),
+                  },
+                });
+                setManualError("");
+                setManualReason("");
+              }}
+            >
+              Add decision
+            </Button>
+            <ScrollArea mt="sm">
+              <Table miw={640}>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Effective UTC</Table.Th>
+                    <Table.Th>Strategy</Table.Th>
+                    <Table.Th>Action / reason</Table.Th>
+                    <Table.Th>Change</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {selected.flatMap((i) =>
+                    (p.manual?.[i.id] || []).map((d) => (
+                      <Table.Tr key={i.id + d.timestamp}>
+                        <Table.Td>
+                          {d.timestamp.replace("T", " ").slice(0, 16)}
+                        </Table.Td>
+                        <Table.Td>
+                          {i.name} / {i.symbol} / {i.timeframe}
+                        </Table.Td>
+                        <Table.Td>
+                          {d.action}: {d.reason}
+                        </Table.Td>
+                        <Table.Td>
+                          <Button
+                            size="compact-xs"
+                            variant="subtle"
+                            aria-label={`Remove ${d.action} ${i.id} ${d.timestamp}`}
+                            onClick={() =>
+                              policy({
+                                manual: {
+                                  ...p.manual,
+                                  [i.id]: (p.manual?.[i.id] || []).filter(
+                                    (x) => x.timestamp !== d.timestamp,
+                                  ),
+                                },
+                              })
+                            }
+                          >
+                            Remove
+                          </Button>
+                        </Table.Td>
+                      </Table.Tr>
+                    )),
+                  )}
+                </Table.Tbody>
+              </Table>
+            </ScrollArea>
+            <Text size="xs" c="dimmed" mt="xs">
+              Decisions persist with this browser's combination and are included
+              in its JSON export. Turning replay off restores the always-on
+              history; it keeps your schedule.
+            </Text>
+          </section>
+        )}
+        {p.enabled && result && !volatility && (
+          <section className="wb-card" data-testid="gate-status">
+            <h2>Entry permission at {settings.end} (UTC)</h2>
+            <ScrollArea>
+              <Table miw={700}>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Strategy</Table.Th>
+                    <Table.Th>Status / reason</Table.Th>
+                    <Table.Th>Cooldown ends (UTC)</Table.Th>
+                    <Table.Th>Recovery</Table.Th>
+                    <Table.Th>Skipped P&amp;L</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {result.components.map((c) => (
+                    <Table.Tr key={c.id}>
+                      <Table.Td>
+                        {c.name} / {c.symbol} /{" "}
+                        {selected.find((i) => i.id === c.id)?.timeframe}
+                      </Table.Td>
+                      <Table.Td>
+                        <Badge color={stateColor[c.state]}>
+                          {c.state === "Active" ? "Enabled" : c.state}
+                        </Badge>
+                        <Text size="xs">{c.status?.reason}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        {c.status?.cooldownUntil
+                          ?.replace("T", " ")
+                          .slice(0, 16) || "—"}
+                      </Table.Td>
+                      <Table.Td>
+                        {c.state === "Paused" && (c.status?.required || 0) > 0
+                          ? `${c.status?.recoveryTrades}/${c.status?.required} trades; ${money(c.status?.recoveryPnl || 0)}`
+                          : "—"}
+                      </Table.Td>
+                      <Table.Td>
+                        {money(c.baseline - c.pnl)}
+                        <Text size="xs">
+                          {c.skipped} trades; positive = missed profit
+                        </Text>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </ScrollArea>
+          </section>
+        )}
         {!p.enabled ? (
           <section className="wb-card">
             <h2>Replay is off</h2>
@@ -1470,77 +2222,87 @@ export function CollectiveDashboard({
           emptyState
         ) : (
           <>
-            <div className={`wb-verdict ${verdictClass}`}>
-              <span className="wb-verdict-icon" aria-hidden="true">
-                {verdictClass === "cluster" ? (
-                  <IconCheck size={17} />
-                ) : (
-                  <IconX size={17} />
+            {p.mode !== "manual" && (
+              <div className={`wb-verdict ${verdictClass}`}>
+                <span className="wb-verdict-icon" aria-hidden="true">
+                  {verdictClass === "cluster" ? (
+                    <IconCheck size={17} />
+                  ) : (
+                    <IconX size={17} />
+                  )}
+                </span>
+                <h2>
+                  {single
+                    ? verdictCopy[single.verdict][0]
+                    : `${clusters} of ${deps.length} selected books show loss clustering`}
+                </h2>
+                <p>
+                  {single
+                    ? verdictCopy[single.verdict][1]
+                    : clusters
+                      ? "Clustering is a reason to investigate those books, not proof that a pause improves future results."
+                      : "No clustering was detected in these samples. This does not prove independence; judge the replay and its skipped trades below."}
+                  {volatility &&
+                    " Volatility scaling changes size without conditioning on P&L."}
+                </p>
+                {single && (
+                  <div className="collective-stats">
+                    <div>
+                      <span>
+                        Trades {single.prior ? "before window" : "in window"}
+                      </span>
+                      <b>{single.trades.toLocaleString()}</b>
+                    </div>
+                    <div>
+                      <span>Lag-1 autocorrelation</span>
+                      <b>
+                        {Number.isFinite(single.autocorrelation)
+                          ? single.autocorrelation.toFixed(3)
+                          : "—"}
+                      </b>
+                    </div>
+                    <div>
+                      <span>Runs z</span>
+                      <b>
+                        {Number.isFinite(single.runsZ)
+                          ? single.runsZ.toFixed(2)
+                          : "—"}
+                      </b>
+                    </div>
+                    <div>
+                      <span>Mean after loss</span>
+                      <b>
+                        {Number.isFinite(single.afterLoss)
+                          ? money(single.afterLoss)
+                          : "—"}
+                      </b>
+                    </div>
+                    <div>
+                      <span>Mean after win</span>
+                      <b>
+                        {Number.isFinite(single.afterWin)
+                          ? money(single.afterWin)
+                          : "—"}
+                      </b>
+                    </div>
+                  </div>
                 )}
-              </span>
-              <h2>
-                {single
-                  ? verdictCopy[single.verdict][0]
-                  : `${clusters} of ${deps.length} selected books show loss clustering`}
-              </h2>
-              <p>
-                {single
-                  ? verdictCopy[single.verdict][1]
-                  : clusters
-                    ? "A pause rule has a statistical basis only for those books."
-                    : "Without persistence, a loss-triggered pause is expected to give up return; a worse result below is the expected outcome, not bad luck."}
-                {volatility &&
-                  " Volatility scaling changes size without conditioning on P&L."}
-              </p>
-              {single && (
-                <div className="collective-stats">
-                  <div>
-                    <span>
-                      Trades {single.prior ? "before window" : "in window"}
-                    </span>
-                    <b>{single.trades.toLocaleString()}</b>
-                  </div>
-                  <div>
-                    <span>Lag-1 autocorrelation</span>
-                    <b>
-                      {Number.isFinite(single.autocorrelation)
-                        ? single.autocorrelation.toFixed(3)
-                        : "—"}
-                    </b>
-                  </div>
-                  <div>
-                    <span>Runs z</span>
-                    <b>
-                      {Number.isFinite(single.runsZ)
-                        ? single.runsZ.toFixed(2)
-                        : "—"}
-                    </b>
-                  </div>
-                  <div>
-                    <span>Mean after loss</span>
-                    <b>
-                      {Number.isFinite(single.afterLoss)
-                        ? money(single.afterLoss)
-                        : "—"}
-                    </b>
-                  </div>
-                  <div>
-                    <span>Mean after win</span>
-                    <b>
-                      {Number.isFinite(single.afterWin)
-                        ? money(single.afterWin)
-                        : "—"}
-                    </b>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
             <div className="wb-compare" data-testid="policy-comparison">
               <div>
                 <span>
-                  {volatility ? "With volatility scaling" : "With pause rule"}
+                  {volatility
+                    ? p.mode === "fixed"
+                      ? "With constant sizing"
+                      : "With volatility scaling"
+                    : p.mode === "manual"
+                      ? "With manual schedule"
+                      : "With pause rule"}
                 </span>
-                <strong className={signed(result.net)}>{money(result.net)}</strong>
+                <strong className={signed(result.net)}>
+                  {money(result.net)}
+                </strong>
               </div>
               <div>
                 <span>Always on</span>
@@ -1569,83 +2331,103 @@ export function CollectiveDashboard({
                         size="sm"
                         ml={4}
                       >
-                        {n > 1 ? `${n} ${s}` : s}
+                        {n > 1
+                          ? `${n} ${s === "Active" ? "Enabled" : s}`
+                          : s === "Active"
+                            ? "Enabled"
+                            : s}
                       </Badge>
                     ))}
                   </span>
                 )}
               </div>
             </div>
-            <section className="wb-card" data-testid="dependence-check">
-              <h2>Do losses cluster?</h2>
-              <p className="wb-card-sub">
-                A loss-triggered pause can only add expected return when
-                outcomes persist (Kaminski &amp; Lo, 2014). Runs test on
-                win/loss signs, using trades closed before the window when at
-                least 30 exist, otherwise the window itself. z below −1.96 means
-                streaks; above +1.96 means alternation.
-              </p>
-              <ScrollArea mt="sm">
-                <Table miw={760}>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Strategy / chart</Table.Th>
-                      <Table.Th ta="right">Trades</Table.Th>
-                      <Table.Th ta="right">Lag-1</Table.Th>
-                      <Table.Th ta="right">Runs z</Table.Th>
-                      <Table.Th ta="right">After loss</Table.Th>
-                      <Table.Th ta="right">After win</Table.Th>
-                      <Table.Th>Verdict</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {deps.map((d) => (
-                      <Table.Tr key={d.id}>
-                        <Table.Td>
-                          {d.name} / {d.symbol}
-                        </Table.Td>
-                        <Table.Td ta="right">
-                          {d.trades}{" "}
-                          <Text span size="xs" c="dimmed">
-                            {d.prior ? "before window" : "in window"}
-                          </Text>
-                        </Table.Td>
-                        <Table.Td ta="right">
-                          {Number.isFinite(d.autocorrelation)
-                            ? d.autocorrelation.toFixed(3)
-                            : "—"}
-                        </Table.Td>
-                        <Table.Td ta="right">
-                          {Number.isFinite(d.runsZ) ? d.runsZ.toFixed(2) : "—"}
-                        </Table.Td>
-                        <Table.Td ta="right">
-                          {Number.isFinite(d.afterLoss) ? money(d.afterLoss) : "—"}
-                        </Table.Td>
-                        <Table.Td ta="right">
-                          {Number.isFinite(d.afterWin) ? money(d.afterWin) : "—"}
-                        </Table.Td>
-                        <Table.Td>
-                          <Badge color={verdicts[d.verdict][1]} radius="xs" variant="light">
-                            {verdicts[d.verdict][0]}
-                          </Badge>
-                        </Table.Td>
+            {p.mode !== "manual" && (
+              <section className="wb-card" data-testid="dependence-check">
+                <h2>Do losses cluster?</h2>
+                <p className="wb-card-sub">
+                  Runs test on win/loss signs, using trades closed before the
+                  window when at least 30 exist, otherwise the window itself. z
+                  below −1.96 indicates clustering in the sample; above +1.96
+                  indicates alternation. These diagnostics do not establish a
+                  profitable pause rule or predict future outcomes.
+                </p>
+                <ScrollArea mt="sm">
+                  <Table miw={760}>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Strategy / chart</Table.Th>
+                        <Table.Th ta="right">Trades</Table.Th>
+                        <Table.Th ta="right">Lag-1</Table.Th>
+                        <Table.Th ta="right">Runs z</Table.Th>
+                        <Table.Th ta="right">After loss</Table.Th>
+                        <Table.Th ta="right">After win</Table.Th>
+                        <Table.Th>Verdict</Table.Th>
                       </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </ScrollArea>
-            </section>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {deps.map((d) => (
+                        <Table.Tr key={d.id}>
+                          <Table.Td>
+                            {d.name} / {d.symbol}
+                          </Table.Td>
+                          <Table.Td ta="right">
+                            {d.trades}{" "}
+                            <Text span size="xs" c="dimmed">
+                              {d.prior ? "before window" : "in window"}
+                            </Text>
+                          </Table.Td>
+                          <Table.Td ta="right">
+                            {Number.isFinite(d.autocorrelation)
+                              ? d.autocorrelation.toFixed(3)
+                              : "—"}
+                          </Table.Td>
+                          <Table.Td ta="right">
+                            {Number.isFinite(d.runsZ)
+                              ? d.runsZ.toFixed(2)
+                              : "—"}
+                          </Table.Td>
+                          <Table.Td ta="right">
+                            {Number.isFinite(d.afterLoss)
+                              ? money(d.afterLoss)
+                              : "—"}
+                          </Table.Td>
+                          <Table.Td ta="right">
+                            {Number.isFinite(d.afterWin)
+                              ? money(d.afterWin)
+                              : "—"}
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge
+                              color={verdicts[d.verdict][1]}
+                              radius="xs"
+                              variant="light"
+                            >
+                              {verdicts[d.verdict][0]}
+                            </Badge>
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </ScrollArea>
+              </section>
+            )}
             <Alert color="yellow">
               {volatility
-                ? "Exploratory sizing replay. Each entry is scaled by target ÷ recent volatility, where volatility is the standard deviation of the book's last positioned marked-P&L days before entry and the target is the median of that estimate before the window. Sizes are fixed at entry and capped. Fractional multiples assume divisible contracts; margin and strategy state are not rerun. "
-                : "Exploratory entry-filter replay. Decisions use only trades closed before entry; recovery observes hypothetical trades while paused. Existing positions keep their original exits. Strategy state, sizing and margin are not rerun; skipped entries can change them in a full simulation. "}
+                ? "Exploratory sizing replay. Sizes are fixed at entry using the selected estimator and calibration, or a constant multiple. Contract rounding and margin caps apply only when explicitly configured. Strategy state and intraday open risk are not rerun. "
+                : p.mode === "manual"
+                  ? "Manual decisions are retrospective user choices, not an out-of-sample strategy test. Existing positions keep their original exits. Strategy state, sizing and margin are not rerun. "
+                  : "Exploratory entry-filter replay. Decisions use only trades closed before entry; recovery observes hypothetical trades while paused. Existing positions keep their original exits. Strategy state, sizing and margin are not rerun; skipped entries can change them in a full simulation. "}
               P&amp;L is realized on exit dates, so open risk is not shown.
               Parameters are not optimized and no live orders are controlled.
             </Alert>
             <section className="wb-card">
               <div className="wb-card-head">
                 <h2>
-                  {volatility ? "Size band changes" : "Pause / resume decisions"}{" "}
+                  {volatility
+                    ? "Size band changes"
+                    : "Pause / resume decisions"}{" "}
                   ({result.events.length})
                 </h2>
                 <Button
@@ -1656,9 +2438,9 @@ export function CollectiveDashboard({
                     download(
                       "pause-resume-decisions.csv",
                       [
-                        "timestamp,strategy,state,reason",
+                        "timestamp,configuration_id,strategy,state,reason",
                         ...result.events.map((e) =>
-                          [e.timestamp, e.name, e.state, e.reason]
+                          [e.timestamp, e.id, e.name, e.state, e.reason]
                             .map(csvCell)
                             .join(","),
                         ),
@@ -1682,12 +2464,19 @@ export function CollectiveDashboard({
                   <Table.Tbody>
                     {result.events.map((e, i) => (
                       <Table.Tr key={i}>
-                        <Table.Td className="mono" style={{ whiteSpace: "nowrap" }}>
+                        <Table.Td
+                          className="mono"
+                          style={{ whiteSpace: "nowrap" }}
+                        >
                           {e.timestamp.replace("T", " ").slice(0, 16)}
                         </Table.Td>
                         <Table.Td>{e.name}</Table.Td>
                         <Table.Td>
-                          <Badge color={stateColor[e.state]} radius="xs" variant="light">
+                          <Badge
+                            color={stateColor[e.state]}
+                            radius="xs"
+                            variant="light"
+                          >
                             {e.state}
                           </Badge>
                         </Table.Td>
@@ -1710,14 +2499,11 @@ export function CollectiveDashboard({
   );
 
   // ---------- strategy picker ----------
-  const counts = catalog
-    ? {
-        working: catalog.items.filter((i) => i.working).length,
-        feasible: catalog.items.filter((i) => i.feasible).length,
-        all: catalog.items.length,
-        screen: catalog.items.filter((i) => !i.tested).length,
-      }
-    : { working: 0, feasible: 0, all: 0, screen: 0 };
+  const counts = {
+    working: catalog?.items.filter(i => i.working).length || 0,
+    feasible: catalog?.items.filter(i => i.feasible).length || 0,
+    backtested: catalog?.items.filter(i => !i.working && !i.benchmark).length || 0,
+  };
   const picker = catalog && (
     <div className="collective-picker">
       <Text size="sm" c="dimmed">
@@ -1731,21 +2517,13 @@ export function CollectiveDashboard({
         value={filter}
         onChange={setFilter}
         data={[
-          { value: "working", label: `Working · ${counts.working}` },
-          {
-            value: "feasible",
-            label: `Fully tested & feasible · ${counts.feasible}`,
-          },
-          { value: "all", label: `All tested configurations · ${counts.all}` },
-          { value: "screen", label: `Screened only · ${counts.screen}` },
+          { value: "working", label: `Evaluation passed · ${counts.working}` },
+          { value: "feasible", label: `Robustness checked · ${counts.feasible}` },
+          { value: "all", label: `All tested · ${catalog.items.length}` },
+          { value: "backtested", label: `Backtested only · ${counts.backtested}` },
         ]}
       />
-      <Text size="xs" c="dimmed">
-        {filter === "feasible"
-          ? catalog.definitions.feasible
-          : catalog.definitions.working}{" "}
-        Screening profits alone do not qualify as working.
-      </Text>
+      <Text size="xs" c="dimmed">Stages apply to each market and configuration. Recorded findings remain in Review notes.</Text>
       <div className="collective-filters">
         <Group gap={6} align="center">
           <Text size="sm" fw={600} mr={4}>
@@ -1759,14 +2537,21 @@ export function CollectiveDashboard({
             All
           </Chip>
           <Chip.Group multiple value={markets} onChange={setMarkets}>
-            {[...new Set(catalog.items.map((i) => i.symbol))].sort().map((s) => (
-              <Chip key={s} value={s} size="sm">
-                {s}
-              </Chip>
-            ))}
+            {[...new Set(catalog.items.map((i) => i.symbol))]
+              .sort()
+              .map((s) => (
+                <Chip key={s} value={s} size="sm">
+                  {s}
+                </Chip>
+              ))}
           </Chip.Group>
         </Group>
-        <Group gap={8} align="end" wrap="nowrap" className="collective-filter-fields">
+        <Group
+          gap={8}
+          align="end"
+          wrap="nowrap"
+          className="collective-filter-fields"
+        >
           <Select
             label="Chart timeframe"
             size="xs"
@@ -1789,7 +2574,15 @@ export function CollectiveDashboard({
           />
         </Group>
       </div>
-      <ScrollArea className="collective-picker-table">
+      <ScrollArea
+        className="collective-picker-table"
+        type="always"
+        viewportProps={{
+          tabIndex: 0,
+          role: "region",
+          "aria-label": "Available strategy configurations",
+        }}
+      >
         <Table miw={880} highlightOnHover data-testid="strategy-picker">
           <Table.Thead>
             <Table.Tr>
@@ -1829,38 +2622,33 @@ export function CollectiveDashboard({
                 </Table.Td>
                 <Table.Td>
                   <Badge
+                    className="collective-milestone-badge"
                     radius="xs"
                     variant="light"
-                    color={i.feasible ? "teal" : i.working ? "blue" : "gray"}
+                    color={i.benchmark ? "gray" : stageColor(collectiveProgress(i).stage)}
                   >
-                    {i.feasible
-                      ? "Checklist passed"
-                      : i.working
-                        ? "Working"
-                        : i.tested
-                          ? "Needs review"
-                          : "Screened"}
+                    {collectiveProgress(i).label}
                   </Badge>
                   <Text size="xs" c="dimmed">
                     {i.source}
                   </Text>
                 </Table.Td>
-                <Table.Td>
-                  <Text size="xs" className="mono" style={{ whiteSpace: "nowrap" }}>
+                <Table.Td data-label="Test coverage">
+                  <Text
+                    size="xs"
+                    className="mono"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
                     {i.start} → {i.end}
                   </Text>
                 </Table.Td>
-                <Table.Td ta="right" c={tone(i.recent_pnl)} className="mono">
+                <Table.Td data-label="2024 onward" ta="right" c={tone(i.recent_pnl)} className="mono">
                   {i.end < "2024" ? "Not tested" : money(i.recent_pnl)}
                 </Table.Td>
                 <Table.Td maw={280}>
                   <details>
                     <summary>
-                      {i.reasons[0]
-                        ? i.reasons[0].length > 60
-                          ? i.reasons[0].slice(0, 58) + "…"
-                          : i.reasons[0]
-                        : `${i.reasons.length} notes`}
+                      {i.reasons[0] ? i.reasons[0].length > 60 ? i.reasons[0].slice(0, 58) + "…" : i.reasons[0] : `${i.reasons.length} notes`}
                     </summary>
                     {i.reasons.map((r, j) => (
                       <Text key={j} size="xs" mb={5}>
@@ -1901,14 +2689,21 @@ export function CollectiveDashboard({
           )}
         </Text>
         <Group gap={8} ml="auto">
-          <Button size="xs" variant="subtle" color="gray" onClick={() => choose({})}>
+          <Button
+            size="xs"
+            variant="subtle"
+            color="gray"
+            onClick={() => choose({})}
+          >
             Clear combination
           </Button>
           <Button
             size="xs"
             variant="default"
             onClick={() =>
-              choose(Object.fromEntries(visible.slice(0, 100).map((i) => [i.id, 1])))
+              choose(
+                Object.fromEntries(visible.slice(0, 100).map((i) => [i.id, 1])),
+              )
             }
             disabled={!visible.length || visible.length > 100}
           >
@@ -1982,32 +2777,67 @@ export function CollectiveDashboard({
                 {settings.start} to {settings.end} · {accountingLabel}, net of
                 recorded costs
               </p>
+              {latestEsNqAvailable && (!showingLatestEsNq || previousSettings) && (
+                <Alert color="blue" title={showingLatestEsNq ? "Viewing refreshed ES/NQ history" : "September ES/NQ history is available"} mb="md">
+                  <Group justify="space-between" align="center" gap="sm">
+                    <Text size="sm">
+                      {latestEsNq.length} ES/NQ books share a tested window through {latestEsNqWindow.end}.
+                      {!showingLatestEsNq && " Open that combination to see its September calendar."}
+                    </Text>
+                    <Group gap="xs">
+                      {!showingLatestEsNq && (
+                        <Button size="xs" onClick={viewLatestEsNq}>View latest ES/NQ</Button>
+                      )}
+                      {previousSettings && (
+                        <Button size="xs" variant="default" onClick={restorePreviousCombination}>
+                          Restore previous combination
+                        </Button>
+                      )}
+                    </Group>
+                  </Group>
+                </Alert>
+              )}
               {computed.error && (
-                <Alert color={loading ? "blue" : "yellow"} title="Combined book">
+                <Alert
+                  color={loading ? "blue" : "yellow"}
+                  title="Combined book"
+                >
                   {computed.error}
                 </Alert>
               )}
               {current === "overview" && overview}
+              {result?.depleted && (
+                <Alert color="orange" title="Starting capital exhausted in this history" mt="md">
+                  Combined equity reaches zero or below at this exposure. The replay
+                  continues through those losses; it does not simulate margin liquidation.
+                </Alert>
+              )}
               {current === "calendar" && calendarView}
               {current === "contributions" && contributionsView}
               {current === "pause" && pauseView}
               <Text size="xs" c="dimmed" mt="md">
-                {catalog.definitions.pnl} Known gaps between test windows block
-                aggregation. Zero on a covered day means no recorded change.
-                Selections were made after inspecting these histories; this is
-                not untouched portfolio validation. Histories are imported from
-                verified full ledgers, with one baseline per strategy
-                configuration; cost and execution variants are not added twice.
-                Daily drawdown does not capture intraday extremes. Feasibility
-                refers to the displayed historical checklist, not live approval.
-                Configuration and selection are saved in this browser.
+                {p.enabled
+                  ? "UTC closed-trade P&L, net of proportionally scaled recorded costs. Independent books with the selected entry, sizing and optional margin-assumption controls; no position netting or stateful execution rerun."
+                  : catalog.definitions.pnl}{" "}
+                Known gaps between test windows block aggregation. Zero on a
+                covered day means no recorded change. Selections were made after
+                inspecting these histories; this is not untouched portfolio
+                validation. Histories are imported from verified full ledgers,
+                with one baseline per strategy configuration; cost and execution
+                variants are not added twice. Daily drawdown does not capture
+                intraday extremes. Feasibility refers to the displayed
+                historical checklist, not live approval. Configuration and
+                selection are saved in this browser.
               </Text>
             </>
           )}
         </div>
         {!isMobile &&
           (collapsed ? (
-            <aside className="wb-rail-strip" aria-label="Combination, collapsed">
+            <aside
+              className="wb-rail-strip"
+              aria-label="Combination, collapsed"
+            >
               <ActionIcon
                 variant="light"
                 aria-label="Expand combination"
@@ -2058,7 +2888,13 @@ export function CollectiveDashboard({
         position="bottom"
         size="auto"
         aria-label="Combination"
-        styles={{ content: { height: "auto", maxHeight: "92vh", borderRadius: "16px 16px 0 0" } }}
+        styles={{
+          content: {
+            height: "auto",
+            maxHeight: "92vh",
+            borderRadius: "16px 16px 0 0",
+          },
+        }}
         classNames={{ body: "collective-sheet" }}
       >
         {railBody}

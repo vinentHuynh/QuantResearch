@@ -1,0 +1,108 @@
+{
+  "created_at_utc": "2026-09-29T16:53:17.072593+00:00",
+  "selected_strategies": [
+    "WorkbenchMnqOvernightBlock",
+    "WorkbenchMnqMinuteReversal",
+    "WorkbenchMnqTsmomOrb"
+  ],
+  "overnight_selection": "Block won the matched actual-MNQ compiled-clock comparison; Session left installed as an unselected alternate.",
+  "compile": {
+    "platform": "Installed NinjaTrader 8.1.8.2 Core/Gui/Custom assemblies",
+    "errors": 0,
+    "warnings": 0
+  },
+  "checks": [
+    {
+      "name": "compile",
+      "exit_code": 0,
+      "command": [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "ninjatrader/build_check.ps1"
+      ]
+    },
+    {
+      "name": "python-calendar-nextopen-tests",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\.venv\\Scripts\\python.exe",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_tsmom_orb_*.py",
+        "-v"
+      ]
+    },
+    {
+      "name": "csharp-orb-tests",
+      "exit_code": 0,
+      "command": [
+        "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\.venv\\Scripts\\python.exe",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_ninjatrader_orb_port.py",
+        "-v"
+      ]
+    }
+  ],
+  "historical_current_orb_cases_passed": 9,
+  "historical_orb_attempts_retained": 10,
+  "zero_overnight_carries": true,
+  "orb_core_historical_differential": {
+    "result": "PASS",
+    "decisions_compared": 151025,
+    "scope": "Actual compiled C# core vs original Python event decisions on identical historical MNQ inputs; no NT fill/performance validation"
+  },
+  "broader_checks": {
+    "app_build": {
+      "command": "npm run build",
+      "exit_code": 0,
+      "note": "Production build passed; existing large-chunk advisory remains."
+    },
+    "pine_regression": {
+      "command": ".venv/Scripts/python.exe -m unittest discover -s tests -p test_pine_ports.py -v",
+      "exit_code": 1,
+      "functional_tests_passed": 11,
+      "pre_existing_failure": "Inventory expects17 Pine files; existing workspace has21. No Pine files were added by this repair."
+    }
+  },
+  "native_ninjatrader_backtest_or_playback_verified": false,
+  "accounts_selected_or_strategies_enabled": false,
+  "limits": "Historical replay on previously inspected data; fills, orders, calendar updates and live profitability remain unverified.",
+  "files": [
+    {
+      "file": "Strategies/WorkbenchMnqMinuteReversal.cs",
+      "sha256": "bf6be734a96fd2e5e8f40a4c93ffc26f649402ef629039f9c2dc139cc553c38c"
+    },
+    {
+      "file": "Strategies/WorkbenchMnqReversalCore.cs",
+      "sha256": "a337bf21f26df0c37fae97b9c7ab62b5cb4ebc63fd7363f3efd004daab88ff99"
+    },
+    {
+      "file": "Strategies/WorkbenchMnqOvernightBlock.cs",
+      "sha256": "182b9df08517b884eca039d7756c51a5cd971e0fd40296159dd03a7aae578847"
+    },
+    {
+      "file": "Strategies/WorkbenchMnqOvernightRules.cs",
+      "sha256": "04cc47cae52b3c5db2e11c5bea4176df9e309a1f83233a3926871781c5552436"
+    },
+    {
+      "file": "Strategies/WorkbenchMnqTsmomOrb.cs",
+      "sha256": "df2751af297dee6724902913726f684a40dcbfc2b26ded1bbef6ce7fa21a19ec"
+    },
+    {
+      "file": "Strategies/WorkbenchMnqTsmomOrbCore.cs",
+      "sha256": "1896bb2f698535cca7499b0b1bc445cb110fe03f60c6f5004f9155b32f0ace77"
+    }
+  ]
+}

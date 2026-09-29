@@ -45,6 +45,17 @@ def metadata(path):
             if type(warmup) is not int or not 0 <= warmup <= 1000:
                 raise ValueError('default_warmup_days must be an integer from 0 to 1000')
             resolve_parameters(value, {})
+            rule = value.get('warmup_bars')
+            if rule is not None:
+                if not isinstance(rule, dict) or set(rule) - {'parameter', 'multiplier', 'offset'}:
+                    raise ValueError('warmup_bars must declare parameter, optional multiplier and offset')
+                field = value['parameters'].get(rule.get('parameter'), {})
+                if field.get('type') != 'integer' or field.get('minimum', 0) < 1:
+                    raise ValueError('warmup_bars parameter must be a positive integer field')
+                for key, default, lower in [('multiplier', 1, 1), ('offset', 0, 0)]:
+                    number = rule.get(key, default)
+                    if type(number) is not int or number < lower:
+                        raise ValueError(f'warmup_bars {key} must be an integer >= {lower}')
             return value
     raise ValueError('Missing literal STRATEGY dictionary')
 

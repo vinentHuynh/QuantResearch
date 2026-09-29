@@ -8,6 +8,8 @@ import {
   defaultPolicy,
   replayGate,
   calendarDates,
+  commonWindow,
+  PortfolioCoverageError,
   tradeDependence,
 } from "../src/collectiveModel.ts";
 import { createCollective } from "../server/collective.ts";
@@ -58,7 +60,7 @@ const base = calculatePortfolio(
   "marked",
   defaultPolicy,
 );
-assert.equal(base.capital, 3000);
+assert.equal(base.capital, 100000);
 assert.equal(base.net, 220);
 assert.equal(base.points[0].pnl, 40);
 assert.equal(base.points[1].pnl, 110);
@@ -71,6 +73,44 @@ assert.equal(
   base.net,
 );
 assert.equal(base.points.at(-1).equity, base.capital + base.net);
+assert.equal(base.components.find(c => c.id === "a").maxDrawdownDollars, 50);
+assert.equal(base.components.find(c => c.id === "b").maxDrawdownDollars, 60);
+assert.equal(base.maxDrawdownDollars, 0, "Opposing strategies can offset each other's individual drawdowns");
+const cropped = calculatePortfolio([item("a")], [a], { a: 1 },
+  "2026-01-03", "2026-01-10", "marked", defaultPolicy);
+assert.equal(cropped.components[0].maxDrawdownDollars, 0, "Only the selected window contributes to drawdown");
+// The account balance is shared, independent of recorded sleeve capital/copies.
+const shared = calculatePortfolio([item("a"), { ...item("b"), capital: 900000 }],
+  [a, b], { a: 1, b: 2 }, "2026-01-01", "2026-01-10", "marked", defaultPolicy, 2000);
+assert.equal(shared.capital, 2000);
+assert.equal(shared.net, base.net);
+assert.equal(shared.returnOnCapital, 220 / 2000);
+assert.equal(shared.points.at(-1).equity, 2220);
+assert.equal(shared.components.reduce((n, c) => n + c.pnl / shared.capital, 0), shared.returnOnCapital);
+for (const basis of ["marked", "closed"]) {
+  const small = calculatePortfolio([item("a")], [a], { a: 1 }, "2026-01-01", "2026-01-10", basis, defaultPolicy, 1000);
+  const large = calculatePortfolio([item("a")], [a], { a: 1 }, "2026-01-01", "2026-01-10", basis, defaultPolicy, 2000);
+  assert.equal(small.net, large.net);
+  assert.equal(small.maxDrawdownDollars, 50);
+  assert.equal(small.components[0].maxDrawdownDollars, 50);
+  assert.equal(large.maxDrawdownDollars, 50);
+  assert.ok(Math.abs(small.maxDrawdown + 50 / 1100) < 1e-12);
+  assert.ok(Math.abs(large.maxDrawdown + 50 / 2100) < 1e-12);
+  assert.equal(small.returnOnCapital, 2 * large.returnOnCapital);
+  const doubled = calculatePortfolio([item("a")], [a], { a: 2 }, "2026-01-01", "2026-01-10", basis, defaultPolicy, 1000);
+  assert.equal(doubled.capital, small.capital);
+  assert.equal(doubled.net, 2 * small.net);
+  assert.equal(doubled.components[0].maxDrawdownDollars, 100);
+}
+for (const invalid of [0, -1, NaN, Infinity, -Infinity]) {
+  assert.throws(() => calculatePortfolio([item("a")], [a], { a: 1 },
+    "2026-01-01", "2026-01-10", "marked", defaultPolicy, invalid), /capital must be a positive finite amount/);
+}
+const depleted = calculatePortfolio([item("a")], [series("a", [["2026-01-01", -200]], [trade(1, -200)])],
+  { a: 1 }, "2026-01-01", "2026-01-10", "marked", defaultPolicy, 100);
+assert.equal(depleted.depleted, true);
+assert.equal(depleted.points[0].equity, -100);
+assert.equal(depleted.maxDrawdown, -2);
 assert.equal(
   base.points.reduce(
     (n, p) => n + Object.values(p.bySymbol).reduce((a, b) => a + b, 0),
@@ -153,6 +193,33 @@ const bad = {
     { start: "2026-01-04", end: "2026-01-10" },
   ],
 };
+assert.deepEqual(commonWindow([]), { start: "", end: "" });
+assert.deepEqual(commonWindow([item("a"), item("b")]), {
+  start: "2026-01-01", end: "2026-01-10",
+});
+assert.deepEqual(commonWindow([item("a"), bad]), {
+  start: "2026-01-04", end: "2026-01-10",
+});
+const repaired = commonWindow([item("a"), bad]);
+assert.doesNotThrow(() => calculatePortfolio(
+  [item("a")], [bad], { a: 1 }, repaired.start, repaired.end, "marked", defaultPolicy,
+));
+assert.deepEqual(commonWindow([{ coverage: [
+  { start: "2026-01-05", end: "2026-01-10" },
+  { start: "2026-01-01", end: "2026-01-04" },
+  { start: "2026-01-02", end: "2026-01-03" },
+] }, item("a")]), { start: "2026-01-01", end: "2026-01-10" });
+assert.deepEqual(commonWindow([item("a"), { coverage: [
+  { start: "2026-02-01", end: "2026-02-10" },
+] }]), { start: "", end: "" });
+assert.deepEqual(commonWindow([{ coverage: [
+  { start: "2026-01-01", end: "2026-01-02" },
+  { start: "2026-01-04", end: "2026-01-05" },
+] }]), { start: "2026-01-04", end: "2026-01-05" });
+assert.deepEqual(commonWindow([item("a"), { coverage: [] }]), { start: "", end: "" });
+assert.throws(() => calculatePortfolio(
+  [item("a")], [bad], { a: 1 }, "2026-01-01", "2026-01-10", "marked", defaultPolicy,
+), (error) => error instanceof PortfolioCoverageError && /tested: 2026-01-01 to 2026-01-02; 2026-01-04 to 2026-01-10/.test(error.message));
 assert.throws(
   () =>
     calculatePortfolio(
@@ -183,7 +250,7 @@ const trades = [
   trade(5, 50),
 ];
 const gate = replayGate(trades, policy, "2026-01-05");
-assert.deepEqual([...gate.accepted], [0, 1, 3, 4]);
+assert.deepEqual([...gate.accepted], [0, 1, 4]);
 assert.equal(gate.events[0].state, "Paused");
 assert.equal(gate.events[1].state, "Active");
 assert.equal(gate.state, "Active");
@@ -197,9 +264,11 @@ const filtered = calculatePortfolio(
   "closed",
   policy,
 );
-assert.equal(filtered.net, 60);
+assert.equal(filtered.net, 20);
 assert.equal(filtered.baseline, 90);
-assert.equal(filtered.components[0].skipped, 1);
+assert.equal(filtered.components[0].skipped, 2);
+assert.equal(filtered.components[0].maxDrawdownDollars, filtered.maxDrawdownDollars,
+  "A single strategy's drawdown follows its pause-filtered P&L");
 const future = replayGate(
   [...trades, trade(6, -99999), trade(7, -99999)],
   policy,
@@ -246,6 +315,44 @@ const drawdown = replayGate(
   "2026-01-05",
 );
 assert.equal(drawdown.events[0].timestamp, trades[1].exit);
+// Recovery excludes the trigger and positions opened before the pause.
+const recoveryPolicy = { ...policy, streak: 1, recovery: 2 };
+const oldWinner = [trade(1, -10), trade(2, 100, 1), trade(3, 20), trade(4, 30), trade(5, 40)];
+const recovered = replayGate(oldWinner, recoveryPolicy, "2026-01-05");
+assert.deepEqual([...recovered.accepted], [0, 1, 4]);
+assert.equal(Date.parse(recovered.events[1].timestamp), Date.parse(oldWinner[3].exit));
+const waiting = replayGate(oldWinner, recoveryPolicy, "2026-01-03");
+assert.equal(waiting.status.recoveryTrades, 1);
+assert.equal(waiting.status.recoveryPnl, 20);
+assert.equal(waiting.state, "Paused");
+// Recovery completed during cooldown must permit the first later entry,
+// even if no trade exits at or after cooldown expiry.
+const cooldown = replayGate([trade(1, -10), trade(2, 10), trade(3, 20), trade(8, 30)],
+  { ...recoveryPolicy, cooldown: 5 }, "2026-01-08");
+assert(cooldown.accepted.has(3));
+const expiryLoss = replayGate([trade(1, -10), trade(2, 100), trade(5, -10), trade(6, 20)],
+  { ...policy, streak: 1, recovery: 1, cooldown: 2 }, "2026-01-06");
+assert.equal(expiryLoss.events[1].timestamp, "2026-01-03T12:00:00.000Z");
+assert.equal(expiryLoss.events[2].state, "Paused");
+assert(!expiryLoss.accepted.has(3));
+const manualPolicy = { ...policy, mode: "manual" };
+const schedule = [
+  { timestamp: "2026-01-02T10:00:00Z", action: "pause", reason: "Review exposure" },
+  { timestamp: "2026-01-04T10:00:00Z", action: "resume", reason: "Review complete" },
+];
+const manualGate = replayGate(trades, manualPolicy, "2026-01-05", [], "", schedule);
+assert.deepEqual([...manualGate.accepted], [0, 3, 4]);
+assert.equal(manualGate.events.length, 2);
+assert.equal(replayGate(trades, manualPolicy, "2026-01-03", [], "", schedule).state, "Paused");
+assert.deepEqual(replayGate([...trades, trade(9, -999)], manualPolicy, "2026-01-05", [], "", schedule), manualGate);
+assert.equal(replayGate(trades, { ...manualPolicy, enabled: false }, "2026-01-05", [], "", schedule).accepted.size, 5);
+assert.equal(replayGate([trade(4, 100, 1)], manualPolicy, "2026-01-05", [], "", schedule).accepted.size, 1);
+assert.throws(() => replayGate(trades, manualPolicy, "2026-01-05", [], "", [...schedule, schedule[0]]), /one manual/);
+assert.throws(() => replayGate(trades, { ...policy, cooldown: NaN }, "2026-01-05"), /whole number/);
+const perBook = calculatePortfolio([item("a"), item("b")], [series("a", [], trades), series("b", [], trades)],
+  { a: 1, b: 2 }, "2026-01-01", "2026-01-05", "closed", { ...manualPolicy, manual: { a: schedule } });
+assert.equal(perBook.components.find(c => c.id === "a").pnl, 80);
+assert.equal(perBook.components.find(c => c.id === "b").pnl, 180);
 // Verified history access is allowlisted; corruption and duplicate sleeves fail closed.
 const folder = mkdtempSync(join(tmpdir(), "collective-test-"));
 try {
@@ -363,9 +470,10 @@ if (process.argv.includes("--real")) {
     "marked",
     defaultPolicy,
   );
-  assert(
-    Math.abs(result.net - working.reduce((n, i) => n + i.recent_pnl, 0)) < 0.01,
-  );
+  const expectedMarked = histories.reduce((total, history) =>
+    total + history.daily.filter((point) => point.date >= "2024-01-01" && point.date <= "2026-08-31")
+      .reduce((sum, point) => sum + point.pnl, 0), 0);
+  assert(Math.abs(result.net - expectedMarked) < 0.01);
   const closed = calculatePortfolio(
     working,
     histories,
@@ -375,7 +483,10 @@ if (process.argv.includes("--real")) {
     "closed",
     defaultPolicy,
   );
-  assert(Math.abs(closed.net - result.net) < 0.01);
+  const expectedClosed = histories.reduce((total, history) =>
+    total + history.trades.filter((trade) => trade.exit.slice(0, 10) >= "2024-01-01" && trade.exit.slice(0, 10) <= "2026-08-31")
+      .reduce((sum, trade) => sum + trade.pnl, 0), 0);
+  assert(Math.abs(closed.net - expectedClosed) < 0.01);
   const gated = calculatePortfolio(
     working,
     histories,

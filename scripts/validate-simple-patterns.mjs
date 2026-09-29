@@ -1,0 +1,61 @@
+// Read-only UI verification: saved results, wording, navigation and mobile layout.
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { chromium, expect } from '@playwright/test';
+
+const report = resolve('reports', `pattern-page-simplified-${Date.now()}`);
+mkdirSync(report, { recursive: true });
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+try {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  let writes = 0;
+  page.on('request', request => { if (request.method() === 'POST') writes++; });
+  await page.goto('http://127.0.0.1:8001/#/event-studies');
+  await page.getByRole('tab', { name: 'Details & charts', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'What the results mean' })).toBeVisible();
+  await expect(page.getByText('These tests have not shown a clear bounce advantage.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Final data still closed', { exact: true })).toBeVisible();
+  await expect(page.getByText('No clear advantage', { exact: true })).toHaveCount(3);
+  await expect(page.getByText('More data needed', { exact: true })).toHaveCount(1);
+  await expect(page.getByRole('heading', { name: 'Each pattern recognizer' })).not.toBeVisible();
+  await expect(page.getByRole('heading', { name: 'The eight patterns' })).toBeVisible();
+  assert.equal(await page.locator('#study-next-steps').getAttribute('open'), null);
+  await page.screenshot({ path: join(report, 'desktop.png') });
+  await page.getByRole('heading', { name: 'The eight patterns' }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: join(report, 'patterns.png') });
+  const cards = page.getByRole('heading', { name: 'The eight patterns' }).locator('..');
+  await expect(cards.getByRole('button', { name: 'See examples' })).toHaveCount(8);
+  await expect(cards.getByRole('button', { name: 'See examples' }).nth(2)).toBeDisabled(); // no validation demand detections
+  const images = page.getByRole('img', { name: /detection with confirmation and first touch/ });
+  await expect(images).toHaveCount(2);
+  await page.getByRole('textbox', { name: 'Review pattern', exact: true }).click();
+  await page.getByRole('option').filter({ hasText: 'Bullish FVG (' }).click();
+  await expect(images).toHaveCount(2);
+  await page.getByRole('heading', { name: 'Chart examples' }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: join(report, 'charts.png') });
+  await page.getByText('Detailed statistics', { exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Each pattern recognizer' })).toBeVisible();
+  await page.getByText('Detailed statistics', { exact: true }).click();
+  await page.getByRole('textbox', { name: 'Results to view', exact: true }).click();
+  await page.getByRole('option').filter({ hasText: 'Development — first check' }).click();
+  await page.getByRole('tab', { name: 'Details & charts', exact: true }).click();
+  await expect(page.getByText('2,027', { exact: true })).toBeVisible();
+  await expect(images).toHaveCount(2);
+  await page.getByRole('button', { name: 'Study setup & next steps', exact: true }).first().click();
+  await expect(page.getByRole('button', { name: 'Freeze protocol', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Run final test', exact: true })).toHaveCount(0);
+  await page.getByText('All test attempts', { exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Inspect', exact: true })).toHaveCount(2);
+  await page.getByText('Download results and logs', { exact: true }).click();
+  await expect(page.getByRole('link', { name: 'events.csv', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: join(report, 'mobile.png') });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth+1), false);
+  assert.deepEqual(errors, []);
+  assert.equal(writes, 0, 'Reviewing results must not launch tests or open final data');
+  writeFileSync(join(report, 'checks.json'), JSON.stringify({ passed: true, errors, writes }, null, 2));
+  console.log('Simplified pattern page passed:', report);
+} finally { await browser.close(); }

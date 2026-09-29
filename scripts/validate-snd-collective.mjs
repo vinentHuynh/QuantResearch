@@ -19,7 +19,7 @@ const page = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
 page.setDefaultTimeout(30000);
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
-const eligibility = async (prefix) => page.locator('.collective-picker label').filter({ hasText: new RegExp('^' + prefix) }).click();
+const eligibility = async prefix => page.locator('.collective-picker label').filter({hasText:new RegExp('^'+prefix)}).click();
 const select = async (label, option) => {
   await page.getByRole('textbox', { name: label, exact: true }).click();
   await page.getByRole('option', { name: option, exact: true }).click();
@@ -28,7 +28,7 @@ try {
   await page.goto(base);
   await page.getByRole('link', { name: 'Combined portfolio', exact: true }).click();
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-  await eligibility('All tested configurations');
+  await eligibility('All tested');
   await page.getByLabel('Find a strategy', { exact: true }).fill('SND');
   await select('Chart timeframe', '1m');
   await expect(page.getByTestId('strategy-picker').locator('tbody tr')).toHaveCount(20);
@@ -51,7 +51,7 @@ try {
   }
   await expect(page.getByTestId('portfolio-metrics').getByText('$1,228.50', { exact: true })).toBeVisible();
   await expect(page.getByTestId('selected-count')).toHaveText('2 books');
-  await eligibility('Working');
+  await eligibility('Evaluation passed');
   await expect(page.getByTestId('strategy-picker').locator('tbody tr')).toHaveCount(0);
   assert.deepEqual(errors, []);
   writeFileSync(folder + '/collective-validation.json', JSON.stringify({ status: 'PASS', imported: items.length, total_catalog: catalog.items.length,

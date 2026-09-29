@@ -1,0 +1,36 @@
+﻿{
+    "installed_at":  "2026-09-29T16:52:26.4928366Z",
+    "actions":  "Verified source copies only. No platform launch, native F5 compile, account selection or enabling.",
+    "files":  [
+                  {
+                      "file":  "WorkbenchMnqMinuteReversal.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqMinuteReversal.cs",
+                      "sha256":  "bf6be734a96fd2e5e8f40a4c93ffc26f649402ef629039f9c2dc139cc553c38c"
+                  },
+                  {
+                      "file":  "WorkbenchMnqReversalCore.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqReversalCore.cs",
+                      "sha256":  "a337bf21f26df0c37fae97b9c7ab62b5cb4ebc63fd7363f3efd004daab88ff99"
+                  },
+                  {
+                      "file":  "WorkbenchMnqOvernightBlock.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqOvernightBlock.cs",
+                      "sha256":  "182b9df08517b884eca039d7756c51a5cd971e0fd40296159dd03a7aae578847"
+                  },
+                  {
+                      "file":  "WorkbenchMnqOvernightRules.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqOvernightRules.cs",
+                      "sha256":  "04cc47cae52b3c5db2e11c5bea4176df9e309a1f83233a3926871781c5552436"
+                  },
+                  {
+                      "file":  "WorkbenchMnqTsmomOrb.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqTsmomOrb.cs",
+                      "sha256":  "df2751af297dee6724902913726f684a40dcbfc2b26ded1bbef6ce7fa21a19ec"
+                  },
+                  {
+                      "file":  "WorkbenchMnqTsmomOrbCore.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqTsmomOrbCore.cs",
+                      "sha256":  "1896bb2f698535cca7499b0b1bc445cb110fe03f60c6f5004f9155b32f0ace77"
+                  }
+              ]
+}

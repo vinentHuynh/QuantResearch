@@ -1,0 +1,56 @@
+{
+  "created_at_utc": "2026-09-29T16:21:11.141904+00:00",
+  "compiled_platform": "NinjaTrader 8.1.8.2 installed assemblies, .NET Framework C#5",
+  "compile": {
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ninjatrader/build_check.ps1",
+    "exit_code": 0,
+    "warnings": 0,
+    "errors": 0,
+    "native_NinjaScript_Editor_F5": false
+  },
+  "decision_validation": [
+    {
+      "command": ".venv/Scripts/python.exe ninjatrader/tests/validate_reversal.py",
+      "result": "PASS",
+      "report": "reversal-validation.json"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m unittest discover -s tests -p test_ninjatrader_overnight_ports.py -v",
+      "result": "PASS",
+      "tests": 6,
+      "log": "overnight-tests.log"
+    }
+  ],
+  "native_strategy_analyzer_tested": false,
+  "native_playback_tested": false,
+  "broker_connected_or_orders_placed": false,
+  "source_strategy_evidence": "selection.json",
+  "mnq_profitability_validated": false,
+  "files": [
+    {
+      "file": "Strategies/WorkbenchMnqMinuteReversal.cs",
+      "sha256": "bf6be734a96fd2e5e8f40a4c93ffc26f649402ef629039f9c2dc139cc553c38c",
+      "bytes": 6734
+    },
+    {
+      "file": "Strategies/WorkbenchMnqReversalCore.cs",
+      "sha256": "a337bf21f26df0c37fae97b9c7ab62b5cb4ebc63fd7363f3efd004daab88ff99",
+      "bytes": 3860
+    },
+    {
+      "file": "Strategies/WorkbenchMnqOvernightBlock.cs",
+      "sha256": "182b9df08517b884eca039d7756c51a5cd971e0fd40296159dd03a7aae578847",
+      "bytes": 4404
+    },
+    {
+      "file": "Strategies/WorkbenchMnqOvernightSession.cs",
+      "sha256": "3d4b6c9973268e2c6acddaacd927c467ff93ea75b0b8a55d7555dc13636c37e2",
+      "bytes": 4436
+    },
+    {
+      "file": "Strategies/WorkbenchMnqOvernightRules.cs",
+      "sha256": "04cc47cae52b3c5db2e11c5bea4176df9e309a1f83233a3926871781c5552436",
+      "bytes": 2546
+    }
+  ]
+}

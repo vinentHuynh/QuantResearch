@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { strategyTitle } from "./strategyTitle";
 import {
   Alert,
   Badge,
@@ -25,7 +26,10 @@ import {
   Title,
 } from "@mantine/core";
 import {
+  IconArrowDown,
+  IconArrowUp,
   IconArrowUpRight,
+  IconArrowsSort,
   IconCheck,
   IconChevronLeft,
   IconChevronRight,
@@ -42,8 +46,12 @@ import {
 import "./workbench.css";
 import { ResearchPage, type EvaluationView, type RegimeView } from "./Research";
 import { StrategyLibrary, type Library } from "./StrategyLibrary";
+import { StrategyTesting } from "./StrategyTesting";
+import { testingEvidence, comparePromising } from "./testingEvidence";
 import { StrategyScorecards } from "./StrategyDashboard";
+import { NqMonthlyComparison } from "./NqMonthlyComparison";
 import { CollectiveDashboard } from "./CollectiveDashboard";
+import { EventStudies } from "./EventStudies";
 import { PageHeader, Shell, type SearchResult } from "./Shell";
 import { href, navGroups, useRoute, type Page } from "./navigation";
 
@@ -140,7 +148,7 @@ type RunInput = Omit<Input, "strategy_id" | "dataset_id" | "sweep"> & {
   selection_time: string;
   retry_of?: string;
 };
-export type Run = {
+export type RunSummary = {
   id: string;
   status: string;
   created_at: string;
@@ -155,11 +163,56 @@ export type Run = {
   result?: {
     metrics: Metrics;
     warnings: string[];
-    equity_preview: { timestamp: string; equity: number; drawdown?: number }[];
-    trade_preview: Record<string, unknown>[];
     artifacts: { name: string }[];
   };
 };
+export type Run = Omit<RunSummary, "result"> & {
+  result?: NonNullable<RunSummary["result"]> & {
+    equity_preview: { timestamp: string; equity: number; drawdown?: number }[];
+    trade_preview: Record<string, unknown>[];
+  };
+};
+type RunSortValue = string | number | null | undefined;
+type RunSortColumn = {
+  key: string;
+  label: string;
+  numeric?: boolean;
+  value: (run: RunSummary, now: number) => RunSortValue;
+};
+function runtimeSeconds(run: RunSummary, now: number) {
+  return run.started_at
+    ? Math.max(0, (run.ended_at ? Date.parse(run.ended_at) : now) - Date.parse(run.started_at)) / 1000
+    : null;
+}
+const runSortColumns: RunSortColumn[] = [
+  { key: "created", label: "Created", value: (run) => Date.parse(run.created_at) },
+  { key: "strategy", label: "Strategy / run", value: (run) => strategyTitle(run.input.strategy.name) },
+  { key: "data", label: "Data / window", value: (run) => `${run.input.dataset.symbol} ${run.input.timeframe} ${run.input.start} ${run.input.end}` },
+  { key: "stage", label: "Run purpose", value: (run) => run.input.stage },
+  { key: "status", label: "Execution", value: (run) => run.status },
+  { key: "return", label: "Net return", numeric: true, value: (run) => run.result?.metrics.net_return },
+  { key: "drawdown", label: "Drawdown", numeric: true, value: (run) => run.result?.metrics.max_drawdown },
+  { key: "trades", label: "Trades", numeric: true, value: (run) => run.result?.metrics.trades },
+  { key: "runtime", label: "Runtime", numeric: true, value: runtimeSeconds },
+];
+const runSortOptions = runSortColumns.flatMap((column) =>
+  ["asc", "desc"].map((direction) => ({
+    value: `${column.key}:${direction}`,
+    label: column.key === "created"
+      ? direction === "asc" ? "Oldest" : "Newest"
+      : `${column.label} (${direction === "asc" ? "ascending" : "descending"})`,
+  })),
+);
+function compareRunValues(a: RunSortValue, b: RunSortValue, descending: boolean) {
+  const missing = (value: RunSortValue) => value == null || (typeof value === "number" && !Number.isFinite(value));
+  if (missing(a)) return missing(b) ? 0 : 1;
+  if (missing(b)) return -1;
+  const order = typeof a === "number" && typeof b === "number"
+    ? a - b
+    : String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+  return descending ? -order : order;
+}
+
 type Watch = {
   id: string;
   run_id: string;
@@ -182,7 +235,7 @@ type State = {
   strategies: Strategy[];
   errors: { file?: string; error: string }[];
   datasets: Dataset[];
-  runs: Run[];
+  runs: RunSummary[];
   watchlist: Watch[];
   presets: { id: string; name: string; input: Input }[];
   views: View[];
@@ -197,6 +250,15 @@ type Comparison = {
   boundary?: string;
   runs?: Run[];
   rows?: { id: string; metrics: Metrics; baseline_equity: number }[];
+};
+type WarmupCheck = {
+  symbol: string;
+  timeframe: string;
+  parameters: Record<string, unknown>;
+  status: string;
+  required_bars: number;
+  available_bars: number;
+  warning: string | null;
 };
 const API = "/api/workbench";
 async function request<T>(
@@ -362,6 +424,7 @@ export function Workbench() {
     explanation: string;
   } | null>(null);
   const [state, setState] = useState<State | null>(null);
+  const stateEtag = useRef("");
   const [route, go] = useRoute();
   const [researchSelection, setResearchSelection] = useState<string>("");
   const [dashboardRefresh, setDashboardRefresh] = useState(0);
@@ -371,11 +434,13 @@ export function Workbench() {
   const [input, setInput] = useState<Input>(initial);
   const [sweepText, setSweepText] = useState("{}");
   const [preview, setPreview] = useState<number | null>(null);
+  const [warmupChecks, setWarmupChecks] = useState<WarmupCheck[]>([]);
   const [step, setStep] = useState(0);
   const [filter, setFilter] = useState("");
+  const [testingMarket, setTestingMarket] = useState("");
   const [stage, setStage] = useState("");
   const [status, setStatus] = useState("");
-  const [sort, setSort] = useState("Newest");
+  const [sort, setSort] = useState("created:desc");
   const [selected, setSelected] = useState<string[]>([]);
   const [comparison, setComparison] = useState<Comparison | null>(null);
   const [detail, setDetail] = useState<Run | null>(null);
@@ -387,15 +452,27 @@ export function Workbench() {
   const [viewOpen, setViewOpen] = useState(false);
   const refresh = useCallback(async () => {
     try {
-      setState(await request<State>("/state"));
+      const response = await fetch(API + "/state?view=summary", {
+        headers: stateEtag.current ? { "If-None-Match": stateEtag.current } : {},
+      });
+      if (response.status === 304) return;
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || response.statusText);
+      stateEtag.current = response.headers.get("ETag") || "";
+      setState(data as State);
     } catch (e) {
       setError(String(e));
     }
   }, []);
   useEffect(() => {
-    void refresh();
-    const timer = setInterval(() => void refresh(), 2000);
-    return () => clearInterval(timer);
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      if (!document.hidden) await refresh();
+      if (!stopped) timer = setTimeout(() => void poll(), 10000);
+    };
+    void poll();
+    return () => { stopped = true; clearTimeout(timer); };
   }, [refresh]);
   useEffect(() => {
     if (!detail || !["Queued", "Running"].includes(detail.status)) return;
@@ -460,7 +537,7 @@ export function Workbench() {
       sweep: JSON.parse(sweepText),
     };
   }
-  async function inspect(run: Run) {
+  async function inspect(run: RunSummary) {
     const result = await request<Run>(`/runs/${run.id}`);
     setDetail(result);
     setNotes(result.notes || "");
@@ -494,6 +571,9 @@ export function Workbench() {
   }
   const strategy = state?.strategies.find((s) => s.id === input.strategy_id);
   const dataset = state?.datasets.find((d) => d.id === input.dataset_id);
+  const [sortKey, sortDirection] = sort.split(":");
+  const sortColumn = runSortColumns.find((column) => column.key === sortKey)!;
+  const now = Date.now();
   const filtered = (state?.runs || [])
     .filter(
       (r) =>
@@ -503,18 +583,14 @@ export function Workbench() {
           .toLowerCase()
           .includes(filter.toLowerCase()),
     )
-    .sort((a, b) =>
-      sort === "Oldest"
-        ? a.created_at.localeCompare(b.created_at)
-        : sort === "Strategy"
-          ? a.input.strategy.name.localeCompare(b.input.strategy.name)
-          : b.created_at.localeCompare(a.created_at),
-    );
+    .sort((a, b) => compareRunValues(
+      sortColumn.value(a, now), sortColumn.value(b, now), sortDirection === "desc",
+    ));
   const compareRuns =
     comparison?.runs ||
     (comparison?.rows || [])
       .map((row) => state?.runs.find((r) => r.id === row.id))
-      .filter((r): r is Run => !!r);
+      .filter((r): r is RunSummary => !!r);
   const counts = {
     total: state?.runs.length || 0,
     active:
@@ -581,7 +657,7 @@ export function Workbench() {
           .slice(0, 5)
           .map((r) => ({
             group: "Runs",
-            label: `${r.input.strategy.name} · ${r.input.dataset.symbol} ${r.input.timeframe}`,
+            label: `${strategyTitle(r.input.strategy.name)} · ${r.input.dataset.symbol} ${r.input.timeframe}`,
             detail: `${short(r.id)} · ${r.status} · ${r.input.start} → ${r.input.end}`,
             run: () => {
               go("runs");
@@ -593,7 +669,7 @@ export function Workbench() {
           .slice(0, 4)
           .map((s) => ({
             group: "Configure a run",
-            label: s.name,
+            label: strategyTitle(s.name),
             detail: s.timeframes.join(" · "),
             run: () => configure(s.id),
           }));
@@ -710,6 +786,7 @@ export function Workbench() {
         />
       );
     if (route.page === "runs") return runsPage(state);
+    if (route.page === "event-studies") return <EventStudies datasets={state.datasets} />;
     if (route.page === "new-run") return newRunPage(state);
     if (route.page === "scripts") return scriptsPage(state);
     if (route.page === "datasets") return datasetsPage(state);
@@ -721,6 +798,7 @@ export function Workbench() {
       (v) => v.filter === filter && v.stage === stage && v.status === status,
     );
     const experiments = route.sub === "experiments";
+    const monthly = route.sub === "nq-monthly";
     return (
       <>
         <PageHeader
@@ -769,13 +847,18 @@ export function Workbench() {
             {
               label: "All runs",
               count: state.runs.length,
-              active: !experiments && !activeView,
+              active: !experiments && !monthly && !activeView,
               onClick: () => {
                 setFilter("");
                 setStage("");
                 setStatus("");
                 go("runs");
               },
+            },
+            {
+              label: "NQ monthly",
+              active: monthly,
+              href: href("runs", "nq-monthly"),
             },
             {
               label: "Experiments",
@@ -785,7 +868,7 @@ export function Workbench() {
             },
             ...state.views.map((v) => ({
               label: v.name,
-              active: !experiments && activeView?.id === v.id,
+              active: !experiments && !monthly && activeView?.id === v.id,
               onClick: () => {
                 setFilter(v.filter);
                 setStage(v.stage);
@@ -795,7 +878,7 @@ export function Workbench() {
             })),
           ]}
           tabsExtra={
-            !experiments && (
+            !experiments && !monthly && (
               <Popover
                 opened={viewOpen}
                 onChange={setViewOpen}
@@ -821,7 +904,7 @@ export function Workbench() {
                       onChange={(e) => setViewName(e.currentTarget.value)}
                     />
                     <Text size="xs" c="dimmed">
-                      Saves the current search, stage and execution filters.
+                      Saves the current search, run purpose and execution filters.
                     </Text>
                     <Button
                       size="xs"
@@ -848,7 +931,16 @@ export function Workbench() {
           }
         />
         {alerts}
-        {experiments ? (
+        {monthly ? (
+          <NqMonthlyComparison
+            refreshKey={dashboardRefresh}
+            onInspect={(id) => {
+              const run = state.runs.find((candidate) => candidate.id === id);
+              if (run) void action(() => inspect(run));
+              else setError(`Saved run ${id} is no longer in the Workbench.`);
+            }}
+          />
+        ) : experiments ? (
           <div className="wb-content">
             <p className="wb-context">
               All attempted variants remain recorded, including failed and
@@ -891,8 +983,8 @@ export function Workbench() {
                 onChange={(e) => setFilter(e.currentTarget.value)}
               />
               <Select
-                aria-label="Research stage"
-                placeholder="All stages"
+                aria-label="Run purpose"
+                placeholder="All run purposes"
                 clearable
                 data={["Exploratory", "Evaluation", "Tracking"]}
                 value={stage || null}
@@ -915,9 +1007,9 @@ export function Workbench() {
               />
               <Select
                 aria-label="Sort"
-                data={["Newest", "Oldest", "Strategy"]}
+                data={runSortOptions}
                 value={sort}
-                onChange={(v) => setSort(v || "Newest")}
+                onChange={(v) => setSort(v || "created:desc")}
               />
               <span className="wb-toolbar-note">
                 {state.limits.concurrency} workers · up to{" "}
@@ -948,22 +1040,29 @@ export function Workbench() {
                 <Table miw={1100} highlightOnHover verticalSpacing="sm">
                   <Table.Thead>
                     <Table.Tr>
-                      {[
-                        "",
-                        "Strategy / run",
-                        "Data / window",
-                        "Stage",
-                        "Execution",
-                        "Net return",
-                        "Drawdown",
-                        "Trades",
-                        "Runtime",
-                        "",
-                      ].map((x, i) => (
-                        <Table.Th key={i} ta={i >= 5 && i <= 8 ? "right" : undefined}>
-                          {x}
+                      <Table.Th />
+                      {runSortColumns.slice(1).map((column) => (
+                        <Table.Th
+                          key={column.key}
+                          ta={column.numeric ? "right" : undefined}
+                          aria-sort={sortKey === column.key
+                            ? sortDirection === "asc" ? "ascending" : "descending"
+                            : "none"}
+                        >
+                          <button
+                            type="button"
+                            className={`wb-sort-header${column.numeric ? " wb-sort-numeric" : ""}`}
+                            title={`Sort ${column.label} ${sortKey === column.key && sortDirection === "asc" ? "descending" : "ascending"}`}
+                            onClick={() => setSort(`${column.key}:${sortKey === column.key && sortDirection === "asc" ? "desc" : "asc"}`)}
+                          >
+                            {column.label}
+                            {sortKey !== column.key ? <IconArrowsSort size={14} aria-hidden="true" />
+                              : sortDirection === "asc" ? <IconArrowUp size={14} aria-hidden="true" />
+                                : <IconArrowDown size={14} aria-hidden="true" />}
+                          </button>
                         </Table.Th>
                       ))}
+                      <Table.Th />
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
@@ -990,7 +1089,7 @@ export function Workbench() {
                         </Table.Td>
                         <Table.Td>
                           <Text fw={600} size="sm">
-                            {run.input.strategy.name}
+                            {strategyTitle(run.input.strategy.name)}
                           </Text>
                           <Text size="xs" c="dimmed" ff="monospace">
                             {short(run.id)} · code {short(run.input.source_hash)}
@@ -1035,7 +1134,7 @@ export function Workbench() {
                         </Table.Td>
                         <Table.Td ta="right" c="dimmed">
                           {run.started_at
-                            ? `${Math.max(0, (Date.parse(run.ended_at || new Date().toISOString()) - Date.parse(run.started_at)) / 1000).toFixed(1)}s`
+                            ? `${runtimeSeconds(run, now)!.toFixed(1)}s`
                             : "—"}
                         </Table.Td>
                         <Table.Td onClick={(e) => e.stopPropagation()}>
@@ -1308,7 +1407,7 @@ export function Workbench() {
   function newRunPage(state: State) {
     const summaries = [
       strategy
-        ? `${strategy.name} · ${dataset ? `${dataset.symbol} ${input.timeframe}` : "choose a dataset"} · ${input.start} to ${input.end}`
+        ? `${strategyTitle(strategy.name)} · ${dataset ? `${dataset.symbol} ${input.timeframe}` : "choose a dataset"} · ${input.start} to ${input.end}`
         : "Choose a script and dataset",
       strategy
         ? Object.entries(input.parameters)
@@ -1379,7 +1478,7 @@ export function Workbench() {
                   searchable
                   data={state.strategies.map((s) => ({
                     value: s.id,
-                    label: s.name,
+                    label: strategyTitle(s.name),
                   }))}
                   value={input.strategy_id || null}
                   onChange={(v) => v && chooseStrategy(v)}
@@ -1521,7 +1620,8 @@ export function Workbench() {
                   Final positions close at the final bar close. No cash flows.
                 </Text>
                 <Select
-                  label="Research stage"
+                  label="Run purpose"
+                  description="Records the intent of this run. Testing milestones are earned from its evidence."
                   data={["Exploratory", "Evaluation"]}
                   value={input.stage}
                   onChange={(v) => v && change("stage", v)}
@@ -1574,7 +1674,7 @@ export function Workbench() {
                   label="Additional timeframes"
                   description={
                     strategy && strategy.timeframes.length <= 1
-                      ? `${strategy.name} runs on ${strategy.timeframes[0] || "one timeframe"} only.`
+                      ? `${strategyTitle(strategy.name)} runs on ${strategy.timeframes[0] || "one timeframe"} only.`
                       : "Datasets × timeframes × parameter combinations form the batch."
                   }
                   data={(strategy?.timeframes || []).filter(
@@ -1680,11 +1780,13 @@ export function Workbench() {
                     loading={busy}
                     onClick={() =>
                       void action(async () => {
-                        const result = await request<{ jobs: number }>(
+                        setPreview(null);
+                        const result = await request<{ jobs: number; warmup: WarmupCheck[] }>(
                           "/preview",
                           runInput(),
                         );
                         setPreview(result.jobs);
+                        setWarmupChecks(result.warmup || []);
                       })
                     }
                   >
@@ -1716,6 +1818,14 @@ export function Workbench() {
                     experiment's code and resolved parameters.
                   </Alert>
                 )}
+                {preview !== null && warmupChecks.map((check, index) => (
+                  <Alert key={index} color={check.status === "insufficient" ? "orange" : "teal"}
+                    title={`${check.symbol} ${check.timeframe}: warmup ${check.status}`}>
+                    <Text size="sm">{check.available_bars} completed bars before scoring; {check.required_bars} required.</Text>
+                    <Text size="xs">Parameters: {JSON.stringify(check.parameters)}</Text>
+                    {check.warning && <Text size="sm">{check.warning}</Text>}
+                  </Alert>
+                ))}
               </>
             )}
             <div className="wb-wizard-nav">
@@ -1772,7 +1882,7 @@ export function Workbench() {
             )}
             <dl className="wb-kv">
               <dt>Script</dt>
-              <dd>{strategy?.name || "—"}</dd>
+              <dd>{strategy ? strategyTitle(strategy.name) : "—"}</dd>
               <dt>Dataset</dt>
               <dd>{dataset ? `${dataset.symbol} · ${short(dataset.id)}` : "—"}</dd>
               <dt>Window (UTC)</dt>
@@ -1781,7 +1891,7 @@ export function Workbench() {
               </dd>
               <dt>Session</dt>
               <dd>{input.session}</dd>
-              <dt>Stage</dt>
+              <dt>Run purpose</dt>
               <dd>{input.stage}</dd>
               <dt>Capital</dt>
               <dd>${input.capital.toLocaleString()}</dd>
@@ -1804,6 +1914,11 @@ export function Workbench() {
 
   function scriptsPage(state: State) {
     const library = route.sub === "library";
+    const evidence = Object.fromEntries(state.strategies.map(s => [s.id, testingEvidence(s, state.runs, state.evaluations || [], testingMarket)]));
+    const testingActions = {
+      inspectRun: (id: string) => { const run = state.runs.find(r => r.id === id); if (run) void action(() => inspect(run)); },
+      openEvaluation: (id: string) => { setResearchSelection(id); go("evaluations"); },
+    };
     return (
       <>
         <PageHeader
@@ -1842,12 +1957,17 @@ export function Workbench() {
         />
         {alerts}
         <div className="wb-content">
+          <Group justify="space-between" align="end" mb="md">
+            <Text size="sm" c="dimmed">Most promising first — validation strength, then return / drawdown.</Text>
+            <Select label="Testing evidence market" value={testingMarket} onChange={v => setTestingMarket(v || "")}
+              data={[{ value: "", label: "All markets" }, ...[...new Set(state.datasets.map(d => d.symbol))].sort().map(symbol => ({ value: symbol, label: symbol }))]} />
+          </Group>
           {library ? (
-            <StrategyLibrary library={state.library} configure={configure} />
+            <StrategyLibrary library={state.library} configure={configure} evidence={evidence} testingActions={testingActions} />
           ) : (
             <>
-              <section className="wb-card">
-                <h2>Create your next strategy</h2>
+              <details className="wb-card">
+                <summary>Create your next strategy</summary>
                 <Text size="sm" mt="xs">
                   Copy <Code>strategies/_template.py</Code> to{" "}
                   <Code>strategies/my_strategy.py</Code>, give it a unique{" "}
@@ -1861,21 +1981,21 @@ export function Workbench() {
                   local helpers when you launch. Existing scripts can be wrapped
                   by this small adapter.
                 </Text>
-              </section>
+              </details>
               {state.errors.map((e, i) => (
                 <Alert key={i} color="red" title={e.file || "Discovery error"}>
                   {e.error}
                 </Alert>
               ))}
               <SimpleGrid cols={{ base: 1, md: 2 }}>
-                {state.strategies.map((s) => (
+                {[...state.strategies].sort((a, b) => comparePromising(evidence[a.id], evidence[b.id]) || a.name.localeCompare(b.name)).map((s) => (
                   <section className="wb-card" key={s.id}>
                     <Group justify="space-between" wrap="nowrap" align="start">
-                      <Title order={3}>{s.name}</Title>
-                      <Badge color="teal" variant="light" radius="xs">
-                        v{s.version}
-                      </Badge>
+                      <Title order={3}>{strategyTitle(s.name)}</Title>
                     </Group>
+                    <StrategyTesting evidence={evidence[s.id]} {...testingActions} />
+                    <details className="script-source-details">
+                      <summary>Script details</summary>
                     <Text size="sm" c="dimmed" my="sm">
                       {s.description}
                     </Text>
@@ -1904,6 +2024,7 @@ export function Workbench() {
                         ?.ended_at?.slice(0, 19)
                         .replace("T", " ") || "No runs yet"}
                     </Text>
+                    </details>
                     <Button
                       mt="md"
                       variant="light"
@@ -2135,7 +2256,7 @@ export function Workbench() {
                 <Group justify="space-between" align="start">
                   <Box>
                     <Title order={3}>
-                      {original.input.strategy.name} ·{" "}
+                      {strategyTitle(original.input.strategy.name)} ·{" "}
                       {original.input.dataset.symbol}
                     </Title>
                     <Text size="xs" c="dimmed">
@@ -2261,7 +2382,7 @@ export function Workbench() {
         {detail && (
           <Stack>
             <Group justify="space-between">
-              <Title order={3}>{detail.input.strategy.name}</Title>
+              <Title order={3}>{strategyTitle(detail.input.strategy.name)}</Title>
               <Badge color={tone(detail.status)}>{detail.status}</Badge>
             </Group>
             <Text size="xs" c="dimmed">

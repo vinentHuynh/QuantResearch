@@ -1,0 +1,38 @@
+.strategy-condition {
+  min-width: 0;
+}
+.strategy-condition .wb-card-head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.condition-cards {
+  display: grid;
+  gap: 12px;
+}
+.condition-book {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 8px;
+  padding: 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.condition-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.condition-book summary {
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 10px;
+}
+.condition-book details p {
+  margin-top: 6px;
+}
+@media (max-width: 650px) {
+  .condition-metrics {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

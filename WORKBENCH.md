@@ -18,6 +18,12 @@ the platform's virtual environment automatically.
 
 ## Run an experiment
 
+**Research → Pattern event studies** tests supply/demand, order blocks, FVGs and
+support/resistance using shared causal outcomes, matched controls and a frozen
+60/20/20 chronological protocol. It includes visual detection review, clustered
+uncertainty, complete event exports and replication on another instrument.
+See [EVENT_STUDIES.md](EVENT_STUDIES.md) for definitions, lifecycle and checks.
+
 1. **Datasets → Import data ZIPs** (sidebar, Sources) scans `data/` recursively. The supplied NQ,
    ES, YM, and CL Databento archives have already been registered locally.
    Imports report progress and errors. Reimporting the same archive reuses its
@@ -45,6 +51,12 @@ never inspected that data; evaluation outcomes remain a research judgment.
 
 ## Add a strategy automatically
 
+The closing-window momentum adapter is documented in
+[MARKET_INTRADAY_MOMENTUM.md](MARKET_INTRADAY_MOMENTUM.md). It includes the
+Baltussen rest-of-day and Gao opening-half-hour signals, scheduled intraday
+execution, market presets, and a reproducible 28-case historical regression
+campaign for ES, NQ, MNQ and CL.
+
 ### Existing Python strategies
 
 **Scripts & library → Library** indexes 91 original Python sources
@@ -69,6 +81,54 @@ the workbench uses its own fixed-contract, next-open execution and accounting.
 
 ### New strategies
 
+**Runnable scripts**, **Library**, evaluations, scorecards and the portfolio
+picker use the same research milestones: **Backtested → Evaluation passed →
+Robustness checked**. A backtest establishes completed execution, not profit or
+validation. Evaluation requires complete passing declared scenarios; robustness
+requires the additional recorded historical execution and parameter checklist.
+The run form's **Run purpose** records intent and never awards a milestone.
+
+Progress belongs to a source snapshot, symbol, timeframe, session and parameter
+configuration. Scripts and library sources are sorted by their most promising
+recorded result: validation strength, then return/drawdown and trade count.
+The default view shows only that result's market/chart, stage and short summary.
+**Testing details** contains the full evidence, reviews and job progress; script
+implementation information is under **Script details**. Expand **Results and next
+steps by configuration** for exact settings, findings and linked runs. A failed
+ES case cannot invalidate a passing NQ configuration. Matching unresolved checks
+remain attached across dates and cost settings. Incomplete evaluations are
+distinct from unmet criteria; completed, queued and summarizing jobs are separate
+from milestone attainment. Older adapter evidence remains visible as requiring
+a current-source retest. An unlinked library source shows its adapter blocker.
+
+Review completion is separate from passing the tests, with the
+saved adapter-wide verdict, next step and reviewed issue count. Failed evidence
+stays visible under **Failure reasons and evidence**, with its market and chart.
+The structured `Testing review:` line in saved run notes records the adapter
+checksum, reviewed run IDs and issue fingerprints. New runs, changed failures,
+or a changed adapter require another review; a tag alone does not complete it.
+Market filtering retains the explicitly labeled adapter-wide review summary.
+These labels do not change the stored historical eligibility flags. Scorecards
+explicitly describe the latest evaluated configuration on the chosen market;
+script/library summaries include all recorded current-adapter configurations.
+Run/evaluation views establish only milestones supported by their records; the
+portfolio catalog additionally carries its reviewed robustness checklist.
+
+**Most viable recorded run** considers positive, traded, non-training results
+matching the current adapter checksum. Passing evaluation baselines rank ahead
+of individually passing cases, exploratory runs, and failed-check candidates.
+Failures follow matching market/timeframe/session/parameters across dates and
+cost settings. Within each group, ranking uses net return divided by absolute
+maximum drawdown, then trade count and recency; zero-drawdown samples rank last.
+The run's dates, market, parameters and assumptions remain inspectable. This
+comparison does not promote Working/feasible status or establish a fresh holdout.
+Free-text review flags display the recorded criteria and measured results;
+structured evaluation failures also show the exact breached thresholds.
+
+Checks: `npm run test:progress` and, with the built app on port 8001,
+`npm run test:progress-browser`. The browser check reads saved evidence and uses
+a local response fixture for mixed-market results; it launches no backtests.
+
 ```powershell
 Copy-Item strategies/_template.py strategies/my_strategy.py
 ```
@@ -84,6 +144,26 @@ automatically links your adapter from those library entries. Use `migration_scop
 to describe exactly which rules it covers and execution differences. Set
 `default_warmup_days` when the form should start with a longer warmup. RSI(2), for
 example, defaults to 400 calendar days for its 200-bar daily trend filter.
+
+Adapters may declare `warmup_bars`, for example
+`{'parameter': 'lookback', 'multiplier': 4, 'offset': 1}` for multi-speed momentum.
+The requirement is `lookback * 4 + 1` completed bars: 241 at the default lookback.
+Momentum defaults to 600 calendar days, but a day count alone does not prove
+coverage. **Validate & preview** reads the selected dataset and counts completed
+session bars available before the scored UTC start. It checks every grid variant,
+excluding unfinished bars and a partially loaded bar at the left boundary.
+The worker repeats the check and preserves its result in `manifest.json` under
+`warmup`, with a warning in the run detail if coverage is insufficient.
+Exploratory runs remain launchable with that warning; their early signals may be
+uninitialized. Strategies without this declaration have `undeclared` coverage,
+not a passing warmup check. Saved source snapshots and historical runs are unchanged.
+
+`npm run test:warmup` checks coverage boundaries and metadata;
+`npm run test:state-summary` checks record-preserving projections.
+With an idle workbench on port 8001, `npm run test:state-warmup` copies completed
+records into a new isolated test state, verifies the API and browser on port
+8003, and runs two MNQ warmup checks there. It requires MNQ data and Edge,
+preserves production runs, and keeps the isolated artifacts for inspection.
 
 Validation commands: `npm run test:library` checks inventory coverage, source
 discovery, indicator parity, and causality. `npm run test:library-browser` exercises
@@ -124,6 +204,14 @@ working brackets. See [PINE_AUDIT.md](PINE_AUDIT.md) and the port modules for th
 contract. Summary-only imports and multi-leg accounting are not implemented.
 
 ## Accounting and comparisons
+
+The dashboard polls `GET /api/workbench/state?view=summary`, which retains inputs,
+metrics (including monthly results), warnings and artifact links while omitting
+per-run equity/trade preview arrays. Conditional requests use ETags and return
+304 when unchanged. Opening a run fetches its complete detail from `/runs/:id`.
+The original `/state` endpoint remains complete for research scripts and exports.
+Research evaluation previews still travel in the summary; pagination and loading
+those previews on demand remain future scaling work.
 
 The following describes the signal runner. Pine event fills, sizing, bracket
 costs, and comparison/evaluation limits are specified in [PINE_AUDIT.md](PINE_AUDIT.md).
@@ -243,8 +331,13 @@ directly to the saved records.
   no earlier matching research failures/flags remain.
 - **Conditional:** latest scenarios pass, but earlier matching evaluations failed
   or earlier saved runs carry a `checks-failed` review flag.
-- **Needs review:** a criterion fails, net profit is not positive, the adapter
-  changed, or trade evidence is unavailable/corrupt.
+- **Failed criteria:** a declared criterion fails or net profit is not positive.
+- **Retest required:** the adapter changed or is no longer registered.
+- **Evidence repair needed:** the trade evidence is unavailable or fails verification.
+- **Further testing needed:** a declared scenario is missing. The portfolio picker
+  also uses this label for tested configurations without Working eligibility.
+  These are next-action labels, independent of whether a review is complete.
+  The scorecard's **Action needed** filter includes these states and incomplete evaluations.
 - **Benchmark**, **In progress**, **Incomplete**, and **Not evaluated** preserve
   the distinction between execution, research status, and missing evidence.
 

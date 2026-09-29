@@ -1,0 +1,17 @@
+test_all_nine_original_carry_dates_have_known_preclose_deadlines (test_tsmom_orb_calendar.OrbCalendarTests) ... ok
+test_deadline_is_prefix_causal_and_unknown_calendar_year_fails (test_tsmom_orb_calendar.OrbCalendarTests) ... ok
+test_early_close_flattens_before_halt_and_cannot_reenter (test_tsmom_orb_calendar.OrbCalendarTests) ... ok
+test_good_friday_closed_before_orb_and_full_holiday_no_entry (test_tsmom_orb_calendar.OrbCalendarTests) ... ok
+test_missing_new_session_opening_range_cannot_reuse_yesterday (test_tsmom_orb_calendar.OrbCalendarTests) ... ok
+test_normal_exit_remains_1550_and_missing_window_exits_after_1600 (test_tsmom_orb_calendar.OrbCalendarTests) ... ok
+test_unobserved_early_close_exit_fails_even_if_gap_bracket_fills (test_tsmom_orb_calendar.OrbCalendarTests) ... ok
+test_pending_entry_cannot_fill_exactly_at_no_entry_deadline (test_tsmom_orb_next_open.OrbNextOpenTests) ... ok
+test_pending_entry_expires_when_next_quote_arrives_after_deadline (test_tsmom_orb_next_open.OrbNextOpenTests) ... ok
+test_pending_exit_cannot_fill_on_quote_at_exclusive_session_close (test_tsmom_orb_next_open.OrbNextOpenTests) ... ok
+test_pending_exit_expires_across_halt_and_gap_bracket_cannot_hide_failure (test_tsmom_orb_next_open.OrbNextOpenTests) ... ok
+test_regular_entry_and_exit_use_successor_open_prices_and_times (test_tsmom_orb_next_open.OrbNextOpenTests) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.655s
+
+OK

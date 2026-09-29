@@ -307,12 +307,12 @@ export function createDashboard(d: Dependencies) {
           (row.scenarios.find((s) => s.name === name)?.metrics.net_pnl ?? 0) >
             0,
       );
-      row.status =
-        changed || row.trade_error || !meets
-          ? "Needs review"
-          : row.prior_flags.length
-            ? "Conditional"
-            : "Research candidate";
+      const missingScenarios = expected.some(name => !row.scenarios.some(s => s.name === name));
+      row.status = changed ? "Retest required"
+        : row.trade_error ? "Evidence repair needed"
+        : missingScenarios ? "Further testing needed"
+        : !meets ? "Failed criteria"
+        : row.prior_flags.length ? "Conditional" : "Research candidate";
       if (changed)
         row.reasons.push(
           "The strategy adapter has changed or is no longer registered.",
@@ -336,7 +336,7 @@ export function createDashboard(d: Dependencies) {
         }
       if (row.prior_flags.length)
         row.reasons.push(
-          `${row.prior_flags.length} earlier matching research check(s) remain flagged for review.`,
+          `${row.prior_flags.length} earlier matching failed research check(s) remain unresolved.`,
         );
       if (meets)
         row.reasons.push(
@@ -369,7 +369,10 @@ export function createDashboard(d: Dependencies) {
     const order = [
       "Research candidate",
       "Conditional",
-      "Needs review",
+      "Failed criteria",
+      "Retest required",
+      "Evidence repair needed",
+      "Further testing needed",
       "Benchmark",
       "In progress",
       "Incomplete",

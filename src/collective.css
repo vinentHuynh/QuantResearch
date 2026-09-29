@@ -168,6 +168,8 @@
   flex-direction: column;
   gap: 12px;
 }
+.collective-milestone-badge { height: auto; min-height: 20px; max-width: none; }
+.collective-milestone-badge .mantine-Badge-label { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.4; }
 .collective-filters {
   display: flex;
   justify-content: space-between;
@@ -176,7 +178,10 @@
   flex-wrap: wrap;
 }
 .collective-picker-table {
-  max-height: calc(100vh - 380px);
+  /* ScrollArea's viewport uses height: 100%; a max-height alone leaves it
+     as tall as every row and clips the table instead of scrolling it. */
+  height: clamp(220px, calc(100dvh - 380px), 720px);
+  flex: none;
 }
 .collective-picker-foot {
   position: sticky;
@@ -238,7 +243,7 @@
     position: static;
   }
   .collective-picker-table {
-    max-height: none;
+    height: clamp(220px, calc(100dvh - 520px), 480px);
   }
   .collective-filter-fields {
     flex-wrap: wrap;

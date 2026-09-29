@@ -1,0 +1,81 @@
+{
+  "checked_at": "2026-09-29T16:48:55.131302+00:00",
+  "result": "PASS",
+  "scope": "Actual compiled C# core vs original Python event decisions on identical historical MNQ inputs; no NT fill/performance validation",
+  "interval": {
+    "start": "2026-01-01",
+    "end": "2026-06-30",
+    "warmup_days": 600
+  },
+  "dataset_path": "data\\workbench\\datasets\\d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1\\bars.parquet",
+  "calendar_template_version": 5119,
+  "python_strategy_version": "1.1.0",
+  "parameters": {
+    "fast_length": 20,
+    "medium_length": 60,
+    "slow_length": 120,
+    "annual_length": 252,
+    "timezone": "America/New_York",
+    "minimum_score": 0.5,
+    "opening_start": 570,
+    "opening_end": 585,
+    "entry_start": 585,
+    "entry_end": 900,
+    "flatten_start": 945,
+    "flatten_end": 960,
+    "risk_budget": 250,
+    "maximum_contracts": 1,
+    "reward_risk": 2,
+    "require_close_break": true,
+    "execution_timing": "close"
+  },
+  "validation_history": [
+    {
+      "checked_at": "2026-09-29T16:46:51.815039+00:00",
+      "result": "TEST_COMPARATOR_CORRECTED",
+      "original_mismatch_counts": {
+        "stop": 50,
+        "target": 50
+      },
+      "explanation": "The original comparator compared nonexistent Python brackets (zero placeholders) with C# diagnostic candidates on50 zero-quantity RiskSkipped results. All actions/quantities/scores matched. Brackets are now compared only for submitted entries; strategy/core unchanged."
+    }
+  ],
+  "source_sha256": {
+    "ninjatrader\\WorkbenchMnqTsmomOrbCore.cs": "1896bb2f698535cca7499b0b1bc445cb110fe03f60c6f5004f9155b32f0ace77",
+    "ninjatrader\\tests\\TsmomOrbHarness.cs": "b6074f933cbb50e5a44777a688613dea599362f753e91cd7a90b33eb25996182",
+    "ninjatrader\\tests\\validate_orb_real_data.py": "040d22f24cabb598f6ec28cdfbb3fb89b68f5f7f51f765350c472198ef350773",
+    "strategies\\_pine_models.py": "dff73eddee2aa44194902de1827999385685493758a29683a9732408b16f939e",
+    "strategies\\pine_tsmom_orb.py": "f1a2068a8b8f392ba6219a1e5545a51bd5e90c22408ff110442767039c31812f",
+    "strategies\\_cme_index_calendar.py": "c38703355d006acd055b6c1c27bf1250309fb7b515c736c610c765a0ab4235f2",
+    "workbench\\events.py": "6b6401a06f81997034b2c8fb8a15680ff58140f93a46fc4d1f78308222d1904e"
+  },
+  "source_minutes": 755125,
+  "five_minute_bars": 151026,
+  "calendar_audit": {
+    "outside_template_bars": 0,
+    "by_session": {},
+    "first_examples": []
+  },
+  "traced_bars": 151025,
+  "compared_bars": 151025,
+  "held_position_decisions": 1001,
+  "python_action_counts": {
+    "None": 150937,
+    "Long": 23,
+    "RiskSkipped": 50,
+    "Flatten": 12,
+    "Short": 3
+  },
+  "completed_python_trades": 26,
+  "submitted_entry_brackets_compared": 26,
+  "risk_skips_with_no_submitted_bracket": 50,
+  "mismatch_counts": {},
+  "first_mismatches": [],
+  "source_unchanged_during_test": true,
+  "limitations": [
+    "Core receives the original Python simulator's actual pre-decision position and tradable state; it does not emulate NT order lifecycle.",
+    "Only submitted entry brackets are compared; zero-quantity risk skips have no Python bracket order. NT submits market orders for subsequent quotes and may fill differently.",
+    "No calendar bars were removed. Native NT data vendor, merge policy and template updates can still change input prices.",
+    "This is previously inspected historical regression, not a new holdout or profitability conclusion."
+  ]
+}

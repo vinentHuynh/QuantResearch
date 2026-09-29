@@ -62,7 +62,51 @@ def _trading_date(timestamp: pd.Timestamp, session: SessionDefinition) -> date |
     return None
 
 
+def _minute_session_bars(frame: pd.DataFrame, session: SessionDefinition) -> pd.DataFrame | None:
+    """Skip regrouping already-normalized one-minute rows; otherwise use the resampler."""
+    index = frame.index
+    if (frame.empty or not isinstance(index, pd.DatetimeIndex) or index.tz is None or
+            not index.is_unique or not index.is_monotonic_increasing or
+            (index.asi8 % 60_000_000_000 != 0).any() or
+            session.opens_at.second or session.closes_at.second):
+        return None
+    local = index.tz_convert(session.zone)
+    minute = local.hour * 60 + local.minute
+    opening = session.opens_at.hour * 60 + session.opens_at.minute
+    closing = session.closes_at.hour * 60 + session.closes_at.minute
+    date = local.tz_localize(None).normalize()
+    if session.crosses_midnight:
+        allowed = (minute >= opening) | (minute < closing)
+        offsets = (minute >= opening).astype(int) + session.trading_date_offset_days - 1
+        date = date + pd.to_timedelta(offsets, unit='D')
+    else:
+        allowed = (minute >= opening) & (minute < closing)
+        date = date + pd.Timedelta(days=session.trading_date_offset_days)
+    allowed &= date.dayofweek < 5
+    columns = ['open', 'high', 'low', 'close'] + (['volume'] if 'volume' in frame else [])
+    result = frame.loc[allowed, columns].copy()
+    result.index = local[allowed].rename('event_time')
+    result.index.freq = None
+    if result.empty:
+        return None  # Preserve the resampler's empty-schema conventions.
+    if 'volume' in result:
+        result['volume'] = result.volume.fillna(0)
+    result['availability_time'] = result.index + pd.Timedelta(minutes=1)
+    result['session_id'] = session.id
+    result['session_date'] = date[allowed].strftime('%Y-%m-%d')
+    return result
+
+
 def session_bars(frame: pd.DataFrame, session: SessionDefinition, timeframe: str) -> pd.DataFrame:
+    """Filter to a session; normalized minute rows need no OHLC aggregation."""
+    if timeframe == '1m':
+        direct = _minute_session_bars(frame, session)
+        if direct is not None:
+            return direct
+    return _resampled_session_bars(frame, session, timeframe)
+
+
+def _resampled_session_bars(frame: pd.DataFrame, session: SessionDefinition, timeframe: str) -> pd.DataFrame:
     """Filter to a session and aggregate bars from that session's local open."""
 
     if timeframe not in TIMEFRAMES:

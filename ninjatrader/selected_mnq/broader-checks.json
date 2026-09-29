@@ -1,0 +1,13 @@
+{
+  "app_build": {
+    "command": "npm run build",
+    "exit_code": 0,
+    "note": "Production build passed; existing large-chunk advisory remains."
+  },
+  "pine_regression": {
+    "command": ".venv/Scripts/python.exe -m unittest discover -s tests -p test_pine_ports.py -v",
+    "exit_code": 1,
+    "functional_tests_passed": 11,
+    "pre_existing_failure": "Inventory expects17 Pine files; existing workspace has21. No Pine files were added by this repair."
+  }
+}

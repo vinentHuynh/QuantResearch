@@ -1,0 +1,185 @@
+//@version=6
+indicator("SND Fresh Retest - Zone Creation", "SND Fresh Zones", overlay = true,
+     max_boxes_count = 500, max_bars_back = 200)
+
+// Formation display for strategies/_snd_fresh_retest.py; not an order simulator.
+// Boxes begin at the CONFIRMING candle's closing timestamp, never at the base.
+// The hourly direction was available at that five-minute candle's OPEN.
+// Room, entry, position blocking, stops and targets are later trading decisions:
+// they must not hide a newly created zone in this formation-only indicator.
+// Native TradingView candles/session data can differ from the Python source.
+
+string modelGroup = "Zone rules"
+int pivotLength = input.int(2, "Swing bars on each side", minval = 1, maxval = 10, group = modelGroup)
+int maximumAge = input.int(288, "Zone lifetime (5-minute bars)", minval = 3, maxval = 2000, group = modelGroup)
+
+string displayGroup = "Display"
+bool showContext = input.bool(false, "Also show unaligned context zones", group = displayGroup,
+     tooltip = "Dotted boxes show geometric zones that did not qualify as aligned strategy zones when created. They are opposing-zone context only.")
+bool showText = input.bool(true, "Text inside zones", group = displayGroup)
+bool showMarkers = input.bool(true, "Mark the confirming candle", group = displayGroup)
+bool keepHistory = input.bool(true, "Keep invalidated / expired zones", group = displayGroup)
+int historyLimit = input.int(150, "Retired boxes to keep", minval = 0, maxval = 250, group = displayGroup)
+color demandColor = input.color(color.rgb(0, 230, 118), "Demand color", group = displayGroup)
+color supplyColor = input.color(color.rgb(255, 61, 87), "Supply color", group = displayGroup)
+int freshOpacity = input.int(45, "Fresh zone fill opacity (%)", minval = 0, maxval = 100, group = displayGroup,
+     tooltip = "Higher values make the colored fill stronger. 0 hides the fill; 100 is fully opaque.")
+int touchedOpacity = input.int(32, "Touched zone fill opacity (%)", minval = 0, maxval = 100, group = displayGroup)
+int retiredOpacity = input.int(24, "Retired zone fill opacity (%)", minval = 0, maxval = 100, group = displayGroup)
+
+int barMilliseconds = 5 * 60 * 1000
+int activeLimit = 100
+float epsilon = syminfo.mintick * 0.0000001
+
+if barstate.isfirst and (not timeframe.isminutes or timeframe.multiplier != 5)
+    runtime.error("Use SND Fresh Zones on a standard 5-minute chart.")
+if barstate.isfirst and not chart.is_standard
+    runtime.error("Use standard candles. Synthetic chart prices do not match this zone model.")
+
+// Strict confirmed swings: ties are excluded and each swing breaks only once.
+// This function has independent persistent state in the chart and hourly calls.
+f_direction(int length) =>
+    var float swingHigh = na
+    var float swingLow = na
+    var bool highUsed = false
+    var bool lowUsed = false
+    var int direction = 0
+    bool strictHigh = bar_index >= length * 2
+    bool strictLow = bar_index >= length * 2
+    if bar_index >= length * 2
+        for offset = 0 to length * 2
+            if offset != length
+                strictHigh := strictHigh and high[length] > high[offset]
+                strictLow := strictLow and low[length] < low[offset]
+    if strictHigh
+        swingHigh := high[length]
+        highUsed := false
+    if strictLow
+        swingLow := low[length]
+        lowUsed := false
+    if not highUsed and not na(swingHigh) and close > swingHigh
+        direction := 1
+        highUsed := true
+    if not lowUsed and not na(swingLow) and close < swingLow
+        direction := -1
+        lowUsed := true
+    direction
+
+int fiveMinuteBias = f_direction(pivotLength)
+int hourlyBias = request.security(syminfo.tickerid, "60", f_direction(pivotLength)[1],
+     gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
+
+type Zone
+    int side
+    float upper
+    float lower
+    int born
+    bool aligned
+    bool touched
+    box drawing
+
+// Separate caps prevent optional context from crowding out strategy zones.
+// Aligned formations also enter context, with no duplicate drawing.
+var array<Zone> entryZones = array.new<Zone>()
+var array<Zone> contextZones = array.new<Zone>()
+var array<box> retiredBoxes = array.new<box>()
+
+f_name(Zone zone) =>
+    (zone.aligned ? "" : "Context ") + (zone.side == 1 ? "DEMAND" : "SUPPLY")
+
+f_retire(Zone zone, string reason) =>
+    if not na(zone.drawing)
+        if keepHistory and historyLimit > 0
+            color zoneColor = zone.side == 1 ? demandColor : supplyColor
+            box.set_extend(zone.drawing, extend.none)
+            box.set_right(zone.drawing, time_close)
+            box.set_bgcolor(zone.drawing, color.new(zoneColor, 100 - retiredOpacity))
+            box.set_border_color(zone.drawing, color.new(zoneColor, 25))
+            box.set_border_style(zone.drawing, line.style_dotted)
+            box.set_border_width(zone.drawing, zone.aligned ? 2 : 1)
+            box.set_text_color(zone.drawing, color.new(chart.fg_color, 10))
+            box.set_text(zone.drawing, showText ? f_name(zone) + " - " + reason : "")
+            array.push(retiredBoxes, zone.drawing)
+            while array.size(retiredBoxes) > historyLimit
+                box.delete(array.shift(retiredBoxes))
+        else
+            box.delete(zone.drawing)
+    0
+
+f_update(array<Zone> zones) =>
+    int index = array.size(zones) - 1
+    while index >= 0
+        Zone zone = array.get(zones, index)
+        bool broken = zone.side == 1 ? low < zone.lower - epsilon : high > zone.upper + epsilon
+        bool expired = bar_index - zone.born > maximumAge
+        if broken or expired
+            f_retire(zone, broken ? "invalidated" : "expired")
+            array.remove(zones, index)
+        else if not zone.touched and bar_index > zone.born and low <= zone.upper + epsilon and high >= zone.lower - epsilon
+            // Touches consume freshness even if direction has since changed.
+            zone.touched := true
+            if not na(zone.drawing)
+                color zoneColor = zone.side == 1 ? demandColor : supplyColor
+                box.set_bgcolor(zone.drawing, color.new(zoneColor, 100 - touchedOpacity))
+                box.set_border_color(zone.drawing, color.new(zoneColor, 15))
+                box.set_border_style(zone.drawing, zone.aligned ? line.style_dashed : line.style_dotted)
+                box.set_border_width(zone.drawing, zone.aligned ? 2 : 1)
+                box.set_text(zone.drawing, showText ? f_name(zone) + " - touched" : "")
+        index -= 1
+    0
+
+f_add(array<Zone> zones, int side, float upper, float lower, bool aligned, bool drawBox) =>
+    box drawing = na
+    if drawBox
+        color zoneColor = side == 1 ? demandColor : supplyColor
+        string title = (aligned ? "" : "Context ") + (side == 1 ? "DEMAND" : "SUPPLY") + " - fresh"
+        drawing := box.new(left = time_close, top = upper, right = time_close + barMilliseconds, bottom = lower,
+             xloc = xloc.bar_time, extend = extend.right,
+             border_color = color.new(zoneColor, aligned ? 0 : 25),
+             border_style = aligned ? line.style_solid : line.style_dotted,
+             border_width = aligned ? 3 : 1, bgcolor = color.new(zoneColor, 100 - (aligned ? freshOpacity : retiredOpacity)),
+             text = showText ? title : "", text_color = chart.fg_color,
+             text_size = size.small, text_halign = text.align_left, text_valign = text.align_top)
+    array.push(zones, Zone.new(side, upper, lower, bar_index, aligned, false, drawing))
+    if array.size(zones) > activeLimit
+        Zone oldest = array.shift(zones)
+        f_retire(oldest, "display limit")
+    0
+
+bool newDemand = false
+bool newSupply = false
+float createdUpper = na
+float createdLower = na
+
+if barstate.isconfirmed
+    // Update old zones first, so a formation cannot retest itself.
+    f_update(entryZones)
+    f_update(contextZones)
+
+    bool consecutive = bar_index >= 2 and time - time[1] == barMilliseconds and time[1] - time[2] == barMilliseconds
+    bool demandPattern = consecutive and close[2] < open[2] and close[1] > open[1] and low > high[2]
+    bool supplyPattern = consecutive and close[2] > open[2] and close[1] < open[1] and high < low[2]
+    int side = demandPattern ? 1 : supplyPattern ? -1 : 0
+
+    if side != 0
+        float upper = side == 1 ? high[2] : math.max(high, math.max(high[1], high[2]))
+        float lower = side == 1 ? math.min(low, math.min(low[1], low[2])) : low[2]
+        bool aligned = fiveMinuteBias == side and hourlyBias == side
+        f_add(contextZones, side, upper, lower, false, showContext and not aligned)
+        if aligned
+            f_add(entryZones, side, upper, lower, true, true)
+            newDemand := side == 1
+            newSupply := side == -1
+            createdUpper := upper
+            createdLower := lower
+
+plotshape(showMarkers and newDemand, title = "Demand creation candle", style = shape.triangleup,
+     location = location.belowbar, color = demandColor, size = size.small, text = "D", textcolor = demandColor)
+plotshape(showMarkers and newSupply, title = "Supply creation candle", style = shape.triangledown,
+     location = location.abovebar, color = supplyColor, size = size.small, text = "S", textcolor = supplyColor)
+
+plot(createdUpper, "New zone upper", display = display.none)
+plot(createdLower, "New zone lower", display = display.none)
+alertcondition(newDemand, "New demand zone", 'SND demand zone confirmed on {{ticker}} {{interval}}. Upper={{plot("New zone upper")}}, lower={{plot("New zone lower")}}.')
+alertcondition(newSupply, "New supply zone", 'SND supply zone confirmed on {{ticker}} {{interval}}. Upper={{plot("New zone upper")}}, lower={{plot("New zone lower")}}.')
+alertcondition(newDemand or newSupply, "Any new strategy zone", 'SND zone confirmed on {{ticker}} {{interval}}. Upper={{plot("New zone upper")}}, lower={{plot("New zone lower")}}.')

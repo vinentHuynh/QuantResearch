@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import { strategyTitle } from "./strategyTitle";
+import { dashboardActionStatus } from "./dashboardTypes";
+import { scorecardStage, progressScope } from "./researchProgress";
+import { ResearchStages } from "./ResearchStages";
 import {
   Alert,
   Badge,
@@ -45,7 +49,7 @@ const tone = (s: DashboardStatus) =>
     ? "teal"
     : s === "Conditional"
       ? "yellow"
-      : s === "Needs review" || s === "Incomplete"
+      : ["Failed criteria", "Retest required", "Evidence repair needed", "Further testing needed", "Incomplete"].includes(s)
         ? "red"
         : "gray";
 function remembered(key: string) {
@@ -105,7 +109,7 @@ function Equity({ row }: { row: DashboardRow }) {
         className="sd-equity"
         viewBox="0 0 900 270"
         role="img"
-        aria-label={`${row.name} evaluation equity`}
+        aria-label={`${strategyTitle(row.name)} evaluation equity`}
       >
         {[low, (high + low) / 2, high].map((v, i) => (
           <g key={i}>
@@ -355,7 +359,7 @@ function IndividualDashboard({
         if (!response.ok)
           throw new Error(result.error || "Dashboard unavailable");
         if (alive) {
-          setData(result);
+          setData({ ...result, rows: (result as DashboardData).rows.map(row => ({ ...row, status: dashboardActionStatus(row) })) });
           setError("");
         }
       } catch (e) {
@@ -385,7 +389,7 @@ function IndividualDashboard({
       filter === "All strategies" ||
       (filter === "Shortlist"
         ? ["Research candidate", "Conditional"].includes(r.status)
-        : r.status === "Needs review"),
+        : ["Failed criteria", "Retest required", "Evidence repair needed", "Further testing needed", "Incomplete"].includes(r.status)),
   );
   const selected = rows.find((r) => r.strategy_id === selection) || rows[0];
   const evaluated = data.rows.filter((r) => r.scenarios.length);
@@ -418,7 +422,8 @@ function IndividualDashboard({
             {latestDate
               ? `Evaluations through ${latestDate}. `
               : "No completed evaluations yet. "}
-            These are research statuses, not live trade signals.
+            Showing the latest evaluation for each strategy on the selected market.
+            Other configurations can have different results.
           </Text>
         </Box>
         <Group>
@@ -437,7 +442,7 @@ function IndividualDashboard({
           <Select
             label="Show strategies"
             value={filter}
-            data={["All strategies", "Shortlist", "Needs review"]}
+            data={["All strategies", "Shortlist", "Action needed"]}
             onChange={(v) => {
               setFilter(v || "All strategies");
               setSelection("");
@@ -462,11 +467,11 @@ function IndividualDashboard({
           help="Latest scenarios pass but earlier matching research checks remain flagged."
         />
         <Metric
-          label="Need review"
+          label="Action needed"
           value={String(
-            data.rows.filter((r) => r.status === "Needs review").length,
+            data.rows.filter((r) => ["Failed criteria", "Retest required", "Evidence repair needed", "Further testing needed", "Incomplete"].includes(r.status)).length,
           )}
-          help="At least one criterion fails, evidence is unavailable, or the adapter changed."
+          help="A failed criterion, missing test, evidence repair, or source retest needs action. This does not mean the review is unfinished."
         />
       </SimpleGrid>
       {!selected ? (
@@ -483,13 +488,15 @@ function IndividualDashboard({
             <Group justify="space-between" align="start">
               <Box>
                 <Text size="xs" className="eyebrow">
-                  SELECTED STRATEGY
+                  LATEST EVALUATED CONFIGURATION
                 </Text>
                 <Title order={2} mt={5}>
-                  {selected.name}
+                  {strategyTitle(selected.name)}
                 </Title>
+                <ResearchStages stage={scorecardStage(selected)} />
+                <Text size="xs" c="dimmed">{progressScope}</Text>
                 <Group mt="sm" gap="xs">
-                  <Badge color={tone(selected.status)}>{selected.status}</Badge>
+                  <Badge color={tone(selected.status)}>Latest evaluation: {selected.status}</Badge>
                   <Text size="sm" c="dimmed">
                     {selected.symbol}
                     {selected.timeframe &&
@@ -646,11 +653,11 @@ function IndividualDashboard({
                     key={r.strategy_id}
                     className={`sd-profit-row ${r.strategy_id === selected.strategy_id ? "is-selected" : ""}`}
                     onClick={() => setSelection(r.strategy_id)}
-                    aria-label={`Select ${r.name}`}
+                    aria-label={`Select ${strategyTitle(r.name)}`}
                     aria-pressed={r.strategy_id === selected.strategy_id}
                   >
                     <span className="sd-profit-label">
-                      <span>{r.name}</span>
+                      <span>{strategyTitle(r.name)}</span>
                       <strong>{cash(baseline(r)?.metrics.net_pnl)}</strong>
                     </span>
                     <ProfitBar
@@ -711,7 +718,7 @@ function IndividualDashboard({
                 <Table.Tr key={r.strategy_id}>
                   <Table.Td>
                     <Text fw={600} size="sm">
-                      {r.name}
+                      {strategyTitle(r.name)}
                     </Text>
                     <Text size="xs" c="dimmed">
                       {r.symbol} · {r.timeframe || "No timeframe"}

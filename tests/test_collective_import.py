@@ -15,6 +15,55 @@ spec.loader.exec_module(builder)
 
 
 class CollectiveImportTests(unittest.TestCase):
+    def test_portfolio_extension_replaces_forced_boundary_exit_once(self):
+        synthetic = {
+            'entry': '2026-08-31T22:00:00+00:00',
+            'exit': '2026-08-31T23:55:00+00:00',
+            'pnl': 47.5, 'quantity': 1, 'cost': 27.5,
+            'exit_reason': 'end-of-test', 'synthetic_exit': True,
+        }
+        natural = {
+            'entry': '2026-08-31T22:00:00+00:00',
+            'exit': '2026-09-01T10:00:00+00:00',
+            'pnl': 100.0, 'quantity': 1, 'cost': 27.5,
+            'exit_reason': 'signal', 'synthetic_exit': False,
+        }
+        old = [('2026-08-01', '2026-08-31', [synthetic], {'2026-08-31': 47.5})]
+        extension = {
+            'catalog_id': 'fixture', 'start': '2026-09-01', 'end': '2026-09-02',
+            'trades': [natural], 'daily': {'2026-09-01': 62.5, '2026-09-02': 0.0},
+            'boundary_correction': {
+                'date': '2026-08-31', 'remove_trade': synthetic,
+                'original_daily_pnl': 47.5, 'delta_pnl': -10.0,
+                'corrected_daily_pnl': 37.5,
+            },
+        }
+        merged = builder.extend_segments(old, extension)
+        self.assertEqual(old[0][2], [synthetic], 'Frozen source history stays intact')
+        self.assertEqual(merged[0][2], [])
+        self.assertEqual(merged[0][3]['2026-08-31'], 37.5)
+        self.assertEqual(merged[1][2], [natural])
+        self.assertEqual(sum(sum(days.values()) for _, _, _, days in merged), 100.0)
+        broken = {**extension, 'daily': {'2026-09-01': 63.5}}
+        with self.assertRaisesRegex(ValueError, 'does not reconcile'):
+            builder.extend_segments(old, broken)
+
+    def test_exit_provenance_keeps_forced_winners_and_losers_out_of_natural_sample(self):
+        import pandas as pd
+        t=pd.DataFrame({'entry_time':['2026-01-01T00:00:00Z']*4,'exit_time':['2026-01-02T00:00:00Z']*4,'net_pnl':[10,-20,30,-40],'exit_reason':['end-of-test','end-of-test','signal',None]})
+        rows=builder.normalize(t)
+        self.assertEqual([r.get('synthetic_exit') for r in rows],[True,True,False,None])
+        self.assertEqual(sum(r['pnl'] for r in rows),-20)
+        self.assertEqual(rows[0]['exit_provenance'],'recorded')
+
+    def test_normalize_preserves_actual_contracts_and_costs_without_guessing(self):
+        import pandas as pd
+        t=pd.DataFrame({'entry_time':['2026-01-01T00:00:00Z']*2,'exit_time':['2026-01-02T00:00:00Z']*2,'net_pnl':[10,20],'quantity':[-2,1],'cost':[5,3]})
+        rows=builder.normalize(t)
+        self.assertEqual([r['quantity'] for r in rows],[2,1])
+        self.assertEqual([r['cost'] for r in rows],[5,3])
+        self.assertNotIn('quantity',builder.normalize(t.drop(columns=['quantity']))[0])
+
     def test_new_workbench_baseline_uses_real_capital_and_rejects_corruption(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); state = root / 'data'; run = state / 'runs' / 'new-run'; run.mkdir(parents=True)
@@ -40,6 +89,12 @@ class CollectiveImportTests(unittest.TestCase):
                 item = index['items'][0]; self.assertEqual(item['capital'], 1000); self.assertEqual(item['net_pnl'], 40)
                 self.assertTrue(item['working']); self.assertFalse(item['feasible'])
                 data = builder.read(state / 'collective' / item['series_file']); self.assertEqual(sum(d['pnl'] for d in data['daily']), 40)
+                self.assertEqual(data['provenance_version'],2)
+                self.assertTrue(data['daily'][-1]['terminal'])
+                self.assertFalse(data['daily'][0]['terminal'])
+                self.assertTrue(data['trades'][0]['synthetic_exit'])
+                self.assertEqual(data['trades'][0]['exit_provenance'],'legacy-worker-timing')
+                self.assertEqual(data['trades'][0]['source_run'],'new-run')
                 (run / 'trades.csv').write_text((run / 'trades.csv').read_text().replace(',40', ',400000'))
                 with self.assertRaises(SystemExit): builder.main()
                 rejected = builder.read(state / 'collective/index.json'); self.assertEqual(rejected['items'], []); self.assertIn('checksum mismatch', rejected['errors'][0]['error'])

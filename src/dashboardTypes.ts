@@ -1,7 +1,11 @@
 export type DashboardStatus =
   | "Research candidate"
   | "Conditional"
-  | "Needs review"
+  | "Failed criteria"
+  | "Retest required"
+  | "Evidence repair needed"
+  | "Further testing needed"
+  | "Needs review" // Compatibility with an already-running older API.
   | "Benchmark"
   | "In progress"
   | "Incomplete"
@@ -78,3 +82,13 @@ export type DashboardData = {
   symbol: string;
   rows: DashboardRow[];
 };
+
+// A running API can serve the previous status vocabulary until its next restart.
+// Preserve its findings and eligibility while displaying the concrete action.
+export function dashboardActionStatus(row: DashboardRow): DashboardStatus {
+  if (row.status !== "Needs review") return row.status;
+  if (row.reasons.includes("The strategy adapter has changed or is no longer registered.")) return "Retest required";
+  if (row.trade_error) return "Evidence repair needed";
+  if (row.reasons.some(reason => reason.includes("declared scenario evidence is missing."))) return "Further testing needed";
+  return "Failed criteria";
+}

@@ -67,7 +67,7 @@ try {
     .waitFor();
   await page
     .getByRole("button", {
-      name: "Configure Pine · TSMOM intraday ORB",
+      name: "Configure TSMOM intraday ORB",
       exact: true,
     })
     .click();
@@ -195,7 +195,7 @@ try {
   await page.reload();
   await page
     .getByRole("row")
-    .filter({ hasText: "Pine · TSMOM intraday ORB" })
+    .filter({ hasText: "TSMOM intraday ORB" })
     .first()
     .getByRole("button", { name: "Inspect", exact: true })
     .click();

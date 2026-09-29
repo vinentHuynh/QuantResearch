@@ -1,6 +1,6 @@
 """Python port; see PINE_AUDIT.md for source coverage and simulator limits."""
 
-STRATEGY = {'version': '1.0.0',
+STRATEGY = {'version': '1.1.0',
  'execution_model': 'event-v1',
  'default_session': 'full-trading-day',
  'required_session': 'full-trading-day',
@@ -12,11 +12,17 @@ STRATEGY = {'version': '1.0.0',
  'pine_sources': ['pine/cme_tsmom_intraday_orb_strategy.pine'],
  'legacy_sources': ['scripts/cme/tsmom_intraday_orb_backtest.py'],
  'description': 'Daily direction-filtered ORB with signal-close entries, a dollar-risk budget, '
-                'stop/target brackets, one attempt per session, and a force-flat window.',
+                'stop/target brackets, one attempt per session, and calendar-aware session exits.',
  'migration_scope': 'Pine rules port with one-minute bracket execution. Stop wins ties within a '
                     'minute; gap fills use the opening price. No TradingView sub-minute Bar '
                     'Magnifier or order-fill recalculation emulation. A rejected risk-sized '
-                    'attempt still consumes the session.',
+                    'attempt still consumes the session. Version 1.1 uses the frozen NinjaTrader '
+                    'CME US Index Futures ETH calendar (2016-2026): close at the earlier of the '
+                    'normal flatten-start bar completion or five minutes before scheduled close; '
+                    'no entries thereafter. Missing held exit quotes fail the replay instead of '
+                    'creating overnight performance. Opening ranges reset every session. Calendar '
+                    'is a current historical snapshot, not a point-in-time exchange archive; '
+                    'NQ/MNQ scope only. Original pre-fix runs remain separate evidence.',
  'parameters': {'fast_length': {'type': 'integer', 'default': 20, 'minimum': 2, 'maximum': 500},
                 'medium_length': {'type': 'integer', 'default': 60, 'minimum': 2, 'maximum': 500},
                 'slow_length': {'type': 'integer', 'default': 120, 'minimum': 2, 'maximum': 500},
@@ -67,12 +73,16 @@ STRATEGY = {'version': '1.0.0',
                                       'minimum': 1,
                                       'maximum': 20},
                 'reward_risk': {'type': 'number', 'default': 2, 'minimum': 0.25, 'maximum': 20},
-                'require_close_break': {'type': 'boolean', 'default': True}}}
+                'require_close_break': {'type': 'boolean', 'default': True},
+                'execution_timing': {'type': 'enum', 'default': 'close', 'choices': ['close', 'next-open'],
+                                     'description': 'Original close fills or explicit next-open execution stress for the NinjaTrader port; bracket levels remain signal-close based.'}}}
 
 
 def validate(parameters, request):
     from strategies._pine_models import validate as check
     check(parameters, request)
+    if request.get('dataset', {}).get('symbol') not in ('NQ', 'MNQ'):
+        raise ValueError('Calendar-corrected TSMOM ORB currently supports NQ and MNQ only')
 
 
 def create_strategy(bars, parameters, request):

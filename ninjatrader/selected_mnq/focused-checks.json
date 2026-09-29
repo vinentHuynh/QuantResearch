@@ -1,0 +1,44 @@
+[
+  {
+    "name": "compile",
+    "exit_code": 0,
+    "command": [
+      "powershell",
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "ninjatrader/build_check.ps1"
+    ]
+  },
+  {
+    "name": "python-calendar-nextopen-tests",
+    "exit_code": 0,
+    "command": [
+      "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\.venv\\Scripts\\python.exe",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_tsmom_orb_*.py",
+      "-v"
+    ]
+  },
+  {
+    "name": "csharp-orb-tests",
+    "exit_code": 0,
+    "command": [
+      "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\.venv\\Scripts\\python.exe",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_ninjatrader_orb_port.py",
+      "-v"
+    ]
+  }
+]

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { strategyTitle } from "./strategyTitle";
 import {
   Alert,
   Badge,
@@ -21,8 +22,10 @@ import {
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { IconPlus, IconSearch } from "@tabler/icons-react";
-import type { Run } from "./Workbench";
+import type { RunSummary } from "./Workbench";
 import { PageHeader } from "./Shell";
+import { testingEvidence } from "./testingEvidence";
+import { ResearchStages } from "./ResearchStages";
 
 type Metrics = {
   net_return: number;
@@ -55,6 +58,7 @@ type Fold = {
   };
 };
 export type EvaluationView = {
+  scenarios?: string[];
   note?: string;
   id: string;
   name: string;
@@ -189,11 +193,11 @@ export function ResearchPage({
   selectedId?: string;
   onSelect: (id: string) => void;
   alerts?: ReactNode;
-  runs: Run[];
+  runs: RunSummary[];
   evaluations: EvaluationView[];
   regimes: RegimeView[];
   refresh: () => Promise<void>;
-  inspect: (run: Run) => void;
+  inspect: (run: RunSummary) => void;
 }) {
   const isMobile = useMediaQuery("(max-width: 900px)");
   const [planOpen, setPlanOpen] = useState(false);
@@ -349,7 +353,7 @@ export function ResearchPage({
             .filter((r) => r.status === "Succeeded" && !r.input.research)
             .map((r) => ({
               value: r.id,
-              label: `${r.input.strategy.name} · ${r.input.dataset.symbol} · ${r.id.slice(0, 8)}`,
+              label: `${strategyTitle(r.input.strategy.name)} · ${r.input.dataset.symbol} · ${r.id.slice(0, 8)}`,
             }))}
           value={seedId || null}
           onChange={chooseSeed}
@@ -556,6 +560,7 @@ export function ResearchPage({
       (r) => r.input.research?.evaluation_id === current.id,
     );
     const scenarios = current.result?.scenarios || [];
+    const progress = jobs[0] ? testingEvidence(jobs[0].input.strategy, jobs, [current]) : null;
     const worstTrades = scenarios.length
       ? Math.min(...scenarios.map((s) => s.metrics.trades))
       : null;
@@ -585,6 +590,8 @@ export function ResearchPage({
                 </Badge>
               )}
             </Group>
+            {progress && <ResearchStages stage={progress.stage} />}
+            <Text size="xs" c="dimmed">Results apply to this evaluation's source, markets and selected settings. Other configurations are assessed separately.</Text>
             {firstFold && lastFold && (
               <p className="wb-meta">
                 {current.folds.length} fold

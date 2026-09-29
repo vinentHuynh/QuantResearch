@@ -12,7 +12,7 @@ const priorState=await(await fetch(api+'/state')).json();
 const browser=await chromium.launch({channel:'msedge'}),page=await browser.newPage({viewport:{width:1500,height:1100},acceptDownloads:true});
 page.setDefaultTimeout(20000);const errors=[],checks=[];page.on('pageerror',e=>errors.push(e.message));
 const select=async(label,value)=>{await page.getByRole('textbox',{name:label,exact:true}).click();await page.getByRole('option',{name:value,exact:true}).click();};
-// Eligibility is a segmented control whose labels carry counts, e.g. "Working · 7".
+// Milestone options include exclusive configuration counts.
 const eligibility=async prefix=>page.locator('.collective-picker label').filter({hasText:new RegExp('^'+prefix)}).click();
 const currency=v=>v.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
 async function expectNet(value){await expect(page.getByTestId('portfolio-metrics').getByText(currency(value),{exact:true})).toBeVisible();}
@@ -24,19 +24,19 @@ try{
  await expect(page.getByRole('heading',{name:'Combined portfolio',level:1})).toBeVisible();
  await expect(page.getByTestId('selected-count')).toHaveText('7 books');await expectNet(678605);
  await page.screenshot({path:folder+'/combined-pnl-desktop.png'});
- await page.getByRole('button',{name:'Add',exact:true}).click();await expect(picker().locator('tbody tr')).toHaveCount(7);
+ await page.getByRole('button',{name:'Add',exact:true}).click();await expect(picker().locator('tbody tr')).toHaveCount(catalog.items.filter(i=>i.working).length);
  await page.screenshot({path:folder+'/builder-desktop.png'});
- checks.push('Default seven working books reconcile to $678,605 net on $700,000 represented capital.');
- await eligibility('Fully tested & feasible');await expect(picker().locator('tbody tr')).toHaveCount(1);
+ checks.push('Default seven working books reconcile to $678,605 net on $100,000 shared portfolio capital.');
+ await eligibility('Robustness checked');await expect(picker().locator('tbody tr')).toHaveCount(1);
  await page.getByRole('button',{name:'Apply visible strategies (1)',exact:true}).click();await expect(page.getByTestId('selected-count')).toHaveText('1 book');await expectNet(74760);
  checks.push('Strict eligibility isolates ES daily moving-average; explicit apply replaces the combination.');
- await eligibility('Working');
+ await eligibility('Evaluation passed');
  await page.locator('.collective-filters').getByText('NQ',{exact:true}).click();
  await select('Chart timeframe','15m');await expect(picker().locator('tbody tr')).toHaveCount(1);
  await page.getByRole('button',{name:'Apply visible strategies (1)',exact:true}).click();await expectNet(188772.5);
  await page.getByRole('button',{name:'Done',exact:true}).click();
  const copies=page.getByRole('textbox',{name:/Copies of/});await copies.fill('2');await copies.blur();await expectNet(377545);
- checks.push('Market chips and the timeframe filter select the NQ 15m book; two copies double P&L and capital.');
+ checks.push('Market chips and the timeframe filter select the NQ 15m book; two copies double P&L while shared capital stays fixed.');
  await page.getByLabel('P&L start',{exact:true}).fill('2010-01-01');await expect(page.getByText(/The selected period is not covered/)).toBeVisible();await expect(page.getByTestId('portfolio-metrics')).toHaveCount(0);
  await page.getByRole('button',{name:'Use common tested window'}).click();await expect(page.getByTestId('portfolio-metrics')).toBeVisible();
  await page.getByLabel('P&L start',{exact:true}).fill('2024-01-01');await expectNet(377545);
@@ -50,16 +50,16 @@ try{
  assert(i);const histories=await(await fetch(api+'/collective/series',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:[i.id]})})).json();
  const expected=calculatePortfolio([i],histories,{[i.id]:2},'2024-01-01','2026-08-31','closed',{...defaultPolicy,enabled:true});
  await page.getByRole('link',{name:'Pause & sizing',exact:true}).click();
- await page.getByRole('switch',{name:'Enable pause/resume replay'}).check();await expect(comparison().getByText(currency(expected.net),{exact:true})).toBeVisible();
+ await page.getByRole('switch',{name:'Enable pause/resume replay'}).check();await select('Replay mode','Rolling closed-trade losses');await expect(comparison().getByText(currency(expected.net),{exact:true})).toBeVisible();
  await expect(page.getByRole('radio',{name:'Marked daily'})).toBeDisabled();
  await page.getByRole('heading',{name:/Pause \/ resume decisions/}).scrollIntoViewIfNeeded();await page.screenshot({path:folder+'/pause-resume-desktop.png'});
- await select('Losing pattern','Consecutive losing trades');await expect(page.getByRole('textbox',{name:'Consecutive losses to pause'})).toBeVisible();
- await select('Losing pattern','Shadow equity drawdown');await expect(page.getByRole('textbox',{name:'Drawdown threshold ($ / copy)'})).toBeVisible();
+ await select('Replay mode','Consecutive losing trades');await expect(page.getByRole('textbox',{name:'Consecutive losses to pause'})).toBeVisible();
+ await select('Replay mode','Shadow equity drawdown');await expect(page.getByRole('textbox',{name:'Drawdown threshold ($ / copy)'})).toBeVisible();
  await expect(page.getByTestId('dependence-check')).toBeVisible();await expect(page.getByTestId('dependence-check').locator('tbody tr')).toHaveCount(1);
- await select('Losing pattern','Scale size by realized volatility (no pause)');await expect(page.getByRole('textbox',{name:'Volatility lookback (positioned days)'})).toBeVisible();await expect(page.getByRole('textbox',{name:'Cooldown (calendar days)'})).toHaveCount(0);
+ await select('Replay mode','Scale size by realized volatility (no pause)');await expect(page.getByRole('textbox',{name:'Volatility lookback (observations)'})).toBeVisible();await expect(page.getByRole('textbox',{name:'Cooldown (calendar days)'})).toHaveCount(0);await select('Volatility estimator','Legacy nonzero days / chart-window target');await page.getByRole('textbox',{name:'Maximum size multiple',exact:true}).fill('2');
  const sized=calculatePortfolio([i],histories,{[i.id]:2},'2024-01-01','2026-08-31','closed',{...defaultPolicy,enabled:true,mode:'volatility'});await expect(comparison().getByText(currency(sized.net),{exact:true})).toBeVisible();
  await expect(page.getByRole('heading',{name:/Size band changes/})).toBeVisible();await page.getByTestId('dependence-check').scrollIntoViewIfNeeded();await page.screenshot({path:folder+'/dependence-volatility-desktop.png'});
- await select('Losing pattern','Rolling closed-trade losses');
+ await select('Replay mode','Rolling closed-trade losses');
  await page.getByRole('switch',{name:'Enable pause/resume replay'}).uncheck();
  checks.push('Pause/resume uses closed accounting and matches the independently computed chronological replay; all four policy controls render; the loss-clustering table appears and volatility scaling reconciles to the model.');
  await page.reload();await page.getByRole('link',{name:'Combined portfolio',exact:true}).click();await expect(page.getByTestId('selected-count')).toHaveText('1 book');await expectNet(377545);

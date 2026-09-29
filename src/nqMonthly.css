@@ -1,0 +1,369 @@
+.nq-monthly h2 {
+  margin: 0;
+}
+
+.nq-monthly-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nq-monthly-intro,
+.nq-monthly-best {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.nq-monthly-eyebrow {
+  color: var(--teal-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.nq-monthly-intro h2,
+.nq-monthly-best h2 {
+  font-size: 20px;
+  margin: 3px 0 5px;
+}
+
+.nq-monthly-best {
+  border-color: #b7d8c9;
+  background: linear-gradient(110deg, #f1f8f4, #fff 68%);
+}
+
+.nq-monthly-best-metrics {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.nq-monthly-best-metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 76px;
+}
+
+.nq-monthly-best-metrics span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.nq-monthly-best-metrics strong {
+  font-family: var(--mono);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--teal-ink);
+}
+
+.nq-monthly-run-link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--teal-ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.nq-monthly-run-link:hover {
+  color: var(--forest);
+}
+
+.nq-monthly-run-link:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+}
+
+.nq-monthly-table-card {
+  overflow: hidden;
+}
+
+.nq-monthly-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.nq-monthly-metric-switch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--line-soft);
+  border-radius: 5px;
+  background: #f5f7f5;
+}
+
+.nq-monthly-metric-switch button {
+  border: 0;
+  border-radius: 3px;
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nq-monthly-metric-switch button[aria-pressed="true"] {
+  background: #fff;
+  color: var(--teal-ink);
+  box-shadow: 0 1px 3px #193f3020;
+}
+
+.nq-monthly-metric-switch button:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+.nq-monthly-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.nq-monthly-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nq-monthly-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.nq-monthly-legend .positive,
+.nq-monthly-cell[data-tone="positive"] {
+  background: #e1f1e7;
+  color: #16613f;
+}
+
+.nq-monthly-legend .negative,
+.nq-monthly-cell[data-tone="negative"] {
+  background: #f8e6e1;
+  color: #a33724;
+}
+
+.nq-monthly-legend .flat,
+.nq-monthly-cell[data-tone="flat"] {
+  background: #eef1ee;
+  color: #59675e;
+}
+
+.nq-monthly-cell[data-tone="missing"] {
+  color: var(--muted);
+}
+
+.nq-monthly-table {
+  min-width: 1230px;
+  border-collapse: separate;
+  border-spacing: 0 3px;
+  font-size: 12px;
+}
+
+.nq-monthly-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.nq-monthly-table th {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.nq-monthly-table td,
+.nq-monthly-table tbody th {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.nq-monthly-table tbody th {
+  color: inherit;
+  font-size: 12px;
+  font-weight: normal;
+  white-space: normal;
+}
+
+.nq-monthly-table tbody tr:hover td,
+.nq-monthly-table tbody tr:hover th {
+  border-bottom-color: #b7d8c9;
+}
+
+.nq-monthly-table .nq-monthly-first td:not(.nq-monthly-cell),
+.nq-monthly-table .nq-monthly-first th {
+  background: #f3faf6;
+}
+
+.nq-monthly-rank {
+  width: 45px;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--teal-ink);
+}
+
+.nq-monthly-strategy-head,
+.nq-monthly-strategy {
+  min-width: 220px;
+  max-width: 260px;
+}
+
+.nq-monthly-strategy {
+  line-height: 1.3;
+}
+
+.nq-monthly-row-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.nq-monthly-mobile-summary {
+  display: none;
+}
+
+.nq-monthly-number,
+.nq-monthly-cell {
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.nq-monthly-number.positive {
+  color: var(--teal-ink);
+}
+
+.nq-monthly-number.negative {
+  color: var(--loss);
+}
+
+.nq-monthly-cell {
+  min-width: 70px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.nq-monthly-foot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.nq-monthly-facts {
+  margin: 7px 0 0;
+  font-size: 12px;
+}
+
+.nq-monthly-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.nq-monthly-facts dt {
+  color: var(--muted);
+}
+
+.nq-monthly-facts dd {
+  margin: 0;
+  text-align: right;
+}
+
+.nq-monthly-facts code {
+  display: block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+}
+
+.nq-monthly-provenance summary {
+  color: var(--teal-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nq-monthly-provenance-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px 20px;
+}
+
+.nq-monthly-provenance-list > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 12px;
+}
+
+.nq-monthly-provenance-list span {
+  color: var(--muted);
+}
+
+.nq-monthly-provenance-list .nq-monthly-issue {
+  color: var(--loss);
+}
+
+@media (max-width: 800px) {
+  .nq-monthly-table {
+    min-width: 850px;
+  }
+
+  .nq-monthly-table .nq-monthly-summary-col {
+    display: none;
+  }
+
+  .nq-monthly-table .nq-monthly-strategy-head,
+  .nq-monthly-table .nq-monthly-strategy {
+    min-width: 170px;
+    max-width: 185px;
+  }
+
+  .nq-monthly-row-sub {
+    flex-wrap: wrap;
+  }
+
+  .nq-monthly-mobile-summary {
+    display: block;
+    flex-basis: 100%;
+  }
+
+  .nq-monthly-foot-grid,
+  .nq-monthly-provenance-list {
+    grid-template-columns: 1fr;
+  }
+
+  .nq-monthly-best-metrics {
+    gap: 12px 18px;
+  }
+
+  .nq-monthly-best-metrics > div {
+    min-width: 72px;
+  }
+}

@@ -15,6 +15,7 @@ export type Page =
   | "runs"
   | "new-run"
   | "evaluations"
+  | "event-studies"
   | "watchlist"
   | "scripts"
   | "datasets";
@@ -26,6 +27,7 @@ const defaults: Record<Page, string> = {
   runs: "all",
   "new-run": "",
   evaluations: "",
+  "event-studies": "",
   watchlist: "",
   scripts: "runnable",
   datasets: "",
@@ -89,6 +91,7 @@ export function navGroups(counts: Partial<Record<Page, number>>) {
       items: [
         item("runs", "Runs & compare", <IconList size={16} />),
         item("evaluations", "Evaluations & regimes", <IconFlask size={16} />),
+        item("event-studies", "Pattern event studies", <IconChartDots size={16} />),
         item("watchlist", "Watchlist", <IconEye size={16} />),
       ],
     },

@@ -1,3 +1,15 @@
+import {
+  applyPortfolioControls,
+  correlationRows,
+  replayDeterioration,
+  replaySizing,
+  sizingSettings,
+  summarizeDaily,
+  validateSizing,
+  type SizingSettings,
+} from "./riskSizing.ts";
+
+export const DEFAULT_PORTFOLIO_CAPITAL = 100000;
 export type Coverage = { start: string; end: string };
 export type CollectiveItem = {
   id: string;
@@ -22,25 +34,54 @@ export type CollectiveItem = {
   coverage: Coverage[];
   series_file: string;
   checksum: string;
+  latest_replay?: {
+    start: string;
+    end: string;
+    dataset_id: string;
+    extension_sha256: string;
+  };
 };
 export type CollectiveCatalog = {
   version: number;
   generated_at: string;
   items: CollectiveItem[];
   errors: { key: string; error: string }[];
+  market_data_through?: Record<string, string>;
+  condition_calibration?: import("./strategyCondition.ts").ConditionCalibration;
   definitions: { working: string; feasible: string; pnl: string };
 };
-export type Trade = { entry: string; exit: string; pnl: number };
-export type DailyMark = { date: string; pnl: number };
+export type Trade = {
+  entry: string;
+  exit: string;
+  pnl: number;
+  quantity?: number;
+  cost?: number;
+  exit_reason?: string;
+  synthetic_exit?: boolean;
+  exit_provenance?: string;
+  source_run?: string;
+  source_version?: string;
+  segment?: string;
+};
+export type DailyMark = { date: string; pnl: number; segment?: string; terminal?: boolean };
 export type CollectiveSeries = {
   id: string;
   daily: DailyMark[];
   trades: Trade[];
   coverage: Coverage[];
+  provenance_version?: number;
 };
 export type GatePolicy = {
   enabled: boolean;
-  mode: "rolling" | "streak" | "drawdown" | "volatility";
+  mode:
+    | "rolling"
+    | "streak"
+    | "drawdown"
+    | "volatility"
+    | "manual"
+    | "fixed"
+    | "portfolio"
+    | "deterioration";
   lookback: number;
   lossLimit: number;
   streak: number;
@@ -49,6 +90,13 @@ export type GatePolicy = {
   recovery: number;
   volLookback: number;
   volCap: number;
+  sizing?: Partial<SizingSettings>;
+  manual?: Record<string, ManualDecision[]>;
+};
+export type ManualDecision = {
+  timestamp: string;
+  action: "pause" | "resume";
+  reason: string;
 };
 export const defaultPolicy: GatePolicy = {
   enabled: false,
@@ -73,7 +121,52 @@ export type GateReplay = {
   weights: Map<number, number>;
   events: GateEvent[];
   state: GateState;
+  status?: {
+    reason: string;
+    cooldownUntil: string | null;
+    recoveryTrades: number;
+    recoveryPnl: number;
+    required: number;
+  };
 };
+
+export function validatePolicy(policy: GatePolicy) {
+  if (!policy.enabled) return;
+  if (
+    ![
+      "rolling",
+      "streak",
+      "drawdown",
+      "volatility",
+      "manual",
+      "fixed",
+      "portfolio",
+      "deterioration",
+    ].includes(policy.mode)
+  )
+    throw new Error("Choose a valid replay mode.");
+  for (const [key, min, max] of [
+    ["lookback", 2, 100],
+    ["streak", 1, 50],
+    ["cooldown", 1, 365],
+    ["recovery", 1, 100],
+    ["volLookback", 10, 250],
+  ] as const) {
+    const value = policy[key];
+    if (!Number.isInteger(value) || value < min || value > max)
+      throw new Error(`${key} must be a whole number from ${min} to ${max}.`);
+  }
+  if (
+    !Number.isFinite(policy.lossLimit) ||
+    policy.lossLimit < 0 ||
+    !Number.isFinite(policy.drawdown) ||
+    policy.drawdown < 1 ||
+    !Number.isFinite(policy.volCap) ||
+    policy.volCap < 0.25 ||
+    policy.volCap > 4
+  )
+    throw new Error("Use finite, valid loss, drawdown and size limits.");
+}
 
 // Closed shadow outcomes only. Equal-timestamp exits are unavailable at entry.
 // Rejected trades still feed shadow recovery; existing trades are never liquidated.
@@ -85,7 +178,24 @@ export function replayGate(
   end: string,
   daily: DailyMark[] = [],
   start = "",
+  manual: ManualDecision[] = [],
 ): GateReplay {
+  validatePolicy(policy);
+  if (policy.enabled && policy.sizing) validateSizing(policy, start);
+  if (policy.enabled && policy.mode === "deterioration") {
+    // Reuse the strict manual-schedule validation, including timezone boundaries.
+    replayGate([], { ...policy, mode: "manual" }, end, [], start, manual);
+    return replayDeterioration(trades, policy, end, daily, start, manual);
+  }
+  if (
+    policy.enabled &&
+    (policy.mode === "fixed" ||
+      policy.mode === "portfolio" ||
+      (policy.mode === "volatility" &&
+        policy.sizing &&
+        policy.sizing.estimator !== "legacy"))
+  )
+    return replaySizing(trades, policy, end, daily, start);
   if (policy.enabled && policy.mode === "volatility")
     return replayVolatility(trades, policy, end, daily, start);
   const cutoff = Date.parse(end + "T23:59:59.999Z");
@@ -98,40 +208,89 @@ export function replayGate(
   const accepted = new Set<number>();
   const weights = new Map<number, number>();
   const events: GateEvent[] = [];
+  const decisions =
+    policy.enabled && policy.mode === "manual"
+      ? [...manual].sort(
+          (a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp),
+        )
+      : [];
+  for (const [i, d] of decisions.entries()) {
+    if (
+      !Number.isFinite(Date.parse(d.timestamp)) ||
+      !/(Z|[+-]\d{2}:\d{2})$/.test(d.timestamp) ||
+      !["pause", "resume"].includes(d.action) ||
+      !d.reason.trim()
+    )
+      throw new Error(
+        "Manual decisions require a timezone, action and reason.",
+      );
+    if (i && Date.parse(decisions[i - 1].timestamp) === Date.parse(d.timestamp))
+      throw new Error("Use one manual decision per strategy and timestamp.");
+  }
+  let manualCursor = 0;
+  function applyManual(through: number) {
+    while (
+      manualCursor < decisions.length &&
+      Date.parse(decisions[manualCursor].timestamp) <= through
+    ) {
+      const d = decisions[manualCursor++];
+      paused = d.action === "pause";
+      events.push({
+        timestamp: d.timestamp,
+        state: paused ? "Paused" : "Active",
+        reason: `Manual ${d.action}: ${d.reason}`,
+      });
+    }
+  }
   let cursor = 0,
     paused = false,
+    pausedAt = 0,
     until = 0,
     equity = 0,
     peak = 0,
     consecutive = 0;
   const recent: number[] = [];
+  const recovery: number[] = [];
+  let recoveryLastTime = 0;
+  function resume(time: number) {
+    if (
+      paused &&
+      time >= until &&
+      recovery.length >= policy.recovery &&
+      recovery.slice(-policy.recovery).reduce((a, b) => a + b, 0) > 0
+    ) {
+      paused = false;
+      peak = equity;
+      consecutive = 0;
+      recent.length = 0;
+      recovery.length = 0;
+      events.push({
+        timestamp: new Date(Math.max(until, recoveryLastTime)).toISOString(),
+        state: "Active",
+        reason: "Cooldown complete and post-pause shadow recovery is positive",
+      });
+    }
+  }
   function observe(before: number) {
     while (cursor < exits.length && Date.parse(exits[cursor].exit) < before) {
       const t = exits[cursor++],
         time = Date.parse(t.exit);
+      if (t.synthetic_exit === true) continue;
+      // Process a ready cooldown before a later outcome. Otherwise a loss after
+      // expiry could incorrectly be treated as part of the old recovery period.
+      if (policy.enabled && policy.mode !== "manual" && time >= until)
+        resume(until);
       recent.push(t.pnl);
       equity += t.pnl;
       peak = Math.max(peak, equity);
       consecutive = t.pnl < 0 ? consecutive + 1 : 0;
-      if (!policy.enabled) continue;
+      if (!policy.enabled || policy.mode === "manual") continue;
       if (paused) {
-        if (
-          time >= until &&
-          recent.length >= policy.recovery &&
-          recent.slice(-policy.recovery).reduce((a, b) => a + b, 0) > 0
-        ) {
-          paused = false;
-          peak = equity;
-          consecutive = 0;
-          // Recovery establishes a new observation segment, preventing immediate
-          // re-pausing on the same losses that caused the previous pause.
-          recent.length = 0;
-          events.push({
-            timestamp: t.exit,
-            state: "Active",
-            reason: "Cooldown complete and shadow recovery is positive",
-          });
+        if (Date.parse(t.entry) > pausedAt) {
+          recovery.push(t.pnl);
+          recoveryLastTime = time;
         }
+        resume(time);
       } else {
         const rolling =
           recent.length >= policy.lookback &&
@@ -145,6 +304,8 @@ export function replayGate(
               : peak - equity >= policy.drawdown;
         if (breach) {
           paused = true;
+          pausedAt = time;
+          recovery.length = 0;
           until = time + policy.cooldown * 86400000;
           events.push({
             timestamp: t.exit,
@@ -164,10 +325,42 @@ export function replayGate(
     const time = Date.parse(t.entry);
     if (time > cutoff) break;
     observe(time);
+    if (policy.enabled && policy.mode === "manual") applyManual(time);
+    else if (policy.enabled) resume(time);
     if (!paused) accepted.add(t.index);
   }
   observe(cutoff + 1);
-  return { accepted, weights, events, state: paused ? "Paused" : "Active" };
+  if (policy.enabled && policy.mode === "manual") applyManual(cutoff);
+  else if (policy.enabled) resume(cutoff);
+  const recoveryPnl = recovery
+    .slice(-policy.recovery)
+    .reduce((a, b) => a + b, 0);
+  return {
+    accepted,
+    weights,
+    events,
+    state: paused ? "Paused" : "Active",
+    status: {
+      reason: !policy.enabled
+        ? "Replay disabled"
+        : policy.mode === "manual"
+          ? paused
+            ? "Waiting for a dated manual resume"
+            : "Manual schedule permits entries"
+          : !paused
+            ? "New entries permitted"
+            : cutoff < until
+              ? "Waiting for cooldown and post-pause recovery"
+              : "Waiting for positive post-pause recovery",
+      cooldownUntil:
+        paused && policy.mode !== "manual"
+          ? new Date(until).toISOString()
+          : null,
+      recoveryTrades: Math.min(recovery.length, policy.recovery),
+      recoveryPnl,
+      required: policy.recovery,
+    },
+  };
 }
 
 // Volatility scaling (Carver; Harvey et al. 2018): size = target ÷ recent
@@ -200,12 +393,15 @@ function replayVolatility(
     if (window.length < 10) return NaN;
     const mean = window.reduce((a, p) => a + p.pnl, 0) / window.length;
     return Math.sqrt(
-      window.reduce((a, p) => a + (p.pnl - mean) ** 2, 0) /
-        (window.length - 1),
+      window.reduce((a, p) => a + (p.pnl - mean) ** 2, 0) / (window.length - 1),
     );
   };
   const entries = trades
-    .map((t, i) => ({ ...t, index: i, sigma: sigmaBefore(t.entry.slice(0, 10)) }))
+    .map((t, i) => ({
+      ...t,
+      index: i,
+      sigma: sigmaBefore(t.entry.slice(0, 10)),
+    }))
     .sort((a, b) => Date.parse(a.entry) - Date.parse(b.entry));
   const prior = entries
     .filter((t) => t.entry.slice(0, 10) < start && Number.isFinite(t.sigma))
@@ -340,16 +536,35 @@ export function calendarDates(start: string, end: string): string[] {
 export function covered(date: string, spans: Coverage[]) {
   return spans.some((s) => s.start <= date && date <= s.end);
 }
-export function commonWindow(items: CollectiveItem[]) {
-  return {
-    start:
-      items
-        .map((i) => i.start)
-        .sort()
-        .at(-1) || "",
-    end: items.map((i) => i.end).sort()[0] || "",
+export function commonWindow(items: Pick<CollectiveItem, "coverage">[]) {
+  // Intersect actual tested spans, never the outer bounds across a test gap.
+  const merge = (spans: Coverage[]) => {
+    const merged: Coverage[] = [];
+    for (const span of [...spans].sort((a, b) => a.start.localeCompare(b.start))) {
+      if (!span.start || !span.end || span.start > span.end) continue;
+      const previous = merged.at(-1);
+      if (previous && Date.parse(span.start) <= Date.parse(previous.end) + 86400000) {
+        if (span.end > previous.end) previous.end = span.end;
+      } else merged.push({ ...span });
+    }
+    return merged;
   };
+  let windows = merge(items[0]?.coverage || []);
+  for (const item of items.slice(1)) {
+    const coverage = merge(item.coverage);
+    windows = merge(windows.flatMap((window) => coverage.flatMap((span) => {
+      const start = window.start > span.start ? window.start : span.start;
+      const end = window.end < span.end ? window.end : span.end;
+      return start <= end ? [{ start, end }] : [];
+    })));
+  }
+  // Prefer the longest continuous window, then the most recent on ties.
+  windows.sort((a, b) =>
+    (Date.parse(b.end) - Date.parse(b.start)) - (Date.parse(a.end) - Date.parse(a.start)) ||
+    b.end.localeCompare(a.end));
+  return windows[0] || { start: "", end: "" };
 }
+export class PortfolioCoverageError extends Error {}
 export type DailyPoint = {
   date: string;
   pnl: number;
@@ -370,7 +585,10 @@ export function calculatePortfolio(
   end: string,
   basis: "marked" | "closed",
   policy: GatePolicy,
+  capital = DEFAULT_PORTFOLIO_CAPITAL,
 ) {
+  if (!Number.isFinite(capital) || capital <= 0)
+    throw new Error("Total portfolio capital must be a positive finite amount.");
   const dates = calendarDates(start, end);
   const active = items.filter((i) => (copies[i.id] || 0) > 0);
   if (!active.length)
@@ -392,8 +610,10 @@ export function calculatePortfolio(
     dates.some((d) => !covered(d, data.get(i.id)!.coverage)),
   );
   if (gaps.length)
-    throw new Error(
-      `The selected period is not covered by ${gaps.map((i) => i.name + " / " + i.symbol + " / " + i.timeframe).join(", ")}. Use the common tested window or remove those configurations.`,
+    throw new PortfolioCoverageError(
+      `The selected period (${start} to ${end}) is not covered by ${gaps.map((i) =>
+        `${i.name} / ${i.symbol} / ${i.timeframe} (tested: ${data.get(i.id)!.coverage.map((span) => `${span.start} to ${span.end}`).join("; ") || "no covered dates"})`
+      ).join(", ")}. Use the common tested window or remove those configurations.`,
     );
   if (basis === "marked" && policy.enabled)
     throw new Error("Pause/resume replay uses closed-trade accounting.");
@@ -419,12 +639,23 @@ export function calculatePortfolio(
     id: string;
     name: string;
     symbol: string;
+    timeframe: string;
+    session: string;
     pnl: number;
+    maxDrawdownDollars: number;
     baseline: number;
     trades: number;
     skipped: number;
     exposure: number;
     state: GateState;
+    status?: GateReplay["status"];
+  }[] = [];
+  const sizingDecisions: {
+    id: string;
+    entry: string;
+    accepted: boolean;
+    multiple: number;
+    contracts: number | null;
   }[] = [];
   const dependence: (Dependence & {
     id: string;
@@ -436,10 +667,50 @@ export function calculatePortfolio(
     profit = 0,
     loss = 0,
     weightSum = 0;
+  const replays = new Map(
+    active.map((item) => {
+      const s = data.get(item.id)!;
+      return [
+        item.id,
+        replayGate(
+          s.trades,
+          policy,
+          end,
+          s.daily,
+          start,
+          policy.manual?.[item.id],
+        ),
+      ];
+    }),
+  );
+  if (policy.enabled)
+    applyPortfolioControls(
+      active,
+      active.map((i) => data.get(i.id)!),
+      copies,
+      replays,
+      policy,
+      end,
+    );
   for (const item of active) {
     const s = data.get(item.id)!,
       multiplier = copies[item.id];
-    const replay = replayGate(s.trades, policy, end, s.daily, start);
+    const replay = replays.get(item.id)!;
+    for (const [index, trade] of s.trades.entries()) {
+      if (trade.entry.slice(0, 10) < start || trade.entry.slice(0, 10) > end)
+        continue;
+      const accepted = replay.accepted.has(index);
+      const multiple = accepted ? (replay.weights.get(index) ?? 1) : 0;
+      sizingDecisions.push({
+        id: item.id,
+        entry: trade.entry,
+        accepted,
+        multiple,
+        contracts: trade.quantity
+          ? trade.quantity * multiplier * multiple
+          : null,
+      });
+    }
     events.push(
       ...replay.events
         .filter(
@@ -450,7 +721,7 @@ export function calculatePortfolio(
         .map((e) => ({
           ...e,
           id: item.id,
-          name: item.name + " / " + item.symbol,
+          name: item.name + " / " + item.symbol + " / " + item.timeframe,
         })),
     );
     if (policy.enabled)
@@ -493,7 +764,9 @@ export function calculatePortfolio(
       }
     }
     let pnl = 0,
-      baseline = 0;
+      baseline = 0,
+      pnlPeak = 0,
+      maxDrawdownDollars = 0;
     for (const date of dates) {
       const point = byDate.get(date)!,
         value = daily.get(date) || 0,
@@ -505,20 +778,25 @@ export function calculatePortfolio(
       point.byStrategy[item.id] = value;
       pnl += value;
       baseline += original;
+      pnlPeak = Math.max(pnlPeak, pnl);
+      maxDrawdownDollars = Math.max(maxDrawdownDollars, pnlPeak - pnl);
     }
     components.push({
       id: item.id,
       name: item.name,
       symbol: item.symbol,
+      timeframe: item.timeframe,
+      session: item.session,
       pnl,
+      maxDrawdownDollars,
       baseline,
       trades,
       skipped,
-      exposure: trades ? weightTotal / trades : 1,
+      exposure: trades + skipped ? weightTotal / (trades + skipped) : 0,
       state: replay.state,
+      status: replay.status,
     });
   }
-  const capital = active.reduce((n, i) => n + i.capital * copies[i.id], 0);
   let cumulative = 0,
     original = 0,
     peak = capital,
@@ -535,12 +813,41 @@ export function calculatePortfolio(
     return { ...p, cumulative, baselineCumulative: original, equity, drawdown };
   });
   const activity = points.filter((p) => p.pnl !== 0 || p.trades > 0);
+  const benchmarks = [0.5, 0.75, 1].map((size) => ({
+    size,
+    ...summarizeDaily(points.map((p) => p.baseline * size)),
+  }));
+  const calibrationEnd = sizingSettings(policy).calibrationEnd;
+  const correlations = correlationRows(
+    active,
+    active.map((i) => data.get(i.id)!),
+    calibrationEnd,
+  );
+  const quantitiesAvailable = active.every((i) =>
+    data
+      .get(i.id)!
+      .trades.filter((t) => t.entry.slice(0, 10) <= end)
+      .every((t) => Number.isInteger(t.quantity) && t.quantity! > 0),
+  );
   return {
     points,
     components,
     dependence,
+    benchmarks,
+    sizingDecisions,
+    comparison: summarizeDaily(points.map((p) => p.pnl)),
+    correlations,
+    execution: {
+      quantitiesAvailable,
+      wholeContracts: policy.enabled && sizingSettings(policy).wholeContracts,
+      marginConfigured:
+        policy.enabled && sizingSettings(policy).marginBudget > 0,
+      statefulRerun: false,
+      openRiskModeled: false,
+    },
     events: events.sort((a, b) => a.timestamp.localeCompare(b.timestamp)),
     capital,
+    depleted: points.some((point) => point.equity <= 0),
     net: cumulative,
     baseline: original,
     maxDrawdown,
@@ -548,7 +855,11 @@ export function calculatePortfolio(
     profitFactor: loss > 0 ? profit / loss : null,
     winRate: totalTrades ? wins / totalTrades : null,
     trades: totalTrades,
-    exposure: totalTrades ? weightSum / totalTrades : 1,
+    exposure:
+      totalTrades + components.reduce((n, c) => n + c.skipped, 0)
+        ? weightSum /
+          (totalTrades + components.reduce((n, c) => n + c.skipped, 0))
+        : 0,
     positiveDays: activity.filter((p) => p.pnl > 0).length,
     activeDays: activity.length,
     returnOnCapital: cumulative / capital,

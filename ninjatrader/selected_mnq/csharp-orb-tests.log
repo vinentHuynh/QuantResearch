@@ -1,0 +1,15 @@
+test_budget_preserves_125_point_cutoff_and_rejected_attempt_consumes_day (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_daily_signal_does_not_use_current_intraday_close_or_publish_holiday_early (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_default_daily_score_and_regular_decisions_match_python (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_early_close_deadline_exits_before_close_and_blocks_new_entry (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_missing_flat_window_catches_up_and_unexpected_carry_is_explicit (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_missing_next_days_or_does_not_reuse_old_range (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_partial_opening_range_remains_observed_source_rule (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_platform_clock_dst_conversion_and_ambiguous_time (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_short_direction_and_bracket (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+test_strict_close_break_and_signal_close_bracket (test_ninjatrader_orb_port.NinjaTraderOrbPort) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 1.183s
+
+OK

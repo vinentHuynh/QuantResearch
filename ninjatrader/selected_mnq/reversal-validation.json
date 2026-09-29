@@ -1,0 +1,52 @@
+{
+  "scope": "Compiled C# decision parity only; no NinjaTrader fill/performance claim",
+  "core_sha256": "a337bf21f26df0c37fae97b9c7ab62b5cb4ebc63fd7363f3efd004daab88ff99",
+  "python_sources": {
+    "strategies\\short_term_reversal.py": "df25162059e4f0d19414b933fed259fae1763b24b0b1c4bb48e0b10dad615f69",
+    "strategies\\short_term_reversal_minute.py": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1"
+  },
+  "results": [
+    {
+      "case": "DST-weekend-expiry-strict-threshold",
+      "bars": 3168,
+      "scheduled_decisions": 8,
+      "long_targets": 1,
+      "result": "PASS"
+    },
+    {
+      "case": "incomplete-future-day",
+      "bars": 948,
+      "scheduled_decisions": 3,
+      "long_targets": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "partial-left-day",
+      "bars": 3013,
+      "scheduled_decisions": 8,
+      "long_targets": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "late-missing-entry",
+      "bars": 3159,
+      "scheduled_decisions": 8,
+      "long_targets": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "sparse-early-close",
+      "bars": 2987,
+      "scheduled_decisions": 8,
+      "long_targets": 1,
+      "result": "PASS"
+    },
+    {
+      "case": "all-preserved-MNQ-minute-data-SMA200",
+      "bars": 2585939,
+      "scheduled_decisions": 1893,
+      "long_targets": 149,
+      "result": "PASS"
+    }
+  ]
+}

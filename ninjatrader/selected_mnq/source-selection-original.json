@@ -1,0 +1,2548 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-09-29T16:14:45.450579+00:00",
+  "request": "Convert only existing NQ strategies that are working and tested to NinjaTrader strategies for MNQ.",
+  "selection_policy": "Read current live catalog and scorecard, require NQ + working + tested, verify recorded source provenance, exclude unresolved matching execution defects. Working and tested means historical research eligibility, not feasible or live approved. Preserve original flags.",
+  "evidence_api": "http://127.0.0.1:8001/api/workbench",
+  "catalog_generated_at": "2026-09-18T04:04:35.442085+00:00",
+  "dashboard_generated_at": "2026-09-29T16:14:41.677Z",
+  "catalog_definitions": {
+    "working": "All available later-period baseline, cost and declared execution/risk checks passed. Unresolved tests remain visible.",
+    "feasible": "Working plus completed execution and parameter-sensitivity checks with no known session-exit flag. Historical research checklist only; not live approval.",
+    "pnl": "UTC calendar days, net of recorded fees and slippage. Independent strategy books; no position netting, shared margin or portfolio resizing."
+  },
+  "catalog_tested_flag_implementation": "coverage end >= 2026-08-31; tested alone does not imply validation passed",
+  "selected_count": 3,
+  "excluded_flagged_count": 1,
+  "all_selected_feasible": false,
+  "conversion_status": "Source selection provenance only; NinjaTrader compilation and MNQ execution validation are separate. NQ historical profitability is not MNQ performance.",
+  "target_economics": {
+    "symbol": "MNQ",
+    "tick_size_points": 0.25,
+    "point_value_usd": 2.0,
+    "tick_value_usd": 0.5,
+    "default_contracts": 1,
+    "note": "1 MNQ has one tenth NQ price exposure; retain point-based rules. Do not relabel NQ backtest as MNQ."
+  },
+  "global_limitations": [
+    "Historical research selection only; none of these NQ configurations has feasible=true.",
+    "Costs, fills, historical bar feeds, contract rolls and time-zone/session calendars can differ in NinjaTrader.",
+    "The two overnight variants overlap economically; they are separately recorded configurations, not independent edges.",
+    "Strategies with overnight positions must be checked against the actual prop account flatten/holding requirements."
+  ],
+  "source_reports": [
+    {
+      "name": "Workbench campaign",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\all-strategies-all-charts-2026-09-16\\report-data.json",
+      "checksum": "803f704849255cfc29bc32a87614b0382266d26062b357e11c10b6dc4fe2482f"
+    },
+    {
+      "name": "Expanded search",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\expanded-search-2026-09-16\\conclusions.json",
+      "checksum": "83e220ee80ad39d863caa9b6054d9ed6e1130500adf8d5c543f02f2878f37f72"
+    }
+  ],
+  "selected": [
+    {
+      "catalog_entry": {
+        "id": "25e6a2710748529fdff5",
+        "key": "pine-overnight-block__NQ__15m",
+        "name": "Pine · Overnight block",
+        "symbol": "NQ",
+        "timeframe": "15m",
+        "session": "full-trading-day",
+        "source": "Workbench",
+        "start": "2018-01-01",
+        "end": "2026-08-31",
+        "coverage": [
+          {
+            "start": "2018-01-01",
+            "end": "2023-12-31"
+          },
+          {
+            "start": "2024-01-01",
+            "end": "2024-12-31"
+          },
+          {
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "start": "2026-01-01",
+            "end": "2026-08-31"
+          }
+        ],
+        "capital": 100000,
+        "working": true,
+        "feasible": false,
+        "benchmark": false,
+        "tested": true,
+        "reasons": [
+          "Event-order delay sensitivity is untested."
+        ],
+        "parameters": {
+          "entry_hour": 17,
+          "entry_minute": 0,
+          "exit_hour": 6,
+          "exit_minute": 0,
+          "contracts": 1,
+          "timezone": "America/New_York"
+        },
+        "net_pnl": 321875,
+        "recent_pnl": 188772.5,
+        "trades": 2236,
+        "series_file": "25e6a2710748529fdff5-d01162e97b54c0c7.json",
+        "checksum": "d01162e97b54c0c746f45f88766e7c1a77816c99b5e7919056f91f447100d1f2"
+      },
+      "decision": "selected",
+      "strategy_id": "pine-overnight-block",
+      "target_symbol": "MNQ",
+      "target_default_contracts": 1,
+      "catalog_series_file": {
+        "path": "data/workbench/collective/25e6a2710748529fdff5-d01162e97b54c0c7.json",
+        "sha256": "d01162e97b54c0c746f45f88766e7c1a77816c99b5e7919056f91f447100d1f2"
+      },
+      "current_scorecard": {
+        "status": "Research candidate",
+        "reasons": [
+          "All declared latest scenarios are profitable and meet the evaluation criteria.",
+          "Event-order delay sensitivity is untested."
+        ],
+        "evaluation_id": "4bc1300c-1f4f-4646-a475-a5e90635f36d",
+        "evaluation_name": "all-charts-20260916-v1 | 2026__pine-overnight-block__NQ__15m",
+        "evaluated_at": "2026-09-16T14:13:57.123Z",
+        "baseline_run_ids": [
+          "12e217ac-1cf8-413b-99b8-a0a3a72eb179"
+        ],
+        "prior_flags": [],
+        "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+        "scenarios": [
+          {
+            "name": "Baseline",
+            "outcome": "Meets criteria",
+            "metrics": {
+              "net_pnl": 71380,
+              "trades": 172,
+              "max_drawdown": -0.26100617617077415
+            }
+          },
+          {
+            "name": "Higher costs",
+            "outcome": "Meets criteria",
+            "metrics": {
+              "net_pnl": 69230,
+              "trades": 172,
+              "max_drawdown": -0.26633081444164564
+            }
+          }
+        ]
+      },
+      "evaluation": {
+        "id": "4bc1300c-1f4f-4646-a475-a5e90635f36d",
+        "name": "all-charts-20260916-v1 | 2026__pine-overnight-block__NQ__15m",
+        "status": "Succeeded",
+        "outcome": "Meets criteria",
+        "created_at": "2026-09-16T14:13:57.123Z",
+        "scenarios": [
+          "Baseline",
+          "Higher costs"
+        ],
+        "folds": [
+          {
+            "index": 0,
+            "train_start": "2025-01-01",
+            "train_end": "2025-12-31",
+            "test_start": "2026-01-01",
+            "test_end": "2026-08-31",
+            "training": [
+              "af8c04b2-bf15-4f1e-a7f5-e28b7bba80e1"
+            ],
+            "tests": [
+              "12e217ac-1cf8-413b-99b8-a0a3a72eb179",
+              "bea5a5d9-6f2e-4fe1-83ca-d45b019e4435"
+            ],
+            "selection": {
+              "run_id": "af8c04b2-bf15-4f1e-a7f5-e28b7bba80e1",
+              "candidate": 0,
+              "score": 60887.5,
+              "selected_at": "2026-09-16T14:14:32.687Z",
+              "permitted_through": "2025-12-31",
+              "ranked": [
+                {
+                  "run_id": "af8c04b2-bf15-4f1e-a7f5-e28b7bba80e1",
+                  "candidate": 0,
+                  "score": 60887.5,
+                  "eligible": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "campaign_review": {
+        "complete": true,
+        "pass": true,
+        "sensitivity_positive": true,
+        "carry_trades": 0
+      },
+      "baseline_runs": [
+        {
+          "run_id": "f4305a9c-8258-4299-8c39-2069cfc82cb6",
+          "status": "Succeeded",
+          "created_at": "2026-09-16T13:36:00.434Z",
+          "started_at": "2026-09-16T13:57:15.447Z",
+          "ended_at": "2026-09-16T13:57:51.396Z",
+          "input_file": {
+            "path": "data/workbench/runs/f4305a9c-8258-4299-8c39-2069cfc82cb6/input.json",
+            "sha256": "37f372c9cfd4d3a4d0b84ecf7f62333cc53b8ac6516e2490177454437af15d34"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/f4305a9c-8258-4299-8c39-2069cfc82cb6/manifest.json",
+            "sha256": "66652f7e6870c481822d830cdd6810931b7c01b578d80f73b2babbd7a6d749bc"
+          },
+          "input": {
+            "parameters": {
+              "entry_hour": 17,
+              "entry_minute": 0,
+              "exit_hour": 6,
+              "exit_minute": 0,
+              "contracts": 1,
+              "timezone": "America/New_York"
+            },
+            "start": "2018-01-01",
+            "end": "2023-12-31",
+            "timeframe": "15m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 1.25,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 10,
+            "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "configuration_id": "f31f425daa571ae029b15407e0816ba04adfd39930eb273c2e666919534a15f5",
+            "criteria": "",
+            "hypothesis": "all-charts-20260916-v1 | screen__pine-overnight-block__NQ__15m"
+          },
+          "strategy": {
+            "id": "pine-overnight-block",
+            "version": "1.0.0",
+            "file": "strategies\\pine_overnight_block.py",
+            "file_hash": "bc9112bae7571a0054780071445ec991d15dbfc7bcd2cc414c5feb0b7db28a99",
+            "migration_scope": "Ports the Pine clock/order rules, including boundary-only entries. Scoring starts flat; no entry midway through an existing hold window. Costs and contract economics use the run inputs."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 133102.5,
+            "trades": 1549,
+            "max_drawdown": -0.182864883169658
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "c44d59a544210ed97effab223b76c95d1b04d1742e8a545ff936f30e624c582a",
+              "rows": 140874
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "f496a2e57369972c75a364310b96a9c05a492dcde3e332ae47e6c811a762ea4a",
+              "rows": 1549
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "8d8d4c2d889f9db1b22d6f1c7e26ed2b6958ba7431daf3540a3d6e29b64027fe",
+              "rows": 140874
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "f498c3c2-21ba-4fb2-bd13-5cf39915ae09",
+          "status": "Succeeded",
+          "created_at": "2026-09-16T14:13:48.835Z",
+          "started_at": "2026-09-16T14:13:48.993Z",
+          "ended_at": "2026-09-16T14:13:59.337Z",
+          "tags": "all-charts-20260916-v1",
+          "notes": "[all-charts-20260916-v1 final review]\nReport decision: Retain for research.\nFull report: reports/all-strategies-all-charts-2026-09-16/REPORT.html. Historical research only.",
+          "input_file": {
+            "path": "data/workbench/runs/f498c3c2-21ba-4fb2-bd13-5cf39915ae09/input.json",
+            "sha256": "121d290b8472b24800d2cf3b1b5462196b745716ec56ac5fd4926a8027076a25"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/f498c3c2-21ba-4fb2-bd13-5cf39915ae09/manifest.json",
+            "sha256": "74e64a5890fe3d1cbd81c5fbb9266463f26f6d551dc5fdd4edaf2d47337e3801"
+          },
+          "input": {
+            "parameters": {
+              "entry_hour": 17,
+              "entry_minute": 0,
+              "exit_hour": 6,
+              "exit_minute": 0,
+              "contracts": 1,
+              "timezone": "America/New_York"
+            },
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "timeframe": "15m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 1.25,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 10,
+            "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "configuration_id": "f31f425daa571ae029b15407e0816ba04adfd39930eb273c2e666919534a15f5",
+            "criteria": "Every scored baseline/cost/supported-delay scenario must have strictly positive net P&L, drawdown <=35%, and >=10 trades (5 for daily TSMOM/RSI2). Prior failure remains a failure. Nonpositive equity is infeasible under the simulator capital assumptions. Sensitivity results and ORB carry events remain separate review flags.",
+            "hypothesis": "all-charts-20260916-v1 | 2024_baseline__pine-overnight-block__NQ__15m"
+          },
+          "strategy": {
+            "id": "pine-overnight-block",
+            "version": "1.0.0",
+            "file": "strategies\\pine_overnight_block.py",
+            "file_hash": "bc9112bae7571a0054780071445ec991d15dbfc7bcd2cc414c5feb0b7db28a99",
+            "migration_scope": "Ports the Pine clock/order rules, including boundary-only entries. Scoring starts flat; no entry midway through an existing hold window. Costs and contract economics use the run inputs."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 56505.0,
+            "trades": 258,
+            "max_drawdown": -0.18303364348276896
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "4b29f2568da19926357578ed45bef829bff63cf436023bf1924403c45ec7705a",
+              "rows": 23671
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "be9192f3fb1a7340ef97b0af985cc182231a962df238c798a61fbfc590218d86",
+              "rows": 258
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "4029b7a46e3483bef364103e3cab46ac54f039946f9799674e7b6df75b26d362",
+              "rows": 23671
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "94955b23-4bad-4092-ba71-c841fb77ae29",
+          "status": "Succeeded",
+          "created_at": "2026-09-16T14:14:29.557Z",
+          "started_at": "2026-09-16T14:16:33.588Z",
+          "ended_at": "2026-09-16T14:16:43.522Z",
+          "input_file": {
+            "path": "data/workbench/runs/94955b23-4bad-4092-ba71-c841fb77ae29/input.json",
+            "sha256": "197865a6b2a4022c9cf30ab60fdd6c95f4cfcf32a4bfe70d50fa287cb6dc77ed"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/94955b23-4bad-4092-ba71-c841fb77ae29/manifest.json",
+            "sha256": "cb935e2f1255b231ed3c34085c5e05ab0b41935bf496252ad346c84436cf5e07"
+          },
+          "input": {
+            "parameters": {
+              "entry_hour": 17,
+              "entry_minute": 0,
+              "exit_hour": 6,
+              "exit_minute": 0,
+              "contracts": 1,
+              "timezone": "America/New_York"
+            },
+            "start": "2025-01-01",
+            "end": "2025-12-31",
+            "timeframe": "15m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 1.25,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 10,
+            "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "configuration_id": "1902f8a391c6cfad47c0437b2e6d5e60e818023a0023d0d825d7d2dd7182d4d6",
+            "research": {
+              "evaluation_id": "043f89b2-6f38-463b-a189-f1f5d96fd48f",
+              "fold": 0,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0; drawdown <= 0.35; trades >= 10 across test folds",
+            "hypothesis": "Every scored baseline/cost/supported-delay scenario must have strictly positive net P&L, drawdown <=35%, and >=10 trades (5 for daily TSMOM/RSI2). Prior failure remains a failure. Nonpositive equity is infeasible under the simulator capital assumptions. Sensitivity results and ORB carry events remain separate review flags. Frozen 2018-2023 selection; singleton calibration candidate; no retuning."
+          },
+          "strategy": {
+            "id": "pine-overnight-block",
+            "version": "1.0.0",
+            "file": "strategies\\pine_overnight_block.py",
+            "file_hash": "bc9112bae7571a0054780071445ec991d15dbfc7bcd2cc414c5feb0b7db28a99",
+            "migration_scope": "Ports the Pine clock/order rules, including boundary-only entries. Scoring starts flat; no entry midway through an existing hold window. Costs and contract economics use the run inputs."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 60887.5,
+            "trades": 257,
+            "max_drawdown": -0.2854675117009232
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "7457e1861dff735271cb1f13c36c07edb9413f154780dd0e89278738cce03d3c",
+              "rows": 23506
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "920dbd069a28338a4f194b5874d765f7e12bacda8b9b07f79ea78e99af7655e1",
+              "rows": 257
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "f7208cb2e345fe399f43b58e342ead5febb07f84f634c716bd6442219eec5ef8",
+              "rows": 23506
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "12e217ac-1cf8-413b-99b8-a0a3a72eb179",
+          "status": "Succeeded",
+          "created_at": "2026-09-16T14:14:32.891Z",
+          "started_at": "2026-09-16T14:17:08.885Z",
+          "ended_at": "2026-09-16T14:17:15.821Z",
+          "tags": "reviewed-2026-09-17",
+          "notes": "[needs-review-audit-2026-09-17]\nReviewed adapter: Pine · Overnight block.\nVerdict: Retain NQ 15m; ES remains conditional and YM fails cost resilience.\nNQ 15m / 17:00-06:00 New York is positive in all saved 2024-2026 baseline and doubled-cost checks. The 2026 baseline earns $71,380 with 26.10% drawdown and 172 trades; doubled costs leave $69,230. Both earlier entry-time neighbors are positive. The catalog already marks this configuration Working, but not feasible because event-order delay remains untested.\nThe NQ 2026 result retains $24,597.50 after arithmetically removing its five best trades, with profit factor 1.34. The 17:00 scheduling boundary normally fills at the 18:00 reopen; these are overnight positions by design.\nES 5m passes later numeric checks, but the 16:00 entry sensitivity loses $2,090 over 2022-2023. Its review flag is a timing-robustness issue, not failure of the displayed 2024 baseline. YM 15m earns only $2,337.50 in 2025 at base costs and loses $875 with doubled costs.\nNext step: Validate NQ entry/exit latency and overnight risk at minute resolution. Resolve ES timing robustness with a separately declared test; keep YM out of a passing classification.\nAudit: all 334 current-adapter runs reconciled; data/source/artifact checksums verified. No failed evidence removed and no automatic promotion.\nFull review: reports/needs-review-2026-09-17/REVIEW.md#pine-overnight-block\n\nTesting review: {\"version\":1,\"sourceHash\":\"bc9112bae7571a0054780071445ec991d15dbfc7bcd2cc414c5feb0b7db28a99\",\"reviewedAt\":\"2026-09-17T20:08:08.042Z\",\"runIds\":[\"67f842e0-3053-40d0-8c5b-92e02b6b06d4\",\"5515dd4e-8241-403f-945f-ad5fbc85f118\",\"25ccc5b3-00bd-4e42-a749-83e815718eef\",\"d7880fe2-c8b9-40fe-a2ac-bb89faed3f24\",\"847f8f97-e7ea-4bc7-9106-0bf65b4e927b\",\"8eab50b5-5433-4dcc-a2ed-9e147a87fef5\",\"1fa77550-7600-44fd-ab7b-514424d69790\",\"dd35c85a-8538-476d-94b3-14f9b8819536\",\"0dd003f7-e3bd-4d2e-96fa-b5defbd6b6a7\",\"c18292a8-956d-4011-a160-8483fff97b57\",\"10c560b3-7abb-42f9-a37b-6ff738c25c51\",\"a57f118b-9eab-445e-b031-ee0414a8ca1e\",\"e5221d45-283e-4f81-84bf-83b3d0cf064e\",\"f605b822-c36d-4a85-aeaa-fa11dce0f950\",\"4fda79aa-d4ce-46d8-b6fd-c986c4cdd209\",\"c2b8ec0d-97e3-4d8c-aff0-dc3433ca4113\",\"f3586854-9d5e-4e77-8417-a78c5d69feab\",\"5fb8884b-617b-4d69-a4e3-55b691e4ca0e\",\"f76c6de1-ee12-481e-819f-b56516d7a19e\",\"b5d7fa12-faaf-4c8e-88e2-7434c701a3ca\",\"7856f62b-5655-4f15-8c78-a97ee4a845a3\",\"0a9e49a1-bbf4-4cec-a487-8599899f4c1e\",\"bea5a5d9-6f2e-4fe1-83ca-d45b019e4435\",\"12e217ac-1cf8-413b-99b8-a0a3a72eb179\",\"97453f54-f57e-42d0-a56c-40e36daf1ca9\",\"94955b23-4bad-4092-ba71-c841fb77ae29\",\"af8c04b2-bf15-4f1e-a7f5-e28b7bba80e1\",\"55213a01-f5f2-489e-a524-d05319ce9d0b\",\"2d099bda-a4ad-4314-b278-af8c93a82d26\",\"3b1ac6bd-0661-4e19-a92e-703f5c44b92e\",\"d85676d6-8183-411a-8019-dd8af1f67c1a\",\"f498c3c2-21ba-4fb2-bd13-5cf39915ae09\",\"f4305a9c-8258-4299-8c39-2069cfc82cb6\",\"e32212c6-7fb4-45b9-b8e1-dac5d4b6a8f9\",\"04e536f1-277e-4647-b71d-a453d4728a95\",\"76bf9f32-f22f-4612-981f-5769018bb240\",\"dac1a188-a99d-44ee-8855-22c57ab2188f\",\"1b63dbee-e5f3-4896-a494-bf8396d685d9\",\"65e0d294-ee68-40c7-8f17-66c29a45c8e2\",\"6c3a3633-5c60-4817-9c06-0495c9519442\"],\"issueKeys\":[\"dc55d86d-c42b-4aa0-9a01-1a2c4046334e-Higher costs:56e7b611\",\"c2b8ec0d-97e3-4d8c-aff0-dc3433ca4113:4e38faf5\",\"0a9e49a1-bbf4-4cec-a487-8599899f4c1e:b3c8d33c\"],\"verdict\":\"Retain NQ 15m; ES remains conditional and YM fails cost resilience\",\"nextStep\":\"Validate NQ entry/exit latency and overnight risk at minute resolution. Resolve ES timing robustness with a separately declared test; keep YM out of a passing classification.\"}",
+          "input_file": {
+            "path": "data/workbench/runs/12e217ac-1cf8-413b-99b8-a0a3a72eb179/input.json",
+            "sha256": "711abac08e2c418e8dc46fe40cba5085596f9f589bbfe9260bf1d5d1fef5cce5"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/12e217ac-1cf8-413b-99b8-a0a3a72eb179/manifest.json",
+            "sha256": "e51424cc1af91257028789bc4586592546b001ba40f729df34cac9a5a9d5c658"
+          },
+          "input": {
+            "parameters": {
+              "entry_hour": 17,
+              "entry_minute": 0,
+              "exit_hour": 6,
+              "exit_minute": 0,
+              "contracts": 1,
+              "timezone": "America/New_York"
+            },
+            "start": "2026-01-01",
+            "end": "2026-08-31",
+            "timeframe": "15m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 1.25,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 10,
+            "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "configuration_id": "1902f8a391c6cfad47c0437b2e6d5e60e818023a0023d0d825d7d2dd7182d4d6",
+            "research": {
+              "evaluation_id": "4bc1300c-1f4f-4646-a475-a5e90635f36d",
+              "fold": 0,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0; drawdown <= 0.35; trades >= 10 across test folds",
+            "hypothesis": "Every scored baseline/cost/supported-delay scenario must have strictly positive net P&L, drawdown <=35%, and >=10 trades (5 for daily TSMOM/RSI2). Prior failure remains a failure. Nonpositive equity is infeasible under the simulator capital assumptions. Sensitivity results and ORB carry events remain separate review flags. Frozen 2018-2023 selection; singleton calibration candidate; no retuning."
+          },
+          "strategy": {
+            "id": "pine-overnight-block",
+            "version": "1.0.0",
+            "file": "strategies\\pine_overnight_block.py",
+            "file_hash": "bc9112bae7571a0054780071445ec991d15dbfc7bcd2cc414c5feb0b7db28a99",
+            "migration_scope": "Ports the Pine clock/order rules, including boundary-only entries. Scoring starts flat; no entry midway through an existing hold window. Costs and contract economics use the run inputs."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 71380.0,
+            "trades": 172,
+            "max_drawdown": -0.26100617617077415
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "194c031ebdc832b32c70659b21382a13b8ee9d75032b2eab8e6443d1451f21bc",
+              "rows": 15720
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "98eccec2673d8bd4e757d5ee3c9767deb483f7615b7b6f17c8afdc707a1c283e",
+              "rows": 172
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "c3881041c162bea8e6a292fce4060530b279a54742aa90c791d4a3a2cc4466f2",
+              "rows": 15720
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        }
+      ],
+      "source_files": [
+        {
+          "repository_path": "strategies/pine_overnight_block.py",
+          "current_sha256": "bc9112bae7571a0054780071445ec991d15dbfc7bcd2cc414c5feb0b7db28a99",
+          "tested_snapshot_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92\\strategies\\pine_overnight_block.py",
+          "tested_sha256": "bc9112bae7571a0054780071445ec991d15dbfc7bcd2cc414c5feb0b7db28a99",
+          "matches_tested_snapshot": true
+        },
+        {
+          "repository_path": "strategies/_pine_models.py",
+          "current_sha256": "310e6f62cf7976bcc371c80196583e14c840389a2427a54bcde2a694e4700fb6",
+          "tested_snapshot_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92\\strategies\\_pine_models.py",
+          "tested_sha256": "310e6f62cf7976bcc371c80196583e14c840389a2427a54bcde2a694e4700fb6",
+          "matches_tested_snapshot": true
+        }
+      ],
+      "selection_reason": "NQ working+tested catalog entry, current source matches tested source, no unresolved matching failed checks in current scorecard.",
+      "execution_rules": {
+        "chart": "15-minute full trading day",
+        "timezone": "America/New_York",
+        "hold_window": "17:00 inclusive to 06:00 exclusive by completed-bar availability time",
+        "entry": "Only false-to-true clock-window transition; next selected-bar open, normally 18:00 CME reopen",
+        "exit": "Window false and previously true or position held; next selected-bar open",
+        "direction": "long",
+        "sizing": "fixed 1 contract",
+        "stops_targets": "none"
+      },
+      "ninjatrader_conversion": {
+        "strategy_class": "WorkbenchMnqOvernightBlock",
+        "code_path": "ninjatrader/WorkbenchMnqOvernightBlock.cs",
+        "signal_helper": "ninjatrader/WorkbenchMnqOvernightRules.cs",
+        "chart": "MNQ 15-minute CME US Index Futures ETH",
+        "entry_clock": "observed completed-bar window transition, usually17:00 signal /18:00 fill",
+        "execution_difference": "Market orders receive actual next available fills. Observed-window transitions preserve source gap behavior; late callbacks can delay fills."
+      }
+    },
+    {
+      "catalog_entry": {
+        "id": "3b3d1cfec7aac292801c",
+        "key": "overnight-session__NQ__1m__globex-overnight",
+        "name": "Overnight Session",
+        "symbol": "NQ",
+        "timeframe": "1m",
+        "session": "globex-overnight",
+        "source": "Expanded",
+        "start": "2018-01-01",
+        "end": "2026-08-31",
+        "coverage": [
+          {
+            "start": "2018-01-01",
+            "end": "2023-12-31"
+          },
+          {
+            "start": "2024-01-01",
+            "end": "2024-12-31"
+          },
+          {
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "start": "2026-01-01",
+            "end": "2026-08-31"
+          }
+        ],
+        "capital": 100000,
+        "working": true,
+        "feasible": false,
+        "benchmark": false,
+        "tested": true,
+        "reasons": [
+          "Literal cross-market settings; contract rolls and live margin are not modeled.",
+          "Three recent periods passed base, double-cost, conservative-execution and marked-risk checks. Parameter sensitivity and prospective validation remain untested."
+        ],
+        "parameters": {},
+        "net_pnl": 325027.5,
+        "recent_pnl": 190712.5,
+        "trades": 2239,
+        "series_file": "3b3d1cfec7aac292801c-e20b5933a8cf609f.json",
+        "checksum": "e20b5933a8cf609f0e4d4e48a01443beb21f4efa0566db56101aa5fc972e2033"
+      },
+      "decision": "selected",
+      "strategy_id": "overnight-session",
+      "target_symbol": "MNQ",
+      "target_default_contracts": 1,
+      "catalog_series_file": {
+        "path": "data/workbench/collective/3b3d1cfec7aac292801c-e20b5933a8cf609f.json",
+        "sha256": "e20b5933a8cf609f0e4d4e48a01443beb21f4efa0566db56101aa5fc972e2033"
+      },
+      "selection_reason": "Expanded frozen NQ overnight candidate passes all three later periods under baseline/double-cost/conservative-execution scenarios and marked-risk checks.",
+      "expanded_conclusion": {
+        "numeric_pass": true,
+        "risk_pass": true,
+        "failures": [],
+        "risk_failures": [],
+        "risk": [
+          {
+            "run": "2024__overnight-session__NQ__1m__globex-overnight__baseline",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2024",
+            "scenario": "baseline",
+            "marked_drawdown": -0.19667828128321485,
+            "min_marked_equity": 90041.25,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 0,
+            "trades_with_late_session_open": 0,
+            "gap_stop_exits": 0
+          },
+          {
+            "run": "2024__overnight-session__NQ__1m__globex-overnight__conservative_execution",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2024",
+            "scenario": "conservative_execution",
+            "marked_drawdown": -0.1914765739858898,
+            "min_marked_equity": 90331.25,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 0,
+            "trades_with_late_session_open": 0,
+            "gap_stop_exits": 0
+          },
+          {
+            "run": "2024__overnight-session__NQ__1m__globex-overnight__double_cost",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2024",
+            "scenario": "double_cost",
+            "marked_drawdown": -0.19965879904763695,
+            "min_marked_equity": 89897.5,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 0,
+            "trades_with_late_session_open": 0,
+            "gap_stop_exits": 0
+          },
+          {
+            "run": "2025__overnight-session__NQ__1m__globex-overnight__baseline",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2025",
+            "scenario": "baseline",
+            "marked_drawdown": -0.2902443191525713,
+            "min_marked_equity": 77891.25,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 1,
+            "trades_with_late_session_open": 1,
+            "gap_stop_exits": 0
+          },
+          {
+            "run": "2025__overnight-session__NQ__1m__globex-overnight__conservative_execution",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2025",
+            "scenario": "conservative_execution",
+            "marked_drawdown": -0.18625546109008417,
+            "min_marked_equity": 90568.75,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 1,
+            "trades_with_late_session_open": 1,
+            "gap_stop_exits": 0
+          },
+          {
+            "run": "2025__overnight-session__NQ__1m__globex-overnight__double_cost",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2025",
+            "scenario": "double_cost",
+            "marked_drawdown": -0.29722760981175134,
+            "min_marked_equity": 76997.5,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 1,
+            "trades_with_late_session_open": 1,
+            "gap_stop_exits": 0
+          },
+          {
+            "run": "2026__overnight-session__NQ__1m__globex-overnight__baseline",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2026",
+            "scenario": "baseline",
+            "marked_drawdown": -0.2501973616466254,
+            "min_marked_equity": 81918.75,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 0,
+            "trades_with_late_session_open": 0,
+            "gap_stop_exits": 0
+          },
+          {
+            "run": "2026__overnight-session__NQ__1m__globex-overnight__conservative_execution",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2026",
+            "scenario": "conservative_execution",
+            "marked_drawdown": -0.24559090159881325,
+            "min_marked_equity": 85188.75,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 0,
+            "trades_with_late_session_open": 0,
+            "gap_stop_exits": 0
+          },
+          {
+            "run": "2026__overnight-session__NQ__1m__globex-overnight__double_cost",
+            "key": "overnight-session__NQ__1m__globex-overnight",
+            "year": "2026",
+            "scenario": "double_cost",
+            "marked_drawdown": -0.25530453889995197,
+            "min_marked_equity": 81337.5,
+            "mark_basis": "one-minute closes plus executions",
+            "native_entry_outside_signal_bar": 0,
+            "trades_with_incomplete_session_close": 0,
+            "trades_with_late_session_open": 0,
+            "gap_stop_exits": 0
+          }
+        ]
+      },
+      "execution_rules": {
+        "chart": "1-minute",
+        "session": "globex-overnight",
+        "timezone": "America/New_York",
+        "open_time": "18:00",
+        "close_time": "06:00",
+        "direction_model": "Long",
+        "contracts": 1,
+        "bracket_exit": false,
+        "max_prior_range_pct": 0.0,
+        "stop_multiple": 1.0,
+        "target_multiple": 2.0,
+        "entry": "first observed session minute open",
+        "exit": "last observed session minute close",
+        "minimum_observed_bars": 2
+      },
+      "explicit_parameters_note": "Catalog parameters is empty. Expanded native() reuses SessionDriftConfig defaults with cost_ticks derived from contract economics; explicit defaults above are source grounded.",
+      "recorded_costs": {
+        "fee_usd_per_side": 1.25,
+        "slippage_ticks_per_side": 1,
+        "equivalent_roundtrip_cost_ticks_NQ": 2.5,
+        "capital": 100000
+      },
+      "source_files": [
+        {
+          "repository_path": "strategy_engine/strategies/session_drift.py",
+          "current_sha256": "8630219804c533e8cef5aee70537f2c7b1af98f9c60b07b1ae4175ba39f5c547",
+          "tested_sha256": "8630219804c533e8cef5aee70537f2c7b1af98f9c60b07b1ae4175ba39f5c547",
+          "matches_tested_snapshot": true
+        },
+        {
+          "repository_path": "strategy_engine/sessions.py",
+          "current_sha256": "228709b77b4f4f0967f0c7eb85f307ee4391066d832b72e716e81c511363ee30",
+          "tested_sha256": "228709b77b4f4f0967f0c7eb85f307ee4391066d832b72e716e81c511363ee30",
+          "matches_tested_snapshot": true
+        }
+      ],
+      "harness_file": {
+        "path": "reports/expanded-search-2026-09-16/expanded.py",
+        "sha256": "d4ff644db279a69553f1b10915d850deea589dabd0ae33ded4a3f6bfc6a6695a"
+      },
+      "frozen_plan_file": {
+        "path": "reports/expanded-search-2026-09-16/PLAN.json",
+        "sha256": "36afaec3788f35e445a74c2e76b46ade9213073e73bd960365850e1e1442640d"
+      },
+      "recorded_harness_sha256": "d4ff644db279a69553f1b10915d850deea589dabd0ae33ded4a3f6bfc6a6695a",
+      "expanded_runs": [
+        {
+          "run": "screen__overnight-session__NQ__1m__globex-overnight__baseline",
+          "phase": "screen",
+          "scenario": "baseline",
+          "start": "2018-01-01",
+          "end": "2023-12-31",
+          "net_pnl": 134315.0,
+          "drawdown": -0.14906919564453813,
+          "trades": 1550,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/screen__overnight-session__NQ__1m__globex-overnight__baseline/manifest.json",
+            "sha256": "ec9b1ad8de2863cc93307c47ac1ed037c41ebac68735f3124278986bb061a761"
+          },
+          "artifact_checksums": {
+            "equity.csv": "73485a7f4c209beaa953cc01a54978d12a77b10f860bc617d10734aa33792345",
+            "result.json": "bc87027fb790185bb791b4aa8afce1dbe5e6b5c331829e519536cbbc35e06fbe",
+            "trades.csv": "d9a82d9a3befb9dce3287bbf9d6175f2db6c3111ba693591ac663a23a07cf017"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2024__overnight-session__NQ__1m__globex-overnight__baseline",
+          "phase": "2024",
+          "scenario": "baseline",
+          "start": "2024-01-01",
+          "end": "2024-12-31",
+          "net_pnl": 54657.5,
+          "drawdown": -0.14044658477397998,
+          "trades": 259,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2024__overnight-session__NQ__1m__globex-overnight__baseline/manifest.json",
+            "sha256": "01cd549f5170d7a78e6baaf506cf8ff8a22c2b6839900cb506f30e34d3deb3a8"
+          },
+          "artifact_checksums": {
+            "equity.csv": "e9d8c0ed9f6212a8d13836746e74286b5967f905a4d4835e6f51de10aba2cd9e",
+            "result.json": "59874fbfa16a2c4738d39a1cce9739716d759159cad27b64260aeed0eeb598d7",
+            "trades.csv": "ba70cdba5187d6d02638165fe5c088e69791dcb5c367a160959269e7e072f925"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2024__overnight-session__NQ__1m__globex-overnight__conservative_execution",
+          "phase": "2024",
+          "scenario": "conservative_execution",
+          "start": "2024-01-01",
+          "end": "2024-12-31",
+          "net_pnl": 52617.5,
+          "drawdown": -0.14057351584417543,
+          "trades": 259,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2024__overnight-session__NQ__1m__globex-overnight__conservative_execution/manifest.json",
+            "sha256": "0d4e3b743bb7bc61dbd921531f254c08700c48d78bf3ce6abac18406c429eec6"
+          },
+          "artifact_checksums": {
+            "equity.csv": "2181f0c50b3dc8cfb4ec9281d5d71889eeb9044de3dd4ba52dc0cbcd786946a7",
+            "result.json": "11e8ded98a3960d2bacd2a590d37ca18a742ce592e85440af30e64ad0d622030",
+            "trades.csv": "1f3aef619da89fa834e1610f83b4f4ec7468030773d737aa27f189edf4ed4544"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2024__overnight-session__NQ__1m__globex-overnight__double_cost",
+          "phase": "2024",
+          "scenario": "double_cost",
+          "start": "2024-01-01",
+          "end": "2024-12-31",
+          "net_pnl": 51420.0,
+          "drawdown": -0.14285169071063275,
+          "trades": 259,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2024__overnight-session__NQ__1m__globex-overnight__double_cost/manifest.json",
+            "sha256": "a56e035ce003e935d8a59c7e15c3f47aed43dc331215d2360669a48e575c4faa"
+          },
+          "artifact_checksums": {
+            "equity.csv": "54a9dc21c02670d469be84558182e492dfb1841df5bcf3912cab9187ae93dd5c",
+            "result.json": "b50dc27ce8a31e1facfade7fca098a2645fc7497e2bdd52e75c76c6a59634363",
+            "trades.csv": "d078184b04e63e57e65503fc266c8b4f58c07f1e00eeedff74122766b053b579"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2025__overnight-session__NQ__1m__globex-overnight__baseline",
+          "phase": "2025",
+          "scenario": "baseline",
+          "start": "2025-01-01",
+          "end": "2025-12-31",
+          "net_pnl": 64615.0,
+          "drawdown": -0.22817075120480557,
+          "trades": 258,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2025__overnight-session__NQ__1m__globex-overnight__baseline/manifest.json",
+            "sha256": "1e771442314c4d06df1ff8498f73ee43df4e830363897b504142924f7d2db3fb"
+          },
+          "artifact_checksums": {
+            "equity.csv": "1b440f28134da83893312f9b4e0b1b9e99a1c9eed717a351938ecf19ba09a5d3",
+            "result.json": "214a3633190e4b641fc35b7845548d6fda07402463c28f73f26c1ed432b1cade",
+            "trades.csv": "6abbaae234a05f32a4cbd695b3afff3acac17e82ebed511c15435199fb40befc"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2025__overnight-session__NQ__1m__globex-overnight__conservative_execution",
+          "phase": "2025",
+          "scenario": "conservative_execution",
+          "start": "2025-01-01",
+          "end": "2025-12-31",
+          "net_pnl": 65350.0,
+          "drawdown": -0.16347258191645087,
+          "trades": 258,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2025__overnight-session__NQ__1m__globex-overnight__conservative_execution/manifest.json",
+            "sha256": "c6a44be17d0ace61093b1717e716c22a0997f41ddc7d4ef1c87fd12e4ef33b3d"
+          },
+          "artifact_checksums": {
+            "equity.csv": "2959ea9112f17b53be54dfa66c37ad42d91142fe09d04677dd38989532033397",
+            "result.json": "ab2021fac14b9e710a3a442358b93a23e7e629f6ff9f30dcb6c680a200de9c35",
+            "trades.csv": "2151fb4aecf9c3a3761478cf67738dca3ab59990411b450e79904df40876f606"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2025__overnight-session__NQ__1m__globex-overnight__double_cost",
+          "phase": "2025",
+          "scenario": "double_cost",
+          "start": "2025-01-01",
+          "end": "2025-12-31",
+          "net_pnl": 61390.0,
+          "drawdown": -0.23542600896860988,
+          "trades": 258,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2025__overnight-session__NQ__1m__globex-overnight__double_cost/manifest.json",
+            "sha256": "e2ae81da34d30e065434ed675bbacec4db4600adb7f60dfbcbcb21d5b0bdff4e"
+          },
+          "artifact_checksums": {
+            "equity.csv": "412e86fb05af1b874136e8ecf007f8c5af07dd60abeaea89c0e1c7eb348dfca9",
+            "result.json": "8f9581d67b978c852cdfed6c241a006cc74ce7e8d6af3973eb8e281fc7035fd1",
+            "trades.csv": "6da19419a2b2dbc5b7d46d98157c515f709fdb0928879785367cafef17209c41"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2026__overnight-session__NQ__1m__globex-overnight__baseline",
+          "phase": "2026",
+          "scenario": "baseline",
+          "start": "2026-01-01",
+          "end": "2026-08-31",
+          "net_pnl": 71440.0,
+          "drawdown": -0.2003213636998743,
+          "trades": 172,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2026__overnight-session__NQ__1m__globex-overnight__baseline/manifest.json",
+            "sha256": "418342f8a5261ceef799c71696b65f1503f23ece20662209dae70f3af027da5d"
+          },
+          "artifact_checksums": {
+            "equity.csv": "e00afd7537c329a06d52a578ed10a0db2385831b5efce65f1e1047c2c42cadb2",
+            "result.json": "988f4d553720981ac04a991f622cdd3c8b30ebf76bd979832fae4d7dd1e5f758",
+            "trades.csv": "5d4ffacce746593e85df8c425dd011518b6b8faa374b4d3249e315a5abf94fbf"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2026__overnight-session__NQ__1m__globex-overnight__conservative_execution",
+          "phase": "2026",
+          "scenario": "conservative_execution",
+          "start": "2026-01-01",
+          "end": "2026-08-31",
+          "net_pnl": 54650.0,
+          "drawdown": -0.2211580133483575,
+          "trades": 172,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2026__overnight-session__NQ__1m__globex-overnight__conservative_execution/manifest.json",
+            "sha256": "2a509284efa2c503efd7b2a3338f905ffb5d77bb3f4cc7f8a6213943cef14f7c"
+          },
+          "artifact_checksums": {
+            "equity.csv": "8f44d7b892f8be1f9fc28f05af15e933d286ec339c6c17dda08245f937415129",
+            "result.json": "8300650382565e433cc1dd8c6045d5cb9ff8124b2b5f2ed39aff184d24146633",
+            "trades.csv": "d5e24f4864469761ef5cae558097d69548d606379c74f7f694367144c98cb34e"
+          },
+          "artifacts_verified": true
+        },
+        {
+          "run": "2026__overnight-session__NQ__1m__globex-overnight__double_cost",
+          "phase": "2026",
+          "scenario": "double_cost",
+          "start": "2026-01-01",
+          "end": "2026-08-31",
+          "net_pnl": 69290.0,
+          "drawdown": -0.20338218714768885,
+          "trades": 172,
+          "manifest_file": {
+            "path": "reports/expanded-search-2026-09-16/runs/2026__overnight-session__NQ__1m__globex-overnight__double_cost/manifest.json",
+            "sha256": "adbe0e3d810d81ea3bfdab6e459ab36b231f25d01fc29cf03ae7b71be02542ea"
+          },
+          "artifact_checksums": {
+            "equity.csv": "2851a974ad5ea39e3411e283885caa00f2d58f5f5b137dee0dc03d45f27d038b",
+            "result.json": "c1303e81fce47c01dc8962e94638e3bc06d0b2e3972e5900e72d49ea62915cc4",
+            "trades.csv": "1d5cc5bff390047fc7fd00418800300c4f3b6c9c6f77b7ce3d94fe30e828bff6"
+          },
+          "artifacts_verified": true
+        }
+      ],
+      "ninjatrader_conversion": {
+        "strategy_class": "WorkbenchMnqOvernightSession",
+        "code_path": "ninjatrader/WorkbenchMnqOvernightSession.cs",
+        "signal_helper": "ninjatrader/WorkbenchMnqOvernightRules.cs",
+        "chart": "MNQ 1-minute CME US Index Futures ETH",
+        "chosen_tested_scenario": "conservative_execution",
+        "entry_clock": "submit after completed18:00-18:01 minute, normally fill18:01",
+        "execution_difference": "Uses the separately tested conservative one-minute entry delay, not the catalog baseline18:00 entry. Requires an observed18:01 bar; no late-opening catch-up. Exit market submission at06:00 can differ from original final observed minute-close price. ETH supplies successor quotes."
+      }
+    },
+    {
+      "catalog_entry": {
+        "id": "35b4fda895bf8ed0435c",
+        "key": "short-term-reversal-minute__NQ__1m__e95b1520f5",
+        "name": "Short-term reversal - minute execution",
+        "symbol": "NQ",
+        "timeframe": "1m",
+        "session": "full-trading-day",
+        "source": "Current workbench",
+        "start": "2020-09-05",
+        "end": "2026-09-03",
+        "coverage": [
+          {
+            "start": "2020-09-05",
+            "end": "2021-09-04"
+          },
+          {
+            "start": "2021-09-05",
+            "end": "2022-09-04"
+          },
+          {
+            "start": "2022-09-05",
+            "end": "2023-09-04"
+          },
+          {
+            "start": "2023-09-05",
+            "end": "2024-09-03"
+          },
+          {
+            "start": "2024-09-04",
+            "end": "2025-09-03"
+          },
+          {
+            "start": "2025-09-04",
+            "end": "2026-09-03"
+          }
+        ],
+        "capital": 100000,
+        "working": true,
+        "feasible": false,
+        "benchmark": false,
+        "tested": true,
+        "reasons": [
+          "Latest completed workbench baseline. Parameter sensitivity and prospective validation are not established by this import."
+        ],
+        "parameters": {
+          "decline_pct": 1.25,
+          "trend_lookback": 200,
+          "open_delay_minutes": 5,
+          "max_entry_lateness_minutes": 5,
+          "contracts": 1
+        },
+        "net_pnl": 146035,
+        "recent_pnl": 107640,
+        "trades": 130,
+        "series_file": "35b4fda895bf8ed0435c-8032581964c16918.json",
+        "checksum": "8032581964c169187bf85efed1dea9d245f4cbf1b9532f2e46a7428561b53078"
+      },
+      "decision": "selected",
+      "strategy_id": "short-term-reversal-minute",
+      "target_symbol": "MNQ",
+      "target_default_contracts": 1,
+      "catalog_series_file": {
+        "path": "data/workbench/collective/35b4fda895bf8ed0435c-8032581964c16918.json",
+        "sha256": "8032581964c169187bf85efed1dea9d245f4cbf1b9532f2e46a7428561b53078"
+      },
+      "current_scorecard": {
+        "status": "Research candidate",
+        "reasons": [
+          "All declared latest scenarios are profitable and meet the evaluation criteria.",
+          "Event-order delay sensitivity is untested."
+        ],
+        "evaluation_id": "d769bf3c-c50f-45b3-a8f3-9d4bd95cba1b",
+        "evaluation_name": "NQ reversal | fixed 09:35 candidate evaluation",
+        "evaluated_at": "2026-09-18T03:37:18.410Z",
+        "baseline_run_ids": [
+          "48512d64-69cd-4213-b412-ebd25b91eb8e",
+          "4150f093-23eb-4a1c-8186-b43ab77fc4c9",
+          "eda1a9e0-f665-4410-82d1-0e3806ac0912",
+          "16a4dc61-c052-4d36-9547-ea4f8e2dd984",
+          "20d213ae-ebd0-46af-999b-aa96eac3dedb",
+          "143882f0-4482-41f2-9548-a5fb7fe195db"
+        ],
+        "prior_flags": [],
+        "source_hash": "b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+        "scenarios": [
+          {
+            "name": "Baseline",
+            "outcome": "Meets criteria",
+            "metrics": {
+              "net_pnl": 146035,
+              "trades": 130,
+              "max_drawdown": -0.1792349008721933
+            }
+          },
+          {
+            "name": "Higher costs",
+            "outcome": "Meets criteria",
+            "metrics": {
+              "net_pnl": 144085,
+              "trades": 130,
+              "max_drawdown": -0.180668234047485
+            }
+          }
+        ]
+      },
+      "evaluation": {
+        "id": "d769bf3c-c50f-45b3-a8f3-9d4bd95cba1b",
+        "name": "NQ reversal | fixed 09:35 candidate evaluation",
+        "status": "Succeeded",
+        "outcome": "Meets criteria",
+        "created_at": "2026-09-18T03:37:18.410Z",
+        "scenarios": [
+          "Baseline",
+          "Higher costs"
+        ],
+        "folds": [
+          {
+            "index": 0,
+            "train_start": "2019-09-06",
+            "train_end": "2020-09-04",
+            "test_start": "2020-09-05",
+            "test_end": "2021-09-04",
+            "training": [
+              "25370339-b788-463f-a981-5780fa85d5ab"
+            ],
+            "tests": [
+              "48512d64-69cd-4213-b412-ebd25b91eb8e",
+              "50535dd8-6b0f-44ef-af39-ed345effc671"
+            ],
+            "selection": {
+              "run_id": "25370339-b788-463f-a981-5780fa85d5ab",
+              "candidate": 0,
+              "score": 11225,
+              "selected_at": "2026-09-18T03:38:43.972Z",
+              "permitted_through": "2020-09-04",
+              "ranked": [
+                {
+                  "run_id": "25370339-b788-463f-a981-5780fa85d5ab",
+                  "candidate": 0,
+                  "score": 11225,
+                  "eligible": true
+                }
+              ]
+            }
+          },
+          {
+            "index": 1,
+            "train_start": "2020-09-05",
+            "train_end": "2021-09-04",
+            "test_start": "2021-09-05",
+            "test_end": "2022-09-04",
+            "training": [
+              "0ab5f8e6-709e-4af6-9ac4-61d23bbc99e3"
+            ],
+            "tests": [
+              "4150f093-23eb-4a1c-8186-b43ab77fc4c9",
+              "d29f4168-e5fb-4844-8142-f4c4bc35b334"
+            ],
+            "selection": {
+              "run_id": "0ab5f8e6-709e-4af6-9ac4-61d23bbc99e3",
+              "candidate": 0,
+              "score": 36660,
+              "selected_at": "2026-09-18T03:41:37.158Z",
+              "permitted_through": "2021-09-04",
+              "ranked": [
+                {
+                  "run_id": "0ab5f8e6-709e-4af6-9ac4-61d23bbc99e3",
+                  "candidate": 0,
+                  "score": 36660,
+                  "eligible": true
+                }
+              ]
+            }
+          },
+          {
+            "index": 2,
+            "train_start": "2021-09-05",
+            "train_end": "2022-09-04",
+            "test_start": "2022-09-05",
+            "test_end": "2023-09-04",
+            "training": [
+              "8cfa26ae-673a-43de-a07c-e2bec74fa90c"
+            ],
+            "tests": [
+              "eda1a9e0-f665-4410-82d1-0e3806ac0912",
+              "fd9e16b3-9bd3-46d7-a311-711acb195168"
+            ],
+            "selection": {
+              "run_id": "8cfa26ae-673a-43de-a07c-e2bec74fa90c",
+              "candidate": 0,
+              "score": -5385,
+              "selected_at": "2026-09-18T03:44:34.366Z",
+              "permitted_through": "2022-09-04",
+              "ranked": [
+                {
+                  "run_id": "8cfa26ae-673a-43de-a07c-e2bec74fa90c",
+                  "candidate": 0,
+                  "score": -5385,
+                  "eligible": true
+                }
+              ]
+            }
+          },
+          {
+            "index": 3,
+            "train_start": "2022-09-05",
+            "train_end": "2023-09-04",
+            "test_start": "2023-09-05",
+            "test_end": "2024-09-03",
+            "training": [
+              "209fe1dc-2e90-4d57-9980-9509ac992f54"
+            ],
+            "tests": [
+              "16a4dc61-c052-4d36-9547-ea4f8e2dd984",
+              "ed3e1d5b-99ab-4208-af05-b2f10b7cc013"
+            ],
+            "selection": {
+              "run_id": "209fe1dc-2e90-4d57-9980-9509ac992f54",
+              "candidate": 0,
+              "score": 11995,
+              "selected_at": "2026-09-18T03:47:30.527Z",
+              "permitted_through": "2023-09-04",
+              "ranked": [
+                {
+                  "run_id": "209fe1dc-2e90-4d57-9980-9509ac992f54",
+                  "candidate": 0,
+                  "score": 11995,
+                  "eligible": true
+                }
+              ]
+            }
+          },
+          {
+            "index": 4,
+            "train_start": "2023-09-05",
+            "train_end": "2024-09-03",
+            "test_start": "2024-09-04",
+            "test_end": "2025-09-03",
+            "training": [
+              "8aa25503-df7a-46f3-a987-5a699766507d"
+            ],
+            "tests": [
+              "20d213ae-ebd0-46af-999b-aa96eac3dedb",
+              "bbffba67-1720-49b1-8c13-5f665d33614c"
+            ],
+            "selection": {
+              "run_id": "8aa25503-df7a-46f3-a987-5a699766507d",
+              "candidate": 0,
+              "score": -3355,
+              "selected_at": "2026-09-18T03:50:21.603Z",
+              "permitted_through": "2024-09-03",
+              "ranked": [
+                {
+                  "run_id": "8aa25503-df7a-46f3-a987-5a699766507d",
+                  "candidate": 0,
+                  "score": -3355,
+                  "eligible": true
+                }
+              ]
+            }
+          },
+          {
+            "index": 5,
+            "train_start": "2024-09-04",
+            "train_end": "2025-09-03",
+            "test_start": "2025-09-04",
+            "test_end": "2026-09-03",
+            "training": [
+              "843611d9-1ec9-4d63-a5f1-2898994fff6b"
+            ],
+            "tests": [
+              "143882f0-4482-41f2-9548-a5fb7fe195db",
+              "419a5318-5969-4d40-8df5-cac14cb6ead9"
+            ],
+            "selection": {
+              "run_id": "843611d9-1ec9-4d63-a5f1-2898994fff6b",
+              "candidate": 0,
+              "score": 16100,
+              "selected_at": "2026-09-18T03:53:11.680Z",
+              "permitted_through": "2025-09-03",
+              "ranked": [
+                {
+                  "run_id": "843611d9-1ec9-4d63-a5f1-2898994fff6b",
+                  "candidate": 0,
+                  "score": 16100,
+                  "eligible": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "baseline_runs": [
+        {
+          "run_id": "48512d64-69cd-4213-b412-ebd25b91eb8e",
+          "status": "Succeeded",
+          "created_at": "2026-09-18T03:38:43.982Z",
+          "started_at": "2026-09-18T03:38:44.000Z",
+          "ended_at": "2026-09-18T03:40:11.427Z",
+          "tags": "nq-reversal-5m-evaluation",
+          "notes": "PASS: fixed 09:35 candidate met the native evaluation and all predeclared supplemental gates.\nCriteria apply to joined test folds, not each individual year. Historical evaluation passed; prospective and broader feasibility evidence remain pending.\nFresh-start diagnostic: worst individual annual test drawdown 25.12% on a new $100,000 account; the 20% declared gate applies to the combined history, not every starting date.\nEvidence: C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z",
+          "input_file": {
+            "path": "data/workbench/runs/48512d64-69cd-4213-b412-ebd25b91eb8e/input.json",
+            "sha256": "531e1e87b80b6bbcbd520c23c3105c9a19b057b7c49c51636c91afa81129149f"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/48512d64-69cd-4213-b412-ebd25b91eb8e/manifest.json",
+            "sha256": "4aa61d425ea7ad8f1f0cef7eb3c351835f25481b24fcbd9d30e5ee9c7b28304c"
+          },
+          "input": {
+            "parameters": {
+              "decline_pct": 1.25,
+              "trend_lookback": 200,
+              "open_delay_minutes": 5,
+              "max_entry_lateness_minutes": 5,
+              "contracts": 1
+            },
+            "start": "2020-09-05",
+            "end": "2021-09-04",
+            "timeframe": "1m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 2.5,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z\\isolated-workbench\\sources\\b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "configuration_id": "956e2ea81cc542e02660a9fa81defc5e3d9a22b449dda12b340b7cdc3a9f696a",
+            "research": {
+              "evaluation_id": "d769bf3c-c50f-45b3-a8f3-9d4bd95cba1b",
+              "fold": 0,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0.000001; drawdown <= 0.2; trades >= 60 across test folds",
+            "hypothesis": "Fixed five-minute NQ reversal candidate selected from already inspected timing research. Freeze decline 1.25%, SMA200, one-session long, no renewal, one flat session, five-minute entry tolerance, one contract and $100000. No further selection, sizing or threshold changes. Native six rolling 365-day test folds cover 2020-09-05 through 2026-09-03, with preceding 365-day training and one fixed candidate (minimum one training trade; selection metric net P&L). Every aggregated declared scenario must have positive net return, >=60 trades and <=20% minute-close drawdown. Native event evaluation supports baseline and doubled costs only, so mandatory supplemental continuous tests cover five-minute doubled costs and offsets four/six minutes at normal and doubled costs. All continuous cases, including the saved five-minute baseline, must satisfy the same gates. Four-minute offset is an earlier timing neighbor, six-minute offset models one-minute scheduling delay to both entry and exit. No generic event-order latency is claimed. Historical development validation only, not untouched holdout. Prior 09:30 campaign and daily-delay failures remain retained."
+          },
+          "strategy": {
+            "id": "short-term-reversal-minute",
+            "version": "1.0.0",
+            "file": "strategies\\short_term_reversal_minute.py",
+            "file_hash": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1",
+            "migration_scope": "Same long-only daily signal as short-term-reversal v1.1 with trend filter, one-session hold and renewal disabled (one mandatory flat interval). Completed 09:30-16:00 New York RTH bars generate signals; partial current days never contribute. A completed minute at/after 09:30 plus the configured offset schedules a next-open fill. Late new entries are suppressed; entry orders expire after the lateness allowance, exit orders expire at that RTH close and are resubmitted at subsequent opening windows. Warmup never synthesizes a position. Full-trading-day minute marks include overnight but exclude 17:00-18:00 and weekends. Native warmup is undeclared because minute counts cannot prove daily initialization; the model separately requires sufficient completed pre-start RTH days. No authoritative holiday calendar, per-contract roll execution, intraminute stop/target, or margin model. Prior daily-shift failure remains unresolved; not an automatic status promotion."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 36660.0,
+            "trades": 28,
+            "max_drawdown": -0.10053471950515158
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "35691c51368c18c2c863ce54141524c402812aa043c2a4a2c14c6c677238dce7",
+              "rows": 350615
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "7058e192e99825168f2ba0923180ff98e7044bfdca98e4213e8878b91be62a09",
+              "rows": 28
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "ebee0f9abb3cd22372a5b80189fe61f4724152a95b643ef540ef8cd53de2ea23",
+              "rows": 350615
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "4150f093-23eb-4a1c-8186-b43ab77fc4c9",
+          "status": "Succeeded",
+          "created_at": "2026-09-18T03:41:37.167Z",
+          "started_at": "2026-09-18T03:41:37.188Z",
+          "ended_at": "2026-09-18T03:43:07.665Z",
+          "tags": "nq-reversal-5m-evaluation",
+          "notes": "PASS: fixed 09:35 candidate met the native evaluation and all predeclared supplemental gates.\nCriteria apply to joined test folds, not each individual year. Historical evaluation passed; prospective and broader feasibility evidence remain pending.\nFresh-start diagnostic: worst individual annual test drawdown 25.12% on a new $100,000 account; the 20% declared gate applies to the combined history, not every starting date.\nEvidence: C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z",
+          "input_file": {
+            "path": "data/workbench/runs/4150f093-23eb-4a1c-8186-b43ab77fc4c9/input.json",
+            "sha256": "bd44149d7b62a59cb160cfee85cda8a286bfc777581da81cf4899403a06eafc6"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/4150f093-23eb-4a1c-8186-b43ab77fc4c9/manifest.json",
+            "sha256": "5ce02460d8ce7dd3543f1821334695579ba5a40a3ada7bf5d466fbc08d9d8f64"
+          },
+          "input": {
+            "parameters": {
+              "decline_pct": 1.25,
+              "trend_lookback": 200,
+              "open_delay_minutes": 5,
+              "max_entry_lateness_minutes": 5,
+              "contracts": 1
+            },
+            "start": "2021-09-05",
+            "end": "2022-09-04",
+            "timeframe": "1m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 2.5,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z\\isolated-workbench\\sources\\b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "configuration_id": "956e2ea81cc542e02660a9fa81defc5e3d9a22b449dda12b340b7cdc3a9f696a",
+            "research": {
+              "evaluation_id": "d769bf3c-c50f-45b3-a8f3-9d4bd95cba1b",
+              "fold": 1,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0.000001; drawdown <= 0.2; trades >= 60 across test folds",
+            "hypothesis": "Fixed five-minute NQ reversal candidate selected from already inspected timing research. Freeze decline 1.25%, SMA200, one-session long, no renewal, one flat session, five-minute entry tolerance, one contract and $100000. No further selection, sizing or threshold changes. Native six rolling 365-day test folds cover 2020-09-05 through 2026-09-03, with preceding 365-day training and one fixed candidate (minimum one training trade; selection metric net P&L). Every aggregated declared scenario must have positive net return, >=60 trades and <=20% minute-close drawdown. Native event evaluation supports baseline and doubled costs only, so mandatory supplemental continuous tests cover five-minute doubled costs and offsets four/six minutes at normal and doubled costs. All continuous cases, including the saved five-minute baseline, must satisfy the same gates. Four-minute offset is an earlier timing neighbor, six-minute offset models one-minute scheduling delay to both entry and exit. No generic event-order latency is claimed. Historical development validation only, not untouched holdout. Prior 09:30 campaign and daily-delay failures remain retained."
+          },
+          "strategy": {
+            "id": "short-term-reversal-minute",
+            "version": "1.0.0",
+            "file": "strategies\\short_term_reversal_minute.py",
+            "file_hash": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1",
+            "migration_scope": "Same long-only daily signal as short-term-reversal v1.1 with trend filter, one-session hold and renewal disabled (one mandatory flat interval). Completed 09:30-16:00 New York RTH bars generate signals; partial current days never contribute. A completed minute at/after 09:30 plus the configured offset schedules a next-open fill. Late new entries are suppressed; entry orders expire after the lateness allowance, exit orders expire at that RTH close and are resubmitted at subsequent opening windows. Warmup never synthesizes a position. Full-trading-day minute marks include overnight but exclude 17:00-18:00 and weekends. Native warmup is undeclared because minute counts cannot prove daily initialization; the model separately requires sufficient completed pre-start RTH days. No authoritative holiday calendar, per-contract roll execution, intraminute stop/target, or margin model. Prior daily-shift failure remains unresolved; not an automatic status promotion."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": -5385.0,
+            "trades": 13,
+            "max_drawdown": -0.1618491689523408
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "f6dc8a62a60bb393abdc34652d510e4e1f213a8afd93b259eea9d3165c0f0cce",
+              "rows": 354219
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "c2f5334af65075d7a419d6d661198eb5388465e265e79e2a89018ad3097de792",
+              "rows": 13
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "71dfd450a7d8e2e0790093541a58ba6d648b713c76b64f9d2dc6d67a4fd58f5c",
+              "rows": 354219
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "eda1a9e0-f665-4410-82d1-0e3806ac0912",
+          "status": "Succeeded",
+          "created_at": "2026-09-18T03:44:34.382Z",
+          "started_at": "2026-09-18T03:44:34.407Z",
+          "ended_at": "2026-09-18T03:46:04.424Z",
+          "tags": "nq-reversal-5m-evaluation",
+          "notes": "PASS: fixed 09:35 candidate met the native evaluation and all predeclared supplemental gates.\nCriteria apply to joined test folds, not each individual year. Historical evaluation passed; prospective and broader feasibility evidence remain pending.\nFresh-start diagnostic: worst individual annual test drawdown 25.12% on a new $100,000 account; the 20% declared gate applies to the combined history, not every starting date.\nEvidence: C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z",
+          "input_file": {
+            "path": "data/workbench/runs/eda1a9e0-f665-4410-82d1-0e3806ac0912/input.json",
+            "sha256": "9c1a81ca685f9da9aece261e53480024e43e00c68196c17bd61f4fd017a97d2f"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/eda1a9e0-f665-4410-82d1-0e3806ac0912/manifest.json",
+            "sha256": "42608c4d0dd2446fcf81940cd2798cd7ab07594703bf5b839af6a5d2c674141c"
+          },
+          "input": {
+            "parameters": {
+              "decline_pct": 1.25,
+              "trend_lookback": 200,
+              "open_delay_minutes": 5,
+              "max_entry_lateness_minutes": 5,
+              "contracts": 1
+            },
+            "start": "2022-09-05",
+            "end": "2023-09-04",
+            "timeframe": "1m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 2.5,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z\\isolated-workbench\\sources\\b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "configuration_id": "956e2ea81cc542e02660a9fa81defc5e3d9a22b449dda12b340b7cdc3a9f696a",
+            "research": {
+              "evaluation_id": "d769bf3c-c50f-45b3-a8f3-9d4bd95cba1b",
+              "fold": 2,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0.000001; drawdown <= 0.2; trades >= 60 across test folds",
+            "hypothesis": "Fixed five-minute NQ reversal candidate selected from already inspected timing research. Freeze decline 1.25%, SMA200, one-session long, no renewal, one flat session, five-minute entry tolerance, one contract and $100000. No further selection, sizing or threshold changes. Native six rolling 365-day test folds cover 2020-09-05 through 2026-09-03, with preceding 365-day training and one fixed candidate (minimum one training trade; selection metric net P&L). Every aggregated declared scenario must have positive net return, >=60 trades and <=20% minute-close drawdown. Native event evaluation supports baseline and doubled costs only, so mandatory supplemental continuous tests cover five-minute doubled costs and offsets four/six minutes at normal and doubled costs. All continuous cases, including the saved five-minute baseline, must satisfy the same gates. Four-minute offset is an earlier timing neighbor, six-minute offset models one-minute scheduling delay to both entry and exit. No generic event-order latency is claimed. Historical development validation only, not untouched holdout. Prior 09:30 campaign and daily-delay failures remain retained."
+          },
+          "strategy": {
+            "id": "short-term-reversal-minute",
+            "version": "1.0.0",
+            "file": "strategies\\short_term_reversal_minute.py",
+            "file_hash": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1",
+            "migration_scope": "Same long-only daily signal as short-term-reversal v1.1 with trend filter, one-session hold and renewal disabled (one mandatory flat interval). Completed 09:30-16:00 New York RTH bars generate signals; partial current days never contribute. A completed minute at/after 09:30 plus the configured offset schedules a next-open fill. Late new entries are suppressed; entry orders expire after the lateness allowance, exit orders expire at that RTH close and are resubmitted at subsequent opening windows. Warmup never synthesizes a position. Full-trading-day minute marks include overnight but exclude 17:00-18:00 and weekends. Native warmup is undeclared because minute counts cannot prove daily initialization; the model separately requires sufficient completed pre-start RTH days. No authoritative holiday calendar, per-contract roll execution, intraminute stop/target, or margin model. Prior daily-shift failure remains unresolved; not an automatic status promotion."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 11995.0,
+            "trades": 17,
+            "max_drawdown": -0.12980383577627064
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "7b10bd1727a998af96757ee62ba158e6fee576e3f22eb7752c0b0c038fba3aa1",
+              "rows": 354519
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "1154dc9f2b74dc447f5d728a32a9218595b70cdcd9510c99d008e10594a5e484",
+              "rows": 17
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "207df87e154665503a84f74d34fefa8b06bdf3c436a7911a9fd9f30a30785dbc",
+              "rows": 354519
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "16a4dc61-c052-4d36-9547-ea4f8e2dd984",
+          "status": "Succeeded",
+          "created_at": "2026-09-18T03:47:30.547Z",
+          "started_at": "2026-09-18T03:47:30.574Z",
+          "ended_at": "2026-09-18T03:48:57.932Z",
+          "tags": "nq-reversal-5m-evaluation",
+          "notes": "PASS: fixed 09:35 candidate met the native evaluation and all predeclared supplemental gates.\nCriteria apply to joined test folds, not each individual year. Historical evaluation passed; prospective and broader feasibility evidence remain pending.\nFresh-start diagnostic: worst individual annual test drawdown 25.12% on a new $100,000 account; the 20% declared gate applies to the combined history, not every starting date.\nEvidence: C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z",
+          "input_file": {
+            "path": "data/workbench/runs/16a4dc61-c052-4d36-9547-ea4f8e2dd984/input.json",
+            "sha256": "1b329dba1e49fc1064b7657f1b0d4ed00f39e9d9bd492bc843bd48a3253e2faa"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/16a4dc61-c052-4d36-9547-ea4f8e2dd984/manifest.json",
+            "sha256": "ee91d7b1408cd3691c6f618be8fb3824824dbfb17125f5832d5bfc915a0eb601"
+          },
+          "input": {
+            "parameters": {
+              "decline_pct": 1.25,
+              "trend_lookback": 200,
+              "open_delay_minutes": 5,
+              "max_entry_lateness_minutes": 5,
+              "contracts": 1
+            },
+            "start": "2023-09-05",
+            "end": "2024-09-03",
+            "timeframe": "1m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 2.5,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z\\isolated-workbench\\sources\\b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "configuration_id": "956e2ea81cc542e02660a9fa81defc5e3d9a22b449dda12b340b7cdc3a9f696a",
+            "research": {
+              "evaluation_id": "d769bf3c-c50f-45b3-a8f3-9d4bd95cba1b",
+              "fold": 3,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0.000001; drawdown <= 0.2; trades >= 60 across test folds",
+            "hypothesis": "Fixed five-minute NQ reversal candidate selected from already inspected timing research. Freeze decline 1.25%, SMA200, one-session long, no renewal, one flat session, five-minute entry tolerance, one contract and $100000. No further selection, sizing or threshold changes. Native six rolling 365-day test folds cover 2020-09-05 through 2026-09-03, with preceding 365-day training and one fixed candidate (minimum one training trade; selection metric net P&L). Every aggregated declared scenario must have positive net return, >=60 trades and <=20% minute-close drawdown. Native event evaluation supports baseline and doubled costs only, so mandatory supplemental continuous tests cover five-minute doubled costs and offsets four/six minutes at normal and doubled costs. All continuous cases, including the saved five-minute baseline, must satisfy the same gates. Four-minute offset is an earlier timing neighbor, six-minute offset models one-minute scheduling delay to both entry and exit. No generic event-order latency is claimed. Historical development validation only, not untouched holdout. Prior 09:30 campaign and daily-delay failures remain retained."
+          },
+          "strategy": {
+            "id": "short-term-reversal-minute",
+            "version": "1.0.0",
+            "file": "strategies\\short_term_reversal_minute.py",
+            "file_hash": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1",
+            "migration_scope": "Same long-only daily signal as short-term-reversal v1.1 with trend filter, one-session hold and renewal disabled (one mandatory flat interval). Completed 09:30-16:00 New York RTH bars generate signals; partial current days never contribute. A completed minute at/after 09:30 plus the configured offset schedules a next-open fill. Late new entries are suppressed; entry orders expire after the lateness allowance, exit orders expire at that RTH close and are resubmitted at subsequent opening windows. Warmup never synthesizes a position. Full-trading-day minute marks include overnight but exclude 17:00-18:00 and weekends. Native warmup is undeclared because minute counts cannot prove daily initialization; the model separately requires sufficient completed pre-start RTH days. No authoritative holiday calendar, per-contract roll execution, intraminute stop/target, or margin model. Prior daily-shift failure remains unresolved; not an automatic status promotion."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": -3355.0,
+            "trades": 25,
+            "max_drawdown": -0.2504303123493907
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "74966dd2747f2c72cd83810bf85f168babafab3cee51760d65b58ba1d87b1608",
+              "rows": 353801
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "e0ea886aa188ec5cd947907cd158142652f21493ccdaddd59e316e1bb06288a3",
+              "rows": 25
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "9950ae508d0da06b2fbf368322e8ddbf5975cfe93a69580c91c3d88085ff1d3a",
+              "rows": 353801
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "20d213ae-ebd0-46af-999b-aa96eac3dedb",
+          "status": "Succeeded",
+          "created_at": "2026-09-18T03:50:21.620Z",
+          "started_at": "2026-09-18T03:50:21.659Z",
+          "ended_at": "2026-09-18T03:51:47.390Z",
+          "tags": "nq-reversal-5m-evaluation",
+          "notes": "PASS: fixed 09:35 candidate met the native evaluation and all predeclared supplemental gates.\nCriteria apply to joined test folds, not each individual year. Historical evaluation passed; prospective and broader feasibility evidence remain pending.\nFresh-start diagnostic: worst individual annual test drawdown 25.12% on a new $100,000 account; the 20% declared gate applies to the combined history, not every starting date.\nEvidence: C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z",
+          "input_file": {
+            "path": "data/workbench/runs/20d213ae-ebd0-46af-999b-aa96eac3dedb/input.json",
+            "sha256": "7cebeb0d435a6c6707b886f566448a7207a676aac9798aafa494b2fdb550bc0f"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/20d213ae-ebd0-46af-999b-aa96eac3dedb/manifest.json",
+            "sha256": "34cb27a310b837c82a197d974afb04ab52be8d413d54591fc3be516510925712"
+          },
+          "input": {
+            "parameters": {
+              "decline_pct": 1.25,
+              "trend_lookback": 200,
+              "open_delay_minutes": 5,
+              "max_entry_lateness_minutes": 5,
+              "contracts": 1
+            },
+            "start": "2024-09-04",
+            "end": "2025-09-03",
+            "timeframe": "1m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 2.5,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z\\isolated-workbench\\sources\\b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "configuration_id": "956e2ea81cc542e02660a9fa81defc5e3d9a22b449dda12b340b7cdc3a9f696a",
+            "research": {
+              "evaluation_id": "d769bf3c-c50f-45b3-a8f3-9d4bd95cba1b",
+              "fold": 4,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0.000001; drawdown <= 0.2; trades >= 60 across test folds",
+            "hypothesis": "Fixed five-minute NQ reversal candidate selected from already inspected timing research. Freeze decline 1.25%, SMA200, one-session long, no renewal, one flat session, five-minute entry tolerance, one contract and $100000. No further selection, sizing or threshold changes. Native six rolling 365-day test folds cover 2020-09-05 through 2026-09-03, with preceding 365-day training and one fixed candidate (minimum one training trade; selection metric net P&L). Every aggregated declared scenario must have positive net return, >=60 trades and <=20% minute-close drawdown. Native event evaluation supports baseline and doubled costs only, so mandatory supplemental continuous tests cover five-minute doubled costs and offsets four/six minutes at normal and doubled costs. All continuous cases, including the saved five-minute baseline, must satisfy the same gates. Four-minute offset is an earlier timing neighbor, six-minute offset models one-minute scheduling delay to both entry and exit. No generic event-order latency is claimed. Historical development validation only, not untouched holdout. Prior 09:30 campaign and daily-delay failures remain retained."
+          },
+          "strategy": {
+            "id": "short-term-reversal-minute",
+            "version": "1.0.0",
+            "file": "strategies\\short_term_reversal_minute.py",
+            "file_hash": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1",
+            "migration_scope": "Same long-only daily signal as short-term-reversal v1.1 with trend filter, one-session hold and renewal disabled (one mandatory flat interval). Completed 09:30-16:00 New York RTH bars generate signals; partial current days never contribute. A completed minute at/after 09:30 plus the configured offset schedules a next-open fill. Late new entries are suppressed; entry orders expire after the lateness allowance, exit orders expire at that RTH close and are resubmitted at subsequent opening windows. Warmup never synthesizes a position. Full-trading-day minute marks include overnight but exclude 17:00-18:00 and weekends. Native warmup is undeclared because minute counts cannot prove daily initialization; the model separately requires sufficient completed pre-start RTH days. No authoritative holiday calendar, per-contract roll execution, intraminute stop/target, or margin model. Prior daily-shift failure remains unresolved; not an automatic status promotion."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 16100.0,
+            "trades": 21,
+            "max_drawdown": -0.15884508216503213
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "e89bc4658075828b1866af0339a177a46fe306c3ebc20dd33af5fdd30052e833",
+              "rows": 353169
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "193214c735370e6787523121f287eafcece32a0bf6672870679d327b6c0a120c",
+              "rows": 21
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "c59d73da7c7313b256bc42c7f3d03f5cf9270864d843c895316d2e82f2c050ec",
+              "rows": 353169
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "143882f0-4482-41f2-9548-a5fb7fe195db",
+          "status": "Succeeded",
+          "created_at": "2026-09-18T03:53:11.700Z",
+          "started_at": "2026-09-18T03:53:11.750Z",
+          "ended_at": "2026-09-18T03:54:40.435Z",
+          "tags": "nq-reversal-5m-evaluation",
+          "notes": "PASS: fixed 09:35 candidate met the native evaluation and all predeclared supplemental gates.\nCriteria apply to joined test folds, not each individual year. Historical evaluation passed; prospective and broader feasibility evidence remain pending.\nFresh-start diagnostic: worst individual annual test drawdown 25.12% on a new $100,000 account; the 20% declared gate applies to the combined history, not every starting date.\nEvidence: C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z",
+          "input_file": {
+            "path": "data/workbench/runs/143882f0-4482-41f2-9548-a5fb7fe195db/input.json",
+            "sha256": "de424aba5d3e900f22b66c0498176d96beee8dea6794e0a164165f0cb4026ccb"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/143882f0-4482-41f2-9548-a5fb7fe195db/manifest.json",
+            "sha256": "1b00c29279724acdbbc626641e0e36c7dba7ee0c64a5c120135cb28e36bd6e2d"
+          },
+          "input": {
+            "parameters": {
+              "decline_pct": 1.25,
+              "trend_lookback": 200,
+              "open_delay_minutes": 5,
+              "max_entry_lateness_minutes": 5,
+              "contracts": 1
+            },
+            "start": "2025-09-04",
+            "end": "2026-09-03",
+            "timeframe": "1m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 2.5,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z\\isolated-workbench\\sources\\b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46",
+            "configuration_id": "956e2ea81cc542e02660a9fa81defc5e3d9a22b449dda12b340b7cdc3a9f696a",
+            "research": {
+              "evaluation_id": "d769bf3c-c50f-45b3-a8f3-9d4bd95cba1b",
+              "fold": 5,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0.000001; drawdown <= 0.2; trades >= 60 across test folds",
+            "hypothesis": "Fixed five-minute NQ reversal candidate selected from already inspected timing research. Freeze decline 1.25%, SMA200, one-session long, no renewal, one flat session, five-minute entry tolerance, one contract and $100000. No further selection, sizing or threshold changes. Native six rolling 365-day test folds cover 2020-09-05 through 2026-09-03, with preceding 365-day training and one fixed candidate (minimum one training trade; selection metric net P&L). Every aggregated declared scenario must have positive net return, >=60 trades and <=20% minute-close drawdown. Native event evaluation supports baseline and doubled costs only, so mandatory supplemental continuous tests cover five-minute doubled costs and offsets four/six minutes at normal and doubled costs. All continuous cases, including the saved five-minute baseline, must satisfy the same gates. Four-minute offset is an earlier timing neighbor, six-minute offset models one-minute scheduling delay to both entry and exit. No generic event-order latency is claimed. Historical development validation only, not untouched holdout. Prior 09:30 campaign and daily-delay failures remain retained."
+          },
+          "strategy": {
+            "id": "short-term-reversal-minute",
+            "version": "1.0.0",
+            "file": "strategies\\short_term_reversal_minute.py",
+            "file_hash": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1",
+            "migration_scope": "Same long-only daily signal as short-term-reversal v1.1 with trend filter, one-session hold and renewal disabled (one mandatory flat interval). Completed 09:30-16:00 New York RTH bars generate signals; partial current days never contribute. A completed minute at/after 09:30 plus the configured offset schedules a next-open fill. Late new entries are suppressed; entry orders expire after the lateness allowance, exit orders expire at that RTH close and are resubmitted at subsequent opening windows. Warmup never synthesizes a position. Full-trading-day minute marks include overnight but exclude 17:00-18:00 and weekends. Native warmup is undeclared because minute counts cannot prove daily initialization; the model separately requires sufficient completed pre-start RTH days. No authoritative holiday calendar, per-contract roll execution, intraminute stop/target, or margin model. Prior daily-shift failure remains unresolved; not an automatic status promotion."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 90020.0,
+            "trades": 26,
+            "max_drawdown": -0.14360398942840058
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "2c827eab12d4824ff6891d7ffeb4d520a63219fc47e74edfcdc93b7fad5a2f52",
+              "rows": 354304
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "60129aec4d000673795b88a122d039e2e380cd10e1a1a57185246669a0b730e9",
+              "rows": 26
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "a5f84d91fb4de454863c20ddf5d17f47c6646fc03c25440f1583c322ec762e21",
+              "rows": 354304
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        }
+      ],
+      "source_files": [
+        {
+          "repository_path": "strategies/short_term_reversal_minute.py",
+          "current_sha256": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1",
+          "tested_snapshot_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z\\isolated-workbench\\sources\\b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46\\strategies\\short_term_reversal_minute.py",
+          "tested_sha256": "851e9abf5492a1499f3b0d100f5f2542fd7d081e42eb6cd7176ad8e4b39079e1",
+          "matches_tested_snapshot": true
+        },
+        {
+          "repository_path": "strategies/short_term_reversal.py",
+          "current_sha256": "df25162059e4f0d19414b933fed259fae1763b24b0b1c4bb48e0b10dad615f69",
+          "tested_snapshot_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\nq-reversal-5m-evaluation-2026-09-18T03-10-55.229Z\\isolated-workbench\\sources\\b5ac12289952bf227aafea44809a80e5047ff9988289930a40b5985c44723c46\\strategies\\short_term_reversal.py",
+          "tested_sha256": "df25162059e4f0d19414b933fed259fae1763b24b0b1c4bb48e0b10dad615f69",
+          "matches_tested_snapshot": true
+        }
+      ],
+      "selection_reason": "Fixed 09:35 NQ candidate has current working+tested entry and passing baseline/higher-cost evaluation; old daily execution failures do not establish this revised minute configuration.",
+      "execution_rules": {
+        "chart": "1-minute full trading day",
+        "timezone": "America/New_York",
+        "daily_signal": "Completed 09:30-16:00 RTH close-to-close decline strictly >1.25% with close >200-day RTH SMA",
+        "entry_exit_schedule": "first completed minute at/after 09:35; next available minute open",
+        "entry_lateness_allowance_minutes": 5,
+        "holding": "one RTH session through next opening window, followed by one mandatory flat interval; no renewal",
+        "warmup": "at least 201 completed RTH days before scoring; research input uses 600 calendar days",
+        "direction": "long",
+        "stops_targets": "none"
+      },
+      "ninjatrader_conversion": {
+        "strategy_class": "WorkbenchMnqMinuteReversal",
+        "code_path": "ninjatrader/WorkbenchMnqMinuteReversal.cs",
+        "signal_helper": "ninjatrader/WorkbenchMnqReversalCore.cs",
+        "chart": "MNQ 1-minute CME US Index Futures ETH",
+        "entry_clock": "09:35 New York, max new-entry callback lateness5minutes",
+        "execution_difference": "Market-order fill timing, quote gaps and future order expiration differ from Python simulator. Warmup requires201 completed RTH days; historical chart data uses MNQ prices."
+      }
+    }
+  ],
+  "excluded": [
+    {
+      "catalog_entry": {
+        "id": "0c4b6e885c9223b5373f",
+        "key": "pine-tsmom-orb__NQ__5m",
+        "name": "Pine · TSMOM intraday ORB",
+        "symbol": "NQ",
+        "timeframe": "5m",
+        "session": "full-trading-day",
+        "source": "Workbench",
+        "start": "2018-01-01",
+        "end": "2026-08-31",
+        "coverage": [
+          {
+            "start": "2018-01-01",
+            "end": "2023-12-31"
+          },
+          {
+            "start": "2024-01-01",
+            "end": "2024-12-31"
+          },
+          {
+            "start": "2025-01-01",
+            "end": "2025-12-31"
+          },
+          {
+            "start": "2026-01-01",
+            "end": "2026-08-31"
+          }
+        ],
+        "capital": 100000,
+        "working": true,
+        "feasible": false,
+        "benchmark": false,
+        "tested": true,
+        "reasons": [
+          "Event-order delay sensitivity is untested.",
+          "Unexpected session carry requires exit-rule review."
+        ],
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "timezone": "America/New_York",
+          "minimum_score": 0.5,
+          "opening_start": 570,
+          "opening_end": 585,
+          "entry_start": 585,
+          "entry_end": 900,
+          "flatten_start": 945,
+          "flatten_end": 960,
+          "risk_budget": 2500,
+          "maximum_contracts": 1,
+          "reward_risk": 2,
+          "require_close_break": true
+        },
+        "net_pnl": 136547.5,
+        "recent_pnl": 45250,
+        "trades": 1103,
+        "series_file": "0c4b6e885c9223b5373f-fa0235c8c4905896.json",
+        "checksum": "fa0235c8c4905896e85d680ae5a83ef52d8e059d6eeca18af33c08b307b0e66b"
+      },
+      "decision": "excluded",
+      "strategy_id": "pine-tsmom-orb",
+      "target_symbol": "MNQ",
+      "target_default_contracts": 1,
+      "catalog_series_file": {
+        "path": "data/workbench/collective/0c4b6e885c9223b5373f-fa0235c8c4905896.json",
+        "sha256": "fa0235c8c4905896e85d680ae5a83ef52d8e059d6eeca18af33c08b307b0e66b"
+      },
+      "current_scorecard": {
+        "status": "Conditional",
+        "reasons": [
+          "1 earlier matching failed research check(s) remain unresolved.",
+          "All declared latest scenarios are profitable and meet the evaluation criteria.",
+          "Event-order delay sensitivity is untested."
+        ],
+        "evaluation_id": "a2bef710-ece9-4daa-974c-8c8920bbaeee",
+        "evaluation_name": "all-charts-20260916-v1 | 2026__pine-tsmom-orb__NQ__5m",
+        "evaluated_at": "2026-09-16T14:15:05.234Z",
+        "baseline_run_ids": [
+          "ae550398-6f1c-47fc-90fe-f503671982b4"
+        ],
+        "prior_flags": [
+          {
+            "id": "ab520bd4-b1bd-4b68-9e7b-98feb2edea32",
+            "end": "2024-12-31",
+            "kind": "run"
+          }
+        ],
+        "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+        "scenarios": [
+          {
+            "name": "Baseline",
+            "outcome": "Meets criteria",
+            "metrics": {
+              "net_pnl": 11552.5,
+              "trades": 29,
+              "max_drawdown": -0.11808362403771089
+            }
+          },
+          {
+            "name": "Higher costs",
+            "outcome": "Meets criteria",
+            "metrics": {
+              "net_pnl": 11220,
+              "trades": 29,
+              "max_drawdown": -0.11896227349242494
+            }
+          }
+        ]
+      },
+      "evaluation": {
+        "id": "a2bef710-ece9-4daa-974c-8c8920bbaeee",
+        "name": "all-charts-20260916-v1 | 2026__pine-tsmom-orb__NQ__5m",
+        "status": "Succeeded",
+        "outcome": "Meets criteria",
+        "created_at": "2026-09-16T14:15:05.234Z",
+        "scenarios": [
+          "Baseline",
+          "Higher costs"
+        ],
+        "folds": [
+          {
+            "index": 0,
+            "train_start": "2025-01-01",
+            "train_end": "2025-12-31",
+            "test_start": "2026-01-01",
+            "test_end": "2026-08-31",
+            "training": [
+              "cc2a5b53-f64e-492a-82ec-ae4a8a727002"
+            ],
+            "tests": [
+              "ae550398-6f1c-47fc-90fe-f503671982b4",
+              "7d73db3f-999d-40ad-b4f7-0f37796c65cf"
+            ],
+            "selection": {
+              "run_id": "cc2a5b53-f64e-492a-82ec-ae4a8a727002",
+              "candidate": 0,
+              "score": 8265,
+              "selected_at": "2026-09-16T14:20:46.707Z",
+              "permitted_through": "2025-12-31",
+              "ranked": [
+                {
+                  "run_id": "cc2a5b53-f64e-492a-82ec-ae4a8a727002",
+                  "candidate": 0,
+                  "score": 8265,
+                  "eligible": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "campaign_review": {
+        "complete": true,
+        "pass": true,
+        "sensitivity_positive": true,
+        "carry_trades": 9
+      },
+      "baseline_runs": [
+        {
+          "run_id": "422eef97-1ed6-4f0c-9f5f-f59aabc69079",
+          "status": "Succeeded",
+          "created_at": "2026-09-16T13:36:09.319Z",
+          "started_at": "2026-09-16T14:03:44.761Z",
+          "ended_at": "2026-09-16T14:05:32.040Z",
+          "input_file": {
+            "path": "data/workbench/runs/422eef97-1ed6-4f0c-9f5f-f59aabc69079/input.json",
+            "sha256": "96aa67cb211fba280a515f7ee5aea0b44b629b35594e4591dba05ae922d5679b"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/422eef97-1ed6-4f0c-9f5f-f59aabc69079/manifest.json",
+            "sha256": "ab6bf6348f3fb4541f6810180281e10daa211902ef442119eb57df22be16a472"
+          },
+          "input": {
+            "parameters": {
+              "fast_length": 20,
+              "medium_length": 60,
+              "slow_length": 120,
+              "annual_length": 252,
+              "timezone": "America/New_York",
+              "minimum_score": 0.5,
+              "opening_start": 570,
+              "opening_end": 585,
+              "entry_start": 585,
+              "entry_end": 900,
+              "flatten_start": 945,
+              "flatten_end": 960,
+              "risk_budget": 2500,
+              "maximum_contracts": 1,
+              "reward_risk": 2,
+              "require_close_break": true
+            },
+            "start": "2018-01-01",
+            "end": "2023-12-31",
+            "timeframe": "5m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 1.25,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "configuration_id": "3cd83ff42ded6c68177f4c2d37212369344834bf091ca6e5cc0433db79564cc6",
+            "criteria": "",
+            "hypothesis": "all-charts-20260916-v1 | screen__pine-tsmom-orb__NQ__5m"
+          },
+          "strategy": {
+            "id": "pine-tsmom-orb",
+            "version": "1.0.0",
+            "file": "strategies\\pine_tsmom_orb.py",
+            "file_hash": "0dcedb91998b3cc77a5cfe044dbb9189040c82ea26d32f1ecb7b1fc317b8f4b9",
+            "migration_scope": "Pine rules port with one-minute bracket execution. Stop wins ties within a minute; gap fills use the opening price. No TradingView sub-minute Bar Magnifier or order-fill recalculation emulation. A rejected risk-sized attempt still consumes the session."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 91297.5,
+            "trades": 821,
+            "max_drawdown": -0.20557914563063517
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "2fdf0e41c55d702f0f69ae7e528f2b5c637cb5f9ebc556af4ab2453919a33622",
+              "rows": 422370
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "3f3d948951ff99a28c7c380af9823aba04044f5d0eff1a8fc71cb0cbc493d686",
+              "rows": 821
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "15bddc7597605375ecca56459661ae3074f732793caeb5f653860403c9479b5e",
+              "rows": 422370
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "ab520bd4-b1bd-4b68-9e7b-98feb2edea32",
+          "status": "Succeeded",
+          "created_at": "2026-09-16T14:14:47.135Z",
+          "started_at": "2026-09-16T14:18:05.909Z",
+          "ended_at": "2026-09-16T14:18:37.849Z",
+          "tags": "all-charts-20260916-v1,checks-failed,reviewed-2026-09-17",
+          "notes": "[all-charts-20260916-v1 final review]\nReport decision: Passes metrics; exit review.\n9 ORB baseline trades in the later periods crossed into a later local date; session-end handling needs review.\nFull report: reports/all-strategies-all-charts-2026-09-16/REPORT.html. Historical research only.\n\n[needs-review-audit-2026-09-17]\nReviewed adapter: Pine · TSMOM intraday ORB.\nVerdict: Execution review confirmed: fix missing flatten windows before promotion.\nThe frozen NQ 5m / 2R rule passes saved numeric checks, but nine unique baseline trades cross the local entry date across 2024, 2025 and Jan-Aug 2026: two, five and two respectively. The audited carry P&L is $3,570, $162.50 and -$3,645. These are actual overnight exposures in a strategy intended to flatten intraday.\nThe adapter only issues a force-flat order when an observed bar falls in its flatten window; its next-opening safety action cannot retroactively close a missing-window trade. The earlier minute-data exit audit found no entry-day flatten-window quotes for the flagged holiday/short-session cases.\nThe app's preferred 2.5R run is a 2022-2023 sensitivity case, not the frozen 2R validation. It earns $52,727.50, but it also carries two trades overnight. Changing reward/risk does not fix the exit defect.\nThe 2025 and 2026 baseline results become negative after removing their five best trades. The 2026 baseline has only 29 trades.\nNext step: Create a separate execution revision with an authoritative session calendar and explicit shortened-session/no-quote policy, then replay the frozen parameters. Preserve these original ledgers; do not claim the unchanged code is intraday-safe.\nAudit: all 334 current-adapter runs reconciled; data/source/artifact checksums verified. No failed evidence removed and no automatic promotion.\nFull review: reports/needs-review-2026-09-17/REVIEW.md#pine-tsmom-orb",
+          "input_file": {
+            "path": "data/workbench/runs/ab520bd4-b1bd-4b68-9e7b-98feb2edea32/input.json",
+            "sha256": "3856c6b1d6453addbc6aa5ce2586091ad0ca5b7088b5b02435bd4d039799a10e"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/ab520bd4-b1bd-4b68-9e7b-98feb2edea32/manifest.json",
+            "sha256": "0c765082408e50178288a0fb660b4fa0e0d32cf914d09081c95679850e6c6497"
+          },
+          "input": {
+            "parameters": {
+              "fast_length": 20,
+              "medium_length": 60,
+              "slow_length": 120,
+              "annual_length": 252,
+              "timezone": "America/New_York",
+              "minimum_score": 0.5,
+              "opening_start": 570,
+              "opening_end": 585,
+              "entry_start": 585,
+              "entry_end": 900,
+              "flatten_start": 945,
+              "flatten_end": 960,
+              "risk_budget": 2500,
+              "maximum_contracts": 1,
+              "reward_risk": 2,
+              "require_close_break": true
+            },
+            "start": "2024-01-01",
+            "end": "2024-12-31",
+            "timeframe": "5m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 1.25,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "configuration_id": "3cd83ff42ded6c68177f4c2d37212369344834bf091ca6e5cc0433db79564cc6",
+            "criteria": "Every scored baseline/cost/supported-delay scenario must have strictly positive net P&L, drawdown <=35%, and >=10 trades (5 for daily TSMOM/RSI2). Prior failure remains a failure. Nonpositive equity is infeasible under the simulator capital assumptions. Sensitivity results and ORB carry events remain separate review flags.",
+            "hypothesis": "all-charts-20260916-v1 | 2024_baseline__pine-tsmom-orb__NQ__5m"
+          },
+          "strategy": {
+            "id": "pine-tsmom-orb",
+            "version": "1.0.0",
+            "file": "strategies\\pine_tsmom_orb.py",
+            "file_hash": "0dcedb91998b3cc77a5cfe044dbb9189040c82ea26d32f1ecb7b1fc317b8f4b9",
+            "migration_scope": "Pine rules port with one-minute bracket execution. Stop wins ties within a minute; gap fills use the opening price. No TradingView sub-minute Bar Magnifier or order-fill recalculation emulation. A rejected risk-sized attempt still consumes the session."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 25432.5,
+            "trades": 149,
+            "max_drawdown": -0.11246038246501189
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "07f800520c981ba2f6ac4198d8fd1c70b1c8591cf5ddb6886c6d3bc9f1aa737e",
+              "rows": 71013
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "e0c5026716a77f3e5e73c51b7cc843f74223d9085ec955f834107440e8876f39",
+              "rows": 149
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "f111381dfb806a253a5385b65a2154a58c7cb446ac4224ab257f88f707ffcd97",
+              "rows": 71013
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "f631c7f4-b097-4b9a-974c-7d7a66953a76",
+          "status": "Succeeded",
+          "created_at": "2026-09-16T14:20:25.540Z",
+          "started_at": "2026-09-16T14:28:54.590Z",
+          "ended_at": "2026-09-16T14:29:19.731Z",
+          "input_file": {
+            "path": "data/workbench/runs/f631c7f4-b097-4b9a-974c-7d7a66953a76/input.json",
+            "sha256": "3a6ca64f035cb2015b1428c18cf8417c9a9b466d77d9be20ab9bb135a4ca2a50"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/f631c7f4-b097-4b9a-974c-7d7a66953a76/manifest.json",
+            "sha256": "95a4aad9e7aa64e63cc0dcb142040dd7da8d2c18b9e76510ba923b47d56ff216"
+          },
+          "input": {
+            "parameters": {
+              "fast_length": 20,
+              "medium_length": 60,
+              "slow_length": 120,
+              "annual_length": 252,
+              "timezone": "America/New_York",
+              "minimum_score": 0.5,
+              "opening_start": 570,
+              "opening_end": 585,
+              "entry_start": 585,
+              "entry_end": 900,
+              "flatten_start": 945,
+              "flatten_end": 960,
+              "risk_budget": 2500,
+              "maximum_contracts": 1,
+              "reward_risk": 2,
+              "require_close_break": true
+            },
+            "start": "2025-01-01",
+            "end": "2025-12-31",
+            "timeframe": "5m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 1.25,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "configuration_id": "dd677c77dabb8734a60f23d823ad2f33c4ed6c96478ae65790b79c31434b10eb",
+            "research": {
+              "evaluation_id": "d3f9db4d-8432-4b8b-9b4a-af13f248d006",
+              "fold": 0,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0; drawdown <= 0.35; trades >= 10 across test folds",
+            "hypothesis": "Every scored baseline/cost/supported-delay scenario must have strictly positive net P&L, drawdown <=35%, and >=10 trades (5 for daily TSMOM/RSI2). Prior failure remains a failure. Nonpositive equity is infeasible under the simulator capital assumptions. Sensitivity results and ORB carry events remain separate review flags. Frozen 2018-2023 selection; singleton calibration candidate; no retuning."
+          },
+          "strategy": {
+            "id": "pine-tsmom-orb",
+            "version": "1.0.0",
+            "file": "strategies\\pine_tsmom_orb.py",
+            "file_hash": "0dcedb91998b3cc77a5cfe044dbb9189040c82ea26d32f1ecb7b1fc317b8f4b9",
+            "migration_scope": "Pine rules port with one-minute bracket execution. Stop wins ties within a minute; gap fills use the opening price. No TradingView sub-minute Bar Magnifier or order-fill recalculation emulation. A rejected risk-sized attempt still consumes the session."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 8265.0,
+            "trades": 104,
+            "max_drawdown": -0.10095873973839598
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "b78a9cca19e7439f9d33f213560819fbeb828f5c8b756fcd4d90630fffce7b15",
+              "rows": 70518
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "f25f914e40ad477d43450261c72fc933a0a535665976253ab141049bb896b8ca",
+              "rows": 104
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "53fa8fa928ef88d878c1557fe8acf55b2f818309fe4e4aea4cfd02480faa639f",
+              "rows": 70518
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        },
+        {
+          "run_id": "ae550398-6f1c-47fc-90fe-f503671982b4",
+          "status": "Succeeded",
+          "created_at": "2026-09-16T14:20:46.988Z",
+          "started_at": "2026-09-16T14:29:20.045Z",
+          "ended_at": "2026-09-16T14:29:39.814Z",
+          "input_file": {
+            "path": "data/workbench/runs/ae550398-6f1c-47fc-90fe-f503671982b4/input.json",
+            "sha256": "d5f9f93c757d71e8b6e9bd0d17f48de227d04d70205e0eca079e6126c94f30ce"
+          },
+          "manifest_file": {
+            "path": "data/workbench/runs/ae550398-6f1c-47fc-90fe-f503671982b4/manifest.json",
+            "sha256": "e8655e0c90912e328da854f02e816db31d19fcedb1181df7695a5c6e2e4de89a"
+          },
+          "input": {
+            "parameters": {
+              "fast_length": 20,
+              "medium_length": 60,
+              "slow_length": 120,
+              "annual_length": 252,
+              "timezone": "America/New_York",
+              "minimum_score": 0.5,
+              "opening_start": 570,
+              "opening_end": 585,
+              "entry_start": 585,
+              "entry_end": 900,
+              "flatten_start": 945,
+              "flatten_end": 960,
+              "risk_budget": 2500,
+              "maximum_contracts": 1,
+              "reward_risk": 2,
+              "require_close_break": true
+            },
+            "start": "2026-01-01",
+            "end": "2026-08-31",
+            "timeframe": "5m",
+            "session": "full-trading-day",
+            "capital": 100000,
+            "fee": 1.25,
+            "slippage": 1,
+            "delay_bars": 0,
+            "warmup_days": 600,
+            "source_hash": "1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "source_dir": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92",
+            "configuration_id": "dd677c77dabb8734a60f23d823ad2f33c4ed6c96478ae65790b79c31434b10eb",
+            "research": {
+              "evaluation_id": "a2bef710-ece9-4daa-974c-8c8920bbaeee",
+              "fold": 0,
+              "role": "Test",
+              "candidate": 0,
+              "scenario": "Baseline"
+            },
+            "criteria": "Net return >= 0; drawdown <= 0.35; trades >= 10 across test folds",
+            "hypothesis": "Every scored baseline/cost/supported-delay scenario must have strictly positive net P&L, drawdown <=35%, and >=10 trades (5 for daily TSMOM/RSI2). Prior failure remains a failure. Nonpositive equity is infeasible under the simulator capital assumptions. Sensitivity results and ORB carry events remain separate review flags. Frozen 2018-2023 selection; singleton calibration candidate; no retuning."
+          },
+          "strategy": {
+            "id": "pine-tsmom-orb",
+            "version": "1.0.0",
+            "file": "strategies\\pine_tsmom_orb.py",
+            "file_hash": "0dcedb91998b3cc77a5cfe044dbb9189040c82ea26d32f1ecb7b1fc317b8f4b9",
+            "migration_scope": "Pine rules port with one-minute bracket execution. Stop wins ties within a minute; gap fills use the opening price. No TradingView sub-minute Bar Magnifier or order-fill recalculation emulation. A rejected risk-sized attempt still consumes the session."
+          },
+          "dataset": {
+            "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+            "symbol": "NQ",
+            "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+            "tick_size": 0.25,
+            "point_value": 20,
+            "first": "2010-06-07T00:00:00+00:00",
+            "last": "2026-09-03T23:59:00+00:00",
+            "warnings": [
+              "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+              "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+              "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+            ]
+          },
+          "metrics": {
+            "net_pnl": 11552.5,
+            "trades": 29,
+            "max_drawdown": -0.11808362403771089
+          },
+          "artifacts": [
+            {
+              "name": "equity.csv",
+              "checksum": "ac15c15f654d378316c0f041c42461b73e05c38b70d9bcc427806de4493b1047",
+              "rows": 47162
+            },
+            {
+              "name": "trades.csv",
+              "checksum": "10f8f15323e7a4ed68f20006131fd5e4a9783b6c8d9b8efc00ac16c43a0ef4a2",
+              "rows": 29
+            },
+            {
+              "name": "positions.csv",
+              "checksum": "1286746b060050d5b531bb530f743963bfe61ee3fd5eb0d37a52cc817e7244b0",
+              "rows": 47162
+            }
+          ],
+          "artifacts_verified": true,
+          "artifact_verification": {
+            "equity.csv": true,
+            "trades.csv": true,
+            "positions.csv": true
+          }
+        }
+      ],
+      "source_files": [
+        {
+          "repository_path": "strategies/pine_tsmom_orb.py",
+          "current_sha256": "0dcedb91998b3cc77a5cfe044dbb9189040c82ea26d32f1ecb7b1fc317b8f4b9",
+          "tested_snapshot_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92\\strategies\\pine_tsmom_orb.py",
+          "tested_sha256": "0dcedb91998b3cc77a5cfe044dbb9189040c82ea26d32f1ecb7b1fc317b8f4b9",
+          "matches_tested_snapshot": true
+        },
+        {
+          "repository_path": "strategies/_pine_models.py",
+          "current_sha256": "310e6f62cf7976bcc371c80196583e14c840389a2427a54bcde2a694e4700fb6",
+          "tested_snapshot_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\sources\\1faa33e22895799ba2c8deafefbfa94c62c53c877524ec55fa841ab4ea0a2b92\\strategies\\_pine_models.py",
+          "tested_sha256": "310e6f62cf7976bcc371c80196583e14c840389a2427a54bcde2a694e4700fb6",
+          "matches_tested_snapshot": true
+        }
+      ],
+      "exclusion_reason": "The unchanged frozen NQ 5-minute / 2R ORB has an unresolved session-exit defect. Current scorecard Conditional and checks-failed audit override the older numeric Working flag for this only-working-and-tested conversion.",
+      "unresolved_check": {
+        "run_id": "ab520bd4-b1bd-4b68-9e7b-98feb2edea32",
+        "review_file": {
+          "path": "reports/needs-review-2026-09-17/REVIEW.md",
+          "sha256": "5b3c319ab841330285a35ad8abbc25c95163db8dcea84d1960633160540bf685"
+        },
+        "issue": "Missing observed flatten-window bars on holidays/short sessions allow overnight positions in an intraday strategy.",
+        "baseline_carry_trades": 9,
+        "by_period": {
+          "2024": 2,
+          "2025": 5,
+          "2026 Jan-Aug": 2
+        },
+        "verdict": "Execution review confirmed: fix missing flatten windows before promotion.",
+        "required_followup": "Separate execution revision using an authoritative session calendar and explicit shortened-session/no-quote policy, then replay frozen parameters."
+      }
+    }
+  ]
+}

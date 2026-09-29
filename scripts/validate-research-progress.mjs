@@ -1,0 +1,115 @@
+import assert from 'node:assert/strict';
+import { chromium, expect } from '@playwright/test';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { collectiveProgress } from '../src/researchProgress.ts';
+import { strategyTitle } from '../src/strategyTitle.ts';
+
+const origin = process.env.WORKBENCH_URL || 'http://127.0.0.1:8001';
+const folder = `reports/research-progress-${new Date().toISOString().replaceAll(':','-')}`;
+await mkdir(folder,{recursive:true});
+const state = await (await fetch(origin+'/api/workbench/state?view=summary')).json();
+const catalog = await (await fetch(origin+'/api/workbench/collective')).json();
+const browser = await chromium.launch();
+const page = await browser.newPage({viewport:{width:1500,height:1100}});
+const errors = [], checks = [];
+page.on('pageerror', e => errors.push(e.message));
+const select = async (label,prefix) => {
+  if (label === 'Testing milestone') {
+    await page.locator('.collective-picker label').filter({hasText:new RegExp('^'+prefix)}).click();return;
+  }
+  await page.getByRole('textbox',{name:label,exact:true}).click();
+  await page.getByRole('option').filter({hasText:new RegExp('^'+prefix)}).click();
+};
+try {
+  await page.goto(origin+'/#collective-strategies',{waitUntil:'domcontentloaded'});
+  const picker = page.getByTestId('strategy-picker');
+  await expect(picker.locator('tbody tr')).toHaveCount(catalog.items.filter(i=>i.working).length);
+  await expect(page.locator('.collective-stage-guide')).toHaveCount(0);
+  await page.screenshot({path:folder+'/picker-desktop.png'});
+  for (const [stage,label] of [[1,'Backtested'],[2,'Evaluation passed'],[3,'Robustness checked']]) {
+    await select('Testing milestone',label);
+    await expect(picker.locator('tbody tr')).toHaveCount(catalog.items.filter(i=>!i.benchmark && (stage===2 ? i.working : collectiveProgress(i).stage===stage)).length);
+  }
+  checks.push('Compact picker layout restored; default passing configurations and stage tabs match the catalog.');
+  await select('Testing milestone','Backtested');
+  const choice=picker.getByRole('checkbox').first();
+  await choice.check();
+  const choiceName=await choice.getAttribute('aria-label');
+  await select('Testing milestone','Robustness checked');
+  await expect(page.getByText(/hidden by these filters stay in the combination/)).toBeVisible();
+  await select('Testing milestone','Backtested');
+  await expect(picker.getByRole('checkbox',{name:choiceName,exact:true})).toBeChecked();
+  checks.push('Selected configurations survive changes to the compact filters.');
+  await select('Testing milestone','All tested');
+  await picker.locator('summary').first().click();
+  await expect(picker.getByText(/Parameters:/).first()).toBeVisible();
+  const viewport=page.getByRole('region',{name:'Available strategy configurations',exact:true});
+  await viewport.hover();await page.mouse.wheel(0,600);
+  await expect.poll(()=>viewport.evaluate(el=>el.scrollTop)).toBeGreaterThan(50);
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('.collective-picker label').first().scrollIntoViewIfNeeded();
+  await page.screenshot({path:folder+'/picker-mobile.png'});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
+  checks.push('Findings and exact parameters expand; the catalog scrolls and the mobile page has no horizontal overflow.');
+  await page.getByRole('button',{name:'Done',exact:true}).click();
+  await page.setViewportSize({width:1500,height:1100});
+  await page.getByRole('link',{name:'Strategy scorecards',exact:true}).click();
+  await expect(page.locator('.sd-selected').getByRole('list',{name:'Research milestones'})).toBeVisible();
+  await expect(page.locator('.sd-selected').getByText(/Latest evaluation:/)).toBeVisible();
+  await page.screenshot({path:folder+'/scorecard.png'});
+  checks.push('Scorecard uses the same milestones and labels the outcome as the latest evaluated configuration.');
+  await page.goto(origin+'/#/scripts');
+  await expect(page.getByRole('region',{name:'Promising configuration'}).first()).toBeVisible();
+  await expect(page.getByRole('region',{name:'Strategy testing evidence'})).toHaveCount(0);
+  await page.screenshot({path:folder+'/scripts-simple.png'});
+  await page.getByRole('link',{name:'Library',exact:true}).click();
+  await expect(page.getByRole('columnheader',{name:'Most promising / stage',exact:true})).toBeVisible();
+  await expect(page.getByRole('region',{name:'Strategy testing evidence'})).toHaveCount(0);
+  await page.screenshot({path:folder+'/library-simple.png'});
+  checks.push('Scripts and library show compact promising-result summaries with detailed evidence collapsed.');
+  // A local response fixture tests cross-market isolation without creating runs.
+  const fixture=structuredClone(state);
+  const strategy=state.strategies.find(s=>s.id==='short-term-reversal-minute') || state.strategies[0];
+  const sample=state.runs.find(r=>r.status==='Succeeded' && r.result?.metrics);
+  const metrics={...sample.result.metrics,net_pnl:20000,net_return:.2,max_drawdown:-.1,trades:100};
+  const scenarios=['Baseline','Higher costs','Delayed execution'];
+  const inputs={...sample.input,strategy,parameters:{lookback:20},source_hash:'progress-fixture',timeframe:'1d',session:'rth'};
+  const runs=scenarios.map((scenario,i)=>({...sample,id:`progress-${i}`,notes:'',tags:'',input:{...inputs,dataset:{...sample.input.dataset,symbol:'NQ'},research:{evaluation_id:'progress-evaluation',role:'Test',scenario}},result:{...sample.result,metrics}}));
+  runs.push({...sample,id:'progress-es',notes:'',tags:'checks-failed',input:{...inputs,dataset:{...sample.input.dataset,symbol:'ES'},research:undefined,criteria:'Maximum drawdown 20%'},result:{...sample.result,metrics:{...metrics,max_drawdown:-.3}}});
+  fixture.runs=runs;fixture.strategies=[strategy];
+  fixture.evaluations=[{id:'progress-evaluation',created_at:'2026-09-17',status:'Succeeded',jobs:3,folds:[{training:[],tests:runs.slice(0,3).map(r=>r.id)}],scenarios,result:{scenarios:scenarios.map(name=>({name,outcome:'Meets criteria',metrics}))}}];
+  await page.route('**/api/workbench/state?view=summary', route=>route.fulfill({json:fixture}));
+  await page.goto(origin+'/#/scripts');
+  await page.reload();
+  const card=page.locator('section.wb-card').filter({has:page.getByRole('heading',{name:strategyTitle(strategy.name),exact:true})});
+  await expect(card.getByText('Evaluation passed',{exact:true}).first()).toBeVisible();
+  await expect(card.getByText(/Promising candidate/)).toBeVisible();
+  await expect(card.getByRole('region',{name:'Strategy testing evidence'})).toHaveCount(0);
+  await card.getByText('Testing details',{exact:true}).click();
+  await expect(card.getByText('1 of 2 configurations passed evaluation · 1 with unmet criteria',{exact:true})).toBeVisible();
+  await card.getByText('Results and next steps by configuration (2)',{exact:true}).click();
+  await expect(card.getByText('Declared checks passed · 3/3 runs succeeded',{exact:true})).toBeVisible();
+  await expect(card.getByText('Criteria not met · 1/1 runs succeeded',{exact:true})).toBeVisible();
+  await card.getByText('Failure reasons and evidence (1)',{exact:true}).click();
+  await expect(card.getByText('ES · 1d · rth',{exact:true}).last()).toBeVisible();
+  await card.scrollIntoViewIfNeeded();
+  await page.screenshot({path:folder+'/mixed-market-fixture.png'});
+  await select('Testing evidence market','ES');
+  await expect(card.getByText('0 of 1 configurations passed evaluation · 1 with unmet criteria',{exact:true})).toBeVisible();
+  await select('Testing evidence market','NQ');
+  await expect(card.getByText('1 of 1 configurations passed evaluation · 0 with unmet criteria',{exact:true})).toBeVisible();
+  await expect(card.getByText(/recorded issues/)).toHaveCount(0);
+  checks.push('Mixed-market fixture shows NQ passing and ES unmet criteria; market filtering isolates both outcomes.');
+  await page.setViewportSize({width:390,height:844});
+  await card.scrollIntoViewIfNeeded();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
+  await page.screenshot({path:folder+'/script-mobile.png'});
+  assert.deepEqual(errors,[]);
+  const after=await(await fetch(origin+'/api/workbench/state?view=summary')).json();
+  assert.deepEqual(after.runs.map(r=>r.id).sort(),state.runs.map(r=>r.id).sort());
+  assert.deepEqual(after.evaluations.map(e=>e.id).sort(),state.evaluations.map(e=>e.id).sort());
+  await writeFile(folder+'/validation.json',JSON.stringify({checks,errors,fixture:'Mixed-market images use a local response fixture; catalog and scorecards use saved evidence.'},null,2));
+  console.log(JSON.stringify({folder,checks,errors},null,2));
+} catch(error) {
+  await page.screenshot({path:folder+'/failure.png'});throw error;
+} finally { await browser.close(); }

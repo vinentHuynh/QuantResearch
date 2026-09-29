@@ -25,6 +25,7 @@ class WorkbenchTests(unittest.TestCase):
         self.assertAlmostEqual(eq.cost.sum(), 3.)
         self.assertAlmostEqual(eq.net_pnl.sum(), trades.net_pnl.sum())
         self.assertEqual(len(trades), 1)
+        self.assertEqual(trades.exit_reason.iloc[0], 'signal')
         self.assertEqual(positions.contracts.iloc[-1], 0)
         self.assertGreater(eq.equity.iloc[1], eq.equity.iloc[-1])
 
@@ -33,6 +34,12 @@ class WorkbenchTests(unittest.TestCase):
             eq, trades, _ = simulate(self.bars, pd.Series(signals, index=self.bars.index), self.request)
             self.assertAlmostEqual(eq.net_pnl.sum(), trades.net_pnl.sum())
             self.assertAlmostEqual(eq.cost.sum(), trades.cost.sum())
+
+    def test_forced_exit_reason_keeps_original_accounting(self):
+        eq, trades, _ = simulate(self.bars, pd.Series([1, 1, 1, 1], index=self.bars.index), self.request)
+        self.assertEqual(trades.exit_reason.iloc[-1], 'end-of-test')
+        self.assertEqual(pd.Timestamp(trades.exit_time.iloc[-1]), self.bars.availability_time.iloc[-1])
+        self.assertAlmostEqual(eq.net_pnl.sum(), trades.net_pnl.sum())
 
     def test_no_trades_has_undefined_sharpe(self):
         eq, trades, _ = simulate(self.bars, pd.Series(0, index=self.bars.index), self.request)

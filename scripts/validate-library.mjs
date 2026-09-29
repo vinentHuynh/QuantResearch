@@ -1,3 +1,4 @@
+import { strategyTitle } from "../src/strategyTitle.ts";
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -77,7 +78,7 @@ try {
       .getByRole("link", { name: "Scripts & library", exact: true })
       .click();
     const card = page
-      .getByRole("heading", { name: strategy.name, exact: true })
+      .getByRole("heading", { name: strategyTitle(strategy.name), exact: true })
       .locator("..")
       .locator("..");
     await card

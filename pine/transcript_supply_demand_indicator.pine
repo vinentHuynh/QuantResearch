@@ -1,0 +1,285 @@
+//@version=6
+indicator("Transcript Supply / Demand - Research", "Transcript S/D", overlay = true,
+     max_boxes_count = 100, max_labels_count = 150, max_lines_count = 10, max_bars_back = 200)
+
+// RESEARCH INDICATOR: a deterministic interpretation of the supplied transcript.
+// No tested profitability is implied. Use standard five-minute candles.
+// Baseline: all sessions, 1h/5m confirmed swing bias, immediate base-to-FVG zone,
+// completed retest, then a rolling previous-candle stop-entry reference.
+// Strict pivots exclude ties and only become known after `pivotLength` right bars.
+// Drawings begin when a zone/signal becomes known; nothing is backdated.
+//
+// Historical trigger markers are confirmed at the FIVE-MINUTE BAR CLOSE. The
+// earlier stop trigger level is not an executable price at that confirmation.
+// The armed plan is available BEFORE the next bar, and changes at each close.
+// An entire 5m candle is rejected if it also breaches the zone's distal edge.
+// This deliberately differs from a 1m execution backtest that can enter and
+// subsequently stop out within that 5m candle. No intrabar order is reconstructed.
+// There is no position blocking or P&L engine: signal counts are not trade counts.
+// TradingView symbol sessions determine 1h boundaries; no session filter is used.
+// HTF method: https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/
+
+string GROUP_MODEL = "Model assumptions"
+int pivotLength = input.int(2, "Confirmed swing bars on each side", minval = 1, maxval = 10, group = GROUP_MODEL)
+int maximumAge = input.int(288, "Zone lifetime in five-minute bars", minval = 3, maxval = 2000, group = GROUP_MODEL,
+     tooltip = "A declared research assumption, not specified in the transcript. Age counts chart bars, not calendar time.")
+string stopModel = input.string("Zone boundary", "Stop reference", options = ["Zone boundary", "Previous candle"], group = GROUP_MODEL)
+float rewardRisk = input.float(1.0, "Target R multiple", minval = 0.25, maxval = 10.0, step = 0.25, group = GROUP_MODEL)
+
+string GROUP_DISPLAY = "Display and alerts"
+bool showZones = input.bool(true, "Show recognized zones", group = GROUP_DISPLAY)
+bool showGuides = input.bool(true, "Show next-bar entry / stop / target", group = GROUP_DISPLAY)
+bool showDetails = input.bool(true, "Label confirmed triggers", group = GROUP_DISPLAY)
+bool showPanel = input.bool(true, "Show research status", group = GROUP_DISPLAY)
+bool dynamicPlanAlerts = input.bool(false, "Send detailed plan / cancel / trigger alerts", group = GROUP_DISPLAY,
+     tooltip = "Create an alert for 'Any alert() function call'. Plans update each completed candle; cancel or replace stale plans. Confirmed trigger alerts report historical detection, not a market order.")
+
+color demandColor = color.rgb(18, 149, 119)
+color supplyColor = color.rgb(216, 83, 78)
+float tick = syminfo.mintick
+
+if barstate.isfirst and (not timeframe.isminutes or timeframe.multiplier != 5)
+    runtime.error("Use this research indicator on a five-minute chart.")
+if barstate.isfirst and not chart.is_standard
+    runtime.error("Use standard candles: synthetic chart prices do not match this model.")
+
+// Each call has separate persistent state; the request.security call runs this
+// function in the hourly context. A new pivot overwrites the prior level even
+// if the prior level was unused. Each pivot can produce only one close break.
+f_direction(int length) =>
+    var float swingHigh = na
+    var float swingLow = na
+    var bool highUsed = false
+    var bool lowUsed = false
+    var int direction = 0
+    bool strictHigh = bar_index >= length * 2
+    bool strictLow = bar_index >= length * 2
+    if strictHigh
+        for offset = 0 to length * 2
+            if offset != length
+                strictHigh := strictHigh and high[length] > high[offset]
+                strictLow := strictLow and low[length] < low[offset]
+    if strictHigh
+        swingHigh := high[length]
+        highUsed := false
+    if strictLow
+        swingLow := low[length]
+        lowUsed := false
+    if not highUsed and not na(swingHigh) and close > swingHigh
+        direction := 1
+        highUsed := true
+    if not lowUsed and not na(swingLow) and close < swingLow
+        direction := -1
+        lowUsed := true
+    direction
+
+f_biasText(int direction) =>
+    direction == 1 ? "Bullish" : direction == -1 ? "Bearish" : "Waiting for structure"
+
+f_price(float price) =>
+    na(price) ? "-" : str.tostring(price, format.mintick)
+
+int fiveMinuteBias = f_direction(pivotLength)
+int hourlyBias = request.security(syminfo.tickerid, "60", f_direction(pivotLength)[1],
+     gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
+int currentBias = fiveMinuteBias == hourlyBias ? fiveMinuteBias : 0
+// These values were available at this bar's open. A newly completed 5m close
+// changes next-bar plans; it cannot cancel a trigger retroactively.
+int openingBias = fiveMinuteBias[1] == hourlyBias ? hourlyBias : 0
+
+type Zone
+    int side
+    float upper
+    float lower
+    int born
+    bool touched
+    bool consumed
+    bool valid
+    box drawing
+
+var array<Zone> zones = array.new<Zone>()
+var array<label> triggerLabels = array.new<label>()
+var Zone pendingZone = na
+var float pendingEntry = na
+var float pendingStop = na
+var float pendingTarget = na
+var int pendingSide = 0
+var int pendingBorn = na
+var line entryGuide = na
+var line stopGuide = na
+var line targetGuide = na
+
+bool confirmedLong = false
+bool confirmedShort = false
+bool newPlan = false
+bool cancelledPlan = false
+float confirmedTrigger = na
+float confirmedStop = na
+float confirmedTarget = na
+int triggerSide = 0
+
+if barstate.isconfirmed
+    int oldSide = pendingSide
+    int oldBorn = pendingBorn
+
+    // Invalidate/expire before evaluating any previously armed trigger.
+    int index = array.size(zones) - 1
+    while index >= 0
+        Zone zone = array.get(zones, index)
+        bool distalBroken = zone.side == 1 ? low < zone.lower : high > zone.upper
+        bool expired = bar_index - zone.born > maximumAge
+        if distalBroken or expired
+            zone.valid := false
+            if not na(zone.drawing)
+                box.delete(zone.drawing)
+            array.remove(zones, index)
+        else
+            // Formation-bar overlap is never a retest.
+            if bar_index > zone.born and low <= zone.upper and high >= zone.lower
+                zone.touched := true
+        index -= 1
+
+    if not na(pendingZone)
+        bool validPlan = pendingZone.valid and not pendingZone.consumed and openingBias == pendingSide
+        bool entryCrossed = pendingSide == 1 ? high >= pendingEntry : low <= pendingEntry
+        bool stopCrossed = pendingSide == 1 ? low <= pendingStop : high >= pendingStop
+        // A previous-candle stop may lie within the zone. If both this stop and
+        // the entry are reached, reject the OHLC-ambiguous bar and retain zone.
+        bool ambiguousCandleStop = stopModel == "Previous candle" and stopCrossed and entryCrossed
+        if validPlan and entryCrossed and not ambiguousCandleStop
+            triggerSide := pendingSide
+            confirmedLong := pendingSide == 1
+            confirmedShort := pendingSide == -1
+            confirmedTrigger := pendingEntry
+            confirmedStop := pendingStop
+            confirmedTarget := pendingTarget
+            pendingZone.consumed := true
+            if not na(pendingZone.drawing)
+                box.set_bgcolor(pendingZone.drawing, color.new(color.gray, 93))
+                box.set_border_color(pendingZone.drawing, color.new(color.gray, 75))
+                box.set_extend(pendingZone.drawing, extend.none)
+                box.set_right(pendingZone.drawing, bar_index)
+        else if not validPlan or ambiguousCandleStop
+            cancelledPlan := true
+
+    // A bearish base, an immediately bullish departure, then a positive wick
+    // gap; the final FVG candle's color is unrestricted. Supply is symmetric.
+    // All three candles must be consecutive; a session/weekend gap is not FVG.
+    bool contiguousPattern = time - time[2] == 10 * 60 * 1000
+    bool demandPattern = contiguousPattern and close[2] < open[2] and close[1] > open[1] and low > high[2]
+    bool supplyPattern = contiguousPattern and close[2] > open[2] and close[1] < open[1] and high < low[2]
+    int formationSide = demandPattern and currentBias == 1 ? 1 : supplyPattern and currentBias == -1 ? -1 : 0
+    if formationSide != 0
+        float zoneUpper = formationSide == 1 ? high[2] : math.max(high, math.max(high[1], high[2]))
+        float zoneLower = formationSide == 1 ? math.min(low, math.min(low[1], low[2])) : low[2]
+        color zoneColor = formationSide == 1 ? demandColor : supplyColor
+        box zoneBox = na
+        if showZones
+            zoneBox := box.new(bar_index, zoneUpper, bar_index + 1, zoneLower,
+                 border_color = color.new(zoneColor, 40), bgcolor = color.new(zoneColor, 88), extend = extend.right)
+        Zone created = Zone.new(formationSide, zoneUpper, zoneLower, bar_index, false, false, true, zoneBox)
+        array.push(zones, created)
+        if array.size(zones) > 100
+            Zone oldest = array.shift(zones)
+            oldest.valid := false
+            if not na(oldest.drawing)
+                box.delete(oldest.drawing)
+
+    // A fresh plan always uses the just-completed candle for the NEXT bar.
+    // Touch state survives a bias mismatch and can rearm if alignment returns.
+    pendingZone := na
+    pendingEntry := na
+    pendingStop := na
+    pendingTarget := na
+    pendingSide := 0
+    pendingBorn := na
+    int candidate = array.size(zones) - 1
+    while candidate >= 0 and na(pendingZone)
+        Zone zone = array.get(zones, candidate)
+        if zone.valid and not zone.consumed and zone.touched and zone.side == currentBias and bar_index > zone.born
+            float nextEntry = zone.side == 1 ? high + tick : low - tick
+            float nextStop = stopModel == "Zone boundary" ? (zone.side == 1 ? zone.lower - tick : zone.upper + tick) : (zone.side == 1 ? low - tick : high + tick)
+            float risk = (nextEntry - nextStop) * zone.side
+            if risk > 0
+                pendingZone := zone
+                pendingEntry := nextEntry
+                pendingStop := nextStop
+                pendingTarget := nextEntry + zone.side * risk * rewardRisk
+                pendingSide := zone.side
+                pendingBorn := zone.born
+        candidate -= 1
+    newPlan := pendingSide != 0 and (oldSide != pendingSide or na(oldBorn) or oldBorn != pendingBorn)
+    cancelledPlan := cancelledPlan or (oldSide != 0 and pendingSide == 0 and triggerSide == 0)
+
+    if showDetails and triggerSide != 0
+        string directionText = triggerSide == 1 ? "LONG" : "SHORT"
+        string explanation = directionText + " trigger confirmed\nHistorical level " + f_price(confirmedTrigger) + "\nStop " + f_price(confirmedStop) + " | Target " + f_price(confirmedTarget) + "\nDetected at bar close; not a close-price entry"
+        label marker = label.new(bar_index, triggerSide == 1 ? low : high, explanation,
+             style = triggerSide == 1 ? label.style_label_up : label.style_label_down,
+             color = triggerSide == 1 ? demandColor : supplyColor, textcolor = color.white, size = size.small)
+        array.push(triggerLabels, marker)
+        if array.size(triggerLabels) > 100
+            label.delete(array.shift(triggerLabels))
+
+    // Guides start at this recognition close; they describe a next-bar plan.
+    if not na(entryGuide)
+        line.delete(entryGuide)
+        entryGuide := na
+    if not na(stopGuide)
+        line.delete(stopGuide)
+        stopGuide := na
+    if not na(targetGuide)
+        line.delete(targetGuide)
+        targetGuide := na
+    if showGuides and pendingSide != 0
+        entryGuide := line.new(bar_index, pendingEntry, bar_index + 1, pendingEntry,
+             extend = extend.right, color = color.yellow, width = 2)
+        stopGuide := line.new(bar_index, pendingStop, bar_index + 1, pendingStop,
+             extend = extend.right, color = supplyColor, style = line.style_dashed)
+        targetGuide := line.new(bar_index, pendingTarget, bar_index + 1, pendingTarget,
+             extend = extend.right, color = demandColor, style = line.style_dashed)
+
+    if dynamicPlanAlerts
+        if triggerSide != 0
+            alert((triggerSide == 1 ? "LONG" : "SHORT") + " historical trigger CONFIRMED at 5m close. Prior trigger " + f_price(confirmedTrigger) + "; not a market order or an executable close price.", alert.freq_all)
+        if cancelledPlan
+            alert("CANCEL prior transcript S/D plan: bias, expiry, invalidation or OHLC ambiguity. Research only.", alert.freq_all)
+        if pendingSide != 0
+            alert("NEXT-BAR " + (pendingSide == 1 ? "LONG" : "SHORT") + " PLAN: replace prior levels. Entry " + f_price(pendingEntry) + ", stop " + f_price(pendingStop) + ", target " + f_price(pendingTarget) + ". Research; 5m OHLC confirmation can veto an intrabar trigger.", alert.freq_all)
+
+// Hidden plots supply numeric alert placeholders; no P&L is inferred.
+plot(pendingSide != 0 ? pendingEntry : na, "Next entry", display = display.none)
+plot(pendingSide != 0 ? pendingStop : na, "Next stop", display = display.none)
+plot(pendingSide != 0 ? pendingTarget : na, "Next target", display = display.none)
+plot(confirmedTrigger, "Confirmed historical trigger", display = display.none)
+plotshape(confirmedLong and not showDetails, title = "Long historical trigger", style = shape.triangleup,
+     location = location.belowbar, color = demandColor, size = size.small, text = "Confirmed")
+plotshape(confirmedShort and not showDetails, title = "Short historical trigger", style = shape.triangledown,
+     location = location.abovebar, color = supplyColor, size = size.small, text = "Confirmed")
+
+alertcondition(confirmedLong, "Long trigger confirmed", "Research LONG trigger confirmed at five-minute close. Historical trigger {{plot(\"Confirmed historical trigger\")}}; this is not an executable close-price entry.")
+alertcondition(confirmedShort, "Short trigger confirmed", "Research SHORT trigger confirmed at five-minute close. Historical trigger {{plot(\"Confirmed historical trigger\")}}; this is not an executable close-price entry.")
+alertcondition(newPlan, "New next-bar setup armed", "Research next-bar setup armed. Entry {{plot(\"Next entry\")}}, stop {{plot(\"Next stop\")}}, target {{plot(\"Next target\")}}. Levels roll every completed candle; use detailed plan alerts for updates.")
+alertcondition(barstate.isconfirmed and pendingSide != 0, "Next-bar plan updated", "Research next-bar plan: entry {{plot(\"Next entry\")}}, stop {{plot(\"Next stop\")}}, target {{plot(\"Next target\")}}. Replace prior plan; this is not a fill.")
+alertcondition(cancelledPlan, "Prior setup cancelled", "Cancel the previous transcript S/D plan. Check the current next-bar plan; research only.")
+
+var table status = table.new(position.top_right, 2, 9, bgcolor = color.new(color.black, 12), border_width = 1)
+if barstate.islast and showPanel
+    table.cell(status, 0, 0, "TRANSCRIPT S/D", text_color = color.white, text_size = size.small)
+    table.cell(status, 1, 0, "Research - edge unverified", text_color = color.orange, text_size = size.small)
+    table.cell(status, 0, 1, "Confirmed 1h bias", text_color = color.silver, text_size = size.small)
+    table.cell(status, 1, 1, f_biasText(hourlyBias), text_color = color.white, text_size = size.small)
+    table.cell(status, 0, 2, "Last completed 5m bias", text_color = color.silver, text_size = size.small)
+    table.cell(status, 1, 2, f_biasText(barstate.isconfirmed ? fiveMinuteBias : fiveMinuteBias[1]), text_color = color.white, text_size = size.small)
+    table.cell(status, 0, 3, "Next-bar plan", text_color = color.silver, text_size = size.small)
+    table.cell(status, 1, 3, pendingSide == 1 ? "LONG" : pendingSide == -1 ? "SHORT" : "Waiting", text_color = pendingSide == 1 ? demandColor : pendingSide == -1 ? supplyColor : color.white, text_size = size.small)
+    table.cell(status, 0, 4, "Entry / stop", text_color = color.silver, text_size = size.small)
+    table.cell(status, 1, 4, f_price(pendingEntry) + " / " + f_price(pendingStop), text_color = color.white, text_size = size.small)
+    table.cell(status, 0, 5, "Target", text_color = color.silver, text_size = size.small)
+    table.cell(status, 1, 5, f_price(pendingTarget) + " (" + str.tostring(rewardRisk) + "R)", text_color = color.white, text_size = size.small)
+    table.cell(status, 0, 6, "Signal timing", text_color = color.silver, text_size = size.small)
+    table.cell(status, 1, 6, "5m close; historical trigger", text_color = color.white, text_size = size.small)
+    table.cell(status, 0, 7, "Ambiguous candles", text_color = color.silver, text_size = size.small)
+    table.cell(status, 1, 7, "Distal breach vetoes entire bar", text_color = color.white, text_size = size.small)
+    table.cell(status, 0, 8, "Scope", text_color = color.silver, text_size = size.small)
+    table.cell(status, 1, 8, "All sessions | No P&L | One signal/zone", text_color = color.white, text_size = size.small)

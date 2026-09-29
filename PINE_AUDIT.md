@@ -58,6 +58,20 @@ The two overnight ports support 5 and 15 minutes. The daily models default to
    exceeds the risk budget still consumes the day's attempt. A bracket created
    at a signal close cannot exit against the earlier high/low of that signal bar.
 
+   **2026-09-29 correction, adapter v1.1:** NQ/MNQ now use a frozen NinjaTrader
+   CME Index ETH holiday calendar, covering 2016–2026. The exit deadline is the
+   earlier of the normal 15:50 completion or five minutes before the scheduled
+   session close. Flattening remains active after that deadline; entries stop
+   then, and an old opening range cannot survive into another session. Missing
+   held exit quotes through the scheduled close fail the replay instead of
+   producing overnight profits. The original nine holiday carries and frozen
+   runs remain recorded in [the repair audit](reports/tsmom-orb-fix-2026-09-29/audit-findings.md).
+   An explicit `execution_timing=next-open` case tests the NinjaTrader transfer;
+   entry and exit orders expire strictly before their respective deadlines.
+   The default `close` execution retains the original fill assumption. Generic
+   delayed-bar stress remains unsupported. This calendar is a current historical
+   snapshot, not proof of the calendar version known on each historical date.
+
 The shared [event simulator](workbench/events.py) marks equity at every chart-bar
 close and reconciles trade P&L and costs. Brackets are walked through the original
 one-minute OHLC bars in order. A gap through a level fills at the minute open;

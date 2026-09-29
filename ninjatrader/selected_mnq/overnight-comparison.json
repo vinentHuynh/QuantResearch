@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "symbol": "MNQ",
+  "point_value": 2,
+  "tick_size": 0.25,
+  "contracts": 1,
+  "start_session_date": "2020-01-01",
+  "end_session_date": "2026-08-31",
+  "commission_per_side": 0.62,
+  "slippage_ticks_per_side": 1.0,
+  "round_turn_cost_usd": 2.24,
+  "dataset": {
+    "id": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1",
+    "symbol": "MNQ",
+    "source": "Local MNQ historical cache",
+    "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1\\bars.parquet",
+    "checksum": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1",
+    "archive": "data/mnq_dom_sample/full_history/ohlcv-1m/candles_1m.parquet",
+    "archive_checksum": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1",
+    "rows": 2585941,
+    "first": "2019-05-05T22:03:00+00:00",
+    "last": "2026-09-03T23:59:00+00:00",
+    "timeframe": "1m",
+    "timezone": "UTC",
+    "session": "CME Globex",
+    "currency": "USD",
+    "tick_size": 0.25,
+    "point_value": 2,
+    "query": {
+      "symbols": [
+        "MNQ"
+      ],
+      "schema": "ohlcv-1m",
+      "provenance": "Existing local cache; original vendor request not reconstructed"
+    },
+    "acquired_at": "2026-09-08T23:58:01.824024+00:00",
+    "registered_at": "2026-09-16T16:48:02.265324+00:00",
+    "quality": {
+      "duplicates": 0,
+      "unordered": 0,
+      "invalid_ohlc": 0,
+      "gaps_over_one_minute": 5913,
+      "contract_changes": 29
+    },
+    "warnings": [
+      "Registered from the existing MNQ cache. Original vendor query and acquisition receipt are not verified.",
+      "Continuous unadjusted contracts: roll gaps can affect signals and P&L.",
+      "Missing minutes include closures and no-trade minutes; no holiday-calendar completeness claim."
+    ]
+  },
+  "core_sha256": "04cc47cae52b3c5db2e11c5bea4176df9e309a1f83233a3926871781c5552436",
+  "script_sha256": "71a8701471d122541ace6e6e7b05b6141da7ac1568201aad74c7f1ae07454c58",
+  "execution": "Unchanged compiled C# clock decisions; market orders fill next observed primary-bar open; minute-close marked equity on the same underlying MNQ feed.",
+  "results": {
+    "block": {
+      "net_pnl": 25499.47999999999,
+      "gross_pnl": 29359.0,
+      "commission": 2136.5200000000004,
+      "slippage": 1723.0,
+      "trades": 1723,
+      "win_rate": 0.551363900174115,
+      "profit_factor": 1.2139280576312128,
+      "minute_close_marked_max_drawdown_usd": -3961.0599999999613,
+      "closed_trade_max_drawdown_usd": -3514.0600000000304,
+      "worst_trade_mae_usd": -2091.5,
+      "net_2024_onward": 18179.139999999992,
+      "yearly_net_pnl": {
+        "2020": 5882.839999999999,
+        "2021": 618.8399999999996,
+        "2022": 148.0799999999991,
+        "2023": 670.5799999999995,
+        "2024": 5129.339999999999,
+        "2025": 5836.579999999999,
+        "2026": 7213.219999999998
+      },
+      "contract_change_trades": 26,
+      "net_excluding_contract_change_trades": 16987.719999999987,
+      "doubled_cost_net_pnl": 21639.96
+    },
+    "session": {
+      "net_pnl": 24429.95999999999,
+      "gross_pnl": 28285.0,
+      "commission": 2134.04,
+      "slippage": 1721.0,
+      "trades": 1721,
+      "win_rate": 0.5490993608367228,
+      "profit_factor": 1.2105981289752297,
+      "minute_close_marked_max_drawdown_usd": -4298.979999999945,
+      "closed_trade_max_drawdown_usd": -3829.0400000000336,
+      "worst_trade_mae_usd": -1987.5,
+      "net_2024_onward": 16594.879999999994,
+      "yearly_net_pnl": {
+        "2020": 6216.079999999999,
+        "2021": 109.83999999999936,
+        "2022": 349.07999999999896,
+        "2023": 1160.0799999999997,
+        "2024": 4964.839999999999,
+        "2025": 6304.819999999999,
+        "2026": 5325.219999999998
+      },
+      "contract_change_trades": 26,
+      "net_excluding_contract_change_trades": 16151.19999999999,
+      "doubled_cost_net_pnl": 20574.92
+    }
+  },
+  "winner_by_net_pnl": "block",
+  "net_difference_block_minus_session": 1069.5200000000004,
+  "winner_excluding_contract_change_trades": "block",
+  "winner_doubled_costs": "block",
+  "overlap": {
+    "shared_observed_minutes": 1234697,
+    "share_of_block_minutes": 0.9975817854228441,
+    "share_of_session_minutes": 0.9993071928116398
+  },
+  "limitations": [
+    "These dates were already available and reviewed; this comparison is historical selection, not an untouched holdout or profitability guarantee.",
+    "No NinjaTrader runtime/Playback fill test is implied; provider bars, holidays, connectivity and actual fills can differ.",
+    "MNQ cache has unverified original vendor request provenance, missing minutes and unadjusted continuous-contract rolls.",
+    "Calendar uses canonical weekday ETH filtering, not an authoritative CME holiday schedule. Next available quotes are used across gaps.",
+    "Drawdown is marked on observed one-minute closes, not every tick; worst trade low is also shown. Neither strategy has a stop.",
+    "Costs are matched research assumptions, not verified brokerage rates; default commission is $0.62 per side plus one tick per side.",
+    "Trading session dates determine the common window, not UTC calendar entry dates. Only closed trades with entry session in the window are scored."
+  ],
+  "artifacts": {
+    "block-daily.csv": "63ce2a22ed11e2a2f6e43744846df9c71a32b5201fa47417e772bdaa224d151c",
+    "block-trades.csv": "15cfc322a38062a315b5ea37afa12bc6934ec8a78623735f587bb3798a26f36f",
+    "session-daily.csv": "1711d0951cc7d7f21039207f15407404ffe8e1c0c2ce891d1e798c5b97a14931",
+    "session-trades.csv": "179c2f08d1afe92596da4669e902ac5b0eede7efdb35e5121dd2028c57ffdbb8"
+  }
+}

@@ -1,3 +1,5 @@
+import { strategyTitle } from "../src/strategyTitle.ts";
+import { dashboardActionStatus } from "../src/dashboardTypes.ts";
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";
@@ -11,7 +13,7 @@ assert.equal(data.rows.length, 9);
 const shortlistCount = data.rows.filter((r) =>
   ["Research candidate", "Conditional"].includes(r.status),
 ).length;
-const reviewCount = data.rows.filter((r) => r.status === "Needs review").length;
+const actionCount = data.rows.filter((r) => ["Failed criteria", "Retest required", "Evidence repair needed", "Further testing needed", "Incomplete"].includes(dashboardActionStatus(r))).length;
 const orb = data.rows.find((r) => r.strategy_id === "pine-tsmom-orb");
 assert(orb.trades.trades > 0);
 assert.equal(orb.target_rr, 2);
@@ -35,16 +37,16 @@ try {
     .getByRole("link", { name: "Strategy scorecards", exact: true })
     .click();
   await page
-    .getByRole("button", { name: `Select ${orb.name}`, exact: true })
+    .getByRole("button", { name: `Select ${strategyTitle(orb.name)}`, exact: true })
     .click();
-  await page.getByRole("heading", { name: orb.name, exact: true }).waitFor();
+  await page.getByRole("heading", { name: strategyTitle(orb.name), exact: true }).waitFor();
   await expect(
     page.getByText(`${orb.trades.payoff_ratio.toFixed(2)} : 1`, { exact: true }).first(),
   ).toBeVisible();
   await expect(page.getByText("2.00 : 1", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("img", {
-      name: `${orb.name} evaluation equity`,
+      name: `${strategyTitle(orb.name)} evaluation equity`,
       exact: true,
     }),
   ).toBeVisible();
@@ -55,7 +57,7 @@ try {
   await select("Equity scenario", "Higher costs");
   assert.equal(
     await page
-      .getByRole("img", { name: `${orb.name} evaluation equity` })
+      .getByRole("img", { name: `${strategyTitle(orb.name)} evaluation equity` })
       .locator("polyline")
       .count(),
     1,
@@ -70,14 +72,14 @@ try {
   );
   for (const row of data.rows) {
     await page
-      .getByRole("button", { name: `Select ${row.name}`, exact: true })
+      .getByRole("button", { name: `Select ${strategyTitle(row.name)}`, exact: true })
       .click();
     await expect(
-      page.getByRole("heading", { name: row.name, exact: true }),
+      page.getByRole("heading", { name: strategyTitle(row.name), exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("img", {
-        name: `${row.name} evaluation equity`,
+        name: `${strategyTitle(row.name)} evaluation equity`,
         exact: true,
       }),
     ).toBeVisible();
@@ -87,11 +89,11 @@ try {
   );
   await select("Show strategies", "Shortlist");
   assert.equal(await page.locator(".sd-profit-row").count(), shortlistCount);
-  await select("Show strategies", "Needs review");
-  assert.equal(await page.locator(".sd-profit-row").count(), reviewCount);
+  await select("Show strategies", "Action needed");
+  assert.equal(await page.locator(".sd-profit-row").count(), actionCount);
   await select("Show strategies", "All strategies");
   await page
-    .getByRole("button", { name: `Select ${orb.name}`, exact: true })
+    .getByRole("button", { name: `Select ${strategyTitle(orb.name)}`, exact: true })
     .click();
   await page
     .getByRole("button", { name: "Open evaluation", exact: true })
@@ -107,7 +109,7 @@ try {
     .click();
   const drawer = page.getByRole("dialog", { name: "Run evidence" });
   await expect(
-    drawer.getByRole("heading", { name: orb.name, exact: true }),
+    drawer.getByRole("heading", { name: strategyTitle(orb.name), exact: true }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
   checks.push(
@@ -123,7 +125,7 @@ try {
     ),
   );
   await select("Dashboard market", "NQ");
-  await page.getByRole("heading", { name: orb.name, exact: true }).waitFor();
+  await page.getByRole("heading", { name: strategyTitle(orb.name), exact: true }).waitFor();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({
     path: `${folder}/dashboard-mobile.png`,

@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { strategyTitle } from "./strategyTitle";
+import { StrategyTesting, type TestingActions } from "./StrategyTesting";
+import { comparePromising, type TestingEvidence } from "./testingEvidence";
 import {
   Alert,
   Badge,
@@ -40,9 +43,13 @@ export type Library = {
 export function StrategyLibrary({
   library,
   configure,
+  evidence,
+  testingActions,
 }: {
   library?: Library;
   configure: (id: string) => void;
+  evidence: Record<string, TestingEvidence>;
+  testingActions: TestingActions;
 }) {
   const [search, setSearch] = useState("");
   const [family, setFamily] = useState<string | null>(null);
@@ -53,6 +60,7 @@ export function StrategyLibrary({
   );
   const [error, setError] = useState("");
   if (!library) return null;
+  const bestEvidence = (entry: LibraryEntry) => entry.adapters.map(a => evidence[a.id]).filter(Boolean).sort(comparePromising)[0];
   const entries = library.entries.filter(
     (e) =>
       (!family || e.family === family) &&
@@ -61,7 +69,7 @@ export function StrategyLibrary({
         .join(" ")
         .toLowerCase()
         .includes(search.toLowerCase()),
-  );
+  ).sort((a, b) => comparePromising(bestEvidence(a), bestEvidence(b)) || a.name.localeCompare(b.name));
   async function viewSource(entry: LibraryEntry) {
     setError("");
     try {
@@ -77,15 +85,8 @@ export function StrategyLibrary({
     <Paper p="lg" withBorder>
       <Title order={3}>Consolidated strategy library</Title>
       <Text c="dimmed" size="sm" my="sm">
-        {library.total} Python and Pine sources, grouped by family. Rule
-        collections retain their individual functions and parameters. Original
-        files stay at their existing paths.
+        {library.total} sources, most promising first. Open a source for implementation details.
       </Text>
-      <Alert color="blue" mb="md">
-        Runnable scripts use workbench accounting. An adapter link
-        covers only the stated signal rules; it does not certify the original
-        script's execution, sizing, or research results.
-      </Alert>
       <Group mb="md" align="end">
         <TextInput
           label="Search strategy library"
@@ -113,12 +114,12 @@ export function StrategyLibrary({
         Showing {entries.length} of {library.total} sources
       </Text>
       <ScrollArea>
-        <Table striped highlightOnHover miw={850}>
+        <Table striped highlightOnHover miw={850} className="strategy-library-table">
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Source</Table.Th>
               <Table.Th>Family / role</Table.Th>
-              <Table.Th>Workbench status</Table.Th>
+              <Table.Th>Most promising / stage</Table.Th>
               <Table.Th>Details</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -127,7 +128,7 @@ export function StrategyLibrary({
               <Table.Tr key={e.id}>
                 <Table.Td>
                   <Text size="sm" fw={600} lineClamp={2}>
-                    {e.name}
+                    {strategyTitle(e.name)}
                   </Text>
                   <Code fz="xs">{e.path}</Code>
                 </Table.Td>
@@ -138,7 +139,7 @@ export function StrategyLibrary({
                   </Text>
                 </Table.Td>
                 <Table.Td>
-                  <Badge
+                  {!e.adapters.length && <Badge
                     color={
                       e.adapters.length
                         ? "teal"
@@ -149,7 +150,11 @@ export function StrategyLibrary({
                     variant="light"
                   >
                     {e.status}
-                  </Badge>
+                  </Badge>}
+                  {[...e.adapters].sort((a,b) => comparePromising(evidence[a.id], evidence[b.id])).slice(0, 1).map(adapter => <div key={adapter.id}>
+                    {e.adapters.length > 1 && <Text size="xs" c="dimmed">{strategyTitle(adapter.name)} · best of {e.adapters.length} adapters</Text>}
+                    {evidence[adapter.id] ? <StrategyTesting compact evidence={evidence[adapter.id]} {...testingActions} /> : <Text size="xs">Adapter unavailable; testing evidence cannot be matched.</Text>}
+                  </div>)}
                 </Table.Td>
                 <Table.Td>
                   <Button
@@ -179,7 +184,7 @@ export function StrategyLibrary({
       >
         {selected && (
           <Stack>
-            <Title order={3}>{selected.name}</Title>
+            <Title order={3}>{strategyTitle(selected.name)}</Title>
             <Code>{selected.path}</Code>
             <Text size="xs" c="dimmed">
               SHA-256: {selected.file_hash}
@@ -201,10 +206,13 @@ export function StrategyLibrary({
             )}
             {selected.adapters.map((adapter) => (
               <Paper withBorder p="md" key={adapter.id}>
-                <Text fw={600}>{adapter.name}</Text>
+                <Text fw={600}>{strategyTitle(adapter.name)}</Text>
                 <Text size="sm" my="xs">
                   {adapter.scope}
                 </Text>
+                {evidence[adapter.id] && <StrategyTesting evidence={evidence[adapter.id]}
+                  inspectRun={id => { setSelected(null); testingActions.inspectRun(id); }}
+                  openEvaluation={id => { setSelected(null); testingActions.openEvaluation(id); }} />}
                 <Button
                   variant="light"
                   onClick={() => {
@@ -212,7 +220,7 @@ export function StrategyLibrary({
                     configure(adapter.id);
                   }}
                 >
-                  Configure {adapter.name}
+                  Configure {strategyTitle(adapter.name)}
                 </Button>
               </Paper>
             ))}

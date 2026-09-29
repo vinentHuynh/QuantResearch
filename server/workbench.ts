@@ -17,6 +17,9 @@ import { createResearch } from "./research.ts";
 import { createRunDeletion } from "./runDeletion.ts";
 import { createDashboard } from "./dashboard.ts";
 import { createCollective } from "./collective.ts";
+import { runSummaries } from "./stateSummary.ts";
+import { previewWarmup } from "./warmup.ts";
+import { createEventStudies } from "./eventStudies.ts";
 
 // Node 24 executes TypeScript directly. No shell commands contain UI input.
 type RecordValue = Record<string, unknown>;
@@ -37,6 +40,8 @@ type Strategy = {
   parameters: Record<string, Parameter>;
   execution_model?: string;
   required_session?: string;
+  warmup_bars?: { parameter: string; multiplier?: number; offset?: number };
+  default_warmup_days?: number;
 };
 type Dataset = {
   id: string;
@@ -546,7 +551,7 @@ function buildInputs(body: RecordValue) {
           true,
         ),
         timeout: numeric(body.timeout ?? 300, "Timeout", 1, 3600, true),
-        warmup_days: numeric(body.warmup_days ?? 60, "Warmup", 0, 1000, true),
+        warmup_days: numeric(body.warmup_days ?? strategy.default_warmup_days ?? 60, "Warmup", 0, 1000, true),
         development_end,
         selection_time: now(),
         hypothesis: String(body.hypothesis || "").slice(0, 2000),
@@ -781,6 +786,7 @@ const dashboard = createDashboard({
   runDir,
 });
 const collective = createCollective(root, state, python);
+const eventStudies = createEventStudies(root, state, python, () => all<Dataset>("dataset"), cleanEnvironment);
 const server = createServer(async (req, res) => {
   // Same-origin browser writes only. Bind loopback; reject cross-site form posts.
   const origin = req.headers.origin;
@@ -822,6 +828,22 @@ const server = createServer(async (req, res) => {
       return;
     }
     const action = parts[2];
+    if (action === 'event-studies') {
+      if (req.method === 'GET' && !parts[3]) return json(res, { studies: eventStudies.list(), defaults: eventStudies.defaults, limits: eventStudies.limits });
+      if (req.method === 'POST' && parts[3] === 'preview') return json(res, await eventStudies.preview(await body(req)));
+      if (req.method === 'POST' && !parts[3]) return json(res, eventStudies.create(await body(req)), 201);
+      if (req.method === 'GET' && parts[4] === 'artifacts') {
+        const file = eventStudies.artifact(parts[3], parts[5], parts[6]);
+        res.writeHead(200, { 'Content-Type': file.endsWith('.json') ? 'application/json' : file.endsWith('.csv') ? 'text/csv' : 'text/plain', ...(url.searchParams.has('download') ? { 'Content-Disposition': `attachment; filename="${parts[6]}"` } : {}) });
+        createReadStream(file).pipe(res); return;
+      }
+      if (req.method === 'GET' && parts[3]) return json(res, eventStudies.read(parts[3]));
+      if (req.method === 'POST' && parts[4] === 'run') return json(res, eventStudies.launch(parts[3], String((await body(req)).phase)));
+      if (req.method === 'POST' && parts[4] === 'review') return json(res, eventStudies.review(parts[3], await body(req)));
+      if (req.method === 'POST' && parts[4] === 'freeze') return json(res, eventStudies.freeze(parts[3]));
+      if (req.method === 'POST' && parts[4] === 'cancel') return json(res, eventStudies.cancel(parts[3]));
+      return json(res, { error: 'Unknown event-study operation' }, 404);
+    }
     if (action === 'collective') {
       if (req.method === 'GET' && parts[3] === 'status') return json(res, collective.status());
       if (req.method === 'GET') return json(res, collective.catalog());
@@ -830,6 +852,29 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === "GET" && action === "dashboard")
       return json(res, dashboard(url.searchParams.get("symbol") || undefined));
+    if (req.method === "GET" && action === "nq-monthly") {
+      const asset = parts[3] || "app-data.json";
+      const contentTypes: Record<string, string> = {
+        "app-data.json": "application/json; charset=utf-8",
+        "report.csv": "text/csv; charset=utf-8",
+        "monthly-pnl.csv": "text/csv; charset=utf-8",
+        "monthly-heatmap.png": "image/png",
+      };
+      if (parts.length > 4 || !contentTypes[asset])
+        return json(res, { error: "Unknown NQ comparison artifact" }, 404);
+      const file = join(root, "reports", "nq-monthly-2026-09-29", asset);
+      if (!existsSync(file))
+        return json(res, { error: "Saved NQ comparison is unavailable" }, 404);
+      res.writeHead(200, {
+        "Content-Type": contentTypes[asset],
+        "Cache-Control": "private, no-cache",
+        ...(asset.endsWith(".csv")
+          ? { "Content-Disposition": `attachment; filename="${asset}"` }
+          : {}),
+      });
+      createReadStream(file).pipe(res);
+      return;
+    }
     if (
       req.method === "POST" &&
       action === "runs" &&
@@ -861,10 +906,11 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === "GET" && action === "state") {
       registerDatasets();
-      return json(res, {
+      const summary = url.searchParams.get("view") === "summary";
+      const payload = {
         ...catalog,
         datasets: all("dataset"),
-        runs: all("run"),
+        runs: summary ? runSummaries(db) : all("run"),
         experiments: all("experiment"),
         presets: all("preset"),
         watchlist: all("watch"),
@@ -873,7 +919,18 @@ const server = createServer(async (req, res) => {
         views: all("view"),
         import: importJob,
         limits: { concurrency, maxBatch },
-      });
+      };
+      if (!summary) return json(res, payload);
+      const encoded = JSON.stringify(payload);
+      const etag = `"${hash(encoded)}"`;
+      res.setHeader("ETag", etag);
+      res.setHeader("Cache-Control", "private, no-cache");
+      if (req.headers["if-none-match"] === etag) {
+        res.writeHead(304);
+        return res.end();
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(encoded);
     }
     if (req.method === "POST" && action === "discover") {
       await refreshCatalog();
@@ -888,6 +945,7 @@ const server = createServer(async (req, res) => {
       return json(res, {
         jobs: inputs.length,
         parameters: inputs.map((i) => i.parameters),
+        warmup: await previewWarmup(python, root, cleanEnvironment(), inputs as Input[]),
       });
     }
     if (action === "evaluations") {
@@ -1148,6 +1206,7 @@ server.listen(port, "127.0.0.1", () => {
 });
 function shutdown() {
   stopping = true;
+  eventStudies.stop();
   research.stop();
   for (const [id, child] of active) {
     const run = get<Run>("run", id);

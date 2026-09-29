@@ -129,19 +129,45 @@ class OvernightDrift:
 
 class IntradayORB:
     def __init__(self, bars, p, request):
+        from strategies._cme_index_calendar import session_close_et
+
         self.p, self.request = p, request
         self.known = daily_features(bars, p)
         minutes = clock(bars.index, p['timezone'])
         self.opening = inside(minutes, p['opening_start'], p['opening_end'])
         self.entry = inside(minutes, p['entry_start'], p['entry_end'])
-        self.flatten = inside(minutes, p['flatten_start'], p['flatten_end'])
         self.high = self.low = np.nan
         self.attempted = False
+        self.session = None
+        self.entry_session_end = None
+        self.session_ends, self.deadlines = {}, {}
+        # Freeze a known calendar, never infer today's close from its last
+        # observed/future price bar. Preserve normal 15:45-start/15:50-close exit.
+        for day in bars.session_date.unique():
+            key = str(day)
+            end = session_close_et(key)
+            normal = pd.Timestamp(key).tz_localize(p['timezone']) + pd.Timedelta(minutes=p['flatten_start'] + 5)
+            self.session_ends[key] = end
+            self.deadlines[key] = min(normal, end - pd.Timedelta(minutes=5)) if end is not None else None
 
     def on_close(self, i, bar, state):
         p = self.p
+        key = str(bar.session_date)
+        completed = pd.Timestamp(bar.availability_time)
+        # If there was no tradable quote to exit before the known session end,
+        # fail the historical replay instead of fabricating a pre-gap fill or
+        # silently allowing an overnight bracket trade to appear valid.
+        if (state.get('position_at_open', state['position']) and self.entry_session_end is not None
+                and bar.name >= self.entry_session_end):
+            raise ValueError(f'ORB missed scheduled session exit before {self.entry_session_end.isoformat()}; '
+                             f'first subsequent held bar is {bar.name.isoformat()}. Missing exit quotes require review.')
+        new_session = self.session != key
+        if new_session:
+            self.session = key
+            self.high = self.low = np.nan
+            self.attempted = False
         opening = self.opening[i]
-        prior = self.opening[i - 1] if i else False
+        prior = bool(self.opening[i - 1]) if i and not new_session else False
         if opening and not prior:
             self.high, self.low, self.attempted = bar.high, bar.low, False
             if state['tradable'] and state['position']:
@@ -150,8 +176,13 @@ class IntradayORB:
             self.high, self.low = max(self.high, bar.high), min(self.low, bar.low)
         if not state['tradable']:
             return None
-        if self.flatten[i] and state['position']:
-            return {'target': 0, 'reason': 'force-flat window'}
+        deadline = self.deadlines[key]
+        if deadline is None or completed >= deadline:
+            if state['position']:
+                return {'target': 0, 'reason': 'calendar force-flat',
+                        'timing': p.get('execution_timing', 'close'),
+                        'expires_at': (self.session_ends[key] - pd.Timedelta(nanoseconds=1)).isoformat() if self.session_ends[key] is not None else completed.isoformat()}
+            return None  # Never enter in a closed/expired session.
         score = self.known.score.iloc[i]
         direction = 1 if score >= p['minimum_score'] else -1 if score <= -p['minimum_score'] else 0
         long_break = direction > 0 and (bar.close > self.high if p['require_close_break'] else bar.high >= self.high)
@@ -162,4 +193,6 @@ class IntradayORB:
             risk = abs(bar.close - stop)
             count = min(p['maximum_contracts'], math.floor(p['risk_budget'] / (risk * self.request['dataset']['point_value']))) if risk > 0 else 0
             if count:
-                return {'target': count * direction, 'bracket': (stop, bar.close + direction * p['reward_risk'] * risk)}
+                self.entry_session_end = self.session_ends[key]
+                return {'target': count * direction, 'bracket': (stop, bar.close + direction * p['reward_risk'] * risk),
+                        'timing': p.get('execution_timing', 'close'), 'expires_at': (deadline - pd.Timedelta(nanoseconds=1)).isoformat()}

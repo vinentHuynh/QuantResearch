@@ -13,6 +13,7 @@ import pandas as pd
 
 from .contract import checksum, metadata, resolve_parameters
 from .metrics import calculate
+from .warmup import coverage, warning as warmup_warning
 
 
 def simulate(bars, targets, request):
@@ -48,7 +49,7 @@ def simulate(bars, targets, request):
         if target != held:
             if active is not None:
                 active['cost'] += abs(held) * one_way_cost
-                active.update(exit_time=timestamp.isoformat(), exit=float(row.open))
+                active.update(exit_time=timestamp.isoformat(), exit=float(row.open),exit_reason='signal')
                 active['net_pnl'] = active['gross_pnl'] - active['cost']
                 trades.append(active)
             active = {'entry_time': timestamp.isoformat(), 'entry': float(row.open), 'quantity': target, 'gross_pnl': 0.0, 'cost': abs(target) * one_way_cost} if target else None
@@ -70,7 +71,7 @@ def simulate(bars, targets, request):
             turnover += abs(held)
             cost += abs(held) * one_way_cost
             active['cost'] += abs(held) * one_way_cost
-            active.update(exit_time=pd.Timestamp(row.availability_time).isoformat(), exit=float(row.close))
+            active.update(exit_time=pd.Timestamp(row.availability_time).isoformat(), exit=float(row.close),exit_reason='end-of-test')
             active['net_pnl'] = active['gross_pnl'] - active['cost']
             trades.append(active)
             held = 0
@@ -79,7 +80,7 @@ def simulate(bars, targets, request):
         equity_rows.append({'timestamp': event, 'equity': balance, 'gross_pnl': gross, 'cost': cost, 'net_pnl': gross - cost})
         positions.append({'timestamp': event, 'contracts': held, 'intrabar_contracts': target, 'turnover_contracts': turnover})
         previous_close = float(row.close)
-    return pd.DataFrame(equity_rows), pd.DataFrame(trades, columns=['entry_time', 'exit_time', 'quantity', 'entry', 'exit', 'gross_pnl', 'cost', 'net_pnl']), pd.DataFrame(positions)
+    return pd.DataFrame(equity_rows), pd.DataFrame(trades, columns=['entry_time', 'exit_time', 'quantity', 'entry', 'exit', 'gross_pnl', 'cost', 'net_pnl','exit_reason']), pd.DataFrame(positions)
 
 
 def main(request_file):
@@ -139,6 +140,11 @@ def main(request_file):
         raise ValueError('Dataset has no bars in the requested interval')
     print(f'Loaded {len(frame):,} source bars; building {request["timeframe"]} bars', flush=True)
     bars = session_bars(frame, get_session(request['session']), request['timeframe'])
+    warmup = coverage(bars, request, spec, parameters)
+    initialization_warning = warmup_warning(warmup)
+    print(f'Warmup coverage: {json.dumps(warmup)}', flush=True)
+    if initialization_warning:
+        print(initialization_warning, flush=True)
     module_spec = importlib.util.spec_from_file_location('user_strategy', source)
     module = importlib.util.module_from_spec(module_spec)
     module_spec.loader.exec_module(module)
@@ -171,6 +177,8 @@ def main(request_file):
                     'TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.']
     if metrics['trades'] == 0:
         warnings.append('No completed trades; this run supplies no trading evidence.')
+    if initialization_warning:
+        warnings.append(initialization_warning)
     if spec.get('migration_scope'):
         warnings.append(spec['migration_scope'])
     if metrics['observations'] < 100:
@@ -180,7 +188,7 @@ def main(request_file):
     equity['drawdown'] = equity.equity.to_numpy() / np.maximum.accumulate(np.r_[request['capital'], equity.equity.to_numpy()])[1:] - 1
     preview = equity.iloc[::stride]
     preview = pd.concat([preview, equity.tail(1)]).drop_duplicates('timestamp')
-    manifest = {'protocol': 1, 'run_id': request['id'], 'metrics': metrics, 'warnings': warnings,
+    manifest = {'protocol': 1, 'run_id': request['id'], 'metrics': metrics, 'warnings': warnings, 'warmup': warmup,
                 'artifacts': artifacts, 'equity_preview': preview[['timestamp', 'equity', 'drawdown']].to_dict('records'),
                 'trade_preview': trades.head(100).to_dict('records')}
     partial = folder / 'manifest.partial.json'

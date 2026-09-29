@@ -15,6 +15,13 @@ REPORTS=ROOT/'reports'
 FIRST=REPORTS/'all-strategies-all-charts-2026-09-16'
 EXPANDED=REPORTS/'expanded-search-2026-09-16'
 SND=REPORTS/'snd-fresh-backtest-2026-09-16'
+REFRESH_IDS={
+    '72475d93c4667b888c79',  # ES Pine overnight block
+    'f24587940b6c8c81c877',  # ES Globex overnight
+    '0c4b6e885c9223b5373f',  # NQ Pine TSMOM ORB
+    '3b3d1cfec7aac292801c',  # NQ Globex overnight
+    '35b4fda895bf8ed0435c',  # NQ minute reversal
+}
 def read(p):return json.loads(Path(p).read_text(encoding='utf-8'))
 def sha(p):
     h=hashlib.sha256()
@@ -34,7 +41,25 @@ def normalize(t,pnl='net_pnl'):
     if t.empty:return []
     a=pd.to_datetime(t.entry_time,utc=True);z=pd.to_datetime(t.exit_time,utc=True)
     assert (a<=z).all() and np.isfinite(t[pnl]).all()
-    return [{'entry':x.isoformat(),'exit':y.isoformat(),'pnl':round(float(v),8)} for x,y,v in zip(a,z,t[pnl])]
+    rows=[{'entry':x.isoformat(),'exit':y.isoformat(),'pnl':round(float(v),8)} for x,y,v in zip(a,z,t[pnl])]
+    reason_column=next((c for c in ('exit_reason','reason') if c in t.columns),None)
+    if reason_column:
+        for row,value in zip(rows,t[reason_column]):
+            if pd.isna(value) or not str(value).strip():continue
+            reason=str(value).strip()
+            row['exit_reason']=reason
+            row['synthetic_exit']=reason.lower().replace('_','-').replace(' ','-') in ('end-of-test','end-of-data','end-of-backtest','final-liquidation')
+            row['exit_provenance']='recorded'
+    # Keep actual source quantities; never infer one contract from a strategy name.
+    for column in ('quantity','cost'):
+        if column not in t.columns:continue
+        for row,value in zip(rows,t[column]):
+            if not np.isfinite(value):continue
+            value=abs(float(value)) if column=='quantity' else float(value)
+            if column=='quantity' and (value<=0 or not value.is_integer()):continue
+            if column=='cost' and value<0:continue
+            row[column]=value
+    return rows
 def daily(equity,capital=100000):
     equity=equity.sort_index()
     assert equity.index.is_unique and np.isfinite(equity).all()
@@ -49,7 +74,17 @@ def canonical_run(run_id):
     assert abs(t.net_pnl.sum()-manifest['metrics']['net_pnl'])<.01
     assert abs(e.equity.iloc[-1]-inp['capital']-t.net_pnl.sum())<.01
     marks=daily(pd.Series(e.equity.to_numpy(),index=pd.to_datetime(e.timestamp,utc=True)),inp['capital'])
-    return normalize(t),marks,inp
+    normalized=normalize(t)
+    # Legacy signal workers lacked reasons. Their documented final-close
+    # liquidation is identifiable from the last equity timestamp. Never
+    # rewrite the original ledger; retain the inference in derived metadata.
+    if 'exit_reason' not in t.columns and 'reason' not in t.columns:
+        final=pd.to_datetime(e.timestamp.iloc[-1],utc=True)
+        for row in normalized:
+            terminal=pd.Timestamp(row['exit'])==final
+            row.update(exit_reason='end-of-test' if terminal else 'signal',synthetic_exit=terminal,exit_provenance='legacy-worker-timing')
+    for row in normalized:row.update(source_run=run_id,source_version=inp.get('source_hash','unknown'))
+    return normalized,marks,inp
 
 PRICE_CACHE={}
 def market_closes(symbol):
@@ -80,26 +115,115 @@ def expanded_run(r):
     assert abs(closed[-1]-r['net_pnl'])<.01
     return normalize(t),daily(pd.Series(100000+closed,index=prices.index))
 
+
+def refresh_extensions():
+    """Load the five completed replays together, never a partial portfolio refresh."""
+    folder=ROOT/'reports/combined-es-nq-refresh-2026-09-29'
+    files=sorted(folder.rglob('extension.json')) if folder.exists() else []
+    if not files:return {}
+    found={}
+    for path in files:
+        extension=read(path);identity=extension['catalog_id']
+        if identity in found:raise ValueError(f'Duplicate portfolio extension: {identity}')
+        if identity not in REFRESH_IDS:raise ValueError(f'Unexpected portfolio extension: {identity}')
+        extension['_file']=str(path)
+        found[identity]=extension
+    if set(found)!=REFRESH_IDS:
+        raise ValueError(f'Incomplete ES/NQ portfolio refresh: missing {sorted(REFRESH_IDS-set(found))}')
+    datasets=read(ROOT/'data/workbench/datasets/catalog.json')['datasets']
+    by_id={dataset['id']:dataset for dataset in datasets}
+    checked=set()
+    for identity,extension in found.items():
+        dataset=by_id[extension['dataset_id']]
+        if dataset['checksum']!=extension['dataset_checksum']:
+            raise ValueError(f'Portfolio extension dataset checksum changed: {identity}')
+        if dataset['id'] not in checked:
+            if sha(dataset['path'])!=dataset['checksum']:
+                raise ValueError(f'Portfolio extension dataset file changed: {dataset["id"]}')
+            checked.add(dataset['id'])
+    return found
+
+
+def extend_segments(segments, extension):
+    """Apply a checked tail while retaining frozen source runs and catalog IDs."""
+    if not extension:return segments
+    ordered=[(start,end,list(trades),dict(marks)) for start,end,trades,marks in sorted(segments)]
+    start,end=extension['start'],extension['end']
+    if not ordered or not start<=end or pd.Timestamp(start)-pd.Timestamp(ordered[-1][1])!=pd.Timedelta(days=1):
+        raise ValueError(f'Portfolio extension does not adjoin old coverage: {extension["catalog_id"]}')
+    removed_pnl=0.0
+    boundary=extension.get('boundary_correction')
+    if boundary:
+        date=boundary['date']
+        if date!=ordered[-1][1] or date not in ordered[-1][3]:
+            raise ValueError('Portfolio boundary correction does not match old terminal mark')
+        delta=float(boundary['delta_pnl'])
+        if not np.isfinite(delta):raise ValueError('Invalid portfolio boundary correction')
+        old=ordered[-1]
+        original=boundary.get('original_daily_pnl',boundary.get('prior_pnl'))
+        if original is not None and not np.isclose(old[3][date],original,atol=1e-6):
+            raise ValueError('Old boundary mark differs from the replay provenance')
+        old[3][date]+=delta
+        corrected=boundary.get('corrected_daily_pnl',boundary.get('corrected_pnl'))
+        if corrected is not None and not np.isclose(old[3][date],corrected,atol=1e-6):
+            raise ValueError('Corrected portfolio boundary mark does not reconcile')
+        remove=boundary.get('remove_trade')
+        if remove:
+            matching=[i for i,trade in enumerate(old[2]) if all(trade.get(k)==remove.get(k) for k in ('entry','exit','pnl','exit_reason'))]
+            if len(matching)!=1 or not old[2][matching[0]].get('synthetic_exit'):
+                raise ValueError('Expected one recorded synthetic boundary trade')
+            removed_pnl=float(old[2].pop(matching[0])['pnl'])
+    else:delta=0.0
+    marks=extension['daily']
+    if not marks or any(not(start<=date<=end) or not np.isfinite(value) for date,value in marks.items()):
+        raise ValueError('Invalid portfolio extension daily marks')
+    trades=extension['trades']
+    for trade in trades:
+        if not all(k in trade for k in ('entry','exit','pnl','quantity','cost','exit_reason')):
+            raise ValueError('Portfolio extension trade lacks accounting fields')
+        if trade['entry']>trade['exit'] or not np.isfinite([trade['pnl'],trade['quantity'],trade['cost']]).all():
+            raise ValueError('Invalid portfolio extension trade')
+        if trade.get('synthetic_exit'):
+            raise ValueError('Fresh portfolio extension has a forced terminal exit')
+    if not np.isclose(delta+sum(marks.values()),sum(t['pnl'] for t in trades)-removed_pnl,atol=.01):
+        raise ValueError(f'Portfolio extension P&L does not reconcile: {extension["catalog_id"]}')
+    ordered.append((start,end,trades,marks))
+    return ordered
+
 def main():
     OUT.mkdir(parents=True,exist_ok=True);items=[];errors=[];sources=[]
+    extensions=refresh_extensions()
+    if extensions:
+        sources.append({'name':'ES/NQ September replay','path':str(ROOT/'reports/combined-es-nq-refresh-2026-09-29'),'checksums':{identity:sha(extension['_file']) for identity,extension in extensions.items()}})
     def save(key,name,symbol,tf,session,source,segments,working=False,feasible=False,reasons=None,benchmark=False,parameters=None,capital=100000):
-        trades=[];marks={};coverage=[]
+        trades=[];marks={};coverage=[];mark_metadata={}
+        identity=hashlib.sha256((source+'|'+key).encode()).hexdigest()[:20]
+        extension=extensions.get(identity)
+        segments=extend_segments(segments,extension)
         for start,end,tt,dd in sorted(segments):
             if coverage and start<=coverage[-1]['end']:raise ValueError('Overlapping source windows')
             coverage.append({'start':start,'end':end})
-            trades.extend(tt)
+            segment=f'{start}/{end}'
+            trades.extend([dict(t,segment=segment) for t in tt])
+            terminal=max((d for d in dd if start<=d<=end),default=None)
             for date,value in dd.items():
                 if start<=date<=end:
                     if date in marks:raise ValueError('Duplicate daily P&L')
                     marks[date]=value
+                    mark_metadata[date]={'segment':segment,'terminal':date==terminal}
         trades.sort(key=lambda t:(t['entry'],t['exit']))
-        identity=hashlib.sha256((source+'|'+key).encode()).hexdigest()[:20]
-        series={'id':identity,'daily':[{'date':d,'pnl':v} for d,v in sorted(marks.items())],'trades':trades,'coverage':coverage}
+        if extension:
+            # An extended source no longer ends at its earlier terminal mark.
+            previous=segments[-2][1]
+            if previous in mark_metadata:mark_metadata[previous]['terminal']=False
+        series={'id':identity,'provenance_version':2,'daily':[{'date':d,'pnl':v,**mark_metadata[d]} for d,v in sorted(marks.items())],'trades':trades,'coverage':coverage}
         payload=json.dumps(series,allow_nan=False,separators=(',',':')).encode();checksum=hashlib.sha256(payload).hexdigest()
         filename=f'{identity}-{checksum[:16]}.json';target=OUT/filename
         if not target.exists():target.write_bytes(payload)
         recent=sum(v for d,v in marks.items() if d>='2024-01-01')
-        items.append({'id':identity,'key':key,'name':name,'symbol':symbol,'timeframe':tf,'session':session,'source':source,'start':coverage[0]['start'],'end':coverage[-1]['end'],'coverage':coverage,'capital':capital,'working':bool(working and not benchmark),'feasible':bool(feasible and not benchmark),'benchmark':benchmark,'tested':bool(coverage[-1]['end']>='2026-08-31'),'reasons':reasons or [],'parameters':parameters or {},'net_pnl':round(sum(marks.values()),6),'recent_pnl':round(recent,6),'trades':len(trades),'series_file':filename,'checksum':checksum})
+        notes=[*(reasons or [])]
+        if extension:notes.append('September 2026 extension is an exploratory replay on newer ES/NQ data; earlier evaluation status does not validate the new period.')
+        items.append({'id':identity,'key':key,'name':name,'symbol':symbol,'timeframe':tf,'session':session,'source':source,'start':coverage[0]['start'],'end':coverage[-1]['end'],'coverage':coverage,'capital':capital,'working':bool(working and not benchmark),'feasible':bool(feasible and not benchmark),'benchmark':benchmark,'tested':bool(coverage[-1]['end']>='2026-08-31'),'reasons':notes,'parameters':parameters or {},'net_pnl':round(sum(marks.values()),6),'recent_pnl':round(recent,6),'trades':len(trades),'series_file':filename,'checksum':checksum,**({'latest_replay':{'start':extension['start'],'end':extension['end'],'dataset_id':extension['dataset_id'],'extension_sha256':sha(extension['_file'])}} if extension else {})})
     if (FIRST/'report-data.json').exists():
         report=read(FIRST/'report-data.json');sources.append({'name':'Workbench campaign','path':str(FIRST/'report-data.json'),'checksum':sha(FIRST/'report-data.json')})
         follow={r['key']:r for r in report['followups']}
@@ -149,10 +273,14 @@ def main():
     # New workbench runs also enter the catalog on refresh. Report campaigns
     # retain their richer historical review; their existing runs are not added twice.
     database=OUT.parent/'workbench.sqlite3'
+    market_data_through={}
     if database.exists():
         with sqlite3.connect(database.resolve().as_uri()+'?mode=ro',uri=True) as connection:
             records=[(kind,json.loads(body)) for kind,body in connection.execute('SELECT kind,body FROM records')]
         connection.close()
+        for kind,record in records:
+            if kind=='dataset' and record.get('last'):
+                symbol=record['symbol'];market_data_through[symbol]=max(market_data_through.get(symbol,''),record['last'])
         runs={r['id']:r for kind,r in records if kind=='run'}
         evaluations={r['id']:r for kind,r in records if kind=='evaluation'}
         known=set()
@@ -195,6 +323,11 @@ def main():
                 save(key+'__'+hashlib.sha256(signature.encode()).hexdigest()[:10],name,inp['dataset']['symbol'],inp['timeframe'],inp['session'],'Current workbench',segments,working,False,reasons,inp['strategy']['id']=='buy-hold',inp['parameters'],capital=inp['capital'])
             except Exception as ex:errors.append({'key':key,'error':str(ex)})
     index={'version':1,'generated_at':pd.Timestamp.now(tz='UTC').isoformat(),'items':items,'errors':errors,'sources':sources,'definitions':{'working':'All available later-period baseline, cost and declared execution/risk checks passed. Unresolved tests remain visible.','feasible':'Working plus completed execution and parameter-sensitivity checks with no known session-exit flag. Historical research checklist only; not live approval.','pnl':'UTC calendar days, net of recorded fees and slippage. Independent strategy books; no position netting, shared margin or portfolio resizing.'}}
+    index['market_data_through']=market_data_through
+    if (OUT/'index.json').exists():
+        prior=read(OUT/'index.json').get('condition_calibration')
+        if prior and all(any(i['id']==s['id'] and i['checksum']==s['checksum'] for i in items) for s in prior.get('sources',[])):
+            index['condition_calibration']=prior
     dump(OUT/'index.json',index)
     print(json.dumps({'configurations':len(items),'working':sum(i['working'] for i in items),'feasible':sum(i['feasible'] for i in items),'errors':errors},indent=2))
     if errors:sys.exit(1)

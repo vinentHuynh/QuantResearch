@@ -1,0 +1,31 @@
+﻿{
+    "installed_at":  "2026-09-29T16:21:12.0377836Z",
+    "actions":  "Source files copied only. No NinjaTrader launch, native F5 compile, account selection, or strategy enable.",
+    "files":  [
+                  {
+                      "file":  "WorkbenchMnqMinuteReversal.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqMinuteReversal.cs",
+                      "sha256":  "bf6be734a96fd2e5e8f40a4c93ffc26f649402ef629039f9c2dc139cc553c38c"
+                  },
+                  {
+                      "file":  "WorkbenchMnqReversalCore.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqReversalCore.cs",
+                      "sha256":  "a337bf21f26df0c37fae97b9c7ab62b5cb4ebc63fd7363f3efd004daab88ff99"
+                  },
+                  {
+                      "file":  "WorkbenchMnqOvernightBlock.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqOvernightBlock.cs",
+                      "sha256":  "182b9df08517b884eca039d7756c51a5cd971e0fd40296159dd03a7aae578847"
+                  },
+                  {
+                      "file":  "WorkbenchMnqOvernightSession.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqOvernightSession.cs",
+                      "sha256":  "3d4b6c9973268e2c6acddaacd927c467ff93ea75b0b8a55d7555dc13636c37e2"
+                  },
+                  {
+                      "file":  "WorkbenchMnqOvernightRules.cs",
+                      "destination":  "C:\\Users\\vince\\OneDrive\\Documents\\NinjaTrader 8\\bin\\Custom\\Strategies\\WorkbenchMnqOvernightRules.cs",
+                      "sha256":  "04cc47cae52b3c5db2e11c5bea4176df9e309a1f83233a3926871781c5552436"
+                  }
+              ]
+}

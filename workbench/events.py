@@ -77,7 +77,11 @@ def simulate_events(bars, model, request, execution_bars=None):
         gross, cost, turnover = 0., 0., 0
         mark(float(bar.open))
         if pending is not None:
-            apply(pending, float(bar.open), timestamp)
+            expiry = pending.get('expires_at')
+            if expiry is None or timestamp <= pd.Timestamp(expiry):
+                apply(pending, float(bar.open), timestamp)
+            else:
+                print(f'Expired next-open order before {timestamp.isoformat()}: {pending.get("reason", "signal")}', flush=True)
             pending = None
         intrabar_contracts = held
         if held and bracket:
@@ -110,6 +114,11 @@ def simulate_events(bars, model, request, execution_bars=None):
             if timing == 'close':
                 apply(decision, float(bar.close), bar.availability_time)
             elif timing == 'next-open':
+                expiry = decision.get('expires_at')
+                if expiry is not None:
+                    expiry = pd.Timestamp(expiry)
+                    if expiry.tzinfo is None or expiry < pd.Timestamp(bar.availability_time):
+                        raise ValueError('Order expiry must be timezone-aware and not precede the decision availability')
                 pending = decision
             else:
                 raise ValueError('Event timing must be close or next-open')
