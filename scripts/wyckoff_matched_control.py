@@ -28,22 +28,57 @@ sys.path.insert(0, str(ROOT))
 from strategy_engine.data import session_bars  # noqa: E402
 from strategy_engine.sessions import get_session  # noqa: E402
 from workbench.contract import checksum  # noqa: E402
+from workbench.dataset_reference import resolve_dataset_path  # noqa: E402
+from workbench.layout import load_layout  # noqa: E402
+
+
+def state_root() -> Path:
+    return load_layout(ROOT).state_root
+
+
+def dataset_path(request: dict, workbench_home: Path | None = None) -> Path:
+    dataset = request["dataset"]
+    if request.get("protocol") == 2 and dataset.get("schema_version") != 2:
+        dataset = {**dataset, "schema_version": 2}
+    return resolve_dataset_path(dataset, workbench_home or state_root())
+
+
+def decode_sqlite_record(kind: str, record_id: str, raw: str) -> dict:
+    """Read a legacy body or validate and unwrap a protocol-v2 envelope."""
+    value = json.loads(raw)
+    if (
+        isinstance(value, dict)
+        and value.get("schema_version") == 2
+        and ("kind" in value or "body" in value)
+    ):
+        if (
+            set(value) != {"schema_version", "kind", "id", "body"}
+            or value.get("kind") != kind
+            or value.get("id") != record_id
+            or not isinstance(value.get("body"), dict)
+        ):
+            raise ValueError(f"Invalid protocol-v2 SQLite envelope for {kind}/{record_id}")
+        return value["body"]
+    if not isinstance(value, dict):
+        raise ValueError(f"Invalid protocol-v1 SQLite record for {kind}/{record_id}")
+    return value
 
 
 def _load_run(run_id: str) -> tuple[dict, pd.DataFrame]:
     UUID(run_id)  # Also prevents using an arbitrary path as the run identifier.
-    db = ROOT / "data/workbench/workbench.sqlite3"
+    state = state_root()
+    db = state / "workbench.sqlite3"
     with sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True) as conn:
         row = conn.execute("SELECT body FROM records WHERE kind='run' AND id=?", (run_id,)).fetchone()
     if row is None:
         raise ValueError(f"Run {run_id} was not found")
-    run = json.loads(row[0])
+    run = decode_sqlite_record("run", run_id, row[0])
     request = run["input"]
     if run["status"] != "Succeeded" or request["strategy"]["id"] != "wyckoff-nq":
         raise ValueError("Expected a succeeded wyckoff-nq run")
     if request["dataset"]["symbol"] != "NQ" or request["parameters"]["exit_policy"] != "fixed_bars":
         raise ValueError("Expected NQ data and a fixed_bars exit policy")
-    folder = ROOT / "data/workbench/runs" / run_id
+    folder = state / "runs" / run_id
     artifact = next(a for a in run["result"]["artifacts"] if a["name"] == "trades.csv")
     trade_path = folder / "trades.csv"
     if checksum(trade_path) != artifact["checksum"]:
@@ -55,7 +90,7 @@ def _load_market(request: dict, roll_pad: pd.Timedelta) -> tuple[pd.DataFrame, n
     start = pd.Timestamp(request["start"], tz="UTC") - max(roll_pad, pd.Timedelta(days=7))
     stop = pd.Timestamp(request["end"], tz="UTC") + pd.Timedelta(days=1) + max(roll_pad, pd.Timedelta(days=7))
     raw = pd.read_parquet(
-        request["dataset"]["path"],
+        dataset_path(request),
         filters=[("ts_event", ">=", start), ("ts_event", "<", stop)],
     )
     if raw.empty or "instrument_id" not in raw:

@@ -1,6 +1,8 @@
 """Causal fixed-clock implementation of Gao/Baltussen closing-window momentum."""
 
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': ['strategies/market_intraday_momentum.py'],
     'id': 'market-intraday-momentum',
     'name': 'Market intraday momentum - last 30 minutes',
     'version': '1.0.1',

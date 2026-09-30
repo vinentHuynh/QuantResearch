@@ -1,6 +1,18 @@
 """Adapter for the repository's canonical moving-average signal calculation."""
 
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': [
+        'strategies/moving_average.py',
+        'strategy_engine/__init__.py',
+        'strategy_engine/accounting.py',
+        'strategy_engine/catalog.py',
+        'strategy_engine/sessions.py',
+        'strategy_engine/sizing.py',
+        'strategy_engine/strategies/__init__.py',
+        'strategy_engine/strategies/relative_value.py',
+        'strategy_engine/strategies/trend.py',
+    ],
     'id': 'moving-average',
     'name': 'Moving-average trend',
     'description': 'Existing canonical long/flat trend signal, with next-bar-open fills and fixed whole contracts.',

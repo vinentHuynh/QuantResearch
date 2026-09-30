@@ -2,9 +2,12 @@ import {chromium,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {join} from 'node:path';
 import {parseCsv,tradeStatistics} from '../server/dashboard.ts';
+import {loadWorkbenchLayout} from '../server/layout.ts';
 
-const folder='reports/strategy-potential-2026';
+const layout=loadWorkbenchLayout();
+const folder=join(layout.artifactsRoot,'research','strategy-potential-2026');
 const api='http://127.0.0.1:8001/api/workbench';
 const origin='http://127.0.0.1:5173';
 const campaign=JSON.parse(await readFile(`${folder}/campaign.json`,'utf8'));
@@ -32,7 +35,7 @@ try{
       assert.equal(r.input.source_hash,campaign.source_hash);
       assert.equal(r.status,'Succeeded');
       for(const artifact of r.result.artifacts){
-        const bytes=await readFile(`data/workbench/runs/${r.id}/${artifact.name}`);
+        const bytes=await readFile(join(layout.stateRoot,'runs',r.id,artifact.name));
         assert.equal(createHash('sha256').update(bytes).digest('hex'),artifact.checksum);
         const [head,...records]=parseCsv(bytes.toString('utf8'));
         assert.equal(records.length,artifact.rows);

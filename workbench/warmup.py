@@ -4,6 +4,8 @@ import sys
 
 import pandas as pd
 
+from .dataset_reference import resolve_dataset_path
+
 
 def required_bars(spec, parameters):
     rule = spec.get('warmup_bars')
@@ -47,7 +49,11 @@ def preview(inputs):
         if key not in cache:
             end = pd.Timestamp(request['start'], tz='UTC')
             start = end - pd.Timedelta(days=request['warmup_days'])
-            frame = pd.read_parquet(dataset['path'], columns=['open', 'high', 'low', 'close'],
+            path = resolve_dataset_path(
+                {**dataset, 'schema_version': 2}
+                if request.get('protocol') == 2 else dataset
+            )
+            frame = pd.read_parquet(path, columns=['open', 'high', 'low', 'close'],
                                     filters=[('ts_event', '>=', start), ('ts_event', '<', end)])
             cache[key] = session_bars(frame, get_session(request['session']), request['timeframe'])
         result = coverage(cache[key], request, spec, parameters)

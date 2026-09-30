@@ -1,0 +1,319 @@
+{
+  "created_at": "2026-09-16T15:20:17.302770+00:00",
+  "datasets": {
+    "CL": {
+      "id": "79f02649cfee40b46478be5cdea1438c369bc8a29db1293f6342ec92608d975f-v1",
+      "symbol": "CL",
+      "source": "GLBX.MDP3",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\79f02649cfee40b46478be5cdea1438c369bc8a29db1293f6342ec92608d975f-v1\\bars.parquet",
+      "checksum": "2fa7f56517bffd7345af439ee1adbc83875d96ae365ff350ffac7c171b2cd22b",
+      "archive": "data\\mnq_dom_sample\\GLBX-20260907-UE53XREPRP.zip",
+      "archive_checksum": "79f02649cfee40b46478be5cdea1438c369bc8a29db1293f6342ec92608d975f",
+      "rows": 4788547,
+      "first": "2010-06-07T00:00:00+00:00",
+      "last": "2026-09-03T23:59:00+00:00",
+      "timeframe": "1m",
+      "timezone": "UTC",
+      "session": "CME Globex",
+      "currency": "USD",
+      "tick_size": 0.01,
+      "point_value": 1000,
+      "query": {
+        "dataset": "GLBX.MDP3",
+        "schema": "ohlcv-1m",
+        "symbols": [
+          "CL.v.0"
+        ],
+        "stype_in": "continuous",
+        "stype_out": "instrument_id",
+        "start": 1275782400000000000,
+        "end": 1788480000000000000,
+        "limit": null,
+        "encoding": "dbn",
+        "compression": "zstd"
+      },
+      "acquired_at": "2026-09-16T13:21:43.540945+00:00",
+      "registered_at": "2026-09-16T13:25:49.870384+00:00",
+      "quality": {
+        "duplicates": 0,
+        "unordered": 0,
+        "invalid_ohlc": 0,
+        "gaps_over_one_minute": 68123,
+        "contract_changes": 195
+      },
+      "warnings": [
+        "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+        "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+        "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+      ]
+    },
+    "YM": {
+      "id": "332f3ffd105057ccd5c508c83ac3ff393dc5e23ddb780ac8ca975ccac943d2aa-v1",
+      "symbol": "YM",
+      "source": "GLBX.MDP3",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\332f3ffd105057ccd5c508c83ac3ff393dc5e23ddb780ac8ca975ccac943d2aa-v1\\bars.parquet",
+      "checksum": "514cd93b52a11da44d366dcfdc054c6d2b3512504fd6902bf50e4626b198caac",
+      "archive": "data\\mnq_dom_sample\\GLBX-20260907-TDEWMKVFUE.zip",
+      "archive_checksum": "332f3ffd105057ccd5c508c83ac3ff393dc5e23ddb780ac8ca975ccac943d2aa",
+      "rows": 4782024,
+      "first": "2010-06-07T00:00:00+00:00",
+      "last": "2026-09-03T23:59:00+00:00",
+      "timeframe": "1m",
+      "timezone": "UTC",
+      "session": "CME Globex",
+      "currency": "USD",
+      "tick_size": 1,
+      "point_value": 5,
+      "query": {
+        "dataset": "GLBX.MDP3",
+        "schema": "ohlcv-1m",
+        "symbols": [
+          "YM.v.0"
+        ],
+        "stype_in": "continuous",
+        "stype_out": "instrument_id",
+        "start": 1275782400000000000,
+        "end": 1788480000000000000,
+        "limit": null,
+        "encoding": "dbn",
+        "compression": "zstd"
+      },
+      "acquired_at": "2026-09-16T13:22:23.932676+00:00",
+      "registered_at": "2026-09-16T13:25:04.942124+00:00",
+      "quality": {
+        "duplicates": 0,
+        "unordered": 0,
+        "invalid_ohlc": 0,
+        "gaps_over_one_minute": 119524,
+        "contract_changes": 65
+      },
+      "warnings": [
+        "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+        "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+        "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+      ]
+    },
+    "ES": {
+      "id": "dc30057c7601b72a17c66457345d743a805087cdd43f2acb0488344dbed104f9-v1",
+      "symbol": "ES",
+      "source": "GLBX.MDP3",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\dc30057c7601b72a17c66457345d743a805087cdd43f2acb0488344dbed104f9-v1\\bars.parquet",
+      "checksum": "812dd8d2b0e334464ce82103e73e9a286bd1abc1f79fa40e7eb72cf891771e9c",
+      "archive": "data\\mnq_dom_sample\\GLBX-20260907-FYC5GEKK84.zip",
+      "archive_checksum": "dc30057c7601b72a17c66457345d743a805087cdd43f2acb0488344dbed104f9",
+      "rows": 4924584,
+      "first": "2010-06-07T00:00:00+00:00",
+      "last": "2026-09-03T23:59:00+00:00",
+      "timeframe": "1m",
+      "timezone": "UTC",
+      "session": "CME Globex",
+      "currency": "USD",
+      "tick_size": 0.25,
+      "point_value": 50,
+      "query": {
+        "dataset": "GLBX.MDP3",
+        "schema": "ohlcv-1m",
+        "symbols": [
+          "ES.v.0"
+        ],
+        "stype_in": "continuous",
+        "stype_out": "instrument_id",
+        "start": 1275782400000000000,
+        "end": 1788480000000000000,
+        "limit": null,
+        "encoding": "dbn",
+        "compression": "zstd"
+      },
+      "acquired_at": "2026-09-16T13:22:11.448866+00:00",
+      "registered_at": "2026-09-16T13:24:20.959916+00:00",
+      "quality": {
+        "duplicates": 0,
+        "unordered": 0,
+        "invalid_ohlc": 0,
+        "gaps_over_one_minute": 27646,
+        "contract_changes": 65
+      },
+      "warnings": [
+        "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+        "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+        "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+      ]
+    },
+    "NQ": {
+      "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+      "symbol": "NQ",
+      "source": "GLBX.MDP3",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1\\bars.parquet",
+      "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+      "archive": "data\\mnq_dom_sample\\GLBX-20260907-6M58JWVVTK.zip",
+      "archive_checksum": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3",
+      "rows": 4812017,
+      "first": "2010-06-07T00:00:00+00:00",
+      "last": "2026-09-03T23:59:00+00:00",
+      "timeframe": "1m",
+      "timezone": "UTC",
+      "session": "CME Globex",
+      "currency": "USD",
+      "tick_size": 0.25,
+      "point_value": 20,
+      "query": {
+        "dataset": "GLBX.MDP3",
+        "schema": "ohlcv-1m",
+        "symbols": [
+          "NQ.v.0"
+        ],
+        "stype_in": "continuous",
+        "stype_out": "instrument_id",
+        "start": 1275782400000000000,
+        "end": 1788480000000000000,
+        "limit": null,
+        "encoding": "dbn",
+        "compression": "zstd"
+      },
+      "acquired_at": "2026-09-16T13:22:36.253881+00:00",
+      "registered_at": "2026-09-16T13:23:40.466709+00:00",
+      "quality": {
+        "duplicates": 0,
+        "unordered": 0,
+        "invalid_ohlc": 0,
+        "gaps_over_one_minute": 96073,
+        "contract_changes": 65
+      },
+      "warnings": [
+        "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+        "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+        "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+      ]
+    },
+    "MNQ": {
+      "symbol": "MNQ",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\mnq_dom_sample\\full_history\\ohlcv-1m\\candles_1m.parquet",
+      "tick_size": 0.25,
+      "point_value": 2,
+      "checksum": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1"
+    }
+  },
+  "variants": [
+    "original_multi_tf",
+    "phase6",
+    "phase7_prior_1m",
+    "phase7_prior_5m"
+  ],
+  "executions": [
+    "touch_reference",
+    "next_open"
+  ],
+  "source_timeframes": [
+    "1h",
+    "4h",
+    "1d"
+  ],
+  "execution_timeframe": "1m",
+  "primary_markets": [
+    "MNQ",
+    "NQ"
+  ],
+  "transfer_markets": [
+    "ES",
+    "YM",
+    "CL"
+  ],
+  "parameters": {
+    "CL": {
+      "body_ratio": 0.5,
+      "max_zones": 50,
+      "max_tests": 2,
+      "bounce_points": 75.0,
+      "min_zone_age_bars": 1,
+      "min_bars_between_tests": 5,
+      "min_bars_in_trade": 1,
+      "stop_cap_points": 100.0,
+      "zone_stop_buffer_points": 1.0,
+      "point_value": 1000,
+      "cost_ticks": 2.25,
+      "tick_size": 0.01,
+      "target_1h_ticks": 10000.0,
+      "target_4h_ticks": 20000.0,
+      "target_1d_ticks": 40000.0
+    },
+    "YM": {
+      "body_ratio": 0.5,
+      "max_zones": 50,
+      "max_tests": 2,
+      "bounce_points": 75.0,
+      "min_zone_age_bars": 1,
+      "min_bars_between_tests": 5,
+      "min_bars_in_trade": 1,
+      "stop_cap_points": 100.0,
+      "zone_stop_buffer_points": 1.0,
+      "point_value": 5,
+      "cost_ticks": 2.5,
+      "tick_size": 1,
+      "target_1h_ticks": 100.0,
+      "target_4h_ticks": 200.0,
+      "target_1d_ticks": 400.0
+    },
+    "ES": {
+      "body_ratio": 0.5,
+      "max_zones": 50,
+      "max_tests": 2,
+      "bounce_points": 75.0,
+      "min_zone_age_bars": 1,
+      "min_bars_between_tests": 5,
+      "min_bars_in_trade": 1,
+      "stop_cap_points": 100.0,
+      "zone_stop_buffer_points": 1.0,
+      "point_value": 50,
+      "cost_ticks": 2.2,
+      "tick_size": 0.25,
+      "target_1h_ticks": 400.0,
+      "target_4h_ticks": 800.0,
+      "target_1d_ticks": 1600.0
+    },
+    "NQ": {
+      "body_ratio": 0.5,
+      "max_zones": 50,
+      "max_tests": 2,
+      "bounce_points": 75.0,
+      "min_zone_age_bars": 1,
+      "min_bars_between_tests": 5,
+      "min_bars_in_trade": 1,
+      "stop_cap_points": 100.0,
+      "zone_stop_buffer_points": 1.0,
+      "point_value": 20,
+      "cost_ticks": 2.5,
+      "tick_size": 0.25,
+      "target_1h_ticks": 400.0,
+      "target_4h_ticks": 800.0,
+      "target_1d_ticks": 1600.0
+    },
+    "MNQ": {
+      "body_ratio": 0.5,
+      "max_zones": 50,
+      "max_tests": 2,
+      "bounce_points": 75.0,
+      "min_zone_age_bars": 1,
+      "min_bars_between_tests": 5,
+      "min_bars_in_trade": 1,
+      "stop_cap_points": 100.0,
+      "zone_stop_buffer_points": 1.0,
+      "point_value": 2,
+      "cost_ticks": 7.0,
+      "tick_size": 0.25,
+      "target_1h_ticks": 400.0,
+      "target_4h_ticks": 800.0,
+      "target_1d_ticks": 1600.0
+    }
+  },
+  "source_hashes": {
+    "scripts\\mnq\\SND_baseline_backtest.py": "00892c506978660bb7bc5ca1b3eead88bd83b77051d0b6b0b38207c0092d79e8",
+    "scripts\\mnq\\SND_phase4_backtest.py": "f6d006b91b2bfe56252dda94dedf3e43e6236ec9525cc21f99b59291c5836f93",
+    "scripts\\mnq\\SND_phase2_dataset.py": "53d90c169f0ab320e1641128654b24ca6a7f7e824fa7a4a11b51168b544b0384",
+    "scripts\\mnq\\SND_phase7_relative_volume.py": "be3e410ff3ebbd2be186c56baf489e03eee12451e8c2d3d36e424f710b78fa3f",
+    "scripts\\mnq\\build_mnq_timeframes.py": "8bcfaf5ecb0ff161419436255175a392e482560177748c62f6620d0f6d8c23bd",
+    "SND_phase6_strategy.pine": "d9276d3e50c9ab3692b5e79b0b75071c6f61af68bfc6ba18b43eeb6f8ebaf61a",
+    "SND.pine": "76a47800371d307e228ac2fdd529c912775162b4d0f370f72af8a8771806a045"
+  },
+  "harness_sha256": "ddeb27885c2b43afa57868bcad92dec6254f4b3a97ff17459b41f710e232b442",
+  "protocol": "All 40 configurations declared; no optimization or selection. One fixed contract and $100k per reported window. Original point distances retained across markets; transfer tests are not equal-risk or calibrated contract substitutions. 2017 supplies new-market warmup; MNQ starts at archive inception. September retained for raw reference parity only; scored periods end August 31. Costs: $1.25 per side plus one tick per side. Double-cost paths are arithmetic accounting stresses, not additional state-machine runs. Next-open is an explicit source-derived execution variant, not certified TradingView parity."
+}

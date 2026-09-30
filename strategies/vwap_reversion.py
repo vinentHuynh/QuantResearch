@@ -1,5 +1,7 @@
 """Session VWAP decision state from the ETF intraday bakeoff."""
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': ['strategies/vwap_reversion.py', 'strategies/_legacy_signals.py'],
     'id': 'vwap-reversion', 'name': 'Session VWAP reversion', 'version': '1.0.0',
     'description': 'Fade deviations from cumulative session VWAP; return to flat when price crosses VWAP. Decision state resets each session.',
     'timeframes': ['5m', '15m', '30m'], 'capabilities': ['equity', 'trades', 'positions'],

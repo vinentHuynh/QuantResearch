@@ -1,5 +1,5 @@
-import { strategyTitle } from "../src/strategyTitle.ts";
-import { dashboardActionStatus } from "../src/dashboardTypes.ts";
+import { strategyTitle } from "../shared/ts/formatting.ts";
+import { dashboardActionStatus } from "../shared/ts/dashboard.ts";
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import assert from "node:assert/strict";

@@ -67,7 +67,8 @@ class NinjaTraderOvernightPorts(unittest.TestCase):
         ]), ["1", "0", "0", "1", "0", "1", "0", "-1"])
 
     def test_session_matches_frozen_conservative_entry_schedule(self):
-        spec = importlib.util.spec_from_file_location("mnq_frozen_expanded", ROOT / "reports/expanded-search-2026-09-16/expanded.py")
+        source = ROOT / "research/campaigns/expanded-search-2026-09-16/expanded.py"
+        spec = importlib.util.spec_from_file_location("mnq_frozen_expanded", source)
         expanded = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(expanded)
         idx = pd.date_range("2024-01-07 18:00", "2024-01-08 05:59", freq="1min", tz="America/New_York")
@@ -76,7 +77,10 @@ class NinjaTraderOvernightPorts(unittest.TestCase):
                              "session_date": "2024-01-08", "session_id": "globex-overnight"}, index=idx)
         native, _ = run(bars, symbol="NQ", tick_size=.25, point_value=20,
                         config=SessionDriftConfig(cost_ticks=2.5))
-        conservative = expanded.conservative({"strategy": "overnight-session", "symbol": "NQ"}, bars, native)
+        conservative = expanded.conservative({
+            "strategy": "overnight-session", "symbol": "NQ",
+            "tick_size": .25, "point_value": 20,
+        }, bars, native)
         entry = pd.Timestamp(conservative.iloc[0].entry_time).tz_convert("America/New_York")
         exit_time = pd.Timestamp(conservative.iloc[0].exit_time).tz_convert("America/New_York")
         rows = [f"session;{close.strftime('%Y-%m-%d %H:%M:%S')};{int(close > entry)}"

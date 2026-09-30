@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://strategy-workbench.local/contracts/run-result.v2.schema.json",
+  "title": "Workbench run result protocol v2",
+  "type": "object",
+  "required": [
+    "protocol",
+    "run_id",
+    "execution_source_hash",
+    "snapshot_hash",
+    "app_build_hash",
+    "metrics",
+    "warnings",
+    "artifacts",
+    "equity_preview",
+    "trade_preview"
+  ],
+  "properties": {
+    "protocol": { "const": 2 },
+    "run_id": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "execution_source_hash": { "$ref": "#/$defs/sha256" },
+    "snapshot_hash": { "$ref": "#/$defs/sha256" },
+    "app_build_hash": { "$ref": "#/$defs/sha256" },
+    "metrics": { "type": "object" },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "warmup": { "type": "object" },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "checksum", "rows"],
+        "properties": {
+          "name": { "$ref": "#/$defs/relativePath" },
+          "checksum": { "$ref": "#/$defs/sha256" },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "rows": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "equity_preview": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "equity", "drawdown"],
+        "properties": {
+          "timestamp": { "$ref": "#/$defs/timestamp" },
+          "equity": { "type": "number" },
+          "drawdown": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "trade_preview": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*(?:^|/)\\.(?:/|$)).+$"
+    }
+  },
+  "additionalProperties": false
+}

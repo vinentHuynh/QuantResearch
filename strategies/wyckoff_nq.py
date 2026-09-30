@@ -14,6 +14,8 @@ from strategies._wyckoff_core import generate_entries
 
 
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': ['strategies/wyckoff_nq.py', 'strategies/_wyckoff_core.py'],
     'id': 'wyckoff-nq',
     'name': 'Wyckoff [theUltimator5] - NQ research',
     'version': '0.1.0',

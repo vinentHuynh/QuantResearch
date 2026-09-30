@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://strategy-workbench.local/contracts/run-input.v2.schema.json",
+  "title": "Workbench run input protocol v2",
+  "type": "object",
+  "required": [
+    "protocol",
+    "id",
+    "experiment_id",
+    "strategy",
+    "dataset",
+    "parameters",
+    "start",
+    "end",
+    "timeframe",
+    "session",
+    "stage",
+    "capital",
+    "fee",
+    "slippage",
+    "warmup_days",
+    "timeout",
+    "source_snapshot",
+    "execution_source_hash",
+    "snapshot_hash",
+    "app_build_hash",
+    "configuration_id",
+    "development_end",
+    "selection_time",
+    "hypothesis",
+    "criteria"
+  ],
+  "properties": {
+    "protocol": { "const": 2 },
+    "id": { "$ref": "#/$defs/id" },
+    "experiment_id": { "$ref": "#/$defs/id" },
+    "strategy": { "$ref": "strategy-metadata.v2.schema.json" },
+    "dataset": { "$ref": "dataset-manifest.v2.schema.json" },
+    "parameters": { "type": "object" },
+    "start": { "type": "string", "format": "date" },
+    "end": { "type": "string", "format": "date" },
+    "timeframe": { "type": "string", "minLength": 1, "maxLength": 20 },
+    "session": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "stage": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "capital": { "type": "number", "exclusiveMinimum": 0 },
+    "fee": { "type": "number", "minimum": 0 },
+    "slippage": { "type": "number", "minimum": 0 },
+    "warmup_days": { "type": "integer", "minimum": 0, "maximum": 1000 },
+    "timeout": { "type": "integer", "minimum": 1 },
+    "delay_bars": { "type": "integer", "minimum": 0 },
+    "source_snapshot": { "$ref": "#/$defs/relativePath" },
+    "source_dir": {
+      "$ref": "#/$defs/relativePath",
+      "deprecated": true,
+      "description": "Compatibility alias for source_snapshot; protocol-v2 values remain logical references."
+    },
+    "execution_source_hash": { "$ref": "#/$defs/sha256" },
+    "snapshot_hash": { "$ref": "#/$defs/sha256" },
+    "app_build_hash": { "$ref": "#/$defs/sha256" },
+    "source_hash": {
+      "$ref": "#/$defs/sha256",
+      "deprecated": true,
+      "description": "Protocol-v1 compatibility alias; new identity uses the three explicit hashes."
+    },
+    "configuration_id": { "$ref": "#/$defs/sha256" },
+    "development_end": {
+      "description": "Empty for exploratory runs; a frozen date is required for evaluation runs.",
+      "oneOf": [
+        { "const": "" },
+        { "type": "string", "format": "date" }
+      ]
+    },
+    "selection_time": { "$ref": "#/$defs/timestamp" },
+    "hypothesis": { "type": "string", "maxLength": 2000 },
+    "criteria": { "type": "string", "maxLength": 2000 },
+    "retry_of": { "$ref": "#/$defs/id" },
+    "research": {
+      "type": "object",
+      "required": ["evaluation_id", "fold", "role", "candidate", "scenario"],
+      "properties": {
+        "evaluation_id": { "$ref": "#/$defs/id" },
+        "fold": { "type": "integer", "minimum": 0 },
+        "role": { "type": "string", "minLength": 1 },
+        "candidate": { "type": "integer", "minimum": 0 },
+        "scenario": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "stage": { "const": "Evaluation" } },
+        "required": ["stage"]
+      },
+      "then": {
+        "properties": {
+          "development_end": { "type": "string", "format": "date", "minLength": 1 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*(?:^|/)\\.(?:/|$)).+$"
+    }
+  },
+  "additionalProperties": false
+}

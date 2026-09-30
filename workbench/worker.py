@@ -1,5 +1,6 @@
 """JSON boundary, next-bar-open execution, validated atomic output publication."""
 import importlib.util
+import hashlib
 import json
 import os
 import sys
@@ -12,8 +13,14 @@ import numpy as np
 import pandas as pd
 
 from .contract import checksum, metadata, resolve_parameters
+from .dataset_reference import resolve_dataset_path
 from .metrics import calculate
 from .warmup import coverage, warning as warmup_warning
+
+
+def _canonical_hash(value):
+    encoded = json.dumps(value, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def simulate(bars, targets, request):
@@ -104,20 +111,56 @@ def main(request_file):
                         os._exit(75)
         threading.Thread(target=monitor, daemon=True).start()
     print('Preflight: verifying preserved data and strategy', flush=True)
-    if request['protocol'] != 1:
+    protocol = request['protocol']
+    if protocol not in (1, 2):
         raise ValueError('Unsupported protocol version')
     dataset = request['dataset']
-    if checksum(dataset['path']) != dataset['checksum']:
+    dataset_path = resolve_dataset_path(
+        {**dataset, 'schema_version': 2} if protocol == 2 else dataset
+    )
+    if checksum(dataset_path) != dataset['checksum']:
         raise ValueError('Immutable dataset checksum mismatch')
-    source = Path(request['source_dir']) / request['strategy']['file']
+    source_root = (Path(os.environ.get('WORKBENCH_SOURCE_DIR', Path.cwd()))
+                   if protocol == 2 else Path(request['source_dir'])).resolve()
+    source = source_root / request['strategy']['file']
     if checksum(source) != request['strategy']['file_hash']:
         raise ValueError('Preserved strategy checksum mismatch')
-    source_manifest = Path(request['source_dir']) / 'sources.json'
+    source_manifest = source_root / 'sources.json'
     if source_manifest.exists():
         for filename, digest in json.loads(source_manifest.read_text()).items():
-            if checksum(Path(request['source_dir']) / filename) != digest:
+            if checksum(source_root / filename) != digest:
                 raise ValueError(f'Preserved source checksum mismatch: {filename}')
-    environment = json.loads((Path(request['source_dir']) / 'environment.json').read_text())
+    if protocol == 2:
+        snapshot = json.loads((source_root / 'snapshot.json').read_text())
+        if (snapshot.get('schema_version') != 2 or
+                snapshot.get('execution_source_hash') != request.get('execution_source_hash') or
+                snapshot.get('snapshot_hash') != request.get('snapshot_hash') or
+                snapshot.get('app_build_hash') != request.get('app_build_hash')):
+            raise ValueError('Source snapshot provenance mismatch')
+    environment = json.loads((source_root / 'environment.json').read_text())
+    if protocol == 2:
+        rows = snapshot.get('files')
+        if not isinstance(rows, list) or not rows:
+            raise ValueError('Source snapshot file manifest is empty')
+        identities = []
+        for row in rows:
+            path = source_root / row['path']
+            if (not path.is_file() or path.stat().st_size != row['bytes'] or
+                    checksum(path) != row['sha256']):
+                raise ValueError(f"Preserved source checksum mismatch: {row.get('path')}")
+            if row.get('role') != 'research':
+                identities.append([row['path'], row['sha256']])
+        execution_hash = _canonical_hash(identities)
+        replay_hash = _canonical_hash({
+            'execution_source_hash': execution_hash,
+            'app_build_hash': snapshot['app_build_hash'],
+            'files': [[row['path'], row['sha256'], row['bytes']] for row in rows],
+            'environment': environment,
+        })
+        if (execution_hash != snapshot['execution_source_hash'] or
+                replay_hash != snapshot['snapshot_hash'] or
+                snapshot.get('environment') != environment):
+            raise ValueError('Source snapshot hash verification failed')
     for package in environment['dependencies']:
         try:
             installed = version(package['name'])
@@ -135,7 +178,7 @@ def main(request_file):
     from strategy_engine.sessions import get_session
     start = pd.Timestamp(request['start'], tz='UTC') - pd.Timedelta(days=request['warmup_days'])
     end = pd.Timestamp(request['end'], tz='UTC') + pd.Timedelta(days=1)
-    frame = pd.read_parquet(dataset['path'], filters=[('ts_event', '>=', start), ('ts_event', '<', end)])
+    frame = pd.read_parquet(dataset_path, filters=[('ts_event', '>=', start), ('ts_event', '<', end)])
     if frame.empty:
         raise ValueError('Dataset has no bars in the requested interval')
     print(f'Loaded {len(frame):,} source bars; building {request["timeframe"]} bars', flush=True)
@@ -151,10 +194,12 @@ def main(request_file):
     if hasattr(module, 'validate'):
         module.validate(parameters, request)
     print(f'Accounting for {len(bars):,} bars including warmup', flush=True)
+    signals = None
     if spec.get('execution_model') == 'event-v1':
         from .events import simulate_events
         model = module.create_strategy(bars.copy(), parameters, request)
-        equity, trades, positions = simulate_events(bars, model, request, execution_bars=frame)
+        equity, trades, positions, signals = simulate_events(
+            bars, model, request, execution_bars=frame, return_signals=True)
     else:
         targets = module.signals(bars.copy(), parameters)
         equity, trades, positions = simulate(bars, targets, request)
@@ -165,15 +210,20 @@ def main(request_file):
         raise ValueError('Trade ledger does not reconcile with marked equity')
     folder = Path(request_file).parent
     artifacts = []
-    for name, frame in [('equity', equity), ('trades', trades), ('positions', positions)]:
+    outputs = [('equity', equity), ('trades', trades), ('positions', positions)]
+    if signals is not None:
+        outputs.append(('signals', signals))
+    for name, frame in outputs:
         path = folder / f'{name}.csv'
         frame.to_csv(path, index=False)
-        artifacts.append({'name': path.name, 'checksum': checksum(path), 'rows': len(frame)})
+        artifacts.append({'name': path.name, 'checksum': checksum(path),
+                          'bytes': path.stat().st_size, 'rows': len(frame)})
     warnings = [*dataset['warnings'], 'Final bar closes all positions. Warmup initializes signals; scoring starts flat. Positions carry across excluded session gaps.', 'Intrabar paths are unknown; fills use next bar open and slippage, with no stop/limit simulation.']
     if spec.get('execution_model') == 'event-v1':
         warnings = [*dataset['warnings'],
-                    'Historical event simulation: strategy-declared close or next-open fills. Scoring starts flat; final bar liquidates positions.',
-                    'Working brackets use one-minute OHLC; stop wins ties within a minute. Intraminute timestamps are the minute close. Market/stop slippage is charged as cash cost; limit exits pay commission only.',
+                    'Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.',
+                    'Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.',
+                    'Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.',
                     'TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.']
     if metrics['trades'] == 0:
         warnings.append('No completed trades; this run supplies no trading evidence.')
@@ -188,9 +238,13 @@ def main(request_file):
     equity['drawdown'] = equity.equity.to_numpy() / np.maximum.accumulate(np.r_[request['capital'], equity.equity.to_numpy()])[1:] - 1
     preview = equity.iloc[::stride]
     preview = pd.concat([preview, equity.tail(1)]).drop_duplicates('timestamp')
-    manifest = {'protocol': 1, 'run_id': request['id'], 'metrics': metrics, 'warnings': warnings, 'warmup': warmup,
+    manifest = {'protocol': protocol, 'run_id': request['id'], 'metrics': metrics, 'warnings': warnings, 'warmup': warmup,
                 'artifacts': artifacts, 'equity_preview': preview[['timestamp', 'equity', 'drawdown']].to_dict('records'),
-                'trade_preview': trades.head(100).to_dict('records')}
+                'trade_preview': json.loads(trades.head(100).to_json(orient='records'))}
+    if protocol == 2:
+        manifest.update(execution_source_hash=request['execution_source_hash'],
+                        snapshot_hash=request['snapshot_hash'],
+                        app_build_hash=request['app_build_hash'])
     partial = folder / 'manifest.partial.json'
     partial.write_text(json.dumps(manifest, allow_nan=False, indent=2))
     os.replace(partial, folder / 'manifest.json')

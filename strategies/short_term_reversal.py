@@ -1,6 +1,8 @@
 """Daily reversal built from the workbench fixed-contract benchmark template."""
 
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': ['strategies/short_term_reversal.py'],
     'id': 'short-term-reversal',
     'name': 'Short-term reversal - prior-day selloff',
     'description': 'Buy the next open after a configurable daily selloff. Optional trend, close-location, shock-size and volatility filters; bounded holding period and rebound exit.',

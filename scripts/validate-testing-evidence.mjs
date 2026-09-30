@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { strategyTitle } from '../src/strategyTitle.ts';
+import { strategyTitle } from '../shared/ts/formatting.ts';
 
 const origin='http://127.0.0.1:8001';
 const folder=`reports/testing-indicators-${new Date().toISOString().replaceAll(':','-')}`;

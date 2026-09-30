@@ -17,6 +17,15 @@ ECONOMICS = {'MNQ': (.25, 2), 'NQ': (.25, 20), 'ES': (.25, 50), 'YM': (1, 5), 'C
 IMPORT_VERSION = '1'
 
 
+def logical_dataset_path(destination, path):
+    """Return a protocol-v2 dataset reference relative to WORKBENCH_HOME."""
+    state = destination.resolve().parent
+    try:
+        return path.resolve().relative_to(state).as_posix()
+    except ValueError as exc:
+        raise ValueError('Imported dataset is outside WORKBENCH_HOME') from exc
+
+
 def ingest(root, destination):
     destination.mkdir(parents=True, exist_ok=True)
     records, errors = [], []
@@ -84,9 +93,10 @@ def ingest(root, destination):
                 os.replace(temporary, final)
                 tick, point = ECONOMICS[symbol]
                 record = {
+                    'schema_version': 2,
                     'id': version, 'symbol': symbol, 'source': query['dataset'],
-                    'path': str(final.resolve()), 'checksum': checksum(final),
-                    'archive': str(archive.relative_to(root)), 'archive_checksum': digest,
+                    'path': logical_dataset_path(destination, final), 'checksum': checksum(final),
+                    'archive': archive.relative_to(root).as_posix(), 'archive_checksum': digest,
                     'rows': rows, 'first': first, 'last': previous.isoformat(),
                     'timeframe': '1m', 'timezone': 'UTC', 'session': 'CME Globex', 'currency': 'USD',
                     'tick_size': tick, 'point_value': point, 'query': query,

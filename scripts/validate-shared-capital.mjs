@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { chromium, expect as baseExpect } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { defaultPolicy } from "../src/collectiveModel.ts";
+import { defaultPolicy } from "../shared/ts/portfolio.ts";
 
 const origin = "http://127.0.0.1:5173";
 const folder = `reports/shared-capital-${Date.now()}`;

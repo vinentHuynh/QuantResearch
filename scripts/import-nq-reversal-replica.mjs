@@ -5,6 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { cpSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
+import { encodeRecord } from '../server/infra/recordRepository.ts';
 
 const folder=resolve(process.argv[2]);
 const read=name=>JSON.parse(readFileSync(join(folder,name),'utf8'));
@@ -39,8 +40,8 @@ cpSync(join(replication.home,'evaluations',evaluation.id),destination,{recursive
 db.exec('BEGIN IMMEDIATE');
 try {
   const insert=db.prepare('INSERT INTO records(kind,id,body) VALUES(?,?,?)');
-  for(const run of runs)insert.run('run',run.id,JSON.stringify(run));
-  insert.run('evaluation',evaluation.id,JSON.stringify(evaluation));
+  for(const run of runs)insert.run('run',run.id,encodeRecord('run',run.id,run));
+  insert.run('evaluation',evaluation.id,encodeRecord('evaluation',evaluation.id,evaluation));
   db.exec('COMMIT');
 } catch(error) { db.exec('ROLLBACK');throw error; }
 db.close();

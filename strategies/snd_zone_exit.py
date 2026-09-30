@@ -1,5 +1,14 @@
 """Exploratory SND opposing-zone exits, preserving the original entry model."""
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': [
+        'strategies/snd_zone_exit.py',
+        'strategies/snd.py',
+        'strategies/_snd_zone_exit.py',
+        'strategies/_snd_model.py',
+        'scripts/mnq/SND_baseline_backtest.py',
+        'scripts/mnq/build_mnq_timeframes.py',
+    ],
     'id': 'snd-zone-exit', 'name': 'SND - Opposing zone exit experiment', 'version': '1.0.0',
     'execution_model': 'event-v1', 'timeframes': ['1m'],
     'default_session': 'full-trading-day', 'required_session': 'full-trading-day',

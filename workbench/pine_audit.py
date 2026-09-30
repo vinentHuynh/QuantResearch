@@ -13,9 +13,14 @@ EXISTING = {
 }
 
 
-def inventory(root, strategies):
+def inventory(root, strategies, source_roots=None):
     entries = []
-    for path in sorted([*root.glob('*.pine'), *(root / 'pine').rglob('*.pine')]):
+    roots = source_roots or (root, root / 'pine')
+    paths = set()
+    for folder in roots:
+        matches = folder.glob('*.pine') if folder == root else folder.rglob('*.pine')
+        paths.update(matches)
+    for path in sorted(paths):
         source = path.read_text(encoding='utf-8-sig')
         relative = path.relative_to(root).as_posix()
         declaration = re.search(r'^\s*(strategy|indicator)\s*\(\s*"([^"]+)"', source, re.M)
@@ -31,8 +36,11 @@ def inventory(root, strategies):
                        'Python port available. See the adapter scope for daily feed, fill, and sizing differences; TradingView trade-export parity is not certified.' if adapters else
                        'Indicator with related Python research logic. Its drawings/alerts are not an independently specified entry-and-exit strategy.' if existing else
                        'Display/analysis indicator. No complete entry, exit, and sizing rules to port as a backtest; no trading strategy invented.')
+        legacy_id = hashlib.sha256(relative.encode()).hexdigest()[:20]
         entries.append({
-            'id': hashlib.sha256(relative.encode()).hexdigest()[:20], 'path': relative,
+            'id': legacy_id, 'source_id': f'pine:{path.name}', 'aliases': [legacy_id],
+            'path_aliases': [relative],
+            'path': relative,
             'name': declaration[2], 'family': 'Pine strategies' if is_strategy else 'Pine indicators',
             'role': 'Pine strategy' if is_strategy else 'Pine indicator',
             'description': '\n'.join(line.removeprefix('//').strip() for line in source.splitlines()[:45] if line.startswith('//') and not line.startswith('//@')),

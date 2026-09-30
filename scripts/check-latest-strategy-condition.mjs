@@ -1,8 +1,8 @@
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
-import { defaultPolicy, replayGate } from "../src/collectiveModel.ts";
-import { defaultSizing, volatilityModel } from "../src/riskSizing.ts";
+import { defaultPolicy, replayGate } from "../shared/ts/portfolio.ts";
+import { defaultSizing, volatilityModel } from "../shared/ts/riskSizing.ts";
 
 const api = "http://127.0.0.1:8001/api/workbench";
 async function get(path, body) {
@@ -23,7 +23,7 @@ const plan = {
   classification: "Pause/review when the existing deterioration replay is paused; insufficient monitoring sample when fewer than 30 post-calibration normalized trades exist; otherwise Watch if the last 20 closed trades have negative net P&L; otherwise No deterioration flag. Watch is an audit label, not a new app rule. No flag is not a profitability forecast.",
   accounting: "Recorded net trade outcomes. Current marked drawdown uses all recorded daily marks from each book's inception. Terminal closes can be forced by the test boundary. No live prices, changed strategy settings, or parameter search.",
   sources: items.map(i => ({ id: i.id, name: i.name, symbol: i.symbol, timeframe: i.timeframe, checksum: i.checksum, series_file: i.series_file, coverage_end: i.end })),
-  code: ["src/collectiveModel.ts", "src/riskSizing.ts"].map(path => ({ path, checksum: createHash("sha256").update(readFileSync(path)).digest("hex") })),
+  code: ["shared/ts/portfolio.ts", "shared/ts/riskSizing.ts"].map(path => ({ path, checksum: createHash("sha256").update(readFileSync(path)).digest("hex") })),
 };
 writeFileSync(join(folder, "criteria.json"), JSON.stringify(plan, null, 2), { flag: "wx" });
 const sum = xs => xs.reduce((a, b) => a + b, 0);

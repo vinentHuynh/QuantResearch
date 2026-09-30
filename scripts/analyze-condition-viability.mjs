@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
-import { normalizedMarks, monitor, assessCondition, CONDITION_VERSION } from "../src/strategyCondition.ts";
-import { calculatePortfolio, defaultPolicy } from "../src/collectiveModel.ts";
-import { summarizeDaily } from "../src/riskSizing.ts";
+import { normalizedMarks, monitor, assessCondition, CONDITION_VERSION } from "../shared/ts/strategyCondition.ts";
+import { calculatePortfolio, defaultPolicy } from "../shared/ts/portfolio.ts";
+import { summarizeDaily } from "../shared/ts/riskSizing.ts";
 
 const api = "http://127.0.0.1:8001/api/workbench/collective";
 const get = async (url, body) => {
@@ -41,7 +41,7 @@ const plan = {
   hypothesis: "Frozen condition warnings predict subsequent losses and improve entry filtering or sizing beyond simple reduced constant exposure.",
   evidence: "Previously inspected, selected historical books; development analysis, not a fresh holdout or live validation.",
   calibration, sources: items.map(i => ({ id: i.id, name: `${i.symbol} ${i.name} ${i.timeframe}`, checksum: i.checksum, series_file: i.series_file })),
-  code: ["src/strategyCondition.ts", "src/collectiveModel.ts", "src/riskSizing.ts", "scripts/analyze-condition-viability.mjs"].map(path => ({ path, checksum: hash(readFileSync(path)) })),
+  code: ["shared/ts/strategyCondition.ts", "shared/ts/portfolio.ts", "shared/ts/riskSizing.ts", "scripts/analyze-condition-viability.mjs"].map(path => ({ path, checksum: hash(readFileSync(path)) })),
   rules: {
     timing: "Use only marks and natural exits on UTC days strictly before entry day. Freeze size at entry; retain original exits. Extra-delay stress waits one additional calendar day.",
     monitor: "Continuous baseline/shadow outcomes regardless of skipped trades. CUSUM resets at independent source segments and requires 20 normalized observations in the active segment. Recent-loss trigger is last 10 natural trades < 0 OR last 20 marked observations < 0, with full windows required. Recovery returns size only on the next eligible entry.",

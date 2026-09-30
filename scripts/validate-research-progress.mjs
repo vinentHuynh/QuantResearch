@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { collectiveProgress } from '../src/researchProgress.ts';
-import { strategyTitle } from '../src/strategyTitle.ts';
+import { collectiveProgress } from '../shared/ts/progress.ts';
+import { strategyTitle } from '../shared/ts/formatting.ts';
 
 const origin = process.env.WORKBENCH_URL || 'http://127.0.0.1:8001';
 const folder = `reports/research-progress-${new Date().toISOString().replaceAll(':','-')}`;

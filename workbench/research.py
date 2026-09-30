@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from .contract import checksum
+from .dataset_reference import resolve_dataset_path
 from .metrics import calculate
 
 
@@ -143,6 +144,32 @@ def entry_bar_indices(times, trades):
     return np.searchsorted(times, pd.to_datetime(trades.entry_time, utc=True), side='right')
 
 
+def resolve_source_snapshot(evaluation, workbench_home=None):
+    """Resolve absolute protocol-v1 and logical protocol-v2 snapshots."""
+    value = evaluation.get('source_snapshot') or evaluation.get('source_dir')
+    if not isinstance(value, str) or not value:
+        raise ValueError('Evaluation source snapshot must be a nonempty string')
+    path = Path(value)
+    if path.is_absolute():
+        return path.expanduser().resolve()
+    if '\\' in value:
+        raise ValueError('Protocol v2 requires a logical source snapshot path')
+    configured = workbench_home or os.environ.get('WORKBENCH_HOME')
+    if not configured:
+        raise ValueError(
+            'Protocol v2 requires a logical source snapshot and WORKBENCH_HOME'
+        )
+    home = Path(configured).resolve()
+    resolved = (home / path).resolve()
+    try:
+        resolved.relative_to(home)
+    except ValueError as exc:
+        raise ValueError('Source snapshot reference escapes WORKBENCH_HOME') from exc
+    if resolved == home:
+        raise ValueError('Source snapshot reference must name a directory below WORKBENCH_HOME')
+    return resolved
+
+
 def investigate(payload, folder):
     from strategy_engine.data import session_bars
     from strategy_engine.sessions import get_session
@@ -152,11 +179,15 @@ def investigate(payload, folder):
         request = run['input']
         fold = evaluation['folds'][request['research']['fold']]
         dataset = request['dataset']
-        if checksum(dataset['path']) != dataset['checksum']:
+        dataset_path = resolve_dataset_path(
+            {**dataset, 'schema_version': 2}
+            if request.get('protocol') == 2 else dataset
+        )
+        if checksum(dataset_path) != dataset['checksum']:
             raise ValueError('Dataset changed since evaluation')
         start = pd.Timestamp(fold['train_start'], tz='UTC') - pd.Timedelta(days=request['warmup_days'])
         end = pd.Timestamp(fold['test_end'], tz='UTC') + pd.Timedelta(days=1)
-        source = pd.read_parquet(dataset['path'], filters=[('ts_event', '>=', start), ('ts_event', '<', end)])
+        source = pd.read_parquet(dataset_path, filters=[('ts_event', '>=', start), ('ts_event', '<', end)])
         bars = session_bars(source, get_session(request['session']), request['timeframe'])
         features, labels, threshold, count = assign_states(bars, task['feature'], task['window'], task['quantile'], fold['train_start'], fold['train_end'])
         by_time = pd.DataFrame({'timestamp': pd.to_datetime(bars.availability_time, utc=True), 'feature': features.to_numpy(), 'state': labels.to_numpy()})
@@ -199,7 +230,7 @@ def main(kind, path):
     monitor_lease()
     folder = Path(path).parent
     payload = json.loads(Path(path).read_text())
-    snapshot = Path(payload['evaluation']['source_dir'])
+    snapshot = resolve_source_snapshot(payload['evaluation'])
     for package in json.loads((snapshot / 'environment.json').read_text())['dependencies']:
         try:
             installed = version(package['name'])

@@ -1,13 +1,18 @@
 import { chromium, expect } from "@playwright/test";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import assert from "node:assert/strict";
-const folder = "reports/strategy-potential-2025",
+import { loadWorkbenchLayout } from "../server/layout.ts";
+
+const layout = loadWorkbenchLayout();
+const researchRoot = join(layout.artifactsRoot, "research");
+const folder = join(researchRoot, "strategy-potential-2025"),
   origin = "http://127.0.0.1:5173",
   api = `${origin}/api/workbench`;
 const campaign = JSON.parse(await readFile(`${folder}/campaign.json`, "utf8"));
 const prior = JSON.parse(
   await readFile(
-    "reports/strategy-optimization-2022-2024/campaign.json",
+    join(researchRoot, "strategy-optimization-2022-2024", "campaign.json"),
     "utf8",
   ),
 );
@@ -34,9 +39,10 @@ try {
     if (frame === page.mainFrame()) navigations++;
   });
   // A source-snapshot tsconfig must not reload the running application.
-  await mkdir("data/workbench/watch-probe", { recursive: true });
+  const watchProbe = join(layout.stateRoot, "watch-probe");
+  await mkdir(watchProbe, { recursive: true });
   await writeFile(
-    "data/workbench/watch-probe/tsconfig.json",
+    join(watchProbe, "tsconfig.json"),
     JSON.stringify({
       compilerOptions: { strict: true },
       checked_at: new Date().toISOString(),

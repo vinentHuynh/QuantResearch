@@ -1,0 +1,1554 @@
+{
+  "created_at": "2026-09-16T14:52:01.376043+00:00",
+  "harness_sha256": "d4ff644db279a69553f1b10915d850deea589dabd0ae33ded4a3f6bfc6a6695a",
+  "configs": [
+    {
+      "key": "opening-range-breakout__CL__1m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__CL__5m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__CL__15m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__CL__30m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__CL__1m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__CL__5m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__CL__15m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__CL__30m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__CL__1m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__CL__5m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__CL__15m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__CL__30m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__YM__1m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__YM__5m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__YM__15m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__YM__30m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__YM__1m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__YM__5m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__YM__15m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__YM__30m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__YM__1m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__YM__5m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__YM__15m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__YM__30m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__ES__1m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__ES__5m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__ES__15m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__ES__30m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__ES__1m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__ES__5m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__ES__15m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__ES__30m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__ES__1m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__ES__5m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__ES__15m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__ES__30m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__NQ__1m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__NQ__5m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__NQ__15m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__NQ__30m__new-york-rth",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "opening-range-breakout__NQ__1m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__NQ__5m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__NQ__15m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__NQ__30m__london",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "opening-range-breakout__NQ__1m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__NQ__5m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__NQ__15m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "opening-range-breakout__NQ__30m__asia",
+      "strategy": "opening-range-breakout",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__CL__1m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__CL__5m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__CL__15m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__CL__30m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__CL__1h__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "1h",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__CL__1m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__CL__5m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__CL__15m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__CL__30m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__CL__1h__london",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "1h",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__CL__1m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__CL__5m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__CL__15m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__CL__30m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__CL__1h__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "CL",
+      "timeframe": "1h",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__YM__1m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__YM__5m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__YM__15m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__YM__30m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__YM__1h__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "1h",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__YM__1m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__YM__5m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__YM__15m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__YM__30m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__YM__1h__london",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "1h",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__YM__1m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__YM__5m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__YM__15m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__YM__30m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__YM__1h__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "YM",
+      "timeframe": "1h",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__ES__1m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__ES__5m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__ES__15m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__ES__30m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__ES__1h__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "1h",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__ES__1m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__ES__5m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__ES__15m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__ES__30m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__ES__1h__london",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "1h",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__ES__1m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__ES__5m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__ES__15m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__ES__30m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__ES__1h__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "ES",
+      "timeframe": "1h",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__NQ__1m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__NQ__5m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__NQ__15m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__NQ__30m__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__NQ__1h__new-york-rth",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "1h",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "prior-range-fill__NQ__1m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__NQ__5m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__NQ__15m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__NQ__30m__london",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__NQ__1h__london",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "1h",
+      "session": "london"
+    },
+    {
+      "key": "prior-range-fill__NQ__1m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__NQ__5m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__NQ__15m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__NQ__30m__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "prior-range-fill__NQ__1h__asia",
+      "strategy": "prior-range-fill",
+      "symbol": "NQ",
+      "timeframe": "1h",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__CL__1m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__CL__5m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__CL__15m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__CL__30m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__CL__1h__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "1h",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__CL__1m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__CL__5m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__CL__15m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__CL__30m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__CL__1h__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "1h",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__CL__1m__london",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__CL__5m__london",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__CL__15m__london",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__CL__30m__london",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__CL__1h__london",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "1h",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__CL__1m__asia",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__CL__5m__asia",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__CL__15m__asia",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__CL__30m__asia",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__CL__1h__asia",
+      "strategy": "overnight-session",
+      "symbol": "CL",
+      "timeframe": "1h",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__YM__1m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__YM__5m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__YM__15m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__YM__30m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__YM__1h__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "1h",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__YM__1m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__YM__5m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__YM__15m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__YM__30m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__YM__1h__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "1h",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__YM__1m__london",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__YM__5m__london",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__YM__15m__london",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__YM__30m__london",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__YM__1h__london",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "1h",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__YM__1m__asia",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__YM__5m__asia",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__YM__15m__asia",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__YM__30m__asia",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__YM__1h__asia",
+      "strategy": "overnight-session",
+      "symbol": "YM",
+      "timeframe": "1h",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__ES__1m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__ES__5m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__ES__15m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__ES__30m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__ES__1h__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "1h",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__ES__1m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__ES__5m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__ES__15m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__ES__30m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__ES__1h__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "1h",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__ES__1m__london",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__ES__5m__london",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__ES__15m__london",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__ES__30m__london",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__ES__1h__london",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "1h",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__ES__1m__asia",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__ES__5m__asia",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__ES__15m__asia",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__ES__30m__asia",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__ES__1h__asia",
+      "strategy": "overnight-session",
+      "symbol": "ES",
+      "timeframe": "1h",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__NQ__1m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__NQ__5m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__NQ__15m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__NQ__30m__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__NQ__1h__globex-overnight",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "1h",
+      "session": "globex-overnight"
+    },
+    {
+      "key": "overnight-session__NQ__1m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__NQ__5m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__NQ__15m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__NQ__30m__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__NQ__1h__new-york-rth",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "1h",
+      "session": "new-york-rth"
+    },
+    {
+      "key": "overnight-session__NQ__1m__london",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__NQ__5m__london",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__NQ__15m__london",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__NQ__30m__london",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__NQ__1h__london",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "1h",
+      "session": "london"
+    },
+    {
+      "key": "overnight-session__NQ__1m__asia",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "1m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__NQ__5m__asia",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "5m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__NQ__15m__asia",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__NQ__30m__asia",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "30m",
+      "session": "asia"
+    },
+    {
+      "key": "overnight-session__NQ__1h__asia",
+      "strategy": "overnight-session",
+      "symbol": "NQ",
+      "timeframe": "1h",
+      "session": "asia"
+    }
+  ],
+  "screen": [
+    "2018-01-01",
+    "2023-12-31"
+  ],
+  "later": [
+    [
+      "2024-01-01",
+      "2024-12-31"
+    ],
+    [
+      "2025-01-01",
+      "2025-12-31"
+    ],
+    [
+      "2026-01-01",
+      "2026-08-31"
+    ]
+  ],
+  "capital": 100000,
+  "costs": "One full-size contract; $1.25/side plus one tick/side, represented as equivalent round-trip cost ticks.",
+  "selection": "Positive net, Sharpe >=0.25, session-close DD <=35%, at least 60 trades, 4/6 positive years, profit exceeds baseline costs. One highest-Sharpe timeframe/session per family/market; finer timeframe breaks ties; no replacement.",
+  "later_criteria": "Every baseline, doubled-cost and conservative-execution scenario positive, session-close DD <=35%, at least 10 trades. Intratrade risk must be reviewed separately.",
+  "source_hashes": {
+    "strategy_engine\\accounting.py": "304688e21058a404940da96e11c9ddab5dc22e5532c11883445cf7eb9b1c9b13",
+    "strategy_engine\\catalog.py": "c53fba45a85f4e6e2dc71bdfcf44d620e8c9ce22e52e74a150c9b5a29a6fe603",
+    "strategy_engine\\data.py": "6da7894b2f0d52162acbcedd024bbf3bdc74952d600c97cf3c52d5025294fa16",
+    "strategy_engine\\parity.py": "47406c193022282f26a4c5652320ea9e51ba5b71f50178c49f5c79ba12147997",
+    "strategy_engine\\runner.py": "ada2688e15b7de06efac94ddded0f4d21000fb3ba8a14c1fdef1791fb4770b7c",
+    "strategy_engine\\sessions.py": "228709b77b4f4f0967f0c7eb85f307ee4391066d832b72e716e81c511363ee30",
+    "strategy_engine\\sizing.py": "c4c5ecc05392b611f9da98bb124374d378c710490dafdf2ef39d2ea626444717",
+    "strategy_engine\\__init__.py": "967f04215c6487e04ce22c04cf71eac4be66d81fadc1146a859b7a8b34b864de",
+    "strategy_engine\\strategies\\opening_range_breakout.py": "23ca171a08a584d911fd8ae13d0ea543c8642973dd2ccf80d232b7441cd3fcd7",
+    "strategy_engine\\strategies\\prior_range_fill.py": "629d50d8631c0790870bbed45453769c55456c2bc0b530f9bd8cd20598a9e3b4",
+    "strategy_engine\\strategies\\relative_value.py": "7e7d1d9b5fe7054ed347bd5ae6d407efcf87699b51055d048d2272094dd56106",
+    "strategy_engine\\strategies\\session_drift.py": "8630219804c533e8cef5aee70537f2c7b1af98f9c60b07b1ae4175ba39f5c547",
+    "strategy_engine\\strategies\\trend.py": "9191ea43886ec74195f305d31399076ed5a0a06ceb42f0063f12e55ec18f5521",
+    "strategy_engine\\strategies\\__init__.py": "1362e4a4b9f8bc9e3971a5d58fb18b18c7e5d8b233c29aa304a44320eddad321"
+  },
+  "datasets": [
+    {
+      "id": "79f02649cfee40b46478be5cdea1438c369bc8a29db1293f6342ec92608d975f-v1",
+      "symbol": "CL",
+      "source": "GLBX.MDP3",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\79f02649cfee40b46478be5cdea1438c369bc8a29db1293f6342ec92608d975f-v1\\bars.parquet",
+      "checksum": "2fa7f56517bffd7345af439ee1adbc83875d96ae365ff350ffac7c171b2cd22b",
+      "archive": "data\\mnq_dom_sample\\GLBX-20260907-UE53XREPRP.zip",
+      "archive_checksum": "79f02649cfee40b46478be5cdea1438c369bc8a29db1293f6342ec92608d975f",
+      "rows": 4788547,
+      "first": "2010-06-07T00:00:00+00:00",
+      "last": "2026-09-03T23:59:00+00:00",
+      "timeframe": "1m",
+      "timezone": "UTC",
+      "session": "CME Globex",
+      "currency": "USD",
+      "tick_size": 0.01,
+      "point_value": 1000,
+      "query": {
+        "dataset": "GLBX.MDP3",
+        "schema": "ohlcv-1m",
+        "symbols": [
+          "CL.v.0"
+        ],
+        "stype_in": "continuous",
+        "stype_out": "instrument_id",
+        "start": 1275782400000000000,
+        "end": 1788480000000000000,
+        "limit": null,
+        "encoding": "dbn",
+        "compression": "zstd"
+      },
+      "acquired_at": "2026-09-16T13:21:43.540945+00:00",
+      "registered_at": "2026-09-16T13:25:49.870384+00:00",
+      "quality": {
+        "duplicates": 0,
+        "unordered": 0,
+        "invalid_ohlc": 0,
+        "gaps_over_one_minute": 68123,
+        "contract_changes": 195
+      },
+      "warnings": [
+        "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+        "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+        "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+      ]
+    },
+    {
+      "id": "332f3ffd105057ccd5c508c83ac3ff393dc5e23ddb780ac8ca975ccac943d2aa-v1",
+      "symbol": "YM",
+      "source": "GLBX.MDP3",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\332f3ffd105057ccd5c508c83ac3ff393dc5e23ddb780ac8ca975ccac943d2aa-v1\\bars.parquet",
+      "checksum": "514cd93b52a11da44d366dcfdc054c6d2b3512504fd6902bf50e4626b198caac",
+      "archive": "data\\mnq_dom_sample\\GLBX-20260907-TDEWMKVFUE.zip",
+      "archive_checksum": "332f3ffd105057ccd5c508c83ac3ff393dc5e23ddb780ac8ca975ccac943d2aa",
+      "rows": 4782024,
+      "first": "2010-06-07T00:00:00+00:00",
+      "last": "2026-09-03T23:59:00+00:00",
+      "timeframe": "1m",
+      "timezone": "UTC",
+      "session": "CME Globex",
+      "currency": "USD",
+      "tick_size": 1,
+      "point_value": 5,
+      "query": {
+        "dataset": "GLBX.MDP3",
+        "schema": "ohlcv-1m",
+        "symbols": [
+          "YM.v.0"
+        ],
+        "stype_in": "continuous",
+        "stype_out": "instrument_id",
+        "start": 1275782400000000000,
+        "end": 1788480000000000000,
+        "limit": null,
+        "encoding": "dbn",
+        "compression": "zstd"
+      },
+      "acquired_at": "2026-09-16T13:22:23.932676+00:00",
+      "registered_at": "2026-09-16T13:25:04.942124+00:00",
+      "quality": {
+        "duplicates": 0,
+        "unordered": 0,
+        "invalid_ohlc": 0,
+        "gaps_over_one_minute": 119524,
+        "contract_changes": 65
+      },
+      "warnings": [
+        "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+        "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+        "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+      ]
+    },
+    {
+      "id": "dc30057c7601b72a17c66457345d743a805087cdd43f2acb0488344dbed104f9-v1",
+      "symbol": "ES",
+      "source": "GLBX.MDP3",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\dc30057c7601b72a17c66457345d743a805087cdd43f2acb0488344dbed104f9-v1\\bars.parquet",
+      "checksum": "812dd8d2b0e334464ce82103e73e9a286bd1abc1f79fa40e7eb72cf891771e9c",
+      "archive": "data\\mnq_dom_sample\\GLBX-20260907-FYC5GEKK84.zip",
+      "archive_checksum": "dc30057c7601b72a17c66457345d743a805087cdd43f2acb0488344dbed104f9",
+      "rows": 4924584,
+      "first": "2010-06-07T00:00:00+00:00",
+      "last": "2026-09-03T23:59:00+00:00",
+      "timeframe": "1m",
+      "timezone": "UTC",
+      "session": "CME Globex",
+      "currency": "USD",
+      "tick_size": 0.25,
+      "point_value": 50,
+      "query": {
+        "dataset": "GLBX.MDP3",
+        "schema": "ohlcv-1m",
+        "symbols": [
+          "ES.v.0"
+        ],
+        "stype_in": "continuous",
+        "stype_out": "instrument_id",
+        "start": 1275782400000000000,
+        "end": 1788480000000000000,
+        "limit": null,
+        "encoding": "dbn",
+        "compression": "zstd"
+      },
+      "acquired_at": "2026-09-16T13:22:11.448866+00:00",
+      "registered_at": "2026-09-16T13:24:20.959916+00:00",
+      "quality": {
+        "duplicates": 0,
+        "unordered": 0,
+        "invalid_ohlc": 0,
+        "gaps_over_one_minute": 27646,
+        "contract_changes": 65
+      },
+      "warnings": [
+        "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+        "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+        "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+      ]
+    },
+    {
+      "id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+      "symbol": "NQ",
+      "source": "GLBX.MDP3",
+      "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1\\bars.parquet",
+      "checksum": "dae0fbc548c415fa5630beae860a38aecd7b6ca9bb28e0f1583303b2422be843",
+      "archive": "data\\mnq_dom_sample\\GLBX-20260907-6M58JWVVTK.zip",
+      "archive_checksum": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3",
+      "rows": 4812017,
+      "first": "2010-06-07T00:00:00+00:00",
+      "last": "2026-09-03T23:59:00+00:00",
+      "timeframe": "1m",
+      "timezone": "UTC",
+      "session": "CME Globex",
+      "currency": "USD",
+      "tick_size": 0.25,
+      "point_value": 20,
+      "query": {
+        "dataset": "GLBX.MDP3",
+        "schema": "ohlcv-1m",
+        "symbols": [
+          "NQ.v.0"
+        ],
+        "stype_in": "continuous",
+        "stype_out": "instrument_id",
+        "start": 1275782400000000000,
+        "end": 1788480000000000000,
+        "limit": null,
+        "encoding": "dbn",
+        "compression": "zstd"
+      },
+      "acquired_at": "2026-09-16T13:22:36.253881+00:00",
+      "registered_at": "2026-09-16T13:23:40.466709+00:00",
+      "quality": {
+        "duplicates": 0,
+        "unordered": 0,
+        "invalid_ohlc": 0,
+        "gaps_over_one_minute": 96073,
+        "contract_changes": 65
+      },
+      "warnings": [
+        "Continuous volume-rolled prices are unadjusted. Roll gaps can affect signals and P&L; no roll-neutral performance claim.",
+        "Gaps include closures and no-trade minutes; an exchange holiday calendar and historical revision timestamps are unavailable.",
+        "Acquisition time uses local archive modification time, not a verified vendor download receipt."
+      ]
+    }
+  ],
+  "limitations": [
+    "Existing canonical variants; not certified full legacy parity.",
+    "Closed-trade accounting underestimates intratrade drawdown.",
+    "Unadjusted continuous contracts, no margin liquidation.",
+    "Previously inspected later history; not untouched holdout.",
+    "Whole-session ORB range begins at first observed minute; incomplete sessions need review.",
+    "Direct function reuse avoids a runner/config signature mismatch for session drift. No engine source changes."
+  ]
+}

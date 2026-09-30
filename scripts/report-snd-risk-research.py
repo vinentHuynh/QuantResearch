@@ -159,7 +159,7 @@ def report(analysis):
         '- [Structured analysis](analysis.json)',
         '- [Frozen protocol](protocol.json)',
         '- [Source and artifact verification](verification.json)',
-        '- [Prospective workflow](../../SND_FORWARD_TEST.md)', '',
+        '- [Prospective workflow](../../docs/research/snd/SND_FORWARD_TEST.md)', '',
         '![Marked sizing equity](mnq-risk-sizing.png)', '']
     if analysis['errors']:
         lines += ['## Incomplete or failed evidence', '', *['- '+x for x in analysis['errors']], '']

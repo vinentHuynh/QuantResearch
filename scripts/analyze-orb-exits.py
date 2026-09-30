@@ -6,6 +6,7 @@ denominator; both gross and net realized R are reported.
 """
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -15,15 +16,29 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'reports/strategy-potential-2026'
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from workbench.dataset_reference import resolve_dataset_path  # noqa: E402
+from workbench.layout import load_layout  # noqa: E402
+
+LAYOUT = load_layout(ROOT)
+STATE_ROOT = LAYOUT.state_root
+RESEARCH_ROOT = LAYOUT.artifacts_root / 'research'
+OUT = RESEARCH_ROOT / 'strategy-potential-2026'
 
 
 def read_json(path):
     return json.loads(path.read_text(encoding='utf-8'))
 
 
+def dataset_file(dataset):
+    """Resolve legacy absolute and protocol-v2 logical dataset references."""
+    return resolve_dataset_path(dataset, STATE_ROOT)
+
+
 def ledger(run, name):
-    path = ROOT / 'data/workbench/runs' / run['id'] / name
+    path = STATE_ROOT / 'runs' / run['id'] / name
     expected = next(a['checksum'] for a in run['result']['artifacts'] if a['name'] == name)
     assert hashlib.sha256(path.read_bytes()).hexdigest() == expected, path
     return pd.read_csv(path)
@@ -108,15 +123,16 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     records = []
     for year in ['2025', '2026']:
-        detail = read_json(ROOT / f'reports/strategy-potential-{year}/pine-tsmom-orb.json')
+        detail = read_json(RESEARCH_ROOT / f'strategy-potential-{year}' / 'pine-tsmom-orb.json')
         baseline = next(r for r in detail['evaluation']['runs'] if r['input']['research']['scenario'] == 'Baseline')
         records.append((year if year == '2025' else '2026-Jan-Aug', baseline))
         if year == '2026':
             records.append(('2026-Sep-partial', detail['september']))
     dataset = records[0][1]['input']['dataset']
     assert all(r['input']['dataset']['checksum'] == dataset['checksum'] for _, r in records)
-    assert hashlib.sha256(Path(dataset['path']).read_bytes()).hexdigest() == dataset['checksum']
-    raw = pd.read_parquet(dataset['path'], filters=[('ts_event','>=',pd.Timestamp('2025-01-01',tz='UTC'))])
+    dataset_path = dataset_file(dataset)
+    assert hashlib.sha256(dataset_path.read_bytes()).hexdigest() == dataset['checksum']
+    raw = pd.read_parquet(dataset_path, filters=[('ts_event','>=',pd.Timestamp('2025-01-01',tz='UTC'))])
     results = [analyze(r, label, raw) for label, r in records]
     (OUT / 'orb-exit-analysis.json').write_text(json.dumps(results,indent=2,allow_nan=False), encoding='utf-8')
     dollars = lambda x: f'${x:,.2f}'

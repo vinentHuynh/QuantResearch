@@ -15,6 +15,46 @@ spec.loader.exec_module(builder)
 
 
 class CollectiveImportTests(unittest.TestCase):
+    def test_refresh_extensions_uses_configured_workbench_home(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state = root / 'isolated-state'
+            refresh = root / 'refresh'
+            data_file = state / 'datasets' / 'fixture.parquet'
+            data_file.parent.mkdir(parents=True)
+            data_file.write_bytes(b'isolated dataset fixture')
+            checksum = builder.sha(data_file)
+            dataset = {
+                'schema_version': 2,
+                'id': 'isolated-dataset',
+                'symbol': 'NQ',
+                'path': 'datasets/fixture.parquet',
+                'checksum': checksum,
+            }
+            (state / 'datasets' / 'catalog.json').write_text(
+                json.dumps({'datasets': [dataset], 'errors': []}),
+                encoding='utf-8',
+            )
+            for index, identity in enumerate(sorted(builder.REFRESH_IDS)):
+                folder = refresh / f'extension-{index}'
+                folder.mkdir(parents=True)
+                (folder / 'extension.json').write_text(json.dumps({
+                    'catalog_id': identity,
+                    'dataset_id': dataset['id'],
+                    'dataset_checksum': checksum,
+                }), encoding='utf-8')
+            missing_production = root / 'must-not-be-read'
+            with patch.multiple(
+                builder,
+                ROOT=missing_production,
+                FIRST=root / 'first',
+                EXPANDED=root / 'expanded',
+                SND=root / 'snd',
+                REFRESH=refresh,
+            ), patch.dict(os.environ, {'WORKBENCH_HOME': str(state)}):
+                extensions = builder.refresh_extensions()
+            self.assertEqual(set(extensions), builder.REFRESH_IDS)
+
     def test_portfolio_extension_replaces_forced_boundary_exit_once(self):
         synthetic = {
             'entry': '2026-08-31T22:00:00+00:00',
@@ -78,13 +118,23 @@ class CollectiveImportTests(unittest.TestCase):
             record = {'id': 'new-run', 'input': inp, 'created_at': '2026-01-11', 'status': 'Succeeded'}
             scenarios = ['Baseline', 'Higher costs', 'Delayed execution']
             evaluation = {'id': 'evaluation', 'status': 'Succeeded', 'folds': [{'tests': ['new-run']}], 'scenarios': scenarios, 'result': {'scenarios': [{'name': name, 'outcome': 'Meets criteria', 'metrics': {'net_pnl': 40}} for name in scenarios]}}
+            dataset = {'id': 'dataset-v2', 'symbol': 'ES', 'last': '2026-01-10T23:59:00Z'}
+            envelope = lambda kind, identifier, body: json.dumps({
+                'schema_version': 2, 'kind': kind, 'id': identifier, 'body': body,
+            })
             with sqlite3.connect(state / 'workbench.sqlite3') as db:
-                db.execute('CREATE TABLE records (kind TEXT, body TEXT)')
-                db.executemany('INSERT INTO records VALUES (?,?)', [('run', json.dumps(record)), ('evaluation', json.dumps(evaluation))])
+                db.execute('CREATE TABLE records (kind TEXT, id TEXT, body TEXT)')
+                db.executemany('INSERT INTO records VALUES (?,?,?)', [
+                    ('run', record['id'], envelope('run', record['id'], record)),
+                    ('evaluation', evaluation['id'], envelope('evaluation', evaluation['id'], evaluation)),
+                    ('dataset', dataset['id'], envelope('dataset', dataset['id'], dataset)),
+                    ('preset', 'legacy-v1', json.dumps({'id': 'legacy-v1', 'name': 'Legacy row'})),
+                ])
             db.close()
             with patch.multiple(builder, ROOT=root, OUT=state / 'collective', FIRST=root / 'missing-first', EXPANDED=root / 'missing-expanded', SND=root / 'missing-snd'), patch.dict(os.environ, {'WORKBENCH_HOME': str(state)}), contextlib.redirect_stdout(io.StringIO()):
                 builder.main()
                 index = builder.read(state / 'collective/index.json'); self.assertEqual(index['errors'], [])
+                self.assertEqual(index['market_data_through']['ES'], dataset['last'])
                 self.assertEqual(len(index['items']), 1)
                 item = index['items'][0]; self.assertEqual(item['capital'], 1000); self.assertEqual(item['net_pnl'], 40)
                 self.assertTrue(item['working']); self.assertFalse(item['feasible'])

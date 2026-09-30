@@ -4,7 +4,7 @@ import { chromium, expect as baseExpect } from '@playwright/test';
 const expect=baseExpect.configure({timeout:30000});
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { calculatePortfolio, defaultPolicy } from '../src/collectiveModel.ts';
+import { calculatePortfolio, defaultPolicy } from '../shared/ts/portfolio.ts';
 const base='http://127.0.0.1:5173',folder='reports/collective-dashboard-2026-09-16';mkdirSync(folder,{recursive:true});
 const api=base+'/api/workbench',catalog=await(await fetch(api+'/collective')).json();
 assert(catalog.items.length>=312);assert.equal(catalog.errors.length,0);

@@ -186,7 +186,7 @@ def parity_record(
         "passed": all(item["passed"] for item in comparisons.values()),
         "coverage": coverage,
         "fixture": {"id": "deterministic-daily-trend-v1", "sha256": fixture_hash, "rows": 180},
-        "legacy_source": str(legacy_path.relative_to(ROOT)),
+        "legacy_source": legacy_path.relative_to(ROOT).as_posix(),
         "legacy_sha256": sha256(legacy_path),
         "canonical_source": TREND_SOURCE,
         "canonical_sha256": sha256(canonical_path),

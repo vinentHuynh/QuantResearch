@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://strategy-workbench.local/contracts/workbench-layout.v1.schema.json",
+  "title": "Strategy Workbench repository layout v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "paths",
+    "source_roots",
+    "source_aliases",
+    "discovery_paths"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": { "const": 1 },
+    "protocol_version": { "const": 2 },
+    "paths": {
+      "type": "object",
+      "required": ["state", "artifacts", "evidence", "contracts"],
+      "properties": {
+        "state": { "$ref": "#/$defs/relativePath" },
+        "artifacts": { "$ref": "#/$defs/relativePath" },
+        "evidence": { "$ref": "#/$defs/relativePath" },
+        "contracts": { "$ref": "#/$defs/relativePath" }
+      },
+      "additionalProperties": false
+    },
+    "source_roots": { "$ref": "#/$defs/pathList" },
+    "source_aliases": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(?:python|pine):[A-Za-z0-9_.-]+$"
+      },
+      "additionalProperties": { "$ref": "#/$defs/pathList" }
+    },
+    "discovery_paths": {
+      "type": "object",
+      "required": ["strategy_adapters", "python_library", "pine_library"],
+      "properties": {
+        "strategy_adapters": { "$ref": "#/$defs/pathList" },
+        "python_library": { "$ref": "#/$defs/pathList" },
+        "pine_library": { "$ref": "#/$defs/pathList" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?:\\.|(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*(?:^|/)\\.(?:/|$)).+)$"
+    },
+    "pathList": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/relativePath" }
+    }
+  },
+  "additionalProperties": false
+}

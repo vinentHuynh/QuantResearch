@@ -1,7 +1,7 @@
 import { chromium, expect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { calculatePortfolio, defaultPolicy } from '../src/collectiveModel.ts';
+import { calculatePortfolio, defaultPolicy } from '../shared/ts/portfolio.ts';
 
 const base = 'http://127.0.0.1:5173', api = base + '/api/workbench';
 const folder = 'reports/snd-workbench-adapter-2026-09-16';

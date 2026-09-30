@@ -1,0 +1,35 @@
+# Supply and demand zones: research conclusion
+
+Updated 2026-09-28. This summarizes the [48-case zone-quality study](../../../artifacts/research/snd-zone-quality-2026-09-25/REPORT.md) and the [41,472-case combination study](../../../artifacts/research/snd-combinations-2026-09-26/REPORT.md). Both use already inspected history. A completed simulation is evidence about the specified historical rules, not evidence of an unfilled institutional order or a future trading edge.
+
+## What a useful zone would need to show
+
+A zone is a price interval whose boundaries and creation time can be fixed from information available **before** a trade. Its value has to be judged with a specified entry, structural invalidation point, target, position size, and costs. Three outcomes should remain separate: whether price revisits the zone, whether it bounces before invalidation, and whether the complete trade has positive **net** expectancy. A visually sharp departure or a profitable one-contract dollar total does not prove the third outcome.
+
+Primary research gives a reason to test levels, without validating this futures model. [Osler's New York Fed study](https://www.newyorkfed.org/research/epr/00v06n2/0007osle.html) found that published FX support and resistance levels predicted some intraday trend interruptions, with results varying by source and currency. [Chung and Bellotti](https://arxiv.org/html/2101.07410v1) found more prior bounces associated with more subsequent bounces and also found decay with age under their level definition; their result does not establish that first-touch futures trades earn more after costs. [Cont, Kukanov, and Stoikov](https://arxiv.org/abs/1011.6402) relate short-horizon price changes to order-flow imbalance and depth. OHLCV departure and volume are proxies for those unobserved mechanisms. [White's data-snooping paper](https://onlinelibrary.wiley.com/doi/abs/10.1111/1468-0262.00152) explains why a winner drawn from many tried rules needs search-aware validation.
+
+## What the backtests found
+
+The first study changed zone width, departure body, formation volume, age, opposing room, and completed hourly direction one at a time on MNQ, MGC, ES, and CL. All 48 predeclared cases completed. **No new filter passed its declared, multiple-comparison-aware evidence requirement.** Its [complete results](../../../artifacts/research/snd-zone-quality-2026-09-25/RESULTS.md) retain the annual slices, doubled-cost outcomes, mean net R, and trade counts. Opposing room and hourly direction had useful descriptive support in dollars, but neither was confirmed as a universal risk-normalized improvement. Narrower zones, larger departure, higher volume, and younger age were mixed or unstable.
+
+The next study crossed 11 rule choices in a declared finite grid: width, departure, volume, age, hourly direction, strict versus relaxed formation, opposing room, first versus any touch, order lifetime, zone versus signal-candle stop, and wick versus body boundaries. All **10,368 configurations per market, 41,472 total**, completed. The [independent sweep audit](../../../artifacts/research/snd-combinations-2026-09-26/independent-sweep-audit.json) reconciled all cases and sampled raw-candle checks. The [factor table](../../../artifacts/research/snd-combinations-2026-09-26/factor-effects.csv) holds all matched one-rule comparisons. In the later 2025–July 2026 slice, with at least 100 trades on each side of a matched comparison:
+
+| Rule change | Descriptive median effect on mean net R across markets |
+| --- | --- |
+| Zone stop to signal-candle stop | Lower in all four markets, by 0.033–0.068 R per trade. |
+| First physical touch to any eligible touch | Lower in all four, by 0.005–0.019 R per trade. |
+| Remove completed-hour direction | Lower on MNQ, MGC, and ES; approximately flat on CL. |
+| Remove 2R opposing room | Lower on MNQ and ES, higher on MGC and CL. |
+| Tighter width, stronger departure, more volume, younger age, strict gap, body boundary | Mixed by market and threshold. |
+
+These are medians across overlapping, searched strategies. They describe this simulator's sensitivity; they do **not** establish causal factor effects or tell us to combine the best-looking cells.
+
+The frozen selection procedure used 2022–2023 to choose rules for 2024, then expanded training prefixes for 2025 and January–July 2026. It selected a rule on MNQ in all three folds, CL only for 2024, and cash on MGC and ES. Independent flat-start follow-up simulations covered 312 declared cases, including costs, adverse prices, targets, pivots, and whole-contract risk budgets. **Zero of four markets passed the historical economic gates.** Selected MNQ lost **$508 across 219 trades**, with mean net return **−0.124R per trade**; the unchanged one-contract reference earned $5,222 on the same folds. Selected CL lost **$3,295 across 79 trades** in its sole active fold. The [full validation report](../../../artifacts/research/snd-combinations-2026-09-26/REPORT.md) and [pooled paths](../../../artifacts/research/snd-combinations-2026-09-26/validation-pooled-paths.csv) show every scenario, including negative and cash outcomes. Earlier [risk-budget research](SND_RISK_RESEARCH.md) also found that positive one-contract MNQ dollars did not carry over to fixed-dollar-risk sizing.
+
+## What this supports
+
+For **research screening**, retain a causally confirmed zone, a structural stop, measured room to the next known opposing area, and completed higher-timeframe context as clear reference definitions. Track first touch separately from elapsed age and prior successful bounces. Do not add a narrow-width, high-volume, impulse, or strict-gap filter just because a retrospective cell looks good. No tested combination has earned a profitability or live-use claim.
+
+The large-grid family bootstrap recorded all 165,888 declared contrasts but did **not** calibrate: only 1,410 of 2,000 joint draws were usable, below its 95% requirement. It produced no valid simultaneous confidence bound. The selected-path intervals in the report are conditional on selection and cannot repair that. The frozen independent validation audit reported four failures, all in zero-trade CL/$50-risk cases where the saved maximum actual stop loss is `null` and the auditor expected `0`; the original failed audit remains preserved, with a separate [supplementary audit](../../../artifacts/research/snd-combinations-2026-09-26/supplementary-zero-trade-audit.md) that verified all 312 case records and 672 artifact hashes. Neither issue changes the negative economic gate outcome.
+
+The historical periods were studied before this selector was frozen, so their chronological order does not make them an untouched holdout. The [frozen MNQ forward workflow](SND_FORWARD_TEST.md) still has zero post-start bars because current local minute data lacks the required warmup and new observations. Stronger evidence requires newly received data under unchanged rules and realistic execution; a future study can also compare all eligible zone touches with matched non-zone locations to isolate whether the location itself adds information.

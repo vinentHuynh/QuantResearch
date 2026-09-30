@@ -228,7 +228,7 @@ Fresh replay of the seven working books, January 2024–August 2026, one copy ea
 
 These parameters were not optimized. The default rolling pause gives up
 $296,547.50 and does not improve drawdown. See
-`reports/workbench-review-2026-09-16/collective-analysis.json` for the fresh audit.
+`artifacts/research/workbench-review-2026-09-16/collective-analysis.json` for the fresh audit.
 The older pause results and sweeps below describe replay version 1 and are
 retained as historical evidence; their exact figures do not describe version 2.
 
@@ -273,7 +273,7 @@ that matched always on were those that never triggered. Across calendar years
 2018–2026 the default rule trailed always on in eight of nine years (2023:
 +$17,818; every other year between −$37,065 and −$130,600). Skipped trades
 averaged more than accepted trades in every book. The sweep and diagnostics are
-saved under `reports/pause-rule-research-2026-09-16`.
+saved under `artifacts/research/pause-rule-research-2026-09-16`.
 
 The reason is structural, not parametric. Kaminski & Lo (*When do stop-loss
 rules stop losses?*, 2014) show that a loss-triggered stop can raise expected
@@ -404,7 +404,7 @@ instead of being added twice. Earlier matching later-period failures remain
 flagged. New imports do not receive full-checklist status automatically.
 
 The September 29 ES/NQ continuation lives under
-`reports/combined-es-nq-refresh-2026-09-29`. It replays five existing sleeves
+`artifacts/research/combined-es-nq-refresh-2026-09-29`. It replays five existing sleeves
 against the newly registered ES/NQ datasets using their frozen source rules.
 The importer checks all five extensions together, corrects the August 31
 overnight boundary, and retains the original catalog IDs and saved-selection
@@ -444,4 +444,4 @@ corrupt ledgers, and new workbench imports. Browser checks cover the direct
 chart/calendar drilldowns, exports, persistence, mobile layout, all four policy
 modes with the loss-clustering table, and preservation of all 279 previous
 workbench runs. Screenshots and the verification record are saved under
-`reports/collective-dashboard-2026-09-16`.
+`artifacts/research/collective-dashboard-2026-09-16`.

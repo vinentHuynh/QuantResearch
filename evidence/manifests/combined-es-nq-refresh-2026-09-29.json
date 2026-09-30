@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "campaign_id": "combined-es-nq-refresh-2026-09-29",
+  "created_at": "2026-09-29T00:00:00Z",
+  "protocol_path": "research/combined-es-nq-refresh-2026-09-29/README.md",
+  "summary_paths": [
+    "research/combined-es-nq-refresh-2026-09-29/portfolio-verification.json"
+  ],
+  "artifacts": [
+    {
+      "role": "protocol",
+      "relative_path": "research/combined-es-nq-refresh-2026-09-29/README.md",
+      "bytes": 1879,
+      "sha256": "d1c9468fb6f1d69a8f426932bdb5e7df0a043273c60a70ac816ef9a340980986"
+    },
+    {
+      "role": "summary",
+      "relative_path": "research/combined-es-nq-refresh-2026-09-29/portfolio-verification.json",
+      "bytes": 6826,
+      "sha256": "0964e891760ec4c65f508bd870b7c7530080b021ff84afbe495f90c5f8c4711c"
+    },
+    {
+      "role": "globex-es-extension",
+      "relative_path": "research/combined-es-nq-refresh-2026-09-29/expanded/ES/extension.json",
+      "bytes": 9349,
+      "sha256": "f6973adc8aeb051d1861337bfa747b56f3442a0e89684e585ad292f4c2d684f0"
+    },
+    {
+      "role": "globex-nq-extension",
+      "relative_path": "research/combined-es-nq-refresh-2026-09-29/expanded/NQ/extension.json",
+      "bytes": 9165,
+      "sha256": "723987957267354f938467dc4de63f054e2d5ac6bb8cca79f9edc0c0c5d6624a"
+    },
+    {
+      "role": "pine-es-extension",
+      "relative_path": "research/combined-es-nq-refresh-2026-09-29/workbench/es-pine-overnight-block-aug28-overlap/extension.json",
+      "bytes": 11931,
+      "sha256": "2fd9688f61282392c1662b012749c6d5f89c854d121d8da8920d94dc141c544a"
+    },
+    {
+      "role": "pine-nq-extension",
+      "relative_path": "research/combined-es-nq-refresh-2026-09-29/workbench/nq-pine-tsmom-orb/extension.json",
+      "bytes": 4280,
+      "sha256": "762b79b186724aed8fba62510071b0945c5e8c7cf50df1c77abd8336c89f8250"
+    },
+    {
+      "role": "minute-reversal-nq-extension",
+      "relative_path": "research/combined-es-nq-refresh-2026-09-29/workbench/nq-short-term-reversal-minute/extension.json",
+      "bytes": 3088,
+      "sha256": "89877683fe69b44f24f9fde6851e5eb2237730406af31e1a5d2965271c06f000"
+    }
+  ],
+  "consumers": [
+    "collective-catalog"
+  ]
+}

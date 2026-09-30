@@ -1,6 +1,14 @@
 """Daily reversal signals with causal minute scheduling and overnight marks."""
 
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': [
+        'strategies/short_term_reversal_minute.py',
+        'strategies/short_term_reversal.py',
+        'workbench/__init__.py',
+        'workbench/contract.py',
+        'workbench/layout.py',
+    ],
     'id': 'short-term-reversal-minute',
     'name': 'Short-term reversal - minute execution',
     'version': '1.0.0',

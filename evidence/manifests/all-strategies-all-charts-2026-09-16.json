@@ -1,0 +1,44 @@
+{
+  "schema_version": 2,
+  "campaign_id": "all-strategies-all-charts-2026-09-16",
+  "created_at": "2026-09-16T00:00:00Z",
+  "protocol_path": "research/all-strategies-all-charts-2026-09-16/PLAN.json",
+  "summary_paths": [
+    "research/all-strategies-all-charts-2026-09-16/REPORT.md"
+  ],
+  "artifacts": [
+    {
+      "role": "protocol",
+      "relative_path": "research/all-strategies-all-charts-2026-09-16/PLAN.json",
+      "bytes": 67951,
+      "sha256": "7321ab49a399b3307efc191f4dbaae314d121051ecf19891d4ce0013160bb443"
+    },
+    {
+      "role": "summary",
+      "relative_path": "research/all-strategies-all-charts-2026-09-16/REPORT.md",
+      "bytes": 40541,
+      "sha256": "5bc7fa11fe49199730136083fce65cb69281b5712ec525eea0a596bc9ed12f55"
+    },
+    {
+      "role": "catalog-input",
+      "relative_path": "research/all-strategies-all-charts-2026-09-16/report-data.json",
+      "bytes": 3694565,
+      "sha256": "803f704849255cfc29bc32a87614b0382266d26062b357e11c10b6dc4fe2482f"
+    },
+    {
+      "role": "dataset-inventory",
+      "relative_path": "research/all-strategies-all-charts-2026-09-16/inventory.json",
+      "bytes": 391871,
+      "sha256": "09b54498788acb8a9026b582815c41db67867d72dd4a96be5e5d1d261adc409e"
+    },
+    {
+      "role": "terminal-runs",
+      "relative_path": "research/all-strategies-all-charts-2026-09-16/terminal-runs.json",
+      "bytes": 48827,
+      "sha256": "2610696957a52353f9e719dafb738ffe66636c16d3c4375007241d6c3d6e5d59"
+    }
+  ],
+  "consumers": [
+    "collective-catalog"
+  ]
+}

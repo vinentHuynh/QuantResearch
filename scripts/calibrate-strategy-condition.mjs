@@ -6,7 +6,7 @@ import {
   fitReference,
   normalizedMarks,
   assessCondition,
-} from "../src/strategyCondition.ts";
+} from "../shared/ts/strategyCondition.ts";
 
 const root = resolve(
   process.env.WORKBENCH_HOME || "data/workbench",
@@ -22,7 +22,7 @@ mkdirSync(folder, { recursive: true });
 const plan = {
   ...conditionProtocol,
   code: [
-    "src/strategyCondition.ts",
+    "shared/ts/strategyCondition.ts",
     "scripts/calibrate-strategy-condition.mjs",
   ].map((path) => ({ path, checksum: hash(readFileSync(path)) })),
   books: items.map((i) => ({ id: i.id, name: i.name, checksum: i.checksum })),

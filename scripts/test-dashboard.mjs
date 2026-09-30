@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdtempSync, writeFileSync, unlinkSync, rmdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { dashboardActionStatus } from "../src/dashboardTypes.ts";
+import { dashboardActionStatus } from "../shared/ts/dashboard.ts";
 import {
   createDashboard,
   parseCsv,
@@ -14,6 +14,7 @@ import {
 const stats = tradeStatistics([200, 100, -50, -100, 0]);
 assert.equal(dashboardActionStatus({status:'Needs review',reasons:[]}), 'Failed criteria');
 assert.equal(dashboardActionStatus({status:'Needs review',reasons:['The strategy adapter has changed or is no longer registered.']}), 'Retest required');
+assert.equal(dashboardActionStatus({status:'Needs review',reasons:['The strategy execution source has changed or is no longer registered.']}), 'Retest required');
 assert.equal(dashboardActionStatus({status:'Needs review',reasons:[],trade_error:'Checksum mismatch'}), 'Evidence repair needed');
 assert.equal(dashboardActionStatus({status:'Needs review',reasons:['Higher costs: declared scenario evidence is missing.']}), 'Further testing needed');
 assert.equal(dashboardActionStatus({status:'Conditional',reasons:[]}), 'Conditional');
@@ -53,9 +54,11 @@ try {
     id: "test",
     name: "Test strategy",
     file_hash: "same",
+    execution_source_hash: "execution-v1",
     execution_model: "event-v1",
   };
   const input = {
+    protocol: 2,
     strategy,
     dataset: { symbol: "NQ" },
     parameters: { reward_risk: 2, lookback: 20 },
@@ -69,6 +72,8 @@ try {
     start: "2025-01-01",
     end: "2025-12-31",
     research: { scenario: "Baseline" },
+    execution_source_hash: "execution-v1",
+    source_hash: "execution-v1",
   };
   const metrics = {
     net_pnl: 3000,
@@ -115,6 +120,7 @@ try {
     max_drawdown: 0.35,
     min_test_trades: 20,
     source_hash: "snapshot",
+    execution_source_hash: "execution-v1",
     outcome: "Meets criteria",
   };
   const records = {
@@ -154,6 +160,56 @@ try {
     }),
   );
   assert(!sameSettings(input, { ...input, capital: 50000 }));
+  assert(
+    !sameSettings(input, {
+      ...input,
+      strategy: { ...strategy, execution_source_hash: "execution-v2" },
+      execution_source_hash: "execution-v2",
+      source_hash: "execution-v2",
+    }),
+    "A declared dependency/runtime change must create a different setting identity",
+  );
+  const legacyInput = {
+    ...input,
+    protocol: 1,
+    strategy: { ...strategy, execution_source_hash: undefined },
+    execution_source_hash: undefined,
+    source_hash: "legacy-snapshot-a",
+  };
+  assert(
+    sameSettings(legacyInput, { ...legacyInput, source_hash: "legacy-snapshot-b" }),
+    "Protocol-v1 scorecard settings remain keyed to the adapter hash",
+  );
+  const legacyRun = { ...run, id: "legacy-full", input: legacyInput };
+  const legacyEvaluation = {
+    ...evaluation,
+    id: "legacy-evaluation",
+    candidates: [legacyInput],
+    folds: [
+      {
+        test_start: "2025-01-01",
+        test_end: "2025-12-31",
+        tests: [legacyRun.id],
+      },
+    ],
+    source_hash: "legacy-snapshot-a",
+    execution_source_hash: undefined,
+  };
+  const legacyDashboard = createDashboard({
+    all: (kind) => ({
+      run: [legacyRun],
+      evaluation: [legacyEvaluation],
+      regime: [],
+      dataset: records.dataset,
+    })[kind],
+    strategies: () => [{ ...strategy, execution_source_hash: "execution-v2" }],
+    runDir: () => folder,
+  });
+  assert.equal(
+    legacyDashboard().rows[0].status,
+    "Research candidate",
+    "A protocol-v1 scorecard remains current when its adapter bytes are unchanged",
+  );
   const prior = {
     ...run,
     id: "prior",
@@ -187,7 +243,13 @@ try {
   assert.equal(dashboard().rows[0].status, "Further testing needed");
   assert.match(dashboard().rows[0].reasons.join(" "), /evidence is missing/);
   scenarios.push(missing);
-  registered[0] = { ...strategy, file_hash: "changed" };
+  registered[0] = { ...strategy, execution_source_hash: "execution-v2" };
+  assert.equal(
+    dashboard().rows[0].status,
+    "Retest required",
+    "A dependency-only execution fingerprint change requires retesting",
+  );
+  registered[0] = { ...strategy, file_hash: "changed", execution_source_hash: "execution-v3" };
   assert.equal(dashboard().rows[0].status, "Retest required");
   registered[0] = strategy;
   writeFileSync(path, csv + "\n123,bad");

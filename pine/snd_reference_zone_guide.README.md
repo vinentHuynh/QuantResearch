@@ -24,7 +24,7 @@ The top-right checklist shows the 5-minute and **previous completed hourly** dir
 4. Only the first later physical overlap is eligible. At that candle's close, the demand entry reference is one tick above its high; the supply reference is one tick below its low. The stop is one tick beyond the zone's far edge. The reference target is 1R from entry. The nearest known opposing zone must leave at least 2R, or there must be no known opposing zone.
 5. The stop-entry reference is valid for **one following 5-minute interval**, unless the newly completed hour changes direction at its start. The **WATCH** mark reports a geometric candidate, not an entry or fill. The script cannot know whether another open position or pending order would block the backtest's setup.
 
-These are the visual parts of the [frozen MNQ prospective protocol](../SND_FORWARD_TEST.md). Its primary stream is one MNQ contract; a separate $100 estimated-risk shadow stream is **not sized by this indicator**.
+These are the visual parts of the [frozen MNQ prospective protocol](../docs/research/snd/SND_FORWARD_TEST.md). Its primary stream is one MNQ contract; a separate $100 estimated-risk shadow stream is **not sized by this indicator**.
 
 ## Alerts
 
@@ -34,6 +34,6 @@ In TradingView, create an alert with this indicator as the condition, select **N
 
 The Python test uses source **one-minute OHLC** to decide entries, gaps, stops, targets, adverse ticks, commissions, whole-contract sizing, position blocking, pending-order cancellation, contract rolls, session and incomplete-bar handling. This Pine **indicator** does not simulate those decisions, reconstruct P&L, or issue broker orders. Its 1R line is based on the signal reference; the Python model recalculates risk, target, and opposing room after an actual simulated fill. A historical WATCH mark stays on the chart even if an order would have been blocked or canceled. TradingView data, continuous-contract rolls, and session settings can also change which zones appear. The 288-bar age here counts observed chart bars; missing or closed-session intervals are not equivalent to the Python model's elapsed-bucket treatment.
 
-The historical research did **not** establish a robust edge, and the frozen prospective test has no new outcome sample yet. Treat the chart as a paper-trading checklist, not a validated live signal. See [research conclusions](../SND_RESEARCH_CONCLUSIONS.md).
+The historical research did **not** establish a robust edge, and the frozen prospective test has no new outcome sample yet. Treat the chart as a paper-trading checklist, not a validated live signal. See [research conclusions](../docs/research/snd/SND_RESEARCH_CONCLUSIONS.md).
 
 The script uses confirmed chart bars and the last completed hourly value using TradingView's [higher-timeframe, non-repainting pattern](https://www.tradingview.com/pine-script-docs/concepts/other-timeframes-and-data/). Zone boxes follow TradingView's [drawing-object rules and limits](https://www.tradingview.com/pine-script-docs/visuals/lines-and-boxes/). TradingView compilation and live-chart rendering should be checked in Pine Editor before relying on alerts.

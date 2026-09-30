@@ -84,6 +84,10 @@ def _minute_session_bars(frame: pd.DataFrame, session: SessionDefinition) -> pd.
         date = date + pd.Timedelta(days=session.trading_date_offset_days)
     allowed &= date.dayofweek < 5
     columns = ['open', 'high', 'low', 'close'] + (['volume'] if 'volume' in frame else [])
+    # Keep the resolved futures contract on native minute bars. Strategies
+    # that use prior-day levels can then reset at a continuous-symbol roll.
+    if 'instrument_id' in frame:
+        columns.append('instrument_id')
     result = frame.loc[allowed, columns].copy()
     result.index = local[allowed].rename('event_time')
     result.index.freq = None

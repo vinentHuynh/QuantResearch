@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "campaigns": [
+    {
+      "campaign_id": "all-strategies-all-charts-2026-09-16",
+      "manifest": "manifests/all-strategies-all-charts-2026-09-16.json"
+    },
+    {
+      "campaign_id": "expanded-search-2026-09-16",
+      "manifest": "manifests/expanded-search-2026-09-16.json"
+    },
+    {
+      "campaign_id": "snd-fresh-backtest-2026-09-16",
+      "manifest": "manifests/snd-fresh-backtest-2026-09-16.json"
+    },
+    {
+      "campaign_id": "combined-es-nq-refresh-2026-09-29",
+      "manifest": "manifests/combined-es-nq-refresh-2026-09-29.json"
+    },
+    {
+      "campaign_id": "nq-monthly-2026-09-29",
+      "manifest": "manifests/nq-monthly-2026-09-29.json"
+    }
+  ]
+}

@@ -1,0 +1,802 @@
+{
+  "id": "nq-monthly-2026-09-29-v1",
+  "created_at": "2026-09-29T19:50:19.181Z",
+  "period": {
+    "start": "2026-01-01",
+    "end": "2026-08-31"
+  },
+  "assumptions": {
+    "capital": 100000,
+    "fee_per_contract_per_side": 2.5,
+    "slippage_ticks_per_side": 1,
+    "monthly_basis": "continuous UTC month-end marked equity"
+  },
+  "selection": [
+    {
+      "strategy_id": "buy-hold",
+      "selection_run_prefix": "571a4c3c",
+      "selection_note": "Benchmark; one trade by design",
+      "selection_run_id": "571a4c3c-27ff-4e90-8957-149e0e37149d"
+    },
+    {
+      "strategy_id": "market-intraday-momentum",
+      "selection_run_prefix": "1388ab56",
+      "selection_note": "Earlier NQ baseline lost money; diagnostic",
+      "selection_run_id": "1388ab56-704c-47c1-b3fd-73ada622c78e"
+    },
+    {
+      "strategy_id": "moving-average",
+      "selection_run_prefix": "fbbbdb99",
+      "selection_note": "4h lookback 20; positive 2018-2023 evidence",
+      "selection_run_id": "fbbbdb99-cb18-4896-9bcf-2bdfa44c745c"
+    },
+    {
+      "strategy_id": "multi-speed-momentum",
+      "selection_run_prefix": "33d05d29",
+      "selection_note": "4h lookback 60 from prior adapter version; provisional",
+      "selection_run_id": "33d05d29-d1dc-4f91-a875-aa07d4ecf627"
+    },
+    {
+      "strategy_id": "pine-daily-tsmom",
+      "selection_run_prefix": "4c5cb899",
+      "selection_note": "Fixed one-contract earlier configuration",
+      "selection_run_id": "4c5cb899-3cd1-4052-8cd1-4c4a7cf24971"
+    },
+    {
+      "strategy_id": "pine-overnight-block",
+      "selection_run_prefix": "1fdcd163",
+      "selection_note": "17:00-06:00 NY; positive earlier evidence",
+      "selection_run_id": "1fdcd163-4157-4d78-babf-f934d5a66a4e"
+    },
+    {
+      "strategy_id": "pine-overnight-drift",
+      "selection_run_prefix": "6ade3bf0",
+      "selection_note": "Long after up close; 2024 strong, 2025 loss",
+      "selection_run_id": "6ade3bf0-8ae7-4d7a-b7c0-ca95b64fe617"
+    },
+    {
+      "strategy_id": "pine-tsmom-orb",
+      "selection_run_prefix": "c5acb02e",
+      "selection_note": "Risk cap $2,500, one contract; earlier positive evidence",
+      "selection_run_id": "c5acb02e-c3e9-4c63-aa04-742d752e4594"
+    },
+    {
+      "strategy_id": "rsi2-reversion",
+      "selection_run_prefix": "06d54926",
+      "selection_note": "Trend 200, entry 10, exit 70; earlier positive evidence",
+      "selection_run_id": "06d54926-474c-4705-a804-90a63298f881"
+    },
+    {
+      "strategy_id": "rsi2-reversion-corrected",
+      "selection_run_prefix": "dcbcfea6",
+      "selection_note": "Default parameters; no separate pre-2026 NQ selection",
+      "selection_run_id": "dcbcfea6-9cd9-48f2-9fb4-9464896c10e3"
+    },
+    {
+      "strategy_id": "short-term-reversal",
+      "selection_run_prefix": "4f040d7a",
+      "selection_note": "1.25% prior decline, trend filter; 2024-2025 selection",
+      "selection_run_id": "4f040d7a-6231-4a7f-9855-cb2296eafb45"
+    },
+    {
+      "strategy_id": "short-term-reversal-minute",
+      "selection_run_prefix": "29765c05",
+      "selection_note": "1.25% prior decline, five-minute open delay; 2024-2025 selection",
+      "selection_run_id": "29765c05-bcf2-40e3-80c2-ca4387968e88"
+    },
+    {
+      "strategy_id": "snd",
+      "selection_run_prefix": "939f933f",
+      "selection_note": "Phase 6; prior NQ variants lost money; diagnostic",
+      "selection_run_id": "939f933f-32da-46ef-ac9f-5a569a2f6d03"
+    },
+    {
+      "strategy_id": "snd-zone-exit",
+      "selection_run_prefix": null,
+      "selection_note": "Selected from recorded 2024-2025 12-case NQ screen, if qualified",
+      "selection_run_id": "e4f6cb8c-9b98-4117-acb9-34167c73ed44"
+    },
+    {
+      "strategy_id": "vwap-reversion",
+      "selection_run_prefix": "70f658c2",
+      "selection_note": "Band 0.004; prior NQ variants lost money; diagnostic",
+      "selection_run_id": "70f658c2-31a4-4021-bd6e-64ddf427b97f"
+    },
+    {
+      "strategy_id": "wyckoff-nq",
+      "selection_run_prefix": "17341945",
+      "selection_note": "15m Standard, eight-bar exit; prior signal sample sparse",
+      "selection_run_id": "17341945-b8d0-4aff-97d1-ddc637c71543"
+    }
+  ],
+  "zone_screen": {
+    "ids": [
+      "958d00eb-4ba7-41a4-a709-cb02fee8943f",
+      "45a89874-803b-41d3-9ae9-9b77da540da4",
+      "0c7d737a-709b-4168-a299-4d42df4594e5",
+      "8eb6a599-43fd-4593-b7f5-9a0b64602712",
+      "5fa691a9-88e1-4aad-807e-0e746048e95b",
+      "c5707d77-479b-402e-aac8-fb785ce6639f",
+      "e4f6cb8c-9b98-4117-acb9-34167c73ed44",
+      "2b1f34ae-c48f-4244-b68f-333991301417",
+      "6d2d2390-843f-49b1-9627-93ed28290ff7",
+      "605fdc91-4ea1-49bf-ab05-16a2e28e40ef",
+      "f759c57e-d683-4f11-8e8a-59383c81b636",
+      "dd8e7a1d-54a9-400b-b1d3-2f5fc93cffff"
+    ],
+    "input": {
+      "strategy_id": "snd-zone-exit",
+      "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+      "start": "2024-01-01",
+      "end": "2025-12-31",
+      "capital": 100000,
+      "fee": 2.5,
+      "slippage": 1,
+      "timeout": 3600,
+      "stage": "Exploratory",
+      "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+      "hypothesis": "nq-monthly-2026-09-29 | snd-zone-exit | 12-setting 2024-2025 development screen; all cases retained",
+      "timeframe": "1m",
+      "session": "full-trading-day",
+      "warmup_days": 60,
+      "parameters": {
+        "variant": "phase7_prior_1m",
+        "zone_exit": "close-inside",
+        "contracts": 1
+      },
+      "sweep": {
+        "variant": [
+          "original_multi_tf",
+          "phase6",
+          "phase7_prior_1m",
+          "phase7_prior_5m"
+        ],
+        "zone_exit": [
+          "baseline",
+          "touch",
+          "close-inside"
+        ]
+      }
+    },
+    "candidates": [
+      {
+        "id": "958d00eb-4ba7-41a4-a709-cb02fee8943f",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "original_multi_tf",
+          "contracts": 1,
+          "zone_exit": "baseline"
+        },
+        "net_return": -0.49219999999999997,
+        "max_drawdown": -0.7693581965928679,
+        "trades": 1783,
+        "score": -0.6397540211824954
+      },
+      {
+        "id": "45a89874-803b-41d3-9ae9-9b77da540da4",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "original_multi_tf",
+          "contracts": 1,
+          "zone_exit": "touch"
+        },
+        "net_return": -0.76015,
+        "max_drawdown": -1.0688411853196114,
+        "trades": 2320,
+        "score": -0.7111907834770563
+      },
+      {
+        "id": "0c7d737a-709b-4168-a299-4d42df4594e5",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "original_multi_tf",
+          "contracts": 1,
+          "zone_exit": "close-inside"
+        },
+        "net_return": -0.7968,
+        "max_drawdown": -1.115893808604202,
+        "trades": 2287,
+        "score": -0.7140464386989157
+      },
+      {
+        "id": "8eb6a599-43fd-4593-b7f5-9a0b64602712",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase6",
+          "contracts": 1,
+          "zone_exit": "baseline"
+        },
+        "net_return": -0.36045000000000005,
+        "max_drawdown": -0.3840263899255978,
+        "trades": 1059,
+        "score": -0.9386073703680482
+      },
+      {
+        "id": "5fa691a9-88e1-4aad-807e-0e746048e95b",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase6",
+          "contracts": 1,
+          "zone_exit": "touch"
+        },
+        "net_return": -0.4736,
+        "max_drawdown": -0.5751228215970474,
+        "trades": 1098,
+        "score": -0.8234762770930727
+      },
+      {
+        "id": "c5707d77-479b-402e-aac8-fb785ce6639f",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase6",
+          "contracts": 1,
+          "zone_exit": "close-inside"
+        },
+        "net_return": -0.44735,
+        "max_drawdown": -0.5385028697032604,
+        "trades": 1096,
+        "score": -0.830729092022314
+      },
+      {
+        "id": "e4f6cb8c-9b98-4117-acb9-34167c73ed44",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase7_prior_1m",
+          "contracts": 1,
+          "zone_exit": "baseline"
+        },
+        "net_return": 0.002850000000000019,
+        "max_drawdown": -0.12931677018633536,
+        "trades": 329,
+        "score": 0.0220389048991356
+      },
+      {
+        "id": "2b1f34ae-c48f-4244-b68f-333991301417",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase7_prior_1m",
+          "contracts": 1,
+          "zone_exit": "touch"
+        },
+        "net_return": -0.03080000000000005,
+        "max_drawdown": -0.14042141314868584,
+        "trades": 332,
+        "score": -0.21933976670201527
+      },
+      {
+        "id": "6d2d2390-843f-49b1-9627-93ed28290ff7",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase7_prior_1m",
+          "contracts": 1,
+          "zone_exit": "close-inside"
+        },
+        "net_return": -0.02729999999999999,
+        "max_drawdown": -0.1362724458204334,
+        "trades": 331,
+        "score": -0.20033396946564883
+      },
+      {
+        "id": "605fdc91-4ea1-49bf-ab05-16a2e28e40ef",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase7_prior_5m",
+          "contracts": 1,
+          "zone_exit": "baseline"
+        },
+        "net_return": -0.39349999999999996,
+        "max_drawdown": -0.44179656153490743,
+        "trades": 412,
+        "score": -0.8906814453985029
+      },
+      {
+        "id": "f759c57e-d683-4f11-8e8a-59383c81b636",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase7_prior_5m",
+          "contracts": 1,
+          "zone_exit": "touch"
+        },
+        "net_return": -0.46099999999999997,
+        "max_drawdown": -0.5090294855553071,
+        "trades": 420,
+        "score": -0.9056449834081592
+      },
+      {
+        "id": "dd8e7a1d-54a9-400b-b1d3-2f5fc93cffff",
+        "status": "Succeeded",
+        "error": null,
+        "parameters": {
+          "variant": "phase7_prior_5m",
+          "contracts": 1,
+          "zone_exit": "close-inside"
+        },
+        "net_return": -0.45135000000000003,
+        "max_drawdown": -0.5147427776535758,
+        "trades": 419,
+        "score": -0.8768457171122479
+      }
+    ],
+    "selected_id": "e4f6cb8c-9b98-4117-acb9-34167c73ed44",
+    "selection_note": "Highest positive return / absolute maximum drawdown among successful candidates with >=30 trades and positive simulated equity"
+  },
+  "runs": {
+    "buy-hold": {
+      "id": "9437c4ea-fcd0-480e-9eda-c1d2918636a1",
+      "input": {
+        "strategy_id": "buy-hold",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | buy-hold | frozen configuration on NQ | previously inspected history",
+        "timeframe": "1d",
+        "session": "full-trading-day",
+        "warmup_days": 60,
+        "parameters": {
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "market-intraday-momentum": {
+      "id": "4e717204-2e54-4ad6-b8aa-a4f0b048967f",
+      "input": {
+        "strategy_id": "market-intraday-momentum",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | market-intraday-momentum | frozen configuration on NQ | previously inspected history",
+        "timeframe": "5m",
+        "session": "new-york-rth",
+        "warmup_days": 10,
+        "parameters": {
+          "signal_mode": "rest-of-day",
+          "close_time": "16:00",
+          "holding_minutes": "30",
+          "entry_delay_minutes": "0",
+          "minimum_move_bps": 0,
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "moving-average": {
+      "id": "6e9f7ac8-2443-4e54-b93f-b39fef28d551",
+      "input": {
+        "strategy_id": "moving-average",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | moving-average | frozen configuration on NQ | previously inspected history",
+        "timeframe": "4h",
+        "session": "full-trading-day",
+        "warmup_days": 60,
+        "parameters": {
+          "lookback": 20,
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "multi-speed-momentum": {
+      "id": "5eeef1b2-ed49-4a2c-8aef-591911f5f519",
+      "input": {
+        "strategy_id": "multi-speed-momentum",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | multi-speed-momentum | frozen configuration on NQ | previously inspected history",
+        "timeframe": "4h",
+        "session": "full-trading-day",
+        "warmup_days": 600,
+        "parameters": {
+          "lookback": 60,
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "pine-daily-tsmom": {
+      "id": "9ec4401a-3721-4329-bd6c-2a385fc7d3de",
+      "input": {
+        "strategy_id": "pine-daily-tsmom",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | pine-daily-tsmom | frozen configuration on NQ | previously inspected history",
+        "timeframe": "15m",
+        "session": "full-trading-day",
+        "warmup_days": 600,
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 1,
+          "rounding": "Nearest"
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "pine-overnight-block": {
+      "id": "739bff8e-cba5-48cc-9beb-48c05a9af5a3",
+      "input": {
+        "strategy_id": "pine-overnight-block",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | pine-overnight-block | frozen configuration on NQ | previously inspected history",
+        "timeframe": "15m",
+        "session": "full-trading-day",
+        "warmup_days": 10,
+        "parameters": {
+          "entry_hour": 17,
+          "entry_minute": 0,
+          "exit_hour": 6,
+          "exit_minute": 0,
+          "contracts": 1,
+          "timezone": "America/New_York"
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "pine-overnight-drift": {
+      "id": "2fc42635-2780-4c36-8095-dd75060ebecd",
+      "input": {
+        "strategy_id": "pine-overnight-drift",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | pine-overnight-drift | frozen configuration on NQ | previously inspected history",
+        "timeframe": "5m",
+        "session": "full-trading-day",
+        "warmup_days": 180,
+        "parameters": {
+          "sizing_mode": "Fixed contracts",
+          "contracts": 1,
+          "annual_risk": 0.2,
+          "maximum_leverage": 2,
+          "volatility_length": 60,
+          "sleeve_count": 4,
+          "timezone": "America/New_York",
+          "rth_start": 570,
+          "rth_end": 960,
+          "trade_weekend": false,
+          "close_rule": "Long after up close",
+          "strong_threshold": 0.6
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "pine-tsmom-orb": {
+      "id": "4ccab74c-4b3b-406b-8572-ddb99fcd5926",
+      "input": {
+        "strategy_id": "pine-tsmom-orb",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | pine-tsmom-orb | frozen configuration on NQ | previously inspected history",
+        "timeframe": "5m",
+        "session": "full-trading-day",
+        "warmup_days": 600,
+        "parameters": {
+          "fast_length": 20,
+          "medium_length": 60,
+          "slow_length": 120,
+          "annual_length": 252,
+          "timezone": "America/New_York",
+          "minimum_score": 0.5,
+          "opening_start": 570,
+          "opening_end": 585,
+          "entry_start": 585,
+          "entry_end": 900,
+          "flatten_start": 945,
+          "flatten_end": 960,
+          "risk_budget": 2500,
+          "maximum_contracts": 1,
+          "reward_risk": 2,
+          "require_close_break": true,
+          "execution_timing": "close"
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "rsi2-reversion": {
+      "id": "8d90c9d6-09b6-4d3f-aa22-fc8540ad53e6",
+      "input": {
+        "strategy_id": "rsi2-reversion",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | rsi2-reversion | frozen configuration on NQ | previously inspected history",
+        "timeframe": "1d",
+        "session": "full-trading-day",
+        "warmup_days": 600,
+        "parameters": {
+          "trend_lookback": 200,
+          "entry_rsi": 10,
+          "exit_rsi": 70,
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "rsi2-reversion-corrected": {
+      "id": "53feb3fe-cfde-44c8-9521-920555a8032c",
+      "input": {
+        "strategy_id": "rsi2-reversion-corrected",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | rsi2-reversion-corrected | frozen configuration on NQ | previously inspected history",
+        "timeframe": "1d",
+        "session": "full-trading-day",
+        "warmup_days": 600,
+        "parameters": {
+          "trend_lookback": 200,
+          "entry_rsi": 10,
+          "exit_rsi": 70,
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "short-term-reversal": {
+      "id": "4c7d7c1a-b2d4-4c83-91ce-ea8dd7aa6851",
+      "input": {
+        "strategy_id": "short-term-reversal",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | short-term-reversal | frozen configuration on NQ | previously inspected history",
+        "timeframe": "1d",
+        "session": "new-york-rth",
+        "warmup_days": 600,
+        "parameters": {
+          "decline_pct": 1.25,
+          "confluence": "trend",
+          "trend_lookback": 200,
+          "close_fraction": 0.25,
+          "direction": "long-only",
+          "max_decline_pct": 3,
+          "hold_sessions": 1,
+          "renew_on_signal": false,
+          "exit_on_rebound": false,
+          "min_atr_multiple": 0,
+          "atr_period": 20,
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "short-term-reversal-minute": {
+      "id": "12e7e335-b656-4387-9be9-b70035fbf24d",
+      "input": {
+        "strategy_id": "short-term-reversal-minute",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | short-term-reversal-minute | frozen configuration on NQ | previously inspected history",
+        "timeframe": "1m",
+        "session": "full-trading-day",
+        "warmup_days": 600,
+        "parameters": {
+          "decline_pct": 1.25,
+          "trend_lookback": 200,
+          "open_delay_minutes": 5,
+          "max_entry_lateness_minutes": 5,
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "snd": {
+      "id": "a423c31a-8d8f-42a2-8c42-708e8d9f86d5",
+      "input": {
+        "strategy_id": "snd",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | snd | frozen configuration on NQ | previously inspected history",
+        "timeframe": "1m",
+        "session": "full-trading-day",
+        "warmup_days": 60,
+        "parameters": {
+          "variant": "phase6",
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "snd-zone-exit": {
+      "id": "7040c8d5-401e-4df8-9b8f-99114f043b67",
+      "input": {
+        "strategy_id": "snd-zone-exit",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | snd-zone-exit | frozen configuration on NQ | previously inspected history",
+        "timeframe": "1m",
+        "session": "full-trading-day",
+        "warmup_days": 60,
+        "parameters": {
+          "variant": "phase7_prior_1m",
+          "contracts": 1,
+          "zone_exit": "baseline"
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "vwap-reversion": {
+      "id": "4adbcf8e-20fd-44d6-acc8-dd23ab398ca8",
+      "input": {
+        "strategy_id": "vwap-reversion",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | vwap-reversion | frozen configuration on NQ | previously inspected history",
+        "timeframe": "5m",
+        "session": "new-york-rth",
+        "warmup_days": 10,
+        "parameters": {
+          "band": 0.004,
+          "contracts": 1
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    },
+    "wyckoff-nq": {
+      "id": "260249fd-e443-49da-a8bf-d742b22793d6",
+      "input": {
+        "strategy_id": "wyckoff-nq",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "start": "2026-01-01",
+        "end": "2026-08-31",
+        "capital": 100000,
+        "fee": 2.5,
+        "slippage": 1,
+        "timeout": 3600,
+        "stage": "Exploratory",
+        "criteria": "Descriptive risk-adjusted comparison; record positive/negative outcomes, drawdown and trade count. Previously inspected historical periods; no fresh holdout claim.",
+        "hypothesis": "nq-monthly-2026-09-29 | wyckoff-nq | frozen configuration on NQ | previously inspected history",
+        "timeframe": "15m",
+        "session": "full-trading-day",
+        "warmup_days": 180,
+        "parameters": {
+          "strictness": "Standard",
+          "exit_policy": "fixed_bars",
+          "holding_bars": 8,
+          "entry_delay_bars": 0,
+          "atr_length": 14,
+          "stop_atr": 1.5,
+          "target_r": 2
+        }
+      },
+      "status": "Succeeded",
+      "error": null
+    }
+  },
+  "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+  "completed_at": "2026-09-29T20:14:11.146Z"
+}

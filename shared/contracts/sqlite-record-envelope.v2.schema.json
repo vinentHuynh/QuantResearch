@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://strategy-workbench.local/contracts/sqlite-record-envelope.v2.schema.json",
+  "title": "SQLite JSON record envelope protocol v2",
+  "description": "Envelope for newly written JSON bodies. Protocol-v1 rows remain readable as unwrapped bodies.",
+  "type": "object",
+  "required": ["schema_version", "kind", "id", "body"],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "kind": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,79}$"
+    },
+    "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "body": { "type": "object" }
+  },
+  "additionalProperties": false
+}

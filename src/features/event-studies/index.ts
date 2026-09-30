@@ -1,0 +1,1 @@
+export { EventStudies } from "./EventStudiesPage";

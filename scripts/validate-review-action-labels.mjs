@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dashboardActionStatus } from '../src/dashboardTypes.ts';
-import { strategyTitle } from '../src/strategyTitle.ts';
+import { dashboardActionStatus } from '../shared/ts/dashboard.ts';
+import { strategyTitle } from '../shared/ts/formatting.ts';
 
 const origin = 'http://127.0.0.1:8001';
 const folder = `reports/review-action-labels-${new Date().toISOString().replaceAll(':','-')}`;

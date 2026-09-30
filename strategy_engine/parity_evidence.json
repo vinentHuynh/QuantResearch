@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-09T06:27:51.960333+00:00",
+  "generated_at": "2026-09-30T02:40:16.370766+00:00",
   "harness": "strategy_engine/parity.py",
-  "harness_sha256": "bea895ceb16bbcfdf4e927781f957024e66adca031ffac85f4c764ea7b4b5b1b",
+  "harness_sha256": "dca55482cd9594ac6c9ebbb7a4154a8cec5b0c981c8fc32072a3f8ffde5a07e3",
   "all_comparisons_passed": true,
   "full_parity_verified": 0,
   "partial_parity_verified": 2,
@@ -14,13 +14,13 @@
       "coverage": "signal_and_return",
       "fixture": {
         "id": "deterministic-daily-trend-v1",
-        "sha256": "0326981e78deb9869265fa9ee3c7909ddcdc271323fc9ea5d69d7aabba50335a",
+        "sha256": "12aa314ec4d087866d8a74ff13e06d12e5ef3978c7d84c8ec36e550dcfc1b0d4",
         "rows": 180
       },
       "legacy_source": "scripts/es_nq/es_nq_backtest.py",
-      "legacy_sha256": "ff45f35bfc2ff12c0171303f59578a762db9810e750f716724b35c4480b4a728",
+      "legacy_sha256": "d4709143f4d8d918abb855a8ea52d397f6c9193d9c098754b283cc6b1f70aa7d",
       "canonical_source": "strategy_engine/strategies/trend.py",
-      "canonical_sha256": "8e8d4c061a38bcb7c42918174da521e57d33273ae1b1da7de95a47200ffa42af",
+      "canonical_sha256": "9191ea43886ec74195f305d31399076ed5a0a06ceb42f0063f12e55ec18f5521",
       "comparisons": {
         "held_direction": {
           "passed": true,
@@ -49,13 +49,13 @@
       "coverage": "signal",
       "fixture": {
         "id": "deterministic-daily-trend-v1",
-        "sha256": "0326981e78deb9869265fa9ee3c7909ddcdc271323fc9ea5d69d7aabba50335a",
+        "sha256": "12aa314ec4d087866d8a74ff13e06d12e5ef3978c7d84c8ec36e550dcfc1b0d4",
         "rows": 180
       },
       "legacy_source": "scripts/cme/cme_time_series_momentum_backtest.py",
-      "legacy_sha256": "6338c8a46aabf9b877b89af95eacc5c12528548376b3d136aef85e5d70bb116a",
+      "legacy_sha256": "10c5c8118012b410a224c611a30ba27b799a69716d703e9d2553d84ca409f4de",
       "canonical_source": "strategy_engine/strategies/trend.py",
-      "canonical_sha256": "8e8d4c061a38bcb7c42918174da521e57d33273ae1b1da7de95a47200ffa42af",
+      "canonical_sha256": "9191ea43886ec74195f305d31399076ed5a0a06ceb42f0063f12e55ec18f5521",
       "comparisons": {
         "lagged_four_horizon_score": {
           "passed": true,

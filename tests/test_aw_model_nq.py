@@ -65,6 +65,17 @@ def fixture(sweep_start='08:30'):
     return bars
 
 
+def mirrored_fixture():
+    """Reflect the short fixture around 100 to exercise the bullish inverse."""
+    bars = fixture()
+    original_high, original_low = bars.high.copy(), bars.low.copy()
+    bars['open'] = 200 - bars.open
+    bars['close'] = 200 - bars.close
+    bars['high'] = 200 - original_low
+    bars['low'] = 200 - original_high
+    return bars
+
+
 def replay_to(model, bars, stop):
     orders = []
     for i, (timestamp, row) in enumerate(bars.iterrows()):
@@ -78,6 +89,85 @@ def replay_to(model, bars, stop):
 
 
 class AWModelNQTests(unittest.TestCase):
+    def test_bias_policy_mapping_and_legacy_no_bias_alias(self):
+        self.assertEqual(aw_model_nq._allowed_sides('aligned-only', -1), (True, False))
+        self.assertEqual(aw_model_nq._allowed_sides('aligned-only', 1), (False, True))
+        self.assertEqual(aw_model_nq._allowed_sides('aligned-only', 0), (False, False))
+        self.assertEqual(aw_model_nq._allowed_sides('mixed-flex', -1), (True, False))
+        self.assertEqual(aw_model_nq._allowed_sides('mixed-flex', 1), (False, True))
+        self.assertEqual(aw_model_nq._allowed_sides('mixed-flex', 0), (True, True))
+        self.assertEqual(aw_model_nq._allowed_sides('unrestricted', -1), (True, True))
+        self.assertEqual(aw_model_nq._effective_bias_policy(params(bias_required=False)),
+                         'unrestricted')
+        self.assertEqual(aw_model_nq._effective_bias_policy(params(bias_policy='mixed-flex')),
+                         'mixed-flex')
+
+    def test_clear_bias_sweep_trade_target_mapping_in_both_directions(self):
+        day = pd.Timestamp('2024-03-12').date()
+        for bars, bias, expected_side, expected_level, expected_target in (
+                (fixture(), -1, -1, 'ONH', 95.0),
+                (mirrored_fixture(), 1, 1, 'ONL', 105.0)):
+            with self.subTest(bias=bias):
+                model = aw_model_nq.create_strategy(bars, params(), request())
+                model.days[day].bias = bias  # Frozen pre-open vote for this fixture.
+                with redirect_stdout(io.StringIO()) as output:
+                    _, trades, _ = simulate_events(bars, model, request())
+                self.assertEqual(len(trades), 1, output.getvalue())
+                entry = next(line for line in output.getvalue().splitlines()
+                             if line.startswith('AW_ENTRY '))
+                import json
+                signal = json.loads(entry[len('AW_ENTRY '):])
+                self.assertEqual(signal['bias'], bias)
+                self.assertEqual(signal['side'], expected_side)
+                self.assertEqual(signal['swept_level'], expected_level)
+                self.assertEqual(signal['target'], expected_target)
+                self.assertEqual(trades.iloc[0].exit, expected_target)
+
+    def test_mixed_policy_allows_either_reversal_only_when_vote_is_none(self):
+        day = pd.Timestamp('2024-03-12').date()
+        for bars, bias, expect_trade in (
+                (fixture(), 0, True),
+                (mirrored_fixture(), 0, True),
+                (fixture(), 1, False),
+                (mirrored_fixture(), -1, False)):
+            with self.subTest(bias=bias, mirrored=bars.close.iloc[0] < bars.open.iloc[0]):
+                model = aw_model_nq.create_strategy(bars, params(bias_policy='mixed-flex'), request())
+                model.days[day].bias = bias
+                with redirect_stdout(io.StringIO()) as output:
+                    _, trades, _ = simulate_events(bars, model, request())
+                self.assertEqual(len(trades) == 1, expect_trade, output.getvalue())
+                if expect_trade:
+                    signal = next(line for line in output.getvalue().splitlines()
+                                  if line.startswith('AW_ENTRY '))
+                    self.assertIn('"bias_policy": "mixed-flex"', signal)
+                    self.assertEqual(model.entries_today, 1)
+
+    def test_mixed_day_later_candidate_not_blocked_by_untouched_first_candidate(self):
+        bars = fixture()
+        model = aw_model_nq.create_strategy(bars, params(bias_policy='mixed-flex'), request())
+        day = pd.Timestamp('2024-03-12').date()
+        model.days[day].bias = 0
+        model._new_day(day, {'position': 0})
+        ready = pd.Timestamp('2024-03-12 08:43', tz=CT)
+        model.candidate = aw_model_nq.Candidate(
+            1, 'ONL', 95.0, 101.0, 94.0, ready - pd.Timedelta(minutes=15),
+            phase='gap', gap_low=110.0, gap_high=111.0,
+            gap_ready=ready - pd.Timedelta(minutes=3))
+        model.other_candidates = [aw_model_nq.Candidate(
+            -1, 'ONH', 101.25, 99.0, 101.75, ready - pd.Timedelta(minutes=12),
+            phase='gap', gap_low=99.25, gap_high=99.5,
+            gap_ready=ready - pd.Timedelta(minutes=1))]
+        touch = pd.Series({'open': 99.0, 'high': 99.5,
+                           'low': 98.5, 'close': 99.0})
+        with redirect_stdout(io.StringIO()):
+            order = model._entry_on_touch(touch, {'position': 0,
+                                                  'position_at_open': 0,
+                                                  'tradable': True}, ready)
+        self.assertEqual(order['target'], -1)
+        self.assertIsNone(model.candidate)
+        self.assertEqual(model.other_candidates, [])
+        self.assertEqual(model._entry_limit(), 1)
+
     def test_discovery_and_nq_one_minute_guard(self):
         spec = metadata(ROOT / 'strategies' / 'aw_model_nq.py')
         self.assertEqual(spec['id'], 'aw-model-nq')

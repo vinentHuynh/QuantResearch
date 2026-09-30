@@ -30,7 +30,7 @@ stores those inputs with the immutable strategy version and data fingerprints.
 - `strategies/` contains economic trading logic without chart paths or instrument constants.
 - `accounting.py` converts closed trades or target-position changes into normalized P&L, order, fill,
   position, closed-exposure, and session-equity ledgers.
-- `runner.py` is the common CLI used by the local FastAPI worker.
+- `runner.py` is the common CLI used by local Strategy Workbench workers.
 
 The runner writes a normalized run specification plus `signals.csv`, `orders.csv`, `fills.csv`, `positions.csv`,
 `pnl.csv`, `trades.csv`, and session-level `equity.csv`. A trade is a closed exposure episode, not a mark-to-market

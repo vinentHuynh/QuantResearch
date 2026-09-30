@@ -10,11 +10,64 @@ import numpy as np
 import pandas as pd
 
 ROOT=Path(__file__).resolve().parents[1]
-OUT=Path(os.environ.get('WORKBENCH_HOME',ROOT/'data/workbench'))/'collective'
-REPORTS=ROOT/'reports'
-FIRST=REPORTS/'all-strategies-all-charts-2026-09-16'
-EXPANDED=REPORTS/'expanded-search-2026-09-16'
-SND=REPORTS/'snd-fresh-backtest-2026-09-16'
+if str(ROOT) not in sys.path:
+    sys.path.insert(0,str(ROOT))
+
+from workbench.evidence import EvidenceCampaign,EvidenceRegistry,EvidenceRegistryError
+from workbench.dataset_reference import resolve_dataset_path
+from workbench.layout import load_layout
+
+def state_root():
+    configured=os.environ.get('WORKBENCH_HOME')
+    return Path(configured).expanduser().resolve() if configured else load_layout(ROOT).state_root
+
+OUT=state_root()/'collective'
+COLLECTIVE_CAMPAIGNS=(
+    'all-strategies-all-charts-2026-09-16',
+    'expanded-search-2026-09-16',
+    'snd-fresh-backtest-2026-09-16',
+    'combined-es-nq-refresh-2026-09-29',
+)
+_EVIDENCE_CAMPAIGNS:dict[str,EvidenceCampaign]|None=None
+# Retain the old module-level campaign constants as an explicit test-injection
+# seam for one compatibility release. Normal CLI execution leaves them unset
+# and must pass the tracked registry checks below.
+FIRST:Path|None=None
+EXPANDED:Path|None=None
+SND:Path|None=None
+REFRESH:Path|None=None
+
+def _compat_campaign(campaign_id,path):
+    root=Path(path)
+    return EvidenceCampaign(campaign_id,1,root,root/'PLAN.json',root/'REPORT.md',('collective-catalog',),())
+
+def _using_compat_overrides():
+    return any(path is not None for path in (FIRST,EXPANDED,SND,REFRESH))
+
+def configure_evidence():
+    """Resolve and verify all evidence required for a complete catalog build."""
+    global _EVIDENCE_CAMPAIGNS
+    if _using_compat_overrides():
+        if any(path is None for path in (FIRST,EXPANDED,SND)):
+            raise EvidenceRegistryError('FIRST, EXPANDED and SND overrides must be provided together')
+        refresh=REFRESH if REFRESH is not None else ROOT/'__missing-test-refresh__'
+        return {
+            COLLECTIVE_CAMPAIGNS[0]:_compat_campaign(COLLECTIVE_CAMPAIGNS[0],FIRST),
+            COLLECTIVE_CAMPAIGNS[1]:_compat_campaign(COLLECTIVE_CAMPAIGNS[1],EXPANDED),
+            COLLECTIVE_CAMPAIGNS[2]:_compat_campaign(COLLECTIVE_CAMPAIGNS[2],SND),
+            COLLECTIVE_CAMPAIGNS[3]:_compat_campaign(COLLECTIVE_CAMPAIGNS[3],refresh),
+        }
+    if _EVIDENCE_CAMPAIGNS is None:
+        registry=EvidenceRegistry(ROOT)
+        loaded={}
+        for campaign_id in COLLECTIVE_CAMPAIGNS:
+            loaded[campaign_id]=registry.campaign(campaign_id,consumer='collective-catalog')
+        _EVIDENCE_CAMPAIGNS=loaded
+    return _EVIDENCE_CAMPAIGNS
+
+def evidence_campaign(campaign_id):
+    return configure_evidence()[campaign_id]
+
 REFRESH_IDS={
     '72475d93c4667b888c79',  # ES Pine overnight block
     'f24587940b6c8c81c877',  # ES Globex overnight
@@ -23,11 +76,29 @@ REFRESH_IDS={
     '35b4fda895bf8ed0435c',  # NQ minute reversal
 }
 def read(p):return json.loads(Path(p).read_text(encoding='utf-8'))
+def decode_sqlite_record(kind,record_id,raw):
+    """Read protocol-v1 rows and validate protocol-v2 record envelopes."""
+    value=json.loads(raw)
+    if (isinstance(value,dict) and value.get('schema_version')==2
+            and ('kind' in value or 'body' in value)):
+        if (set(value)!={'schema_version','kind','id','body'}
+                or not isinstance(value.get('kind'),str)
+                or value.get('kind')!=kind
+                or not isinstance(value.get('id'),str)
+                or value.get('id')!=record_id
+                or not isinstance(value.get('body'),dict)):
+            raise ValueError(f'Invalid protocol-v2 SQLite envelope for {kind}/{record_id}')
+        return value['body']
+    if not isinstance(value,dict):
+        raise ValueError(f'Invalid protocol-v1 SQLite record for {kind}/{record_id}')
+    return value
 def sha(p):
     h=hashlib.sha256()
     with Path(p).open('rb') as f:
         for block in iter(lambda:f.read(1024*1024),b''):h.update(block)
     return h.hexdigest()
+def dataset_file(record):
+    return resolve_dataset_path(record,state_root())
 def dump(p,obj):
     text=json.dumps(obj,allow_nan=False,separators=(',',':'))
     tmp=Path(str(p)+'.tmp');tmp.write_text(text,encoding='utf-8');tmp.replace(p)
@@ -68,7 +139,7 @@ def daily(equity,capital=100000):
     return {d.strftime('%Y-%m-%d'):round(float(v),8) for d,v in p.items()}
 
 def canonical_run(run_id):
-    f=Path(os.environ.get('WORKBENCH_HOME',ROOT/'data/workbench'))/'runs'/run_id
+    f=state_root()/'runs'/run_id
     manifest=verified(f,['trades.csv','equity.csv']);inp=read(f/'input.json')
     t=pd.read_csv(f/'trades.csv');e=pd.read_csv(f/'equity.csv')
     assert abs(t.net_pnl.sum()-manifest['metrics']['net_pnl'])<.01
@@ -89,13 +160,15 @@ def canonical_run(run_id):
 PRICE_CACHE={}
 def market_closes(symbol):
     if symbol not in PRICE_CACHE:
-        inv=read(FIRST/'inventory.json');d=next(x for x in inv['datasets'] if x['symbol']==symbol)
+        first=evidence_campaign('all-strategies-all-charts-2026-09-16').root
+        inv=read(first/'inventory.json');d=next(x for x in inv['datasets'] if x['symbol']==symbol)
         p=Path(d['path']);assert sha(p)==d['checksum']
         bars=pd.read_parquet(p,columns=['close']);idx=pd.to_datetime(bars.index,utc=True)+pd.Timedelta(minutes=1)
         PRICE_CACHE[symbol]=pd.Series(bars.close.to_numpy(),index=idx).groupby(idx.floor('D')).last()
     return PRICE_CACHE[symbol]
 def expanded_run(r):
-    f=EXPANDED/'runs'/r['run'];verified(f,['trades.csv','equity.csv','result.json']);t=pd.read_csv(f/'trades.csv')
+    expanded=evidence_campaign('expanded-search-2026-09-16').root
+    f=expanded/'runs'/r['run'];verified(f,['trades.csv','equity.csv','result.json']);t=pd.read_csv(f/'trades.csv')
     assert abs(t.net_pnl.sum()-r['net_pnl'])<.01
     # Reconstruct UTC daily open equity from the recorded positions and source closes.
     prices=market_closes(r['symbol']).loc[r['start']:r['end']]
@@ -118,9 +191,10 @@ def expanded_run(r):
 
 def refresh_extensions():
     """Load the five completed replays together, never a partial portfolio refresh."""
-    folder=ROOT/'reports/combined-es-nq-refresh-2026-09-29'
-    files=sorted(folder.rglob('extension.json')) if folder.exists() else []
-    if not files:return {}
+    folder=evidence_campaign('combined-es-nq-refresh-2026-09-29').root
+    if _using_compat_overrides() and not folder.exists():return {}
+    files=sorted(folder.rglob('extension.json'))
+    if not files:raise ValueError(f'ES/NQ portfolio refresh contains no extensions: {folder}')
     found={}
     for path in files:
         extension=read(path);identity=extension['catalog_id']
@@ -130,7 +204,7 @@ def refresh_extensions():
         found[identity]=extension
     if set(found)!=REFRESH_IDS:
         raise ValueError(f'Incomplete ES/NQ portfolio refresh: missing {sorted(REFRESH_IDS-set(found))}')
-    datasets=read(ROOT/'data/workbench/datasets/catalog.json')['datasets']
+    datasets=read(state_root()/'datasets/catalog.json')['datasets']
     by_id={dataset['id']:dataset for dataset in datasets}
     checked=set()
     for identity,extension in found.items():
@@ -138,7 +212,7 @@ def refresh_extensions():
         if dataset['checksum']!=extension['dataset_checksum']:
             raise ValueError(f'Portfolio extension dataset checksum changed: {identity}')
         if dataset['id'] not in checked:
-            if sha(dataset['path'])!=dataset['checksum']:
+            if sha(dataset_file(dataset))!=dataset['checksum']:
                 raise ValueError(f'Portfolio extension dataset file changed: {dataset["id"]}')
             checked.add(dataset['id'])
     return found
@@ -191,10 +265,19 @@ def extend_segments(segments, extension):
     return ordered
 
 def main():
+    try:
+        campaigns=configure_evidence()
+    except EvidenceRegistryError as ex:
+        print(json.dumps({'error':'Evidence registry validation failed','detail':str(ex)},indent=2),file=sys.stderr)
+        raise SystemExit(2)
+    first=campaigns['all-strategies-all-charts-2026-09-16'].root
+    expanded=campaigns['expanded-search-2026-09-16'].root
+    snd=campaigns['snd-fresh-backtest-2026-09-16'].root
+    refresh=campaigns['combined-es-nq-refresh-2026-09-29'].root
     OUT.mkdir(parents=True,exist_ok=True);items=[];errors=[];sources=[]
     extensions=refresh_extensions()
     if extensions:
-        sources.append({'name':'ES/NQ September replay','path':str(ROOT/'reports/combined-es-nq-refresh-2026-09-29'),'checksums':{identity:sha(extension['_file']) for identity,extension in extensions.items()}})
+        sources.append({'name':'ES/NQ September replay','path':str(refresh),'checksums':{identity:sha(extension['_file']) for identity,extension in extensions.items()}})
     def save(key,name,symbol,tf,session,source,segments,working=False,feasible=False,reasons=None,benchmark=False,parameters=None,capital=100000):
         trades=[];marks={};coverage=[];mark_metadata={}
         identity=hashlib.sha256((source+'|'+key).encode()).hexdigest()[:20]
@@ -224,8 +307,8 @@ def main():
         notes=[*(reasons or [])]
         if extension:notes.append('September 2026 extension is an exploratory replay on newer ES/NQ data; earlier evaluation status does not validate the new period.')
         items.append({'id':identity,'key':key,'name':name,'symbol':symbol,'timeframe':tf,'session':session,'source':source,'start':coverage[0]['start'],'end':coverage[-1]['end'],'coverage':coverage,'capital':capital,'working':bool(working and not benchmark),'feasible':bool(feasible and not benchmark),'benchmark':benchmark,'tested':bool(coverage[-1]['end']>='2026-08-31'),'reasons':notes,'parameters':parameters or {},'net_pnl':round(sum(marks.values()),6),'recent_pnl':round(recent,6),'trades':len(trades),'series_file':filename,'checksum':checksum,**({'latest_replay':{'start':extension['start'],'end':extension['end'],'dataset_id':extension['dataset_id'],'extension_sha256':sha(extension['_file'])}} if extension else {})})
-    if (FIRST/'report-data.json').exists():
-        report=read(FIRST/'report-data.json');sources.append({'name':'Workbench campaign','path':str(FIRST/'report-data.json'),'checksum':sha(FIRST/'report-data.json')})
+    if (first/'report-data.json').exists():
+        report=read(first/'report-data.json');sources.append({'name':'Workbench campaign','path':str(first/'report-data.json'),'checksum':sha(first/'report-data.json')})
         follow={r['key']:r for r in report['followups']}
         names={r['id']:r['name'] for r in report['overview']}
         for r in report['screen']:
@@ -243,9 +326,9 @@ def main():
                 if feasible:reasons.append('Later base, cost and delayed-execution scenarios plus nearby parameter checks passed; small samples and roll/margin assumptions still apply.')
                 save(key,names.get(r['strategy'],r['strategy']),r['symbol'],r['timeframe'],r['session'],'Workbench',segments,working,feasible,reasons,r['strategy']=='buy-hold',r['parameters'])
             except Exception as ex:errors.append({'key':key,'error':str(ex)})
-    if (EXPANDED/'screen-results.json').exists():
-        conclusions={r['key']:r for r in read(EXPANDED/'conclusions.json')};later=read(EXPANDED/'follow-results.json');sources.append({'name':'Expanded search','path':str(EXPANDED/'conclusions.json'),'checksum':sha(EXPANDED/'conclusions.json')})
-        for r in read(EXPANDED/'screen-results.json'):
+    if (expanded/'screen-results.json').exists():
+        conclusions={r['key']:r for r in read(expanded/'conclusions.json')};later=read(expanded/'follow-results.json');sources.append({'name':'Expanded search','path':str(expanded/'conclusions.json'),'checksum':sha(expanded/'conclusions.json')})
+        for r in read(expanded/'screen-results.json'):
             try:
                 segments=[];c=conclusions.get(r['key'])
                 for q in [r]+sorted([x for x in later if x['key']==r['key'] and x['scenario']=='baseline'],key=lambda x:x['start']):
@@ -257,13 +340,13 @@ def main():
                 # No full parameter-sensitivity campaign was performed for these rules.
                 save(r['key'],r['strategy'].replace('-',' ').title(),r['symbol'],r['timeframe'],r['session'],'Expanded',segments,working,False,reasons)
             except Exception as ex:errors.append({'key':r['key'],'error':str(ex)})
-    if (SND/'results.json').exists():
-        decisions={(r['symbol'],r['variant']):r for r in read(SND/'decisions.json')};sources.append({'name':'Fresh SND','path':str(SND/'results.json'),'checksum':sha(SND/'results.json')})
+    if (snd/'results.json').exists():
+        decisions={(r['symbol'],r['variant']):r for r in read(snd/'decisions.json')};sources.append({'name':'Fresh SND','path':str(snd/'results.json'),'checksum':sha(snd/'results.json')})
         labels={'original_multi_tf':'SND original','phase6':'SND Phase 6','phase7_prior_1m':'SND prior-1m RVOL','phase7_prior_5m':'SND prior-5m RVOL'}
-        for r in read(SND/'results.json'):
+        for r in read(snd/'results.json'):
             if r['execution']!='next_open':continue
             try:
-                f=SND/'runs'/f"{r['symbol']}__{r['variant']}__next_open";verified(f,['trades.parquet','daily-equity.csv','result.json'])
+                f=snd/'runs'/f"{r['symbol']}__{r['variant']}__next_open";verified(f,['trades.parquet','daily-equity.csv','result.json'])
                 t=pd.read_parquet(f/'trades.parquet');e=pd.read_csv(f/'daily-equity.csv',index_col=0);e.index=pd.to_datetime(e.index,utc=True)
                 marks=daily(100000+e.pnl);start='2019-05-06' if r['symbol']=='MNQ' else '2018-01-01';end='2026-08-31'
                 t=t[(t.exit_time>=pd.Timestamp(start,tz='UTC'))&(t.exit_time<pd.Timestamp('2026-09-01',tz='UTC'))]
@@ -276,7 +359,7 @@ def main():
     market_data_through={}
     if database.exists():
         with sqlite3.connect(database.resolve().as_uri()+'?mode=ro',uri=True) as connection:
-            records=[(kind,json.loads(body)) for kind,body in connection.execute('SELECT kind,body FROM records')]
+            records=[(kind,decode_sqlite_record(kind,record_id,body)) for kind,record_id,body in connection.execute('SELECT kind,id,body FROM records')]
         connection.close()
         for kind,record in records:
             if kind=='dataset' and record.get('last'):
@@ -284,8 +367,8 @@ def main():
         runs={r['id']:r for kind,r in records if kind=='run'}
         evaluations={r['id']:r for kind,r in records if kind=='evaluation'}
         known=set()
-        if (FIRST/'terminal-runs.json').exists():
-            terminal=read(FIRST/'terminal-runs.json')
+        if (first/'terminal-runs.json').exists():
+            terminal=read(first/'terminal-runs.json')
             known={r['id'] for r in terminal} if isinstance(terminal,list) else set(terminal)
         groups={}
         for r in runs.values():

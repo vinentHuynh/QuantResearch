@@ -1,6 +1,13 @@
 """Native workbench adapter for the source-derived SND research variants."""
 
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': [
+        'strategies/snd.py',
+        'strategies/_snd_model.py',
+        'scripts/mnq/SND_baseline_backtest.py',
+        'scripts/mnq/build_mnq_timeframes.py',
+    ],
     'id': 'snd', 'name': 'SND - Supply and demand', 'version': '1.0.0',
     'execution_model': 'event-v1', 'timeframes': ['1m'],
     'default_session': 'full-trading-day', 'required_session': 'full-trading-day',

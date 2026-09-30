@@ -1,0 +1,44 @@
+{
+  "schema_version": 2,
+  "campaign_id": "expanded-search-2026-09-16",
+  "created_at": "2026-09-16T00:00:00Z",
+  "protocol_path": "research/expanded-search-2026-09-16/PLAN.json",
+  "summary_paths": [
+    "research/expanded-search-2026-09-16/REPORT.md"
+  ],
+  "artifacts": [
+    {
+      "role": "protocol",
+      "relative_path": "research/expanded-search-2026-09-16/PLAN.json",
+      "bytes": 46434,
+      "sha256": "36afaec3788f35e445a74c2e76b46ade9213073e73bd960365850e1e1442640d"
+    },
+    {
+      "role": "summary",
+      "relative_path": "research/expanded-search-2026-09-16/REPORT.md",
+      "bytes": 16601,
+      "sha256": "7e1ce084e160a7b2ec7ad11d7dd873dc83499b4c835d746965f7b3a16c3a3cf0"
+    },
+    {
+      "role": "conclusions",
+      "relative_path": "research/expanded-search-2026-09-16/conclusions.json",
+      "bytes": 85056,
+      "sha256": "83e220ee80ad39d863caa9b6054d9ed6e1130500adf8d5c543f02f2878f37f72"
+    },
+    {
+      "role": "screen-results",
+      "relative_path": "research/expanded-search-2026-09-16/screen-results.json",
+      "bytes": 184524,
+      "sha256": "9798e9d9748e7fa94e0794d5ea5cb6caffd0263d7dc1cd92652c47895cd731b4"
+    },
+    {
+      "role": "follow-results",
+      "relative_path": "research/expanded-search-2026-09-16/follow-results.json",
+      "bytes": 46446,
+      "sha256": "3c460f0fdddbf45dacf6e76c3cba87570614d132e83da22e4a44cd2eb1dabf35"
+    }
+  ],
+  "consumers": [
+    "collective-catalog"
+  ]
+}

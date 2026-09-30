@@ -22,7 +22,7 @@ the platform's virtual environment automatically.
 support/resistance using shared causal outcomes, matched controls and a frozen
 60/20/20 chronological protocol. It includes visual detection review, clustered
 uncertainty, complete event exports and replication on another instrument.
-See [EVENT_STUDIES.md](EVENT_STUDIES.md) for definitions, lifecycle and checks.
+See [the event-study guide](docs/workbench/EVENT_STUDIES.md) for definitions, lifecycle and checks.
 
 1. **Datasets → Import data ZIPs** (sidebar, Sources) scans `data/` recursively. The supplied NQ,
    ES, YM, and CL Databento archives have already been registered locally.
@@ -30,9 +30,9 @@ See [EVENT_STUDIES.md](EVENT_STUDIES.md) for definitions, lifecycle and checks.
    version; replacing an archive creates a new version.
 2. **Scripts & library → Configure run** (or **New run** on any page)
    selects a discovered strategy. New run is a four-step flow: script &
-   dataset, parameters, assumptions & record, preview & launch. Nine adapters are
-   included: five signal strategies and four Pine event strategies. Their cards
-   and run results state the migration scope; see [PINE_AUDIT.md](PINE_AUDIT.md).
+   dataset, parameters, assumptions & record, preview & launch. Seventeen adapters
+   form the tracked baseline; discovery also includes local adapters. Their cards
+   and run results state the migration scope; see [the Pine audit](docs/workbench/PINE_AUDIT.md).
 3. Select a dataset version, timeframe, session, UTC date interval, parameters,
    capital, fees, slippage, and warmup. Every resolved default is saved.
 4. For a grid, select additional dataset versions/timeframes and enter parameter
@@ -52,24 +52,24 @@ never inspected that data; evaluation outcomes remain a research judgment.
 ## Add a strategy automatically
 
 The closing-window momentum adapter is documented in
-[MARKET_INTRADAY_MOMENTUM.md](MARKET_INTRADAY_MOMENTUM.md). It includes the
+[the intraday-momentum research note](docs/research/MARKET_INTRADAY_MOMENTUM.md). It includes the
 Baltussen rest-of-day and Gao opening-half-hour signals, scheduled intraday
 execution, market presets, and a reproducible 28-case historical regression
 campaign for ES, NQ, MNQ and CL.
 
 ### Existing Python strategies
 
-**Scripts & library → Library** indexes 91 original Python sources
-and 17 Pine sources, grouped by family and role. Search by filename,
+**Scripts & library → Library** indexes 150 Python sources
+and 21 Pine sources (171 total), grouped by family and role. Search by filename,
 description, or function; inspect original Python, command-line declarations,
 requirements, and links to signal adapters. Discovery parses source without
 importing or running it. Original files remain in place to preserve sibling imports.
 
-[STRATEGY_LIBRARY.md](STRATEGY_LIBRARY.md) contains the exportable inventory.
+[The strategy library](docs/workbench/STRATEGY_LIBRARY.md) contains the exportable inventory.
 Regenerate it with:
 
 ```powershell
-.venv/Scripts/python.exe -m workbench.library --output STRATEGY_LIBRARY.md
+.venv/Scripts/python.exe -m workbench.library --output docs/workbench/STRATEGY_LIBRARY.md
 ```
 
 Catalogued does not mean executable in the new runner. Unported intrabar rules,
@@ -169,7 +169,9 @@ Validation commands: `npm run test:library` checks inventory coverage, source
 discovery, indicator parity, and causality. `npm run test:library-browser` exercises
 source inspection, adapter forms, and real-data runs for the five signal adapters.
 `npm run test:pine` and `npm run test:pine-browser` cover the four Pine event ports.
-Screenshots and run IDs are saved in `reports/workbench-validation/`.
+Screenshots and run IDs are saved below
+`$env:WORKBENCH_ARTIFACTS/workbench-validation/` (default
+`artifacts/workbench-validation/`).
 
 The metadata must be a **literal** Python dictionary so the catalog can inspect
 it without running your code. Fields support `integer`, `number`, `boolean`,
@@ -192,15 +194,16 @@ Series with the **same index**, containing signed whole-contract targets in
 [-100, 100]. Zero means flat. Use only completed, available observations.
 The runner shifts decisions to the next bar open; do not shift them yourself.
 
-Local helpers under `strategies/`, `strategy_engine/`, `workbench/`, and
-`scripts/` are snapshotted. Keep imports inside those areas or installed Python
-packages. Pass data through `bars` rather than hard-coding mutable dataset
+Each snapshot contains the selected adapter, its declared `source_files`, and the
+fixed workbench runtime needed to execute it. Declare every execution dependency;
+unrelated UI and research files do not affect execution identity. Pass data through
+`bars` rather than hard-coding mutable dataset
 paths. Existing scripts need a small adapter exposing their signal calculation;
 the app cannot infer the execution semantics of an arbitrary legacy script.
 The signal template supports target-position strategies with full equity.
 The Pine ports use `execution_model: 'event-v1'` and
 `create_strategy(bars, parameters, request)` for close/next-open decisions and
-working brackets. See [PINE_AUDIT.md](PINE_AUDIT.md) and the port modules for that
+working brackets. See [the Pine audit](docs/workbench/PINE_AUDIT.md) and the port modules for that
 contract. Summary-only imports and multi-leg accounting are not implemented.
 
 ## Accounting and comparisons
@@ -214,7 +217,7 @@ Research evaluation previews still travel in the summary; pagination and loading
 those previews on demand remain future scaling work.
 
 The following describes the signal runner. Pine event fills, sizing, bracket
-costs, and comparison/evaluation limits are specified in [PINE_AUDIT.md](PINE_AUDIT.md).
+costs, and comparison/evaluation limits are specified in [the Pine audit](docs/workbench/PINE_AUDIT.md).
 
 - Fixed whole contracts, USD, no cash flows or funding. There is no broker,
   margin, or liquidation simulation. Negative equity remains visible; undefined
@@ -266,7 +269,7 @@ fold's threshold is calibrated on training data, and preceding-bar features
 classify subsequent outcomes. Reports include episodes, P&L, costs, exposure,
 and seeded episode-bootstrap intervals where the sample supports them.
 
-See [PHASES_4_5.md](PHASES_4_5.md) for definitions, limits, usage, and validation.
+See [the evaluation and regime implementation notes](docs/workbench/PHASES_4_5.md) for definitions, limits, usage, and validation.
 
 ## Storage, replay, and backup
 
@@ -295,15 +298,18 @@ Trusted scripts run with the local user's privileges; this is not a sandbox.
 
 For a consistent backup, stop the app, copy **all of `data/workbench/` together**,
 and retain the project and matching Python environment. Restore to the same
-absolute workspace path: stored paths are absolute. Evidence JSON exports include
-source and environment metadata, but **do not include the large datasets** and
-are not complete backups. Portable restore/path relocation is not automated.
+absolute workspace path when protocol-v1 runs are present: those historical
+records retain their original absolute paths. Protocol-v2 records use logical
+dataset and snapshot references resolved below `WORKBENCH_HOME`; existing v1
+rows are never rewritten during restore. Evidence JSON exports include source
+and environment metadata, but **do not include the large datasets** and are not
+complete backups.
 
 Configuration environment variables: `WORKBENCH_PYTHON`, `WORKBENCH_HOME`,
-`WORKBENCH_PORT` (8001), `WORKBENCH_CONCURRENCY` (2, at most 8), and
-`WORKBENCH_MAX_BATCH` (24, at most 100). Change the Vite proxy too if changing
-the API port during development. Workers receive a minimal environment rather
-than inheriting API credentials.
+`WORKBENCH_ARTIFACTS` (defaults to `<repo>/artifacts`), `WORKBENCH_PORT` (8001),
+`WORKBENCH_CONCURRENCY` (2, at most 8), and `WORKBENCH_MAX_BATCH` (24, at most
+100). Change the Vite proxy too if changing the API port during development.
+Workers receive a minimal environment rather than inheriting API credentials.
 
 ## Dataset limitations
 
@@ -362,8 +368,9 @@ are not state-only backtests. The page shows test dates and newer available data
 and makes no live-market or portfolio-allocation claim.
 
 Validate with `npm run test:dashboard`, then `npm run test:dashboard-browser`
-with the app running. Browser checks and screenshots are saved under
-`reports/workbench-validation/dashboard-*`.
+with the app running. Browser checks and screenshots are saved below
+`$env:WORKBENCH_ARTIFACTS/workbench-validation/dashboard-*` (default
+`artifacts/workbench-validation/dashboard-*`).
 
 ## Removing obsolete runs
 
@@ -376,10 +383,14 @@ deletion preview.
 
 Deletion retains the removed records and artifacts in
 `data/workbench/deleted/<deletion-id>/`. This is a local recovery archive; there
-is no automatic restore button. Datasets, source snapshots, presets, and saved
-views remain available. Partially deleted experiments retain their original
-attempt count. Keep losing optimization trials: deleting them would hide how
-many candidates were tried.
+is no automatic restore button. Recover an untouched archive with
+`POST /api/workbench/runs/restore` and body
+`{"deletion_id":"<deletion-id>"}`. Recovery refuses record, artifact, or
+post-deletion experiment conflicts and restores byte-exact SQLite bodies from
+new archives. Datasets, source snapshots, presets, and saved views remain
+available. Partially deleted experiments retain their original attempt count.
+Keep losing optimization trials: deleting them would hide how many candidates
+were tried.
 
 ## Declared optimization campaign
 
@@ -401,7 +412,7 @@ when launched. To replay the preserved historical code and inputs, open the
 original run and choose **Rerun identical inputs**.
 
 Plan, exact selections, run IDs, results, and browser screenshots are saved in
-[`reports/strategy-optimization-2022-2024/`](reports/strategy-optimization-2022-2024/).
+[`artifacts/research/strategy-optimization-2022-2024/`](artifacts/research/strategy-optimization-2022-2024/).
 
 ## Validation commands
 
@@ -418,11 +429,12 @@ npm run test:browser
 Lifecycle tests use isolated synthetic datasets and temporarily register a
 test script. Browser tests use the real registered ZIP datasets and preserve
 their validation experiments in the app. Screenshots and machine-readable
-results go to `reports/workbench-validation/` (ignored by Git).
+results go below `$env:WORKBENCH_ARTIFACTS/workbench-validation/` (default
+`artifacts/workbench-validation/`, ignored by Git).
 
-The old dashboard's modules remain in the repository. `npm test` also runs its
-legacy suite, which currently has unrelated portability, missing legacy data,
-and stale stored-parity failures; see `WORKBENCH_IMPLEMENTATION.md`.
+The old dashboard's modules and legacy-only tests are preserved under
+`legacy/previous-dashboard/` as source-only reference material. They are not
+part of the active build, lint, or default Python test discovery.
 
 Prospective paper trading, optional portfolio allocation, and brokerage execution
 remain later integrations. Current regime investigations are historical research.
@@ -433,8 +445,8 @@ The dashboard now includes the frozen January–August 2026 NQ evaluations for a
 nine strategies, with cost/delay checks and 18 regime studies. September 1–3 is
 kept in separate baseline runs because it is only a partial month.
 
-Read [the 2026 findings](reports/strategy-potential-2026/OVERVIEW.md) and
-[ORB exit analysis](reports/strategy-potential-2026/ORB_EXITS.md). The exit audit
+Read [the 2026 findings](artifacts/research/strategy-potential-2026/OVERVIEW.md) and
+[ORB exit analysis](artifacts/research/strategy-potential-2026/ORB_EXITS.md). The exit audit
 found overnight carries when no bars existed in the configured flattening window;
 the historical strategy rules were preserved, and session-end handling remains
 an implementation issue to address before treating ORB as strictly intraday.

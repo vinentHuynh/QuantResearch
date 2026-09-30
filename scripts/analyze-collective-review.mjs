@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { calculatePortfolio, defaultPolicy } from "../src/collectiveModel.ts";
+import { calculatePortfolio, defaultPolicy } from "../shared/ts/portfolio.ts";
 
 const folder = "reports/workbench-review-2026-09-16";
 const catalog = JSON.parse(

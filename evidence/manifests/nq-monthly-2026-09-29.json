@@ -1,0 +1,50 @@
+{
+  "schema_version": 2,
+  "campaign_id": "nq-monthly-2026-09-29",
+  "created_at": "2026-09-29T00:00:00Z",
+  "protocol_path": "research/nq-monthly-2026-09-29/campaign.json",
+  "summary_paths": [
+    "research/nq-monthly-2026-09-29/REPORT.md"
+  ],
+  "artifacts": [
+    {
+      "role": "protocol",
+      "relative_path": "research/nq-monthly-2026-09-29/campaign.json",
+      "bytes": 28903,
+      "sha256": "eac0e27e92f9273927fcd2d4169ecfd018b9f3cf42d1f74386258120261e44e6"
+    },
+    {
+      "role": "summary",
+      "relative_path": "research/nq-monthly-2026-09-29/REPORT.md",
+      "bytes": 19116,
+      "sha256": "8ffda8afee4b4b4082c6b91ff8f7e2eb91b9fe2d6dadced1a14bab64f24f5e6c"
+    },
+    {
+      "role": "app-data",
+      "relative_path": "research/nq-monthly-2026-09-29/app-data.json",
+      "bytes": 16425,
+      "sha256": "5b54bfb06a99002ff435e6e2857d80a54f69597ae29b985f33d16124aada9faf"
+    },
+    {
+      "role": "monthly-pnl",
+      "relative_path": "research/nq-monthly-2026-09-29/monthly-pnl.csv",
+      "bytes": 3664,
+      "sha256": "62284f1767385385a48e8368e9a6e889c0c9cc3c077fc9d12088ff37bc8f3bf3"
+    },
+    {
+      "role": "report-data",
+      "relative_path": "research/nq-monthly-2026-09-29/report.csv",
+      "bytes": 15302,
+      "sha256": "41ad1b8c39a58758279473236a98c3487f37f1d7282535707e791483bdcbfbcd"
+    },
+    {
+      "role": "monthly-heatmap",
+      "relative_path": "research/nq-monthly-2026-09-29/monthly-heatmap.png",
+      "bytes": 275939,
+      "sha256": "5a45a971289caf0ce8b1b60e68d6ef0f5601a391b7dbc9c6f3604146877eda49"
+    }
+  ],
+  "consumers": [
+    "workbench-nq-monthly-api"
+  ]
+}

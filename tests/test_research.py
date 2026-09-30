@@ -1,3 +1,5 @@
+import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,12 +8,46 @@ import numpy as np
 import pandas as pd
 
 from workbench.contract import checksum
-from workbench.research import assign_states, episode_summary, stitch, evaluate, entry_bar_indices
+from workbench.research import assign_states, episode_summary, stitch, evaluate, entry_bar_indices, main, resolve_source_snapshot
 from unittest.mock import patch
 from workbench.worker import simulate
 
 
 class ResearchTests(unittest.TestCase):
+    def test_logical_protocol_v2_source_snapshot_resolves_from_workbench_home(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory) / 'state'
+            snapshot = home / 'sources' / 'fixture'
+            snapshot.mkdir(parents=True)
+            (snapshot / 'environment.json').write_text(
+                json.dumps({'dependencies': []}), encoding='utf-8'
+            )
+            (snapshot / 'sources.json').write_text('{}', encoding='utf-8')
+            folder = home / 'evaluations' / 'fixture'
+            folder.mkdir(parents=True)
+            request = folder / 'request.json'
+            request.write_text(json.dumps({
+                'evaluation': {
+                    'source_dir': 'sources/fixture',
+                    'source_snapshot': 'sources/fixture',
+                },
+                'runs': [],
+            }), encoding='utf-8')
+            self.assertEqual(
+                resolve_source_snapshot({'source_dir': 'sources/fixture'}, home),
+                snapshot,
+            )
+            with (
+                patch.dict(os.environ, {'WORKBENCH_HOME': str(home)}),
+                patch('workbench.supervision.monitor_lease'),
+                patch('workbench.research.evaluate', return_value={'outcome': 'Meets criteria'}),
+            ):
+                main('evaluations', request)
+            self.assertEqual(
+                json.loads((folder / 'result.json').read_text(encoding='utf-8')),
+                {'outcome': 'Meets criteria'},
+            )
+
     def test_event_entry_at_close_stays_in_its_execution_bar(self):
         times = pd.date_range('2025-01-02 15:00', periods=3, freq='5min', tz='UTC')
         event = pd.DataFrame({'entry_time': [times[0], times[0]], 'entry_bar_close': [times[0], times[1]]})

@@ -1,0 +1,213 @@
+{
+  "status": "verified",
+  "generated_at": "2026-09-29T19:20:00.199316+00:00",
+  "market_data_through": {
+    "ES": "2026-09-29T10:59:00+00:00",
+    "NQ": "2026-09-29T09:17:00+00:00"
+  },
+  "es_nq_common_window": {
+    "start": "2020-09-05",
+    "end": "2026-09-28"
+  },
+  "seven_book_common_window": {
+    "start": "2021-09-02",
+    "end": "2026-08-31"
+  },
+  "es_nq_2024_to_latest": {
+    "start": "2024-01-01",
+    "end": "2026-09-28",
+    "net_pnl": 506515,
+    "max_drawdown_dollars": 56322.5,
+    "recovery_factor": 8.993119978694127,
+    "capital": 100000
+  },
+  "es_nq_september": {
+    "start": "2026-09-01",
+    "end": "2026-09-28",
+    "net_pnl": 10813.75,
+    "by_sleeve": [
+      {
+        "id": "72475d93c4667b888c79",
+        "name": "Pine \u00c2\u00b7 Overnight block",
+        "symbol": "ES",
+        "pnl": 3150,
+        "trades": 20
+      },
+      {
+        "id": "f24587940b6c8c81c877",
+        "name": "Overnight Session",
+        "symbol": "ES",
+        "pnl": 2900,
+        "trades": 20
+      },
+      {
+        "id": "0c4b6e885c9223b5373f",
+        "name": "Pine \u00c2\u00b7 TSMOM intraday ORB",
+        "symbol": "NQ",
+        "pnl": -1392.5,
+        "trades": 3
+      },
+      {
+        "id": "3b3d1cfec7aac292801c",
+        "name": "Overnight Session",
+        "symbol": "NQ",
+        "pnl": 2766.25,
+        "trades": 20
+      },
+      {
+        "id": "35b4fda895bf8ed0435c",
+        "name": "Short-term reversal - minute execution",
+        "symbol": "NQ",
+        "pnl": 3390,
+        "trades": 1
+      }
+    ],
+    "last_day": {
+      "date": "2026-09-28",
+      "pnl": -6741.25,
+      "baseline": -6741.25,
+      "cumulative": 10813.75,
+      "baselineCumulative": 10813.75,
+      "equity": 110813.75,
+      "drawdown": -0.09847051884394009,
+      "trades": 3,
+      "bySymbol": {
+        "ES": -1580,
+        "NQ": -5161.25
+      },
+      "byStrategy": {
+        "72475d93c4667b888c79": -640,
+        "f24587940b6c8c81c877": -940,
+        "0c4b6e885c9223b5373f": 0,
+        "3b3d1cfec7aac292801c": -5161.25,
+        "35b4fda895bf8ed0435c": 0
+      }
+    }
+  },
+  "seven_book_2024_to_august": {
+    "start": "2024-01-01",
+    "end": "2026-08-31",
+    "net_pnl": 534633.75,
+    "capital": 100000
+  },
+  "sleeves": [
+    {
+      "id": "72475d93c4667b888c79",
+      "symbol": "ES",
+      "name": "Pine \u00c2\u00b7 Overnight block",
+      "prior_end": "2026-08-31",
+      "new_end": "2026-09-29",
+      "working": true,
+      "latest_replay": {
+        "start": "2026-09-01",
+        "end": "2026-09-29",
+        "dataset_id": "1080435cff09b12010922b0eabec55edb424380a67a10c35eeff7c1955326161-v1",
+        "extension_sha256": "2fd9688f61282392c1662b012749c6d5f89c854d121d8da8920d94dc141c544a"
+      },
+      "checksum": "4d66c8fb38928d497d043a8ab0efddc1bdc1edb90a3ed45e3b17d528465454a7"
+    },
+    {
+      "id": "f24587940b6c8c81c877",
+      "symbol": "ES",
+      "name": "Overnight Session",
+      "prior_end": "2026-08-31",
+      "new_end": "2026-09-29",
+      "working": true,
+      "latest_replay": {
+        "start": "2026-09-01",
+        "end": "2026-09-29",
+        "dataset_id": "1080435cff09b12010922b0eabec55edb424380a67a10c35eeff7c1955326161-v1",
+        "extension_sha256": "f6973adc8aeb051d1861337bfa747b56f3442a0e89684e585ad292f4c2d684f0"
+      },
+      "checksum": "0441a4b637f519f828dc088bcbfb1d70dcab93bc4433b85b6e873a6a4eb56d36"
+    },
+    {
+      "id": "0c4b6e885c9223b5373f",
+      "symbol": "NQ",
+      "name": "Pine \u00c2\u00b7 TSMOM intraday ORB",
+      "prior_end": "2026-08-31",
+      "new_end": "2026-09-28",
+      "working": true,
+      "latest_replay": {
+        "start": "2026-09-01",
+        "end": "2026-09-28",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "extension_sha256": "762b79b186724aed8fba62510071b0945c5e8c7cf50df1c77abd8336c89f8250"
+      },
+      "checksum": "cdaeb591505c8cf379bb40ea273c361e31e2d6869322f9ab74d7d9517ccaafa6"
+    },
+    {
+      "id": "3b3d1cfec7aac292801c",
+      "symbol": "NQ",
+      "name": "Overnight Session",
+      "prior_end": "2026-08-31",
+      "new_end": "2026-09-28",
+      "working": true,
+      "latest_replay": {
+        "start": "2026-09-01",
+        "end": "2026-09-28",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "extension_sha256": "723987957267354f938467dc4de63f054e2d5ac6bb8cca79f9edc0c0c5d6624a"
+      },
+      "checksum": "76cb0f0a7c8c99f4a0645ee30afcbd5720fa89bdbb6a9782765bd4a2e30fd35a"
+    },
+    {
+      "id": "35b4fda895bf8ed0435c",
+      "symbol": "NQ",
+      "name": "Short-term reversal - minute execution",
+      "prior_end": "2026-09-03",
+      "new_end": "2026-09-28",
+      "working": true,
+      "latest_replay": {
+        "start": "2026-09-04",
+        "end": "2026-09-28",
+        "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+        "extension_sha256": "89877683fe69b44f24f9fde6851e5eb2237730406af31e1a5d2965271c06f000"
+      },
+      "checksum": "1d068260b4c74e981a6a20b239e168202e8246902fcd70fd7a9625344653193e"
+    }
+  ],
+  "prefix_preservation": [
+    {
+      "id": "f24587940b6c8c81c877",
+      "old_daily_marks_preserved_except_documented_boundary": true,
+      "old_trades_preserved_except_documented_forced_exit": true,
+      "working_label_preserved": true,
+      "new_end": "2026-09-29",
+      "boundary_delta_pnl": 98.75
+    },
+    {
+      "id": "3b3d1cfec7aac292801c",
+      "old_daily_marks_preserved_except_documented_boundary": true,
+      "old_trades_preserved_except_documented_forced_exit": true,
+      "working_label_preserved": true,
+      "new_end": "2026-09-28",
+      "boundary_delta_pnl": -346.25
+    },
+    {
+      "id": "72475d93c4667b888c79",
+      "old_daily_marks_preserved_except_documented_boundary": true,
+      "old_trades_preserved_except_documented_forced_exit": true,
+      "working_label_preserved": true,
+      "new_end": "2026-09-29",
+      "boundary_delta_pnl": 13.75
+    },
+    {
+      "id": "0c4b6e885c9223b5373f",
+      "old_daily_marks_preserved_except_documented_boundary": true,
+      "old_trades_preserved_except_documented_forced_exit": true,
+      "working_label_preserved": true,
+      "new_end": "2026-09-28",
+      "boundary_delta_pnl": 0
+    },
+    {
+      "id": "35b4fda895bf8ed0435c",
+      "old_daily_marks_preserved_except_documented_boundary": true,
+      "old_trades_preserved_except_documented_forced_exit": true,
+      "working_label_preserved": true,
+      "new_end": "2026-09-28",
+      "boundary_delta_pnl": 0
+    }
+  ],
+  "condition_calibration_retained": false
+}

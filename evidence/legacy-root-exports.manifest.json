@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "archive": "research/legacy-root-exports",
+  "copied_at": "2026-09-30T02:40:10.4807006Z",
+  "classification": "Unreferenced raw TradingView/Pine research exports; not test fixtures or active application inputs.",
+  "files": [
+    {
+      "original_path": "CME_MINI_MNQ1!, 1.csv",
+      "artifact_relative_path": "research/legacy-root-exports/CME_MINI_MNQ1!, 1.csv",
+      "bytes": 19905,
+      "sha256": "812cdb5f7f92bc145aca83d89ee27549d4dab92b251ac546f4551868cf302cb6"
+    },
+    {
+      "original_path": "P6_Strategy_CME_MINI_MNQ1!_2026-09-05.csv",
+      "artifact_relative_path": "research/legacy-root-exports/P6_Strategy_CME_MINI_MNQ1!_2026-09-05.csv",
+      "bytes": 51647,
+      "sha256": "ae9c85106957060458a3d67178bab9b0a14d2fbfa410eb3a282dfdf64f26721f"
+    },
+    {
+      "original_path": "SND_P6_Strategy_CME_MINI_MNQ1!_2026-09-05.csv",
+      "artifact_relative_path": "research/legacy-root-exports/SND_P6_Strategy_CME_MINI_MNQ1!_2026-09-05.csv",
+      "bytes": 64822,
+      "sha256": "cd0b27fdcd6126f70b54f2e94df4aceae255316f1591e02801541dcbd922640e"
+    },
+    {
+      "original_path": "_P6_7_Strategy_CME_MINI_MNQ1!_2026-09-05.csv",
+      "artifact_relative_path": "research/legacy-root-exports/_P6_7_Strategy_CME_MINI_MNQ1!_2026-09-05.csv",
+      "bytes": 34651,
+      "sha256": "88308979f6e45ee8f9b38ffb26970a9bcd30b340af571f0514fddc02a334a92e"
+    }
+  ]
+}

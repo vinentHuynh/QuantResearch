@@ -5,8 +5,12 @@ An adapter link describes provenance, never a claim of backtest equivalence.
 """
 import ast
 import hashlib
+import os
+import re
 from collections import Counter
 from pathlib import Path
+
+from .layout import load_layout
 
 
 FAMILIES = {
@@ -26,6 +30,45 @@ RULE_COLLECTIONS = {
 }
 STUDIES = {'es_nq_terms', 'mnq_ny_close_asia_fill_backtest', 'SND_phase3_screen',
            'lucid_prop_year_sim', 'lucid_container_scan'}
+
+
+def _legacy_id(relative):
+    """The pre-v2 identifier retained as an alias for saved links."""
+    return hashlib.sha256(relative.encode()).hexdigest()[:20]
+
+
+def _source_id(path, kind):
+    """Return a move-stable id; source basenames are a guarded namespace.
+
+    Research files may move from ``scripts/`` to ``research/`` without changing
+    this id.  A duplicate basename is reported as a discovery error rather than
+    silently producing an ambiguous identity.
+    """
+    name = re.sub(r'[^A-Za-z0-9_.-]+', '-', path.name)
+    return f'{kind}:{name}'
+
+
+def _roots(root, name, fallback):
+    if (root / 'config' / 'workbench-layout.json').is_file():
+        return load_layout(root).discovery_paths[name]
+    return tuple(root / item for item in fallback)
+
+
+def _files(root, folders, suffix):
+    paths = set()
+    for folder in folders:
+        pattern = f'*{suffix}'
+        matches = folder.glob(pattern) if folder == root else folder.rglob(pattern)
+        paths.update(matches)
+    return sorted(paths)
+
+
+def find_entry(entries, identifier):
+    """Resolve both v2 source ids and every retained legacy alias."""
+    return next((entry for entry in entries if identifier in {
+        entry.get('id'), entry.get('source_id'), entry.get('path'),
+        *entry.get('aliases', []), *entry.get('path_aliases', [])
+    }), None)
 
 
 def role(path):
@@ -97,6 +140,11 @@ def requirements(path, category):
 
 def inventory(root, strategies):
     root = Path(root).resolve()
+    configured_aliases = (
+        load_layout(root).source_aliases
+        if (root / 'config' / 'workbench-layout.json').is_file()
+        else {}
+    )
     links = {}
     for strategy in strategies:
         for source in strategy.get('legacy_sources', []):
@@ -104,10 +152,9 @@ def inventory(root, strategies):
                 'id': strategy['id'], 'name': strategy['name'],
                 'scope': strategy.get('migration_scope', 'Signal adapter; original backtest parity not established.'),
             })
-    paths = sorted({*root.glob('*.py'), *(root / 'scripts').rglob('*.py'),
-                    *(root / 'ninjatrader').rglob('*.py'),
-                    *(root / 'strategy_engine' / 'strategies').glob('*.py')})
-    entries, errors = [], []
+    python_roots = _roots(root, 'python_library', ('.', 'scripts', 'ninjatrader', 'strategy_engine/strategies'))
+    paths = _files(root, python_roots, '.py')
+    entries, errors, source_ids = [], [], set()
     for path in paths:
         if '__pycache__' in path.parts or path.name == '__init__.py':
             continue
@@ -126,8 +173,20 @@ def inventory(root, strategies):
                     if flags:
                         cli.append({'flags': flags, 'options': {kw.arg: ast.unparse(kw.value) for kw in node.keywords if kw.arg in ('default', 'choices', 'type', 'action', 'help')}})
             adapters = links.get(relative, [])
+            source_id = _source_id(path, 'python')
+            if source_id in source_ids:
+                raise ValueError(f'Duplicate stable source id: {source_id}')
+            source_ids.add(source_id)
+            path_aliases = list(dict.fromkeys([
+                relative, *configured_aliases.get(source_id, ())
+            ]))
+            legacy_id = _legacy_id(relative)
             entries.append({
-                'id': hashlib.sha256(relative.encode()).hexdigest()[:20],
+                # Keep id for old clients; new clients persist source_id and may
+                # resolve the old path-derived value through aliases.
+                'id': legacy_id, 'source_id': source_id,
+                'aliases': [_legacy_id(alias) for alias in path_aliases],
+                'path_aliases': path_aliases,
                 'path': relative, 'name': title, 'description': doc, 'family': family(path),
                 'role': category, 'file_hash': hashlib.sha256(raw).hexdigest(),
                 'functions': functions, 'arguments': cli, 'adapters': adapters,
@@ -135,17 +194,32 @@ def inventory(root, strategies):
                 'requirements': ('SND adapter available. Configure one-minute execution and choose one of the four supported research variants; other rules in this source collection remain outside that adapter.'
                                  if path.stem.startswith('SND_') and adapters else requirements(path, category)),
             })
-        except (OSError, UnicodeError, SyntaxError) as exc:
+        except (OSError, UnicodeError, SyntaxError, ValueError) as exc:
             errors.append({'file': relative, 'error': str(exc)})
     from .pine_audit import inventory as pine_inventory
-    entries.extend(pine_inventory(root, strategies))
+    pine_roots = _roots(root, 'pine_library', ('.', 'pine'))
+    pine_entries = pine_inventory(root, strategies, pine_roots)
+    for entry in pine_entries:
+        path_aliases = list(dict.fromkeys([
+            entry['path'], *configured_aliases.get(entry['source_id'], ())
+        ]))
+        entry['path_aliases'] = path_aliases
+        entry['aliases'] = [_legacy_id(alias) for alias in path_aliases]
+        if entry['source_id'] in source_ids:
+            errors.append({'file': entry['path'], 'error': f"Duplicate stable source id: {entry['source_id']}"})
+        else:
+            source_ids.add(entry['source_id'])
+            entries.append(entry)
     return {'entries': entries, 'counts': dict(Counter(e['role'] for e in entries)),
             'total': len(entries), 'errors': errors}
 
 
-def markdown_report(result):
+def markdown_report(result, link_prefix=''):
     def cell(value):
         return str(value).replace('|', '\\|').replace('\n', ' ')
+    def link(value):
+        path = Path(value).as_posix()
+        return f"{link_prefix.rstrip('/')}/{path}" if link_prefix else path
     library = result['library']
     lines = ['# Consolidated strategy library', '',
              'Generated from local Python and Pine source using static parsing; discovery does not execute scripts.', '',
@@ -153,20 +227,20 @@ def markdown_report(result):
              '## Runnable adapters', '',
              '| Strategy | Parameters | Migration scope |', '| --- | --- | --- |']
     for spec in result['strategies']:
-        lines.append(f"| [{cell(spec['name'])}]({Path(spec['file']).as_posix()}) | {cell(', '.join(spec['parameters']))} | {cell(spec.get('migration_scope', 'New workbench strategy'))} |")
+        lines.append(f"| [{cell(spec['name'])}]({link(spec['file'])}) | {cell(', '.join(spec['parameters']))} | {cell(spec.get('migration_scope', 'New workbench strategy'))} |")
     lines += ['', '## Original source inventory', '',
               'Adapter links cover only the documented rules. Other variants within the same script still require migration.', '',
               '| Source | Family | Role | Status | Workbench adapters |', '| --- | --- | --- | --- | --- |']
     for entry in library['entries']:
         adapters = ', '.join(a['id'] for a in entry['adapters']) or '—'
-        lines.append(f"| [{entry['path']}]({entry['path']}) | {cell(entry['family'])} | {entry['role']} | {entry['status']} | {adapters} |")
+        lines.append(f"| [{entry['path']}]({link(entry['path'])}) | {cell(entry['family'])} | {entry['role']} | {entry['status']} | {adapters} |")
     lines += ['', '## Remaining execution contracts', '',
               '- Intrabar strategies: preserve stop/limit ordering, gap handling, deadlines, and sizing; the current signal runner only fills at the next bar open.',
               '- Multi-instrument strategies: require synchronized legs and portfolio accounting.',
               '- Factor and ETF strategies: require their original inputs. The four normalized futures ZIP datasets are not substitutes.',
               '- Research studies: require their original selection, resampling, and report workflows in addition to signal rules.', '',
               'The Scripts page shows per-source requirements, source hashes, original documentation, functions, and CLI declarations.',
-              'Refresh this report with `python -m workbench.library --output STRATEGY_LIBRARY.md`.', '']
+              'Refresh this report with `python -m workbench.library --output docs/workbench/STRATEGY_LIBRARY.md`.', '']
     return '\n'.join(lines)
 
 
@@ -180,5 +254,7 @@ if __name__ == '__main__':
     result = discover(args.root.resolve())
     if result['errors']:
         raise SystemExit(str(result['errors']))
-    args.output.write_text(markdown_report(result), encoding='utf-8')
+    output = args.output.resolve()
+    prefix = Path(os.path.relpath(args.root.resolve(), output.parent)).as_posix()
+    args.output.write_text(markdown_report(result, '' if prefix == '.' else prefix), encoding='utf-8')
     print(f"Exported {result['library']['total']} sources and {len(result['strategies'])} adapters to {args.output}")

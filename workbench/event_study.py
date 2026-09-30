@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from workbench.dataset_reference import resolve_dataset_path
+
 
 DEFAULTS = dict(atr_period=14, base_bars=3, base_atr=1., departure_bars=3,
                 departure_atr=1.5, ob_lookback=5, breakout_bars=20, swing_bars=2,
@@ -43,11 +45,12 @@ def load_bars(protocol, end=None):
     from strategy_engine.data import session_bars
     from strategy_engine.sessions import get_session
     dataset = protocol['dataset']
-    if checksum(dataset['path']) != dataset['checksum']:
+    dataset_path = resolve_dataset_path(dataset)
+    if checksum(dataset_path) != dataset['checksum']:
         raise ValueError('Dataset checksum changed')
     start = pd.Timestamp(protocol['start'], tz='UTC')
     stop = pd.Timestamp(end).tz_convert('UTC') if end else pd.Timestamp(protocol['end'], tz='UTC') + pd.Timedelta(days=1)
-    source = pd.read_parquet(dataset['path'], filters=[('ts_event', '>=', start), ('ts_event', '<', stop)])
+    source = pd.read_parquet(dataset_path, filters=[('ts_event', '>=', start), ('ts_event', '<', stop)])
     if not isinstance(source.index, pd.DatetimeIndex):
         source.index = pd.to_datetime(source.pop('ts_event'), utc=True)
     if not source.index.is_unique or not source.index.is_monotonic_increasing:

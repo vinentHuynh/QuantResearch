@@ -1,4 +1,11 @@
-"""Discovery never imports strategies. Only explicit worker runs execute code."""
+"""Static strategy discovery and protocol-v2 metadata normalization.
+
+Discovery never imports strategies.  Protocol-v1 adapters and preserved source
+snapshots did not declare ``schema_version`` or ``source_files``; they remain
+readable and are normalized in memory.  New adapters declare their complete
+local execution surface explicitly so snapshots need not include unrelated
+research or application files.
+"""
 import ast
 import hashlib
 import json
@@ -6,7 +13,12 @@ import math
 import re
 from pathlib import Path
 
-PROTOCOL = 1
+from .layout import load_layout
+
+
+PROTOCOL = 2
+LEGACY_PROTOCOL = 1
+_DRIVE_PATH = re.compile(r'^[A-Za-z]:')
 
 
 def checksum(path):
@@ -17,11 +29,150 @@ def checksum(path):
     return digest.hexdigest()
 
 
-def metadata(path):
-    tree = ast.parse(Path(path).read_text(encoding='utf-8'))
+def _repository_root(path):
+    """Infer the snapshot/repository root without consulting the live checkout."""
+    resolved = Path(path).resolve()
+    for parent in resolved.parents:
+        try:
+            relative = resolved.relative_to(parent)
+        except ValueError:
+            continue
+        if len(relative.parts) > 1 and relative.parts[0] == 'strategies':
+            return parent
+    return resolved.parent
+
+
+def _relative_source(value, root, label='source_files'):
+    if not isinstance(value, str) or not value:
+        raise ValueError(f'{label} must contain nonempty strings')
+    if (value.startswith('/') or _DRIVE_PATH.match(value) or '\\' in value or
+            '//' in value or any(part in ('', '.', '..') for part in value.split('/'))):
+        raise ValueError(f'{label} must list normalized repository-relative paths using forward slashes')
+    candidate = (root / value).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f'{label} path escapes the repository: {value}') from exc
+    if not candidate.is_file():
+        raise ValueError(f'Execution source not found: {value}')
+    return value
+
+
+def _module_file(root, module):
+    if not module:
+        return None
+    candidate = root.joinpath(*module.split('.'))
+    source = candidate.with_suffix('.py')
+    if source.is_file():
+        return source
+    package = candidate / '__init__.py'
+    return package if package.is_file() else None
+
+
+def _module_name(root, path):
+    relative = path.relative_to(root).with_suffix('')
+    parts = list(relative.parts)
+    if parts and parts[-1] == '__init__':
+        parts.pop()
+    return '.'.join(parts)
+
+
+def _package_initializers(root, path):
+    found = []
+    parent = path.parent
+    while parent != root:
+        init = parent / '__init__.py'
+        if init.is_file():
+            found.append(init)
+        if root not in parent.parents:
+            break
+        parent = parent.parent
+    return found
+
+
+def _local_imports(root, path, top_level_only=False):
+    """Return statically visible local imports without executing source code."""
+    tree = ast.parse(path.read_text(encoding='utf-8-sig'))
+    module = _module_name(root, path)
+    package = module if path.name == '__init__.py' else module.rpartition('.')[0]
+    found = []
+    nodes = tree.body if top_level_only else ast.walk(tree)
+    for node in nodes:
+        modules = []
+        if isinstance(node, ast.Import):
+            modules = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                parts = package.split('.') if package else []
+                keep = len(parts) - node.level + 1
+                base_parts = parts[:max(0, keep)]
+                if node.module:
+                    base_parts.extend(node.module.split('.'))
+                base = '.'.join(base_parts)
+            else:
+                base = node.module or ''
+            modules = [base]
+            modules.extend(
+                f'{base}.{alias.name}' if base else alias.name
+                for alias in node.names if alias.name != '*'
+            )
+        for name in modules:
+            imported = _module_file(root, name)
+            if imported is not None:
+                for dependency in [imported, *_package_initializers(root, imported)]:
+                    if dependency not in found:
+                        found.append(dependency)
+    return found
+
+
+def _validate_dependency_closure(root, adapter, sources):
+    """Require direct adapter imports and import-time dependencies of sources."""
+    declared = {(root / source).resolve() for source in sources}
+    required = {adapter, *_package_initializers(root, adapter)}
+    required.update(_local_imports(root, adapter))
+    for source in declared:
+        if source.suffix == '.py' and source != adapter:
+            required.update(_local_imports(root, source, top_level_only=True))
+    missing = sorted(
+        source.relative_to(root).as_posix()
+        for source in required if source not in declared
+    )
+    if missing:
+        raise ValueError(f'source_files is missing local execution dependencies: {missing}')
+
+
+def _legacy_source_files(root, adapter):
+    """Infer dependencies only for preserved v1 adapters lacking declarations.
+
+    The inference is deliberately conservative and recursive.  V2 adapters use
+    explicit declarations, which prevent unrelated imports in tooling modules
+    from changing execution identity.
+    """
+    pending = [adapter]
+    found = set()
+    while pending:
+        source = pending.pop()
+        if source in found:
+            continue
+        found.add(source)
+        pending.extend(item for item in _local_imports(root, source) if item not in found)
+    return sorted(item.relative_to(root).as_posix() for item in found)
+
+
+def metadata(path, root=None):
+    source_path = Path(path).resolve()
+    repository = Path(root).resolve() if root is not None else _repository_root(source_path)
+    try:
+        adapter = source_path.relative_to(repository).as_posix()
+    except ValueError as exc:
+        raise ValueError('Strategy adapter must be inside the repository or source snapshot') from exc
+    tree = ast.parse(source_path.read_text(encoding='utf-8'))
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'STRATEGY' for t in node.targets):
-            value = ast.literal_eval(node.value)
+            value = dict(ast.literal_eval(node.value))
+            schema = value.get('schema_version', LEGACY_PROTOCOL)
+            if type(schema) is not int or schema not in (LEGACY_PROTOCOL, PROTOCOL):
+                raise ValueError(f'Unsupported strategy metadata schema_version: {schema!r}')
             if not re.fullmatch(r'[a-z][a-z0-9-]{1,80}', value['id']):
                 raise ValueError('Strategy id must be lowercase words separated by hyphens')
             for key in ('name', 'description', 'parameters', 'timeframes'):
@@ -56,6 +207,23 @@ def metadata(path):
                     number = rule.get(key, default)
                     if type(number) is not int or number < lower:
                         raise ValueError(f'warmup_bars {key} must be an integer >= {lower}')
+            declared = value.get('source_files')
+            if declared is None:
+                if schema == PROTOCOL:
+                    raise ValueError('Protocol-v2 strategy metadata requires source_files')
+                sources = _legacy_source_files(repository, source_path)
+            else:
+                if not isinstance(declared, list) or not declared:
+                    raise ValueError('source_files must be a nonempty list')
+                sources = [_relative_source(item, repository) for item in declared]
+                if len(sources) != len(set(sources)):
+                    raise ValueError('source_files must not contain duplicates')
+                if adapter not in sources:
+                    raise ValueError(f'source_files must include its adapter: {adapter}')
+                sources = sorted(sources)
+                _validate_dependency_closure(repository, source_path, sources)
+            value['schema_version'] = PROTOCOL
+            value['source_files'] = sources
             return value
     raise ValueError('Missing literal STRATEGY dictionary')
 
@@ -91,19 +259,26 @@ def resolve_parameters(spec, supplied):
 
 
 def discover(root):
+    root = Path(root).resolve()
+    if (root / 'config' / 'workbench-layout.json').is_file():
+        adapter_roots = load_layout(root).discovery_paths['strategy_adapters']
+    else:
+        # Source snapshots and small test fixtures predate the checked-in layout.
+        adapter_roots = (root / 'strategies',)
     found, errors, ids = [], [], set()
-    for path in sorted((Path(root) / 'strategies').glob('*.py')):
+    paths = sorted({path for folder in adapter_roots for path in folder.glob('*.py')})
+    for path in paths:
         if path.name.startswith('_'):
             continue
         try:
-            spec = metadata(path)
+            spec = metadata(path, root)
             for source in spec.get('legacy_sources', []) + spec.get('pine_sources', []):
                 if not (Path(root) / source).is_file():
                     raise ValueError(f'Original source not found: {source}')
             if spec['id'] in ids:
                 raise ValueError('Duplicate strategy id')
             ids.add(spec['id'])
-            found.append({**spec, 'file': str(path.relative_to(root)), 'file_hash': checksum(path)})
+            found.append({**spec, 'file': path.relative_to(root).as_posix(), 'file_hash': checksum(path)})
         except Exception as exc:
             errors.append({'file': path.name, 'error': str(exc)})
     from .library import inventory

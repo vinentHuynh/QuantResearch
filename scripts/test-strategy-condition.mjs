@@ -5,8 +5,8 @@ import {
   normalizedMarks,
   monitor,
   conditionProtocol,
-} from "../src/strategyCondition.ts";
-import { replayGate, defaultPolicy } from "../src/collectiveModel.ts";
+} from "../shared/ts/strategyCondition.ts";
+import { replayGate, defaultPolicy } from "../shared/ts/portfolio.ts";
 const date = (n) =>
   new Date(Date.UTC(2022, 0, 1 + n)).toISOString().slice(0, 10);
 const daily = Array.from({ length: 950 }, (_, n) => ({

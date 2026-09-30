@@ -1,14 +1,25 @@
-# Quant — Papers With Backtest workspace
+# Strategy Workbench
 
-Local environment for running [Papers With Backtest](https://paperswithbacktest.com/) strategies.
-Data and code come from PWB; **execution runs on this machine** — no run endpoint, no per-run limit.
+A local research application for futures strategies. You register a strategy
+adapter, point it at a versioned market-data archive, **declare your pass
+criteria and development cutoff before launching**, and the app runs the
+backtest under multiple cost and execution scenarios. It refuses to call
+anything validated unless every declared scenario passes.
 
-## Strategy Workbench (current application)
+Everything runs on this machine. No accounts, no run quotas, no external
+service. The app is the record of what you tried, including what failed.
 
-The default app now follows `strategy_dashboard_plan.md`: runs and experiments,
-versioned ZIP datasets, generated Python parameter forms, comparisons, and a
-frozen historical replay watchlist. See [WORKBENCH.md](WORKBENCH.md) for setup,
-accounting conventions, and validation commands.
+The point of the application is not the backtester — it is the ledger. A
+completed backtest is treated as *execution completed*, never as evidence of
+profit. Milestones are earned in order:
+
+```
+Backtested  →  Evaluation passed  →  Robustness checked
+```
+
+## Quick start
+
+Requires Node 24+ and Python 3.12.
 
 ```powershell
 npm install
@@ -16,438 +27,241 @@ npm install
 npm run dev:full
 ```
 
-Open **http://127.0.0.1:5173**. The left sidebar groups the app by task:
-**Portfolio** (Combined portfolio, Strategy scorecards), **Research** (Runs &
-compare, Evaluations & regimes, Watchlist) and **Sources** (Scripts & library,
-Datasets). **New run** and **Search** (Ctrl K) are available on every page, and
-each view has its own address, for example `#/portfolio/calendar`. On phones
-the sidebar becomes a bottom bar.
+Open **http://127.0.0.1:5173**. The API listens on loopback port 8001.
 
-To add a strategy, copy
-[`strategies/_template.py`](strategies/_template.py), assign a unique ID, and
-implement its signal function. It is discovered automatically without editing
-the frontend or backend catalog.
-
-**Scripts & library → Library** includes 91 Python and 17 Pine
-sources, searchable by family, filename, and rule function. Five signal adapters
-and four Pine event ports are runnable; other entries show their requirements.
-See [STRATEGY_LIBRARY.md](STRATEGY_LIBRARY.md) and [PINE_AUDIT.md](PINE_AUDIT.md).
-
-**Evaluations & regimes** now provides rolling walk-forward experiments, parameter
-sensitivity, cost/delay stress, and training-calibrated historical state studies.
-See [PHASES_4_5.md](PHASES_4_5.md) for the new workflow and validation evidence.
-
-**Run cleanup and optimization:** remove obsolete runs from their detail panel
-or select them in the ledger for deletion. A preview explains linked records
-and a local backup retains removed evidence. The nine-strategy chronological
-campaign is available via `npm run research:optimize`; see its
-[plan and results](reports/strategy-optimization-2022-2024/).
-
-**2025 evaluation and regimes:** all nine selected configurations now have
-chronological evaluations and volatility/trend studies in the app. Read the
-[strategy potential overview](reports/strategy-potential-2025/OVERVIEW.md).
-
-**Dashboard** brings the latest evaluation for each strategy and market into
-one scorecard. It shows research candidates, conditional candidates, review
-reasons, profit, drawdown, realized and target R:R, profit factor, win rate,
-expectancy, equity/cost charts, and regime contributions. Statistics use the
-complete verified trade ledgers. Test dates and newer available data remain
-visible; these are historical research statuses, not live signals.
-
-**Combined portfolio** adds an all-market strategy picker, working and full
-research-checklist filters, combined P&L and market curves, daily calendar,
-configuration weights, and CSV exports. It includes the expanded and fresh SND
-campaigns. An optional loss-pattern pause/resume replay, a loss-clustering check and a volatility-scaling alternative compare with always-on
-trading using only prior closed outcomes. See [the workflow, accounting and
-validation details](COLLECTIVE_DASHBOARD.md).
-
-## Previous strategy dashboard (legacy reference)
-
-The following describes the previous Python API and portfolio UI, retained as
-source. It is no longer the default application or the `npm run dev:full` API.
-
-The React/Redux/Mantine dashboard includes a local, allowlisted Python runner. Install once, then
-start the web UI and API together:
-
-```bash
-npm install
-.venv/bin/pip install -r requirements-dashboard.txt
-npm run dev:full
-```
-
-Open `http://127.0.0.1:5173` and choose **Run analysis**. The form supports date windows,
-chart timeframes, costs, risk settings, and strategy-specific parameters. Runs execute in the
-existing `.venv` and write isolated outputs under `reports/dashboard_runs/<run-id>/`; they do not
-overwrite the canonical report directories. CSV output can be inspected as a table or line chart,
-while JSON, text, images, and generated HTML are previewed in the same workspace.
-
-The visible pages are driven by the API rather than sample portfolio data. Portfolio shows the
-three independent research, health, and allocation states. Health keeps live, paper, reference,
-and backtest histories separate. Risk shows covariance-aware exposure and hedge-removal what-ifs.
-Decisions stores cutoff snapshots, reproduces sealed decisions, and manages grouped alerts.
-Allocation lab registers chronological comparisons and append-only promotion reviews. Registry
-manages versioned configuration, eligibility assessments, and CSV/JSON-compatible observations.
-The original Backtests, Run history, Run analysis, and Chart data pages remain available.
-
-All runner definitions initially enter the portfolio registry as **Provisional** with **Unknown**
-health and **No current proposal**. This is intentional: a successful backtest does not become
-research approval, and missing observations never become a target-zero instruction. Use Registry
-to import timestamped observations and record settings. Capital-changing proposals require a
-Qualified immutable strategy version, complete owner configuration, fresh current observations,
-and a policy explicitly approved for allocation proposals. Brokerage execution is outside this
-application.
-
-Return imports accept `event_time`, optional `availability_time`, `history_type`
-(`backtest`, `reference`, `paper`, or `live`), `net_return` or `equity`, optional `cash_flow`, and
-currency. Position, fill, market, and cash-flow rows use the same event/availability timestamps.
-Every configuration save creates a new version; decisions retain their input material and hash.
-Monitoring refreshes once per minute and marks scheduled reviews due from the configured cadence,
-the last sealed decision cutoff, and hard-risk events. It never creates an allocation decision or
-broker order automatically.
-
-Strategies and charts are separate inputs. The chart catalog currently reads the normalized,
-timezone-aware Databento one-minute archives for MNQ, NQ, ES, YM, and CL, together with their
-prepared 5m/30m/1h/4h/1d bars. Contract tick size and dollar point value come from the chart
-catalog, not from strategy code. Every run saves a reproducibility record containing the chart,
-dataset identity, contract economics, strategy parameters, and calculation time. TradingView
-exports are not inputs to this runner.
-
-The Backtests page lists implemented trading mechanisms rather than one entry per historical
-script, instrument, or timeframe. A run is selected in this order: strategy, chart, timeframe,
-then strategy parameters. The consolidated catalog contains:
-
-- supply-and-demand zones, opening trend-pullback, and Asia gap-fill;
-- multi-speed momentum and moving-average trend;
-- cross-sectional momentum and pairs mean reversion;
-- prior-range fill, opening-range breakout, and overnight session trading.
-
-The generic strategies run through `scripts/dashboard_compatible_strategy.py`, which resamples
-the selected chart's normalized one-minute archive to the chosen supported timeframe. Specialized
-strategies expose only the resolution their implementation actually supports. Consolidated legacy
-script paths and hashes remain in each run's reproducibility record. Existing run history keeps
-its original strategy IDs. Statistical studies, report generators, data fetchers, and timeframe
-builders are excluded from the runnable strategy count. The current classification and repository
-audit are available from `GET /api/catalog-audit`.
-
-The API only accepts workflows and parameters declared in `dashboard_api/main.py`; browser input
-is never interpreted as a shell command. The local API listens on `127.0.0.1:8000` and is not meant
-to be exposed directly to the internet.
-
-## Layout
-
-- `.venv/` — Python 3.10 virtual environment (gitignored)
-- `.env` — `PWB_API_KEY` data key, secret, expires 2026-08-16 (gitignored)
-- `scripts/` — all backtests/fetchers/reports, grouped by instrument or theme
-  (`cme/`, `mnq/`, `mgc/`, `es_nq/`, `orb/`, `overnight/`, `spy_qqq_intraday/`,
-  `lucid/`, `misc/`). Every script still resolves `data/`, `reports/`, and
-  `.env` at the repo root regardless of which subfolder it lives in.
-- `pine/` — TradingView Pine Script indicators/strategies
-- `ninjatrader/` — NinjaScript ports of the Carver-vetted backtests
-- `reports/` — generated CSV/PNG/HTML output (gitignored contents vary by script)
-- `scripts/misc/smoke_test.py` — verifies data access + metrics
-- `dashboard_api/portfolio.py` — portfolio registry, assessments, allocation, risk, decisions,
-  alerts, overrides, imports, exports, and allocation experiments
-- `tests/test_portfolio.py` — cutoff, accounting, state, versioning, and reproducibility invariants
-
-Run product checks with:
-
-```bash
-npm test
-npm run build
-npm run lint
-```
-
-## Use
-
-Activate the venv:
-
-```bash
-source .venv/Scripts/activate   # git bash on Windows
-```
-
-Run anything:
-
-```bash
-python scripts/misc/smoke_test.py
-```
-
-## CME time-series momentum
-
-Run the readable four-market trend strategy on a $100,000 balance from 2024:
+For the built app instead of the dev server:
 
 ```powershell
-.\.venv\Scripts\python.exe .\scripts\cme\cme_time_series_momentum_backtest.py
+npm run build   # typechecks frontend + backend, then builds
+npm start       # serves UI and API together on http://127.0.0.1:8001
 ```
 
-Export its daily signals, positions, returns, and equity curve:
+On macOS/Linux use `.venv/bin/python`; the npm scripts pick the platform's
+virtualenv automatically.
 
-```powershell
-.\.venv\Scripts\python.exe .\scripts\cme\cme_time_series_momentum_backtest.py `
-  --export .\cme_tsmom_results.csv
-```
+See [WORKBENCH.md](WORKBENCH.md) for accounting conventions, protocol details
+and the full validation command list.
 
-The model combines 20/60/120/252-session momentum, targets equal risk per
-market, lags every position by one session, and applies exposure-based costs.
-ES/NQ use SPX/NDX cash-index proxies; GC/CL use PWB continuous daily series.
+## The application
 
-### TradingView manual indicator
+Ten pages in three sidebar groups. Every view has its own address (for example
+`#/portfolio/calendar`), so any state is linkable. **New run** and **Search**
+(Ctrl/Cmd + K) are reachable from every page. Below 900px the sidebar collapses
+into a bottom bar.
 
-Copy `pine/cme_tsmom_manual_indicator.pine` into TradingView's Pine Editor and add
-it to a chart. It calculates the same model from completed daily bars, displays
-the four-market dashboard, estimates rounded micro-contract quantities, and
-provides next-session long, short, flat, and resize alerts. The indicator does
-not submit orders or model futures rolls. For dated-contract charts, choose the
-matching continuous dashboard series as the marker source; optional L/S/F
-session markers make the active daily state visible during Bar Replay.
+**Research flow**
 
-### TradingView backtest strategy
+| Page | What it is for |
+| --- | --- |
+| Research workspace | Entry point: recent activity, what needs attention, run cleanup |
+| Scripts & library | The 17 tracked runnable adapters plus a searchable index of 171 catalogued sources |
+| Runs & compare | The full run ledger with filters, saved views, side-by-side comparison |
+| Evaluations & regimes | Walk-forward evaluations, cost/delay stress, parameter sensitivity, regime studies |
 
-Copy `pine/cme_tsmom_single_market_strategy.pine` into TradingView's Pine Editor to
-run a one-market Strategy Tester simulation. The strategy is fixed to a
-15-minute execution chart, set to $25,000 initial capital and one standalone
-sleeve. Its daily-data and date-window flow mirrors the working overnight-drift
-strategy: daily values are requested with `lookahead_off`, confirmed outside
-the request, and acted on at the first 15-minute close of the next session. It
-holds overnight and rebalances whole contracts once per exchange session. Its
-other default Properties are $1.25 commission per contract per order, one tick
-of slippage, and 10% simulated margin.
+**Portfolio**
 
-For an MNQ historical or Deep Backtest, put the strategy on the 15-minute
-`CME_MINI:MNQ1!` continuous chart and use `CME_MINI:NQ1!` as the signal. Leave
-the chart multiplier on automatic (`syminfo.pointvalue`, normally $2 per
-point). Dated contracts such as MNQU2026 are suitable for current execution but
-do not contain older custom-date history. Its broad 1990-2099 internal safety
-window contains normal Strategy Report selections, including Deep Backtesting
-dates. Model-sized trading can still correctly round to zero contracts on a
-$25,000 account. Fixed-contract mode is useful for inspecting signal behavior,
-but it does not preserve the tested volatility target.
-For notifications, create a TradingView strategy alert on order-fill events and
-put `{{strategy.order.alert_message}}` in the alert's Message field.
+| Page | What it is for |
+| --- | --- |
+| Strategy scorecards | Latest evaluated configuration per strategy and market |
+| Combined portfolio | Cross-market picker, combined curves, calendar, weights, CSV export |
+| Watchlist | Frozen historical replay set |
 
-### Experimental intraday TSMOM setup
+**Data & studies**
 
-`pine/cme_tsmom_intraday_orb_strategy.pine` uses the completed daily TSMOM score only
-as a direction filter, then trades a confirmed 5-minute close outside the first
-15 minutes' opening range. It takes at most one trade per New York RTH session, skips
-the setup when a whole micro contract exceeds its default $75 stop-risk cap,
-places an opposite-range stop and 2R target, and force-closes by 16:00 ET. This
-is a separate experimental strategy, not an intraday-equivalent reproduction of
-the daily TSMOM backtest. Use `MNQ1!` with `NQ1!` as its signal, or `MES1!` with
-`ES1!`, and enable TradingView Bar Magnifier/Deep Backtesting when available.
+| Page | What it is for |
+| --- | --- |
+| Pattern event studies | Supply/demand, order blocks, FVGs and S/R tested against matched controls |
+| Datasets | Import and version market-data archives |
 
-## Load data
+### Running an experiment
 
-```python
-import pwb_toolbox.datasets as pwb_ds
-df = pwb_ds.load_dataset("Stocks-Daily-Price", symbols=["AAPL", "MSFT"])  # ALWAYS pass symbols=
-```
+**New run** is a four-step flow that will not let you skip the record-keeping:
 
-Omitting `symbols=` materializes the whole dataset (1-min prices ~75 GB). Filter is pushed into parquet reads.
+1. **Script & dataset** — pick an adapter, a dataset version, timeframe and session.
+2. **Parameters** — forms are generated from each adapter's declared parameter schema.
+3. **Assumptions & record** — capital, fees, slippage, execution delay, warmup, UTC
+   date window, development boundary, plus your **hypothesis and pass criteria**.
+4. **Preview & launch** — validate, see the resolved job count and warmup checks,
+   then explicitly launch.
 
-## MNQ New York-close to Asia-fill study
+Every resolved default is saved with the run. For a grid, add dataset versions
+and parameter arrays (`{"lookback": [10, 20, 40]}`); all dimensions form a
+Cartesian product, default cap 24 jobs, two concurrent Python workers.
 
-Test whether the 18:00 ET MNQ reopen revisits the completed New York close by
-00:00 ET, with separate probabilities and one-contract P&L for gap-down longs
-and gap-up shorts:
+Runs execute server-side and **survive closing the browser**. Cancelling keeps a
+cancellation record. Re-running creates a new attempt against the original
+inputs and source snapshot.
+
+### What the gate actually enforces
+
+This is the part that is hard to find in other tools:
+
+- **Criteria are recorded before launch.** The run form's *Run purpose* captures
+  intent and never awards a milestone by itself.
+- **Multi-scenario pass requirement.** A configuration must clear baseline,
+  higher-cost and (where supported) delayed-execution scenarios. One passing
+  scenario is not a pass.
+- **Prior-exposure tracking.** Each evaluation records `inspected_overlap` — the
+  earlier successful runs that already touched its test window. The app tells you
+  when you have already seen the data you are calling out-of-sample. It does not
+  pretend the label makes it clean.
+- **Failures stay visible.** Run tables never silently drop failed variants.
+  Matching failures re-attach across dates and cost settings.
+- **Source checksums invalidate stale verdicts.** Change an adapter and prior
+  reviews for it have to be redone.
+- **Progress is scoped.** A milestone belongs to one source snapshot + symbol +
+  timeframe + session + parameter set. A failing ES case cannot invalidate a
+  passing NQ configuration, and vice versa.
+
+Catalogued is not runnable; backtested is not validated; working is not
+approved. The UI states which of these it means everywhere it shows a status.
+
+### Adding a strategy
+
+Copy [`strategies/_template.py`](strategies/_template.py), give it a unique ID,
+and implement its signal function. Discovery parses source without importing or
+running it, so no frontend or backend catalog edit is needed.
+
+**Scripts & library → Library** indexes 171 sources (150 Python, 21 Pine),
+grouped by family and role, searchable by filename, description or rule
+function. Entries that need work before they can run are marked **Adapter
+required** with the specific blocker. See the
+[strategy library](docs/workbench/STRATEGY_LIBRARY.md) and
+[Pine audit](docs/workbench/PINE_AUDIT.md).
+
+An available adapter covers only its stated rules, not every variant in its
+source file. Signal decisions were checked against the original pure functions;
+the workbench applies its own fixed-contract, next-open execution and
+accounting.
+
+## Data
+
+The app runs on normalized, timezone-aware Databento one-minute archives
+(`GLBX.MDP3`) for **ES, NQ, MNQ, YM and CL** — roughly 4.8M bars per
+instrument — with prepared 5m/15m/30m/1h/4h/1d bars derived from them.
+
+**Datasets → Import data ZIPs** scans `data/` recursively. Reimporting the same
+archive reuses its version; replacing an archive creates a new one, so a run
+always names the exact bytes it used. Contract tick size and dollar point value
+come from the dataset catalog, not from strategy code. TradingView exports are
+not inputs.
+
+Durable app state lives in `data/workbench/`. Repository cleanup must not move
+or rewrite it.
+
+## Standalone studies
+
+Some research runs outside the app as scripts against the same local archives.
+These write their own reports and are not part of the app's run ledger.
+
+**MNQ New York close → Asia fill** — does the 18:00 ET reopen revisit the
+completed NY close by 00:00 ET?
 
 ```powershell
 .\.venv\Scripts\python.exe .\scripts\mnq\mnq_ny_close_asia_fill_backtest.py
-```
-
-The default run compares the 16:00 cash close with the 17:00 futures close,
-uses one tick of round-trip cost, and excludes weekend/holiday reopens whose
-reference close is stale. It writes event-level data, point and BPS gap buckets,
-long/short comparisons, split-sample results, cost sensitivity, and a Markdown
-report to `reports/mnq_ny_close_asia_fill/`.
-
-```powershell
-# Futures close only, two-tick round-trip cost, recent sample
-.\.venv\Scripts\python.exe .\scripts\mnq\mnq_ny_close_asia_fill_backtest.py `
-  --close-times 17:00 --cost-ticks 2 --start 2023-01-01
-```
-
-### Trading the study
-
-The fill study measures probabilities. `scripts/mnq/mnq_asia_fill_strategy_backtest.py`
-trades them: market entry at the reopen, a resting limit at the reference
-close, a flat exit at the deadline, and an equity curve on the full session
-calendar.
-
-```powershell
 .\.venv\Scripts\python.exe .\scripts\mnq\mnq_asia_fill_strategy_backtest.py
 ```
 
-The default headline rule is the study's selection (17:00 close, short, gap
-below 3 bps), priced at one tick of entry slippage, one tick on market exits,
-and $1.00 commission per round trip. It writes trades, a daily equity curve,
-calendar years, and sweeps over cost, protective stop, fill buffer, and
-deadline to `reports/mnq_asia_fill_strategy/`.
+The study measures probabilities; the second script trades them. Because the
+headline rule was chosen after seeing the whole sample, three checks sit beside
+the P&L: a block bootstrap (per-session P&L skewness near -19, so the ordinary
+t-statistic does not apply), a White-style reality check across all 54
+side/threshold/close rules, and a walk-forward that re-picks the rule each year
+from prior data only.
 
-Three checks sit alongside the P&L, because the headline rule was chosen after
-seeing the whole sample:
-
-- a block bootstrap of the rule on its own, since per-session P&L has skewness
-  near -19 and the ordinary t-statistic does not apply;
-- a White-style reality check over all 54 side/threshold/close rules, which
-  prices the search rather than one hypothesis;
-- a walk-forward that re-picks the rule each year from prior data only.
-
-```powershell
-# Long gap-downs instead, with a protective stop and no commission
-.\.venv\Scripts\python.exe .\scripts\mnq\mnq_asia_fill_strategy_backtest.py `
-  --rule-side Long --rule-max-gap-bps 5 --stop-points 50 --commission-rt 0
-```
-
-## MNQ Market Profile: the 80% rule and naked POCs
-
-Two Market Profile "rules" circulate widely without a published dataset behind
-them: that price re-entering the prior value area and holding for two 30-minute
-periods traverses the whole area about 80% of the time, and that roughly 80% of
-naked POCs are revisited within 10 sessions. This tests both on the local
-one-minute MNQ archive:
+**MNQ Market Profile** — tests the two widely repeated claims (the 80% rule, and
+naked POC revisits within 10 sessions) that circulate without a published
+dataset behind them:
 
 ```powershell
 .\.venv\Scripts\python.exe .\scripts\mnq\mnq_market_profile_backtest.py
 ```
 
-Profiles are built per RTH session (08:30-15:00 America/Chicago) under both
-volume and TPO definitions, so the answer does not depend on one vendor's
-value-area convention. Prices are back-adjusted across the 29 contract rolls,
-and holiday/half sessions are excluded from profile formation.
+Profiles are built per RTH session under both volume and TPO definitions, so the
+answer does not hinge on one vendor's value-area convention. Prices are
+back-adjusted across 29 rolls; holiday and half sessions are excluded. Every
+headline number runs against a matched control — that is the part worth keeping.
 
-Every headline number is run against a matched control, which is the part worth
-keeping:
-
-- the 80% rule is compared with sessions that opened *inside* the prior value
-  area, re-weighted to the signal's own mix of trigger bracket, direction, and
-  distance-to-target, so the comparison is not a restatement of how far the far
-  edge happened to be;
-- the same scan is run requiring only one accepting bracket, which isolates what
-  the two-period confirmation is actually worth;
-- naked POCs are compared with the value-area edges, the range midpoint, a
-  uniform draw from the session range, and the POC reflected through the session
-  close, which holds distance-from-close fixed.
-
-Both claims are also converted into costed trade ledgers. Output goes to
-`reports/mnq_market_profile/`.
-
-```powershell
-# TPO value areas, whole-bracket acceptance, coarser rows, day-session revisits only
-.\.venv\Scripts\python.exe .\scripts\mnq\mnq_market_profile_backtest.py `
-  --profile-mode tpo --accept-mode range --price-step 4 --npoc-touch-scope rth
-```
-
-## MNQ opening trend-pullback
-
-Run the mechanical version of the 09:30-11:00 ET trend/pullback plan against
-the local one-minute MNQ archive:
+**MNQ opening trend-pullback** — the mechanical version of a 09:30-11:00 ET
+discretionary plan, with every fuzzy term frozen and documented:
 
 ```powershell
 .\.venv\Scripts\python.exe .\scripts\mnq\mnq_opening_trend_pullback_backtest.py
 ```
 
-It uses completed five-minute bars for structure, VWAP, pullback and rejection
-signals, then one-minute bars for conservative bracket fills. Fuzzy terms from
-the discretionary plan are frozen and documented in
-`reports/mnq_opening_trend_pullback/report.md`; the trade ledger, daily series,
-annual totals, and machine-readable configuration are written beside it.
+Further reading: [event studies](docs/workbench/EVENT_STUDIES.md),
+[intraday momentum](docs/research/MARKET_INTRADAY_MOMENTUM.md),
+[SND setup and variants](SND_WORKBENCH.md),
+[combined portfolio](COLLECTIVE_DASHBOARD.md),
+[evaluation and regime notes](docs/workbench/PHASES_4_5.md).
 
-```powershell
-# Different account risk, date window, and the optional bias-flip exit
-.\.venv\Scripts\python.exe .\scripts\mnq\mnq_opening_trend_pullback_backtest.py `
-  --start 2023-01-01 --risk-dollars 200 --bias-flip-exit
+### TradingView reference implementations
+
+`pine/` holds Pine ports used to cross-check adapter behaviour on TradingView —
+a manual multi-market TSMOM dashboard, a single-market Strategy Tester version,
+an experimental intraday ORB variant, and the supply/demand indicators. They
+request daily values with `lookahead_off`, confirm outside the request, and act
+at the next session's first completed bar. None submit orders or model futures
+rolls. `ninjatrader/` holds the equivalent NinjaTrader ports.
+
+## Layout
+
+- `src/app/`, `src/features/`, `src/shared/` — shell, vertical feature slices, browser-only shared code
+- `server/http/`, `server/features/`, `server/core/`, `server/infra/` — HTTP boundary, domain services, supervision, persistence
+- `shared/contracts/`, `shared/ts/` — versioned cross-runtime schemas and pure calculations
+- `workbench/`, `strategy_engine/`, `strategies/` — Python orchestration, shared execution/accounting, runnable adapters
+- `research/` — reproducible campaigns and studies that are not runnable adapters
+- `tools/` — data, validation, migration and maintenance utilities
+- `scripts/` — standalone studies and compatibility entry points awaiting a parity-backed move
+- `tests/` — unit, isolated API, browser, fixture and opt-in real-data suites
+- `evidence/` — tracked protocols, conclusions, manifests and checksums
+- `artifacts/` — ignored raw research output; override the root with `WORKBENCH_ARTIFACTS`
+- `data/workbench/` — durable app state
+- `docs/workbench/`, `docs/research/` — implementation history, inventories, research notes
+- `pine/`, `ninjatrader/` — platform-specific reference ports
+- `legacy/previous-dashboard/` — source-only archive of the retired dashboard API and UI, excluded from the build and test gates
+
+Some compatibility commands still write ignored output under `reports/`. New
+integrations should resolve artifact storage through the workbench layout rather
+than adding another hard-coded report path.
+
+## Tests
+
+```bash
+npm run test:workbench:all   # hermetic product gate: hygiene, build, lint, TS + Python units
+npm run test:browser         # Playwright smoke over the running app
+npm run doctor               # reports toolchain drift, installs nothing
 ```
 
-## Dashboard run registry and validation
+The Python suites include parity checks against the original strategy sources
+([tests/test_parity.py](tests/test_parity.py)) and accounting invariants
+([tests/test_accounting.py](tests/test_accounting.py)). Real-data validation is
+opt in: `npm run test:real-data` with `WORKBENCH_REAL_DATA=1`.
 
-Runs started from the dashboard are automatically recorded in
-`data/strategy_dashboard.sqlite3`. The registry stores the chart and strategy,
-parameters, lifecycle state, artifact index, reproducibility hashes, and validation
-checks. The report files remain under `reports/dashboard_runs/<run-id>/`.
+## Current limits
 
-After the strategy process exits, the API checks execution, Databento dataset
-coverage metadata, strategy and dataset fingerprints, report artifacts, a structured
-result, and basic sample coverage. A passing run is labeled `DATA VALIDATED`; a hard
-failure is `REJECTED`, and small samples or zero-trade windows are shown as warnings.
-This is a technical/data gate only. Research approval and live-trading eligibility
-remain separate decisions.
+Stated plainly so they are not discovered the hard way:
 
-Every completed run also receives an automated research analysis. It extracts all
-reported performance sections and evaluates reproducibility, evidence coverage,
-execution-cost assumptions, net edge, risk measurement, chronology, and robustness.
-The result is labeled Blocked, Negative evidence, Smoke test, Provisional, or
-Incomplete and includes an explanation plus a recommended next action. Unknown
-evidence stays Unknown; the analysis never promotes a strategy to approved status.
+- **No price chart.** Equity and drawdown render as simple SVG polylines; there
+  is no candlestick view and no way to inspect a trade on the chart. This is the
+  largest functional gap in the app.
+- **The state endpoint is heavy.** `GET /api/workbench/state?view=summary`
+  returns the whole catalog — currently ~13.9 MB — and the UI polls it every 10
+  seconds. The ETag saves bandwidth but not server CPU, because the payload is
+  serialized before the ETag is compared.
+- **No table virtualization.** The runs ledger renders every filtered row.
+- **Single JS bundle.** No route-level code splitting.
+- **Fixed-contract sizing only.** `strategy_engine/sizing.py` rounds contracts;
+  there is no volatility targeting, so risk drifts with the volatility regime.
+- **Independent strategy books.** The combined portfolio does not net positions,
+  share margin, resize, or account for correlation between books. Several
+  correlated index-futures configurations will look like separate bets.
+- **Evaluation labels are research judgments, not certifications.** They record
+  that declared criteria were met on declared data. They do not establish that
+  the data was never inspected, correct for the number of variants tried, or
+  imply live-trading eligibility. Brokerage execution is outside this
+  application.
+- **Desktop-first.** The bottom-bar layout works, but the app is built for a wide
+  screen.
 
-## CME Group data + statistical reports
-
-PWB has no dataset named "CME". The CME Group complex is assembled from four daily datasets by
-`scripts/cme/fetch_cme_data.py`: 38 CME/CBOT/NYMEX/COMEX roots plus 7 non-CME comparators (Brent, ICE softs, VIX).
-
-```powershell
-python scripts/cme/fetch_cme_data.py --include-reference        # -> data/cme_daily.parquet, data/cme_universe.csv
-python scripts/cme/fetch_cme_data.py --refresh                  # repull; otherwise the parquet cache is reused
-python scripts/cme/cme_stats_report.py --include-reference --plots           # full history -> reports/
-python scripts/cme/cme_stats_report.py --start 2005-01-01 --out-dir reports/2005plus
-python scripts/cme/cme_stats_report.py --markets ES,NQ,CL,GC,ZN --rf 0.04
-```
-
-`reports/` gets 14 CSVs plus `cme_report.md`: coverage/quality, moments and risk, dependence
-(ADF, Ljung-Box, Lo-MacKinlay variance ratios, Hurst), correlation, day-of-week / month /
-turn-of-month seasonality, volatility regimes, tails and drawdowns.
-
-Proxies, not futures — cash indices for the equity contracts, bond **price** indices for ZT/ZF/ZN/ZB
-(they rise as yields fall), spot FX, continuous fronts for commodities. No roll yield, multipliers,
-fees, or margin. Momentum, vol, and correlation statistics survive this; carry and term-structure
-statistics do not.
-
-Known data traps, all surfaced by the report's section 0:
-
-- `CC` (cocoa) printed 0.91 between two 5000-handle closes on 2025-11-25 — auto-scrubbed as a
-  one-day round trip. Genuine gaps like April 2020 WTI (which goes negative) are kept, and returns
-  are blanked rather than log-transformed across non-positive prices.
-- `ZR` (rough rice) has bad pre-1987 prints (0.80 -> 3.96 on 1986-08-20). Use `--start 1990-01-01`.
-- `6J 6C 6S 6M 6L 6Z CNH` carry only ~240 days of PWB history and are dropped by `--min-years 3`.
-  Deep FX history exists only for EURUSD, GBPUSD, AUDUSD, NZDUSD.
-- `DC` proxy `DL1` trades at 0.8-4.25, not Class III milk's $/cwt — treat its levels as unverified.
-- `VX` legitimately trips the implausible-move flag (VIX +115.6% on 2018-02-05).
-
-## Metrics (match the catalog)
-
-```python
-from pwb_toolbox.performance.metrics import sharpe_ratio, annualized_volatility, cagr, max_drawdown
-```
-
-- `sharpe_ratio`, `annualized_volatility` — exact match (population var, ×√252, no risk-free rate)
-- `max_drawdown` — returns `(depth, duration)`, depth **negative** → use `abs(depth)`
-- `cagr` — off by ~1e-5 vs catalog (annualizes over `len-1` not `len`)
-
-## Replay a paper
-
-`get_paper` returns a `code` string. **Read it before running — arbitrary Python, runs with your permissions.**
-
-```python
-ns = {"__name__": "__main__"}
-exec(paper_code, ns)
-strat = ns["strategy"]
-nav = strat.log_data                      # [{"date","value"}, ...]
-pos = strat.get_latest_positions()
-```
-
-## Save a run
-
-MCP tools: `create_strategy` (register with hypothesis + cutoff, **before** the run), `update_strategy`,
-`list_my_strategies`, `delete_strategy`. Strategies are private to the account.
-
-- Set `parentSlug` on every variant — lineage is what makes a Sharpe ratio readable.
-- NAV is too big for a tool call (~130k tokens for 36y daily). POST it directly:
-  `POST /api/v1/me/strategies/{slug}/results` with `x-api-key: $PWB_API_KEY`.
-- Pick the in-sample/out-of-sample split **before** looking at results; keep it fixed.
-
-## Keep count
-
-Variants are free locally — that is how noise becomes a fake edge. Log every variant tested,
-including discards. Read `deflatedSharpeRatio` (via `get_strategy_lineage`): <0.5 means the search
-explains the result, not the strategy.
-
-SND is runnable through Scripts & library or New run with four variants and native workbench artifacts. See [SND setup, variants and execution scope](SND_WORKBENCH.md).
+The local API binds `127.0.0.1` and is not intended to be exposed to a network.

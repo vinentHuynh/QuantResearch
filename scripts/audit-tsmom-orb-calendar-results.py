@@ -9,7 +9,6 @@ import datetime
 import hashlib
 import json
 import math
-import os
 from pathlib import Path
 import sqlite3
 import sys
@@ -20,16 +19,41 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from strategies._cme_index_calendar import CALENDAR_VERSION, SOURCE_SHA256, session_close_et
+from workbench.layout import load_layout
+from workbench.research import resolve_source_snapshot
 
 REPORT = ROOT / 'reports/tsmom-orb-fix-2026-09-29'
-STATE = Path(os.environ.get('WORKBENCH_HOME', ROOT / 'data/workbench'))
 TERMINAL = {'Succeeded', 'Failed', 'Cancelled', 'Canceled', 'Timed out', 'Interrupted'}
 SOURCE_FILES = ['strategies/pine_tsmom_orb.py', 'strategies/_pine_models.py',
                 'strategies/_cme_index_calendar.py', 'workbench/events.py']
 
 
+def state_root():
+    return load_layout(ROOT).state_root
+
+
+def source_snapshot_path(inp, workbench_home=None):
+    return resolve_source_snapshot(inp, workbench_home or state_root())
+
+
 def read(path):
     return json.loads(Path(path).read_text(encoding='utf-8'))
+
+
+def decode_sqlite_record(kind, record_id, raw):
+    """Read a legacy body or validate and unwrap a protocol-v2 envelope."""
+    value = json.loads(raw)
+    if (isinstance(value, dict) and value.get('schema_version') == 2
+            and ('kind' in value or 'body' in value)):
+        if (set(value) != {'schema_version', 'kind', 'id', 'body'}
+                or value.get('kind') != kind
+                or value.get('id') != record_id
+                or not isinstance(value.get('body'), dict)):
+            raise ValueError(f'Invalid protocol-v2 SQLite envelope for {kind}/{record_id}')
+        return value['body']
+    if not isinstance(value, dict):
+        raise ValueError(f'Invalid protocol-v1 SQLite record for {kind}/{record_id}')
+    return value
 
 
 def sha(path):
@@ -49,7 +73,7 @@ def normalized_expiry(text):
 
 
 def source_identity(inp):
-    snapshot = Path(inp['source_dir'])
+    snapshot = source_snapshot_path(inp)
     files = {}
     for name in SOURCE_FILES:
         old, current = snapshot / name, ROOT / name
@@ -96,7 +120,7 @@ def audit_run(label, run, request=None):
             result['failures'].append('Run did not succeed: ' + result['status'])
         result['run_error'] = run.get('error') or run.get('result', {}).get('error')
         return result, None
-    folder = STATE / 'runs' / run['id']
+    folder = state_root() / 'runs' / run['id']
     try:
         inp = read(folder / 'input.json')
         manifest = read(folder / 'manifest.json')
@@ -192,8 +216,8 @@ def main():
                    if item['strategy_id'] == 'pine-tsmom-orb')
     old_ids = [r['run_id'] for r in old_orb['baseline_runs'] if r['input']['start'] >= '2024-01-01']
     ids = list(dict.fromkeys([group['run_id'] for group in campaign['groups'].values()] + old_ids))
-    with sqlite3.connect((STATE / 'workbench.sqlite3').resolve().as_uri() + '?mode=ro', uri=True) as connection:
-        records = {run_id: json.loads(body) for run_id, body in connection.execute(
+    with sqlite3.connect((state_root() / 'workbench.sqlite3').resolve().as_uri() + '?mode=ro', uri=True) as connection:
+        records = {run_id: decode_sqlite_record('run', run_id, body) for run_id, body in connection.execute(
             "SELECT id,body FROM records WHERE kind='run' AND id IN (" + ','.join('?' for _ in ids) + ')', ids)}
     results = []
     for label, group in campaign['groups'].items():

@@ -1,6 +1,8 @@
 """Python port; see PINE_AUDIT.md for source coverage and simulator limits."""
 
-STRATEGY = {'version': '1.1.0',
+STRATEGY = {'schema_version': 2,
+ 'source_files': ['strategies/pine_tsmom_orb.py', 'strategies/_pine_models.py', 'strategies/_cme_index_calendar.py'],
+ 'version': '1.1.0',
  'execution_model': 'event-v1',
  'default_session': 'full-trading-day',
  'required_session': 'full-trading-day',

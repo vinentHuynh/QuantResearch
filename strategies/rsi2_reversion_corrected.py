@@ -1,6 +1,8 @@
 """Additive RSI(2) experiment with explicit zero-gain/loss conventions."""
 
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': ['strategies/rsi2_reversion_corrected.py'],
     'id': 'rsi2-reversion-corrected',
     'name': 'RSI(2) reversion - corrected rebound exit',
     'version': '1.0.0',

@@ -14,6 +14,10 @@ Local helpers belong in strategies/ and are preserved in source snapshots.
 """
 
 STRATEGY = {
+    'schema_version': 2,
+    # Change this to the copied adapter path and list every repository-local
+    # module or static asset that can affect execution.
+    'source_files': ['strategies/_template.py'],
     'id': 'my-strategy',
     'name': 'My strategy',
     'description': 'Replace with the mechanism and hypothesis being tested.',

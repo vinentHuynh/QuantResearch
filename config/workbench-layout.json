@@ -1,0 +1,30 @@
+{
+  "$schema": "../shared/contracts/workbench-layout.v1.schema.json",
+  "schema_version": 1,
+  "protocol_version": 2,
+  "paths": {
+    "state": "data/workbench",
+    "artifacts": "artifacts",
+    "evidence": "evidence",
+    "contracts": "shared/contracts"
+  },
+  "source_roots": [
+    "strategies",
+    "strategy_engine",
+    "workbench",
+    "server",
+    "src",
+    "research",
+    "tools",
+    "scripts",
+    "pine",
+    "ninjatrader",
+    "shared"
+  ],
+  "source_aliases": {},
+  "discovery_paths": {
+    "strategy_adapters": ["strategies"],
+    "python_library": [".", "scripts", "ninjatrader", "strategy_engine/strategies"],
+    "pine_library": [".", "pine"]
+  }
+}

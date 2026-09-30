@@ -1,5 +1,7 @@
 """Consolidated RSI(2) signal from the ES/NQ strategy bakeoff."""
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': ['strategies/rsi2_reversion.py', 'strategies/_legacy_signals.py'],
     'id': 'rsi2-reversion', 'name': 'RSI(2) trend-filtered reversion', 'version': '1.0.0',
     'description': 'Long when simple RSI(2) is below the entry threshold and price is above its moving average; exit above the RSI exit threshold.',
     'timeframes': ['1d'], 'capabilities': ['equity', 'trades', 'positions'],

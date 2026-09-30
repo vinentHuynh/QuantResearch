@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://strategy-workbench.local/contracts/source-snapshot.v2.schema.json",
+  "title": "Source snapshot manifest protocol v2",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created_at",
+    "execution_source_hash",
+    "snapshot_hash",
+    "app_build_hash",
+    "files"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "execution_source_hash": { "$ref": "#/$defs/sha256" },
+    "snapshot_hash": { "$ref": "#/$defs/sha256" },
+    "app_build_hash": { "$ref": "#/$defs/sha256" },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "bytes", "role"],
+        "properties": {
+          "path": { "$ref": "#/$defs/relativePath" },
+          "sha256": { "$ref": "#/$defs/sha256" },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "role": {
+            "type": "string",
+            "enum": [
+              "adapter",
+              "execution_dependency",
+              "application",
+              "research",
+              "tooling"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "python": { "type": "string" },
+        "node": { "type": "string" },
+        "platform": { "type": "string" },
+        "dependencies": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)(?!.*(?:^|/)\\.(?:/|$)).+$"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,5 +1,7 @@
 """Canonical four-speed trend decisions with workbench execution."""
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': ['strategies/multi_speed_momentum.py', 'strategies/_legacy_signals.py'],
     'id': 'multi-speed-momentum', 'name': 'Multi-speed momentum', 'version': '1.1.0',
     'description': 'Long/short consensus of four completed-bar momentum horizons. Fixed contracts and next-open fills.',
     'timeframes': ['30m', '1h', '4h', '1d'], 'capabilities': ['equity', 'trades', 'positions'],

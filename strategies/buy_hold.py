@@ -1,5 +1,6 @@
 """Shared passive benchmark from the index and ETF strategy bakeoffs."""
 STRATEGY = {
+    'schema_version': 2, 'source_files': ['strategies/buy_hold.py'],
     'id': 'buy-hold', 'name': 'Buy and hold benchmark', 'version': '1.0.0',
     'description': 'Hold a fixed long position after the first completed bar; liquidate at the evaluation end.',
     'timeframes': ['5m', '15m', '30m', '1h', '4h', '1d'], 'capabilities': ['equity', 'trades', 'positions'],

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium, expect as baseExpect } from "@playwright/test";
-import { defaultPolicy } from "../src/collectiveModel.ts";
+import { defaultPolicy } from "../shared/ts/portfolio.ts";
 
 const origin = "http://127.0.0.1:8001";
 const response = await fetch(`${origin}/api/workbench/collective`);

@@ -11,7 +11,7 @@ import {
   commonWindow,
   PortfolioCoverageError,
   tradeDependence,
-} from "../src/collectiveModel.ts";
+} from "../shared/ts/portfolio.ts";
 import { createCollective } from "../server/collective.ts";
 
 const item = (id) => ({

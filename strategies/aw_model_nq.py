@@ -24,9 +24,11 @@ TWO_HOURS = pd.Timedelta(hours=2)
 
 
 STRATEGY = {
+    'schema_version': 2,
+    'source_files': ['strategies/aw_model_nq.py', 'strategies/_cme_index_calendar.py'],
     'id': 'aw-model-nq',
     'name': 'AW Reversal - NQ frozen research interpretation',
-    'version': '0.1.0',
+    'version': '0.2.0',
     'description': 'NQ-only completed-bar AW Reversal: pre-open 2H bias, premarked ERL sweep, 3m MSS/FVG, and first later 1m retrace.',
     'migration_scope': 'One fixed, causal interpretation of chapters 5, 6, 9-11 of the AW Model PDF, not author-verified rules. Pre-08:30 CT five 2H proxies are: (1) latest 2H failure to make a lower low/higher high; (2) premarked eligible external high/low still beyond price; (3) position below/above midpoint of the last five completed 2H bars; (4) an untouched strict 2H FVG wholly above/below price; (5) latest two completed 2H bars have higher highs/lows or lower highs/lows. A strict 3-of-5 directional vote is required by default. Prior day means the prior complete 08:30-to-calendar-declared-close CT cash session, including shortened valid sessions; overnight means prior 17:00-08:30 CT. Each 3m neckline is a strict pivot with two left and two right candles confirmed before a completed 3m wick-through/close-back sweep; the last two confirmed pivot highs and lows must both rise for shorts or fall for longs. The first strong 3m close through it within five subsequent completed 3m bars must be the middle candle of a strict 3-bar FVG. First later 1m physical gap touch schedules one NQ contract at the immediately following minute open, expiring if that minute is missing; event-v1 cannot model a resting limit entry. Stop is one tick beyond the swept extreme, target the nearest premarked opposing level still untaken at entry, with no discretionary R:R floor. A confirmed, still-untaken 3m pivot more than two points beyond planned entry and strictly before the target is frozen as a proxy first internal level; a later completed 1m close beyond it moves the stop to actual fill plus/minus two NQ points. If none exists, no BE move; subsequent discretionary trailing is omitted. Two submitted entries maximum per CT day; CME daytime calendar closes positions by 15:00 CT or earlier declared close. Intraminute fills, gaps, stop-first collisions, costs and final liquidation follow event-v1. Unadjusted continuous-contract roll gaps can contaminate 2H/3m structures because the workbench 1m selected bars omit instrument_id. No CPI/NFP/FOMC exclusion, equal-high/low pools, IFVG preference, manual significance, dollar-risk sizing, daily loss cap, or flip-candle entry. One contract can exceed the PDF risk ceiling. Historical execution is not live-trading validation.',
     'execution_model': 'event-v1',
@@ -36,12 +38,32 @@ STRATEGY = {
     'default_warmup_days': 60,
     'capabilities': ['equity', 'trades', 'positions'],
     'parameters': {
+        'bias_policy': {'type': 'enum', 'default': 'aligned-only',
+                        'choices': ['aligned-only', 'mixed-flex', 'unrestricted'],
+                        'description': 'Aligned-only requires the frozen 2H majority; mixed-flex trades the majority when clear and allows either reversal on NONE/mixed days; unrestricted ignores the vote.'},
         'bias_required': {'type': 'boolean', 'default': True,
-                          'description': 'Require a pre-08:30 CT majority of at least 3 of 5 completed 2H proxies.'},
+                          'description': 'Legacy compatibility: false with aligned-only selects unrestricted, preserving earlier no-bias run inputs.'},
         'impulse_multiple': {'type': 'number', 'default': 1.25, 'minimum': 1.0, 'maximum': 3.0,
                              'description': 'MSS directional body divided by median of the preceding 20 complete 3m bodies.'},
     },
 }
+
+
+def _effective_bias_policy(parameters):
+    """Retain old ``bias_required=False`` reruns without changing saved snapshots."""
+    policy = parameters.get('bias_policy', 'aligned-only')
+    if policy == 'aligned-only' and not parameters.get('bias_required', True):
+        return 'unrestricted'
+    return policy
+
+
+def _allowed_sides(policy, bias):
+    """Return (short, long) from the bias frozen before the cash open."""
+    if policy == 'unrestricted' or (policy == 'mixed-flex' and bias == 0):
+        return True, True
+    # Bearish bias: take buy-side liquidity then short toward sell-side ERL.
+    # Bullish bias: take sell-side liquidity then long toward buy-side ERL.
+    return bias == -1, bias == 1
 
 
 def validate(parameters, request):
@@ -254,6 +276,7 @@ class AWModelNQ:
         if bars.empty or bars.index.tz is None or not bars.index.is_monotonic_increasing:
             raise ValueError('AW Reversal requires sorted timezone-aware 1m bars')
         self.parameters = parameters
+        self.bias_policy = _effective_bias_policy(parameters)
         self.request = request
         self.tick = float(request['dataset']['tick_size'])
         self.local_start = bars.index.tz_convert(CT)
@@ -284,6 +307,8 @@ class AWModelNQ:
         self.day_morning = None
         self.plan = None
         self.candidate = None
+        self.other_candidates = []
+        self.mixed_day = False
         self.entries_today = 0
         self.taken = set()
         self.taken_at_three_start = set()
@@ -302,6 +327,9 @@ class AWModelNQ:
         self.day_cutoff = self._cutoff(day)
         self.day_morning = pd.Timestamp(day).tz_localize(CT) + pd.Timedelta(hours=8, minutes=30)
         self.candidate = None
+        self.other_candidates = []
+        self.mixed_day = (self.bias_policy == 'mixed-flex' and
+                          day in self.days and self.days[day].bias == 0)
         self.entries_today = 0
         self.taken = set()
         self.taken_at_three_start = set()
@@ -311,6 +339,12 @@ class AWModelNQ:
             self.funnel['prepared_days'] += 1
             if self.days[day].bias:
                 self.funnel['majority_bias_days'] += 1
+            else:
+                self.funnel['none_or_mixed_bias_days'] += 1
+
+    def _entry_limit(self):
+        # The mixed-day diagnostic takes the first valid reversal only.
+        return 1 if self.mixed_day else 2
 
     def _cutoff(self, day):
         exchange = session_close_et(day)
@@ -351,7 +385,8 @@ class AWModelNQ:
         return None
 
     def _try_sweep(self, k, state):
-        if not state['tradable'] or self.entries_today >= 2 or state['position'] or state.get('position_at_open', 0):
+        if (not state['tradable'] or self.entries_today >= self._entry_limit() or
+                state['position'] or state.get('position_at_open', 0)):
             return
         date = self.start3[k].date()
         levels = self.days.get(date)
@@ -363,8 +398,7 @@ class AWModelNQ:
         ready_clock = ready.hour * 60 + ready.minute
         if not (510 <= open_clock and ready_clock <= 630 and opening.date() == ready.date()) or ready >= self.day_cutoff:
             return
-        allow_short = not self.parameters['bias_required'] or levels.bias == -1
-        allow_long = not self.parameters['bias_required'] or levels.bias == 1
+        allow_short, allow_long = _allowed_sides(self.bias_policy, levels.bias)
         matches = []
         for name in ('PDH', 'ONH'):
             level = levels.price(name)
@@ -405,7 +439,14 @@ class AWModelNQ:
             self.funnel['sweep_invalid_neckline'] += 1
             return
         extreme = float(self.low3[k] if side > 0 else self.high3[k])
-        self.candidate = Candidate(side, name, level, neckline, extreme, ready)
+        candidate = Candidate(side, name, level, neckline, extreme, ready)
+        if self.candidate is None:
+            self.candidate = candidate
+        else:
+            # NONE/mixed days can have independent buy- and sell-side sweeps
+            # before either setup resolves. Track both until the first valid
+            # chronological touch; aligned-only days keep their old behavior.
+            self.other_candidates.append(candidate)
         self.funnel['neckline_sweeps'] += 1
 
     def _update_pivots(self, k):
@@ -433,14 +474,14 @@ class AWModelNQ:
             self.open_pivot_lows.append(value)
             self.open_pivot_lows = self.open_pivot_lows[-100:]
 
-    def _on_three_close(self, k, state):
-        candidate = self.candidate
-        if candidate is not None and candidate.phase == 'swept' and self.start3[k] >= candidate.sweep_ready:
+    def _advance_candidate(self, candidate, k):
+        """Advance one setup using this newly completed three-minute candle."""
+        if candidate.phase == 'swept' and self.start3[k] >= candidate.sweep_ready:
             candidate.mss_bars += 1
             crossed = self._mss_crossed(k, candidate)
             if candidate.mss_bars > 5:
                 self.funnel['expired_before_mss'] += 1
-                self.candidate = None
+                return False
             elif crossed:
                 if self._strong_mss(k, candidate):
                     candidate.phase = 'mss_pending'
@@ -448,20 +489,27 @@ class AWModelNQ:
                     self.funnel['strong_mss'] += 1
                 else:
                     self.funnel['weak_first_break'] += 1
-                    self.candidate = None
-        elif candidate is not None and candidate.phase == 'mss_pending':
+                    return False
+        elif candidate.phase == 'mss_pending':
             gap = self._fvg(k, candidate)
             if gap is None:
                 self.funnel['mss_without_strict_fvg'] += 1
-                self.candidate = None
+                return False
             else:
                 candidate.gap_low, candidate.gap_high = gap
                 candidate.gap_ready = self.ready3[k]
                 candidate.phase = 'gap'
                 self.funnel['confirmed_gap'] += 1
+        return True
+
+    def _on_three_close(self, k, state):
+        active = ([self.candidate] if self.candidate is not None else []) + self.other_candidates
+        survivors = [candidate for candidate in active if self._advance_candidate(candidate, k)]
+        self.candidate = survivors[0] if survivors else None
+        self.other_candidates = survivors[1:]
         # A level can be swept by a wick in this very candle; only previous
         # completed 3m bars disqualify it before the sweep decision.
-        if self.candidate is None:
+        if self.candidate is None or self.mixed_day:
             self._try_sweep(k, state)
         self._update_pivots(k)
         self.taken_at_three_start = self.taken.copy()
@@ -481,6 +529,8 @@ class AWModelNQ:
         levels = self.days.get(self.day)
         if levels is None:
             return None
+        # Longs after a sell-side sweep aim at the nearest untaken buy-side
+        # level; shorts after a buy-side sweep aim at sell-side liquidity.
         names = ('PDH', 'ONH') if side > 0 else ('PDL', 'ONL')
         values = [(levels.price(name), name) for name in names
                   if name in levels.eligible and name not in self.taken and
@@ -499,19 +549,44 @@ class AWModelNQ:
         return min(values) if side > 0 else max(values)
 
     def _entry_on_touch(self, bar, state, ready):
-        candidate = self.candidate
-        if candidate is None or candidate.phase != 'gap' or candidate.gap_ready is None:
-            return None
-        if ready <= candidate.gap_ready:
-            return None
         if ready.hour * 60 + ready.minute > 630 or ready >= self.day_cutoff or not state['tradable']:
             self.candidate = None
+            self.other_candidates = []
             return None
-        if float(bar.high) < candidate.gap_low or float(bar.low) > candidate.gap_high:
+        active = ([self.candidate] if self.candidate is not None else []) + self.other_candidates
+        touched = [candidate for candidate in active
+                   if candidate.phase == 'gap' and candidate.gap_ready is not None and
+                   ready > candidate.gap_ready and
+                   float(bar.high) >= candidate.gap_low and float(bar.low) <= candidate.gap_high]
+        if not touched:
             return None
-        self.candidate = None  # First physical touch consumes this setup.
-        self.funnel['first_gap_touches'] += 1
-        if state['position'] or state.get('position_at_open', 0) or self.entries_today >= 2:
+        if len({candidate.side for candidate in touched}) > 1:
+            # A one-minute OHLC candle cannot reveal which opposing gap was
+            # touched first. Do not choose the profitable direction afterward.
+            self.funnel['ambiguous_opposing_gap_touches'] += 1
+            self._consume_candidates(touched)
+            return None
+        for candidate in touched:
+            self._consume_candidates((candidate,))
+            self.funnel['first_gap_touches'] += 1
+            order = self._entry_for_touched_candidate(candidate, bar, state, ready)
+            if order is not None:
+                if self.mixed_day:
+                    self.candidate = None
+                    self.other_candidates = []
+                return order
+        return None
+
+    def _consume_candidates(self, consumed):
+        remaining = [candidate for candidate in
+                     ([self.candidate] if self.candidate is not None else []) + self.other_candidates
+                     if all(candidate is not other for other in consumed)]
+        self.candidate = remaining[0] if remaining else None
+        self.other_candidates = remaining[1:]
+
+    def _entry_for_touched_candidate(self, candidate, bar, state, ready):
+        if (state['position'] or state.get('position_at_open', 0) or
+                self.entries_today >= self._entry_limit()):
             self.funnel['touch_while_busy'] += 1
             return None
         side = candidate.side
@@ -540,6 +615,7 @@ class AWModelNQ:
             'target_level': target_name, 'neckline': candidate.neckline,
             'fvg_low': candidate.gap_low, 'fvg_high': candidate.gap_high,
             'internal_level': internal,
+            'bias': self.days[self.day].bias, 'bias_policy': self.bias_policy,
         }, sort_keys=True), flush=True)
         return {'target': side, 'timing': 'next-open',
                 'expires_at': ready.isoformat(), 'bracket': (stop, target),
@@ -584,6 +660,7 @@ class AWModelNQ:
             self._new_day(day, state)
         if ready >= self.day_cutoff:
             self.candidate = None
+            self.other_candidates = []
         # A first-touch minute can arrive before its containing 3m candle
         # closes. Previously confirmed internal pivots can be taken meanwhile.
         high, low = float(bar.high), float(bar.low)

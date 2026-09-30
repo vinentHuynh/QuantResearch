@@ -3,12 +3,12 @@ import {
   calculatePortfolio,
   defaultPolicy,
   replayGate,
-} from "../src/collectiveModel.ts";
+} from "../shared/ts/portfolio.ts";
 import {
   defaultSizing,
   volatilityModel,
   correlationRows,
-} from "../src/riskSizing.ts";
+} from "../shared/ts/riskSizing.ts";
 
 const date = (n) =>
   new Date(Date.UTC(2025, 0, 1 + n)).toISOString().slice(0, 10);

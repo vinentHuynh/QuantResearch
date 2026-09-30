@@ -1,4 +1,4 @@
-import { strategyTitle } from "../src/strategyTitle.ts";
+import { strategyTitle } from "../shared/ts/formatting.ts";
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
