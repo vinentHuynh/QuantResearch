@@ -18,12 +18,16 @@ import type { Run } from "../../../shared/ts/workbenchModels.ts";
 import { workbenchRequest as request } from "../../shared/api/workbench";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
 import { PageHeader } from "../../shared/ui/PageHeader";
+import { StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { testingEvidence } from "../../../shared/ts/evidence.ts";
+import { useStrategyStages } from "../../shared/ui/strategyStageContext";
 import { WorkbenchAlerts } from "../workspace/WorkbenchChrome";
 import type { WorkbenchController } from "../workspace/useWorkbenchController";
 import { sessionOptions, shortId, type WarmupCheck } from "../workspace/workbenchModel";
 import { initialNewRunInput, newRunSteps, parseSweep } from "./model";
 
 export function NewRunPage({ controller }: { controller: WorkbenchController }) {
+  const { statuses } = useStrategyStages();
   const {
     action,
     busy,
@@ -55,6 +59,16 @@ export function NewRunPage({ controller }: { controller: WorkbenchController }) 
     warmupChecks,
   } = controller;
   if (!state) return null;
+  const configurationStage = strategy && dataset ? testingEvidence(strategy, state.runs, state.evaluations || [], dataset.symbol).configurations
+    .filter((config) => config.timeframe === input.timeframe && config.session === input.session
+      && Object.keys(config.parameters).length === Object.keys(input.parameters).length
+      && Object.entries(config.parameters).every(([key, value]) => JSON.stringify(value) === JSON.stringify(input.parameters[key])))
+    .sort((a, b) => b.stage - a.stage)[0] : undefined;
+  const previousRun = strategy && dataset && state.runs.find(run => run.input.strategy.id === strategy.id && run.input.dataset.symbol === dataset.symbol
+    && run.input.timeframe === input.timeframe && run.input.session === input.session
+    && Object.keys(run.input.parameters).length === Object.keys(input.parameters).length
+    && Object.entries(run.input.parameters).every(([key, value]) => JSON.stringify(value) === JSON.stringify(input.parameters[key])));
+  const configurationStatus = configurationStage?.lifecycle || (previousRun ? statuses.byRun.get(previousRun.id) : undefined);
   const sweep = parseSweep(sweepText);
   const summaries = [
     strategy
@@ -138,6 +152,7 @@ export function NewRunPage({ controller }: { controller: WorkbenchController }) 
       />
       <WorkbenchAlerts controller={controller} />
       <div className="wb-wizard">
+        {strategy && dataset && <Group gap="sm" mb="md"><Text size="sm" fw={600}>Current stage for these settings</Text><StrategyStageBadge stage={configurationStage?.stage || 0} {...configurationStatus} showFinding /></Group>}
         <ol className="wb-steps" aria-label="Steps">
           {newRunSteps.map((label, index) => (
             <li key={label}>

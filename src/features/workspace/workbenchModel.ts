@@ -9,6 +9,7 @@ import type { EvaluationView, RegimeView } from "../evaluations/ResearchPage";
 import type { Library } from "../strategies/StrategyLibrary";
 import type { NewRunInput } from "../new-run/model";
 import type { WatchlistEntry } from "../watchlist/model";
+import type { ResearchArchive } from "../../../shared/ts/researchArchive.ts";
 
 export type SavedView = {
   id: string;
@@ -18,8 +19,18 @@ export type SavedView = {
   status: string;
 };
 
+export type ArchivedScript = {
+  id: string;
+  name: string;
+  original_path: string;
+  archive_path: string;
+  archived_at: string;
+};
+
 export type WorkbenchState = {
   library?: Library;
+  archived_scripts?: ArchivedScript[];
+  research_archive?: ResearchArchive;
   evaluations?: EvaluationView[];
   regimes?: RegimeView[];
   strategies: Strategy[];

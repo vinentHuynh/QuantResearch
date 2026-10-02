@@ -1,23 +1,35 @@
 import { createServer } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { DatabaseSync } from "node:sqlite";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
   readFileSync,
-  writeFileSync,
   readdirSync,
   createReadStream,
   statSync,
 } from "node:fs";
 import { resolve, join, relative, sep } from "node:path";
 import { createResearch } from "../features/evaluations/research.ts";
+import type { Evaluation } from "../features/evaluations/research.ts";
 import { createRunDeletion } from "../features/runs/runDeletion.ts";
+import { createResearchArchive } from "../features/runs/researchArchive.ts";
 import { createDashboard } from "../features/scorecards/dashboard.ts";
 import { createCollective } from "../features/portfolio/collective.ts";
+import { createPortfolioRisk } from "../features/portfolio/portfolioRisk.ts";
+import { createPortfolioTracking } from "../features/portfolio/portfolioTracking.ts";
+import { createScriptArchive } from "../features/scripts/scriptArchive.ts";
+import { createDiscoveryChangeGate } from "../features/scripts/discoveryChangeGate.ts";
+import { visibleMonthlyCsv, visibleMonthlyReport } from "../features/scripts/archiveVisibility.ts";
+import type { EvaluationView } from "../../shared/ts/workbenchModels.ts";
+import { strategyStageStatuses } from "../../shared/ts/stageStatus.ts";
+import { runConfigurationKey } from "../../shared/ts/evidence.ts";
+import { createReadinessReview } from "../../shared/ts/readiness.ts";
+import { createStageAssessment } from "../../shared/ts/stageAssessments.ts";
 import { createDatasets } from "../features/datasets/datasets.ts";
-import { runSummaries } from "../infra/stateSummary.ts";
+import { createRevisionedRunSummaries } from "../infra/revisionedRunSummaries.ts";
 import { previewWarmup } from "../core/warmup.ts";
 import { createEventStudies } from "../features/event-studies/eventStudies.ts";
 import { createRecordRepository } from "../infra/recordRepository.ts";
@@ -43,6 +55,7 @@ import { readJsonBody as body, sendJson as json } from "./responses.ts";
 import { createRunQueue } from "../core/runQueue.ts";
 import { stopProcess } from "../core/processSupervisor.ts";
 import { createContractValidation } from "../core/contractValidation.ts";
+import { startSupervisorHeartbeat } from "../core/supervisorHeartbeat.ts";
 
 export type { Input, Run } from "../core/contracts.ts";
 
@@ -71,29 +84,49 @@ const maxBatch = Math.max(
 mkdirSync(state, { recursive: true });
 const supervisorFile = join(state, "supervisor.json");
 const supervisorToken = randomUUID();
-writeFileSync(
+const supervisorHeartbeat = await startSupervisorHeartbeat(
   supervisorFile,
-  JSON.stringify({ token: supervisorToken, pid: process.pid }),
+  supervisorToken,
+  process.pid,
+  error => {
+    console.error("Supervisor heartbeat failed:", error);
+    shutdown(1);
+  },
 );
-setInterval(
-  () =>
-    writeFileSync(
-      supervisorFile,
-      JSON.stringify({ token: supervisorToken, pid: process.pid }),
-    ),
-  2000,
-).unref();
 const db = new DatabaseSync(join(state, "workbench.sqlite3"));
 db.exec("PRAGMA journal_mode=WAL");
+const projectedRuns = createRevisionedRunSummaries(db);
 const records = createRecordRepository(db);
 const put = records.put;
 const get = records.get;
 const all = records.all;
 const rawRecord = records.raw;
+const scriptArchive = createScriptArchive(root);
+scriptArchive.list(); // Complete any interrupted archive move before discovery starts.
 const now = () => new Date().toISOString();
 const hash = (value: string | Buffer) =>
   createHash("sha256").update(value).digest("hex");
 const runDir = (id: string) => join(state, "runs", id);
+const activeEvaluations = () => {
+  const archived = scriptArchive.archivedIds();
+  return all<Evaluation>("evaluation").filter(evaluation =>
+    !archived.has(evaluation.candidates?.[0]?.strategy.id || ""));
+};
+const activeRegimes = () => {
+  const visibleEvaluations = new Set(activeEvaluations().map(evaluation => evaluation.id));
+  const hiddenEvaluations = new Set(all<Evaluation>("evaluation").map(evaluation => evaluation.id).filter(id => !visibleEvaluations.has(id)));
+  return all<{ evaluation_id: string }>("regime").filter(regime => !hiddenEvaluations.has(regime.evaluation_id));
+};
+const activeDashboardRecords = <T,>(kind: string): T[] => {
+  if (kind === "run") {
+    const archived = scriptArchive.archivedIds();
+    return projectedRuns.read()
+      .filter(run => !archived.has(run.input.strategy.id)) as T[];
+  }
+  if (kind === "evaluation") return activeEvaluations() as T[];
+  if (kind === "regime") return activeRegimes() as T[];
+  return all<T>(kind);
+};
 function saveRun(run: Run) {
   put("run", run.id, run);
 }
@@ -138,9 +171,36 @@ let catalog: {
   strategies: [],
   errors: [],
 };
+let catalogRevision = 0;
+let cachedSummary: { key: string; encoded: string; etag: string } | null = null;
+function sendSummary(req: IncomingMessage, res: ServerResponse, encoded: string, etag: string) {
+  res.setHeader("ETag", etag);
+  res.setHeader("Cache-Control", "private, no-cache");
+  if (req.headers["if-none-match"] === etag) {
+    res.writeHead(304);
+    return res.end();
+  }
+  res.writeHead(200, { "Content-Type": "application/json" });
+  return res.end(encoded);
+}
 let discoveryTask: Promise<void> | null = null;
-function refreshCatalog(): Promise<void> {
-  if (discoveryTask) return discoveryTask;
+let activeDiscoverySnapshot: string | null = null;
+let queuedDiscoveryTask: Promise<void> | null = null;
+const discoveryGate = createDiscoveryChangeGate(root);
+function refreshCatalog(force = false): Promise<void> {
+  if (discoveryTask) {
+    if (!force || discoveryGate.snapshot() === activeDiscoverySnapshot) return discoveryTask;
+    if (!queuedDiscoveryTask) {
+      queuedDiscoveryTask = discoveryTask.then(() => {
+        queuedDiscoveryTask = null;
+        return refreshCatalog(true);
+      });
+    }
+    return queuedDiscoveryTask;
+  }
+  const snapshot = discoveryGate.snapshot();
+  if (!force && !discoveryGate.needsScan(snapshot)) return Promise.resolve();
+  activeDiscoverySnapshot = snapshot;
   discoveryTask = new Promise((resolveDone) => {
     const child = spawn(python, ["-m", "workbench.contract", root], {
       cwd: root,
@@ -182,15 +242,25 @@ function refreshCatalog(): Promise<void> {
         });
         discovered.errors = [...discovered.errors, ...fingerprintErrors];
         catalog = discovered;
+        catalogRevision += 1;
       } catch (e) {
         catalog.errors = [{ error: String(e) }];
+        catalogRevision += 1;
       }
+      // A failed discovery is still an attempt for these bytes. Retry when the
+      // files change or the user explicitly scans, not on every idle tick.
+      discoveryGate.markScanned(snapshot);
+      activeDiscoverySnapshot = null;
       discoveryTask = null;
       resolveDone();
     });
   });
   return discoveryTask;
 }
+// Assigned after the run queue is built; each side has a terminal callback to
+// the other, so construction cannot be expressed as one const initializer.
+// eslint-disable-next-line prefer-const
+let portfolioTracking: ReturnType<typeof createPortfolioTracking> | undefined;
 const datasetService = createDatasets({
   root,
   state,
@@ -198,6 +268,10 @@ const datasetService = createDatasets({
   cleanEnvironment,
   put,
   raw: rawRecord,
+  onRegister: () => {
+    try { portfolioTracking?.reconcile(); }
+    catch (error) { console.error("Portfolio tracking reconciliation failed:", error); }
+  },
 });
 
 const sourceSnapshots = createSourceSnapshots({
@@ -211,7 +285,7 @@ function snapshot(strategy: Strategy) {
   return sourceSnapshots.create(strategy);
 }
 function buildInputs(body: RecordValue) {
-  const strategy = catalog.strategies.find((s) => s.id === body.strategy_id);
+  const strategy = catalog.strategies.find((s) => s.id === body.strategy_id && !scriptArchive.archivedIds().has(s.id));
   if (!strategy) throw new Error("Select a discovered strategy");
   const dataset = get<Dataset>("dataset", String(body.dataset_id));
   const start = date(body.start, "Start"),
@@ -332,6 +406,7 @@ const runQueue = createRunQueue({
   all,
   get,
   saveRun,
+  dataRevision: projectedRuns.revision,
   runDir,
   python,
   concurrency,
@@ -344,8 +419,14 @@ const runQueue = createRunQueue({
   validateInput: (input) => {
     if (input.protocol === 2) contractValidation.runInput(input);
   },
+  onTerminal: (run) => portfolioTracking?.onRunTerminal(run),
 });
-const { enqueue, pump, cancel } = runQueue;
+const { enqueue: queueRun, pump, cancel } = runQueue;
+function enqueue(input: Input, watchId?: string) {
+  if (scriptArchive.archivedIds().has(input.strategy.id))
+    throw new Error("Restore this script before starting another run");
+  return queueRun(input, watchId);
+}
 runQueue.recoverInterrupted();
 const deletion = createRunDeletion({
   db,
@@ -354,6 +435,13 @@ const deletion = createRunDeletion({
   put,
   raw: rawRecord,
   active: runQueue.isActive,
+});
+const researchArchive = createResearchArchive({
+  db,
+  records,
+  runs: projectedRuns.read,
+  active: runQueue.isActive,
+  now,
 });
 function launch(body: RecordValue) {
   const variants = buildInputs(body);
@@ -473,8 +561,8 @@ function safeArtifact(id: string, name: string) {
   return path;
 }
 const dashboard = createDashboard({
-  all,
-  strategies: () => catalog.strategies,
+  all: activeDashboardRecords,
+  strategies: () => catalog.strategies.filter(strategy => !scriptArchive.archivedIds().has(strategy.id)),
   runDir,
 });
 const evidence = createEvidenceRegistry(
@@ -501,7 +589,41 @@ const collective = createCollective(
   state,
   python,
   collectiveEvidenceStatus,
+  () => ({ strategies: catalog.strategies.filter(strategy => !scriptArchive.archivedIds().has(strategy.id)), runs: projectedRuns.read(), evaluations: all<EvaluationView>("evaluation") }),
+  () => scriptArchive.archivedIds(),
 );
+const portfolioRisk = createPortfolioRisk(state, () => projectedRuns.read(), () => scriptArchive.archivedIds());
+portfolioTracking = createPortfolioTracking({
+  root,
+  state,
+  python,
+  cleanEnvironment,
+  catalog: () => {
+    const index = join(state, "collective", "index.json");
+    return existsSync(index) ? JSON.parse(readFileSync(index, "utf8")) : null;
+  },
+  datasets: () => all<Dataset>("dataset"),
+  // Tracking needs complete inputs and terminal status, but never the large
+  // equity/trade previews. Reuse the revision-aware projection so the
+  // five-second reconciliation does not parse every full run record again.
+  runs: () => projectedRuns.read() as unknown as Run[],
+  datasetFile: datasetService.file,
+  runDataset: (dataset, protocol) => protocol === 2
+    ? datasetService.protocol(dataset) : datasetService.legacy(dataset),
+  sourceAvailable: input => existsSync(sourceSnapshots.resolve(input.source_snapshot || input.source_dir)),
+  enqueue,
+  pump,
+});
+portfolioTracking.reconcile();
+setInterval(() => {
+  if (stopping) return;
+  try {
+    datasetService.register();
+    portfolioTracking?.reconcile();
+  } catch (error) {
+    console.error("Portfolio tracking reconciliation failed:", error);
+  }
+}, 5000).unref();
 const eventStudies = createEventStudies(
   root,
   state,
@@ -567,10 +689,23 @@ const server = createServer(async (req, res) => {
       return json(res, { error: 'Unknown event-study operation' }, 404);
     }
     if (action === 'collective') {
+      if (parts[3] === 'tracking') {
+        if (req.method === 'GET' && parts.length === 4) {
+          datasetService.register();
+          return json(res, portfolioTracking!.reconcile());
+        }
+        if (req.method === 'PUT' && parts.length === 4)
+          return json(res, portfolioTracking!.selection((await body(req)).ids));
+        if (req.method === 'POST' && parts[5] === 'retry' && parts.length === 6)
+          return json(res, portfolioTracking!.retry(parts[4]));
+        return json(res, { error: 'Unknown portfolio tracking operation' }, 404);
+      }
       if (req.method === 'GET' && parts[3] === 'status') return json(res, collective.status());
       if (req.method === 'GET') return json(res, collective.catalog());
       if (req.method === 'POST' && parts[3] === 'series') return json(res, collective.series((await body(req)).ids));
+      if (req.method === 'POST' && parts[3] === 'risk') return json(res, portfolioRisk.risk((await body(req)).runIds));
       if (req.method === 'POST' && parts[3] === 'refresh') return json(res, collective.rebuild());
+      if (req.method === 'POST' && parts[3] === 'import') return json(res, collective.importRun(String((await body(req)).runId || '')));
     }
     if (req.method === "GET" && action === "dashboard")
       return json(res, dashboard(url.searchParams.get("symbol") || undefined));
@@ -593,6 +728,19 @@ const server = createServer(async (req, res) => {
       const file = evidence
         .campaign("nq-monthly-2026-09-29", "workbench-nq-monthly-api")
         .file(roles[asset]);
+      const archived = scriptArchive.archivedIds();
+      if (archived.size && asset === "app-data.json") {
+        res.setHeader("Cache-Control", "private, no-cache");
+        return json(res, visibleMonthlyReport(JSON.parse(readFileSync(file, "utf8")), archived));
+      }
+      if (archived.size && asset.endsWith(".csv")) {
+        res.writeHead(200, {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Cache-Control": "private, no-cache",
+          "Content-Disposition": `attachment; filename="${asset}"`,
+        });
+        return res.end(visibleMonthlyCsv(readFileSync(file, "utf8"), archived));
+      }
       res.writeHead(200, {
         "Content-Type": contentTypes[asset],
         "Cache-Control": "private, no-cache",
@@ -616,6 +764,20 @@ const server = createServer(async (req, res) => {
     if (req.method === "POST" && action === "runs" && parts[3] === "restore") {
       const payload = await body(req);
       return json(res, deletion.restore(payload.deletion_id));
+    }
+    if (req.method === "POST" && action === "runs" && parts.length === 4 &&
+        ["archive", "unarchive"].includes(parts[3])) {
+      const payload = await body(req);
+      return json(res, parts[3] === "archive"
+        ? researchArchive.archiveRuns(payload.ids)
+        : researchArchive.unarchiveRuns(payload.ids));
+    }
+    if (req.method === "POST" && action === "configurations" && parts.length === 4 &&
+        ["archive", "unarchive"].includes(parts[3])) {
+      const payload = await body(req);
+      return json(res, parts[3] === "archive"
+        ? researchArchive.archiveConfiguration(payload.run_id)
+        : researchArchive.unarchiveConfiguration(payload.run_id));
     }
     if (req.method === "GET" && action === "library" && parts[4] === "source") {
       const requested = decodeURIComponent(parts[3]);
@@ -641,37 +803,97 @@ const server = createServer(async (req, res) => {
         file_hash: entry.file_hash,
       });
     }
+    if (req.method === "POST" && action === "scripts" && parts[3] === "archive") {
+      await refreshCatalog();
+      const id = (await body(req)).id;
+      if (typeof id !== "string") throw new Error("Choose a script to archive");
+      const strategy = catalog.strategies.find(candidate => candidate.id === id);
+      if (!strategy) throw new Error("Script is not available; scan scripts and try again");
+      if (all<Run>("run").some(run => run.input.strategy.id === id && ["Queued", "Running"].includes(run.status)) ||
+          all<Evaluation>("evaluation").some(evaluation => evaluation.candidates?.[0]?.strategy.id === id && ["Queued", "Running"].includes(evaluation.status)))
+        throw new Error("Wait for this script's active research to finish before archiving it");
+      const archived = scriptArchive.archive(strategy, catalog.strategies);
+      await refreshCatalog();
+      return json(res, archived);
+    }
+    if (req.method === "POST" && action === "scripts" && parts[3] === "restore") {
+      const id = (await body(req)).id;
+      if (typeof id !== "string") throw new Error("Choose a script to restore");
+      await refreshCatalog();
+      if (catalog.strategies.some(strategy => strategy.id === id))
+        throw new Error("A runnable script already uses this strategy ID");
+      const restored = scriptArchive.restore(id, entry => {
+        const output = execFileSync(python, ["-m", "workbench.contract", root], {
+          cwd: root,
+          env: cleanEnvironment(),
+          encoding: "utf8",
+          windowsHide: true,
+        });
+        const discovered = JSON.parse(output) as {
+          strategies: Strategy[];
+          errors: { file?: string; error: string }[];
+        };
+        const strategy = discovered.strategies.find(candidate => candidate.id === id && candidate.file === entry.original_path);
+        if (!strategy) {
+          const filename = entry.original_path.split("/").at(-1);
+          const reason = discovered.errors.find(error => error.file === filename)?.error || "the adapter was not rediscovered";
+          throw new Error(`Cannot restore this script: ${reason}`);
+        }
+        executionSourceFingerprint(root, strategy);
+      });
+      await refreshCatalog();
+      return json(res, restored);
+    }
     if (req.method === "GET" && action === "state") {
       datasetService.register();
       const summary = url.searchParams.get("view") === "summary";
+      const archivedScripts = scriptArchive.list();
+      const archived = new Set(archivedScripts.map(script => script.id));
+      const importJob = datasetService.job();
+      const databaseRevision = summary ? projectedRuns.revision() : "";
+      const cacheKey = summary
+        ? JSON.stringify([databaseRevision, catalogRevision, archivedScripts, importJob])
+        : "";
+      if (summary && cachedSummary?.key === cacheKey)
+        return sendSummary(req, res, cachedSummary.encoded, cachedSummary.etag);
+      const allRuns = summary ? projectedRuns.read(databaseRevision) : all<Run>("run");
+      const runs = allRuns.filter(run => !archived.has(run.input.strategy.id));
+      const visibleRunIds = new Set(runs.map(run => run.id));
+      const knownRunIds = new Set(allRuns.map(run => run.id));
+      const allEvaluations = all<Evaluation>("evaluation");
+      const evaluations = allEvaluations.filter(evaluation =>
+        !archived.has(evaluation.candidates?.[0]?.strategy.id || ""));
+      const visibleEvaluationIds = new Set(evaluations.map(evaluation => evaluation.id));
+      const hiddenEvaluationIds = new Set(allEvaluations
+        .filter(evaluation => !visibleEvaluationIds.has(evaluation.id))
+        .map(evaluation => evaluation.id));
       const payload = {
         ...catalog,
+        strategies: catalog.strategies.filter(strategy => !archived.has(strategy.id)),
+        archived_scripts: archivedScripts,
+        research_archive: researchArchive.read(),
         datasets: all("dataset"),
-        runs: summary ? runSummaries(db) : all("run"),
-        experiments: all("experiment"),
-        presets: all("preset"),
-        watchlist: all("watch"),
-        evaluations: all("evaluation"),
-        regimes: all("regime"),
+        runs,
+        experiments: all<{ run_ids?: string[] }>("experiment").filter(experiment => !experiment.run_ids?.length || experiment.run_ids.some(id => visibleRunIds.has(id)) || experiment.run_ids.every(id => !knownRunIds.has(id))),
+        presets: all<{ input?: { strategy_id?: string } }>("preset").filter(preset => !archived.has(preset.input?.strategy_id || "")),
+        watchlist: all<{ run_id: string }>("watch").filter(watch => visibleRunIds.has(watch.run_id)),
+        evaluations,
+        regimes: all<{ evaluation_id: string }>("regime").filter(regime =>
+          !hiddenEvaluationIds.has(regime.evaluation_id)),
         views: all("view"),
-        import: datasetService.job(),
+        import: importJob,
         limits: { concurrency, maxBatch },
       };
       if (!summary) return json(res, payload);
       const encoded = JSON.stringify(payload);
       const etag = `"${hash(encoded)}"`;
-      res.setHeader("ETag", etag);
-      res.setHeader("Cache-Control", "private, no-cache");
-      if (req.headers["if-none-match"] === etag) {
-        res.writeHead(304);
-        return res.end();
-      }
-      res.writeHead(200, { "Content-Type": "application/json" });
-      return res.end(encoded);
+      cachedSummary = { key: cacheKey, encoded, etag };
+      return sendSummary(req, res, encoded, etag);
     }
     if (req.method === "POST" && action === "discover") {
-      await refreshCatalog();
-      return json(res, catalog);
+      await refreshCatalog(true);
+      const archived = scriptArchive.archivedIds();
+      return json(res, { ...catalog, strategies: catalog.strategies.filter(strategy => !archived.has(strategy.id)), archived_scripts: scriptArchive.list() });
     }
     if (req.method === "POST" && action === "import") {
       return json(res, datasetService.importLocal(), 202);
@@ -716,19 +938,62 @@ const server = createServer(async (req, res) => {
     if (action === "runs" && parts[3]) {
       const id = parts[3],
         run = get<Run>("run", id);
+      if (req.method === "POST" && parts[4] === "stage-assessments") {
+        if (run.input.portfolio_replay)
+          throw new Error("Portfolio tracking runs cannot receive research stage assessments");
+        if (scriptArchive.archivedIds().has(run.input.strategy.id))
+          throw new Error("Restore this script before recording a stage assessment");
+        const payload = await body(req);
+        await refreshCatalog();
+        const freshRun = get<Run>("run", id);
+        const runs = projectedRuns.read();
+        const evaluations = all<EvaluationView>("evaluation");
+        const statuses = strategyStageStatuses(catalog.strategies, runs, evaluations);
+        const seed = runs.find(candidate => candidate.id === id);
+        if (!seed || !catalog.strategies.some(strategy => strategy.id === seed.input.strategy.id)) throw new Error("Current strategy source is unavailable");
+        const matching = runs.filter(candidate => !candidate.input.portfolio_replay && candidate.input.strategy.id === seed.input.strategy.id && runConfigurationKey(candidate) === runConfigurationKey(seed));
+        const status = statuses.byRun.get(id)!;
+        if (status.kind === "retest-required") throw new Error("Retest the current execution source before assessing it");
+        const assessment = createStageAssessment(payload, seed, status, matching, evaluations, now(), randomUUID());
+        freshRun.stage_assessments = [...(freshRun.stage_assessments || []), assessment];
+        saveRun(freshRun);
+        return json(res, assessment, 201);
+      }
+      if (req.method === "POST" && parts[4] === "readiness") {
+        if (run.input.portfolio_replay)
+          throw new Error("Portfolio tracking runs cannot receive research readiness reviews");
+        if (scriptArchive.archivedIds().has(run.input.strategy.id))
+          throw new Error("Restore this script before recording readiness");
+        const payload = await body(req);
+        await refreshCatalog();
+        const freshRun = get<Run>("run", id);
+        const runs = projectedRuns.read();
+        const evaluations = all<EvaluationView>("evaluation");
+        const statuses = strategyStageStatuses(catalog.strategies, runs, evaluations);
+        const seed = runs.find(candidate => candidate.id === id)!;
+        const key = runConfigurationKey(seed);
+        const matching = runs.filter(candidate => !candidate.input.portfolio_replay && candidate.input.strategy.id === seed.input.strategy.id && runConfigurationKey(candidate) === key);
+        const review = createReadinessReview(payload, seed, statuses.byRun.get(id)!, matching, evaluations, key, now(), randomUUID());
+        freshRun.readiness_reviews = [...(freshRun.readiness_reviews || []), review];
+        saveRun(freshRun);
+        return json(res, review, 201);
+      }
       if (req.method === "POST" && parts[4] === "cancel")
         return json(res, cancel(id));
       if (req.method === "POST" && parts[4] === "retry") {
+        if (run.input.portfolio_replay)
+          throw new Error("Retry portfolio updates from the portfolio tracking controls");
         const retry = enqueue({ ...run.input, retry_of: id }, run.watch_id);
         pump();
         return json(res, retry, 201);
       }
       if (req.method === "PATCH") {
         const edits = await body(req);
-        run.notes = String(edits.notes ?? run.notes ?? "").slice(0, 10000);
-        run.tags = String(edits.tags ?? run.tags ?? "").slice(0, 1000);
-        saveRun(run);
-        return json(res, run);
+        const editableRun = get<Run>("run", id);
+        editableRun.notes = String(edits.notes ?? editableRun.notes ?? "").slice(0, 10000);
+        editableRun.tags = String(edits.tags ?? editableRun.tags ?? "").slice(0, 1000);
+        saveRun(editableRun);
+        return json(res, editableRun);
       }
       if (req.method === "GET" && parts[4] === "artifact") {
         const name = url.searchParams.get("name") || "manifest.json",
@@ -794,6 +1059,10 @@ const server = createServer(async (req, res) => {
     if (req.method === "POST" && action === "watchlist" && !parts[3]) {
       const b = await body(req),
         run = get<Run>("run", String(b.run_id));
+      if (run.input.portfolio_replay)
+        throw new Error("Portfolio tracking runs cannot be frozen as research runs");
+      if (scriptArchive.archivedIds().has(run.input.strategy.id))
+        throw new Error("Restore this script before freezing a run");
       if (run.status !== "Succeeded")
         throw new Error("Only successful runs can be frozen");
       if (!String(b.reason || "").trim())
@@ -817,6 +1086,8 @@ const server = createServer(async (req, res) => {
     ) {
       const watch = get<{ run_id: string }>("watch", parts[3]),
         original = get<Run>("run", watch.run_id);
+      if (original.input.portfolio_replay)
+        throw new Error("Portfolio tracking runs update through the portfolio controls");
       if (
         all<Run>("run").some(
           (r) =>
@@ -939,7 +1210,10 @@ function aligned(runs: Run[]): Promise<unknown> {
 }
 await refreshCatalog();
 setInterval(() => {
-  void refreshCatalog();
+  void Promise.resolve().then(() => refreshCatalog()).catch(error => {
+    catalog.errors = [{ error: String(error) }];
+    catalogRevision += 1;
+  });
 }, 5000).unref();
 server.listen(port, "127.0.0.1", () => {
   console.log(
@@ -947,13 +1221,15 @@ server.listen(port, "127.0.0.1", () => {
   );
   pump();
 });
-function shutdown() {
+function shutdown(exitCode = 0) {
+  if (stopping) return;
   stopping = true;
+  void supervisorHeartbeat.stop();
   eventStudies.stop();
   research.stop();
   runQueue.stop();
   server.close();
-  setTimeout(() => process.exit(0), 500).unref();
+  setTimeout(() => process.exit(exitCode), 500).unref();
 }
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);

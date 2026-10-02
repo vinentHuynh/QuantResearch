@@ -17,8 +17,9 @@ import type {
   RegimeView,
   RunSummary,
 } from "../../../shared/ts/workbenchModels.ts";
-import { testingEvidence } from "../../../shared/ts/evidence.ts";
+import { useStrategyStages } from "../../shared/ui/strategyStageContext";
 import { ResearchStages } from "./ResearchStages";
+import { EvaluationStageBadge, RunStageBadge } from "../../shared/ui/StrategyStageBadge";
 import { workbenchRequest as send } from "../../shared/api/workbench";
 import { EvaluationChart } from "./EvaluationChart";
 import { ResearchDownloads as Downloads } from "./ResearchDownloads";
@@ -59,23 +60,23 @@ export function EvaluationDetail({
   const runLink = (id: string) => {
     const run = runs.find((r) => r.id === id);
     return (
+      <Group key={id} gap="xs">
       <Button
-        key={id}
         size="compact-xs"
         variant="subtle"
         onClick={() => run && inspect(run)}
       >
         {id.slice(0, 8)} · {run?.status || "Loading"}
       </Button>
+      {run && <RunStageBadge runId={run.id} />}
+      </Group>
     );
   };
   const jobs = runs.filter(
     (r) => r.input.research?.evaluation_id === current.id,
   );
   const scenarios = current.result?.scenarios || [];
-  const progress = jobs[0]
-    ? testingEvidence(jobs[0].input.strategy, jobs, [current])
-    : null;
+  const progress = useStrategyStages().statuses.byEvaluation.get(current.id);
   const worstTrades = scenarios.length
     ? Math.min(...scenarios.map((s) => s.metrics.trades))
     : null;
@@ -100,7 +101,7 @@ export function EvaluationDetail({
                 radius="xs"
                 variant="light"
               >
-                {current.outcome}
+                Baseline outcome: {current.outcome}
               </Badge>
             )}
             {current.status !== "Succeeded" && (
@@ -109,7 +110,9 @@ export function EvaluationDetail({
               </Badge>
             )}
           </Group>
-          {progress && <ResearchStages stage={progress.stage} />}
+          <Text size="xs" fw={600} mt="sm">Current configuration stage</Text>
+          <EvaluationStageBadge evaluationId={current.id} showFinding />
+          {progress && <details><summary>Development milestones for these current configurations</summary><ResearchStages stage={progress.stage} /></details>}
           <Text size="xs" c="dimmed">
             Results apply to this evaluation's source, markets and selected
             settings. Other configurations are assessed separately.

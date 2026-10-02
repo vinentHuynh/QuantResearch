@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium, expect as baseExpect } from "@playwright/test";
-import { defaultPolicy } from "../shared/ts/portfolio.ts";
+import { commonWindow, defaultPolicy } from "../shared/ts/portfolio.ts";
 
 const origin = "http://127.0.0.1:8001";
 const response = await fetch(`${origin}/api/workbench/collective`);
@@ -10,10 +10,11 @@ const catalog = await response.json();
 const latest = catalog.items.filter(
   (item) => item.working && ["ES", "NQ"].includes(item.symbol),
 );
-const ym = catalog.items.find((item) => item.working && item.symbol === "YM");
 assert.equal(latest.length, 5, "Expected the five refreshed ES/NQ books");
-assert.ok(ym, "Expected a YM book for the older three-market combination");
 assert.ok(latest.every((item) => item.end >= "2026-09-28"));
+const latestEnd = commonWindow(latest).end;
+const ym = catalog.items.find((item) => item.working && item.symbol === "YM");
+assert.ok(ym, "Expected a YM book for the older three-market combination");
 const oldBooks = [...latest, ym];
 const oldCopies = Object.fromEntries(oldBooks.map((item) => [item.id, 1]));
 const latestIds = latest.map((item) => item.id).sort();
@@ -65,107 +66,46 @@ async function expectContext(books, markets, end) {
 
 try {
   await page.goto(`${origin}/#/portfolio`, { waitUntil: "domcontentloaded" });
-  await expectContext(6, 3, "2026-08-31");
-  await expect.poll(activeSettings).toEqual({
-    ids: oldIds,
-    capital: 100000,
-    start: "2024-01-01",
-    end: "2026-08-31",
-    basis: "marked",
-  });
-
-  await page.getByRole("button", { name: "View latest ES/NQ", exact: true }).click();
-  await expectContext(5, 2, "2026-09-28");
+  await expectContext(5, 2, latestEnd);
+  await expect(page.getByRole("button", { name: "View latest ES/NQ", exact: true })).toHaveCount(0);
   await expect.poll(activeSettings).toEqual({
     ids: latestIds,
     capital: 100000,
     start: "2024-01-01",
-    end: "2026-09-28",
+    end: latestEnd,
     basis: "marked",
   });
   await page.getByRole("link", { name: "Calendar", exact: true }).click();
   await expect(page.getByRole("region", { name: "Daily P&L calendar" })).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "Calendar month" })).toHaveValue("2026-09");
-  const september28 = page.getByRole("button", { name: /^2026-09-28:/ });
-  await expect(september28).toBeEnabled();
-  await expect(september28).not.toHaveAttribute("aria-label", /Outside test window/);
+  await expect(page.getByRole("textbox", { name: "Calendar month" })).toHaveValue(latestEnd.slice(0, 7));
+  const latestDay = page.getByRole("button", { name: new RegExp(`^${latestEnd}:`) });
+  await expect(latestDay).toBeEnabled();
+  await expect(latestDay).not.toHaveAttribute("aria-label", /Outside test window/);
   await page.screenshot({ path: `${folder}/latest-es-nq-calendar.png`, animations: "disabled" });
 
   await page.getByRole("link", { name: "Overview", exact: true }).click();
-  await page.getByRole("button", { name: "Restore previous combination", exact: true }).click();
-  await expectContext(6, 3, "2026-08-31");
-  await expect.poll(activeSettings).toEqual({
-    ids: oldIds,
-    capital: 100000,
-    start: "2024-01-01",
-    end: "2026-08-31",
-    basis: "marked",
-  });
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expectContext(6, 3, "2026-08-31");
+  await expectContext(5, 2, latestEnd);
   await expect.poll(activeSettings).toEqual({
-    ids: oldIds,
+    ids: latestIds,
     capital: 100000,
     start: "2024-01-01",
-    end: "2026-08-31",
+    end: latestEnd,
     basis: "marked",
   });
-  await page.screenshot({ path: `${folder}/restored-combination.png`, animations: "disabled" });
   assert.deepEqual(errors, []);
-
-  const directPage = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
-  directPage.setDefaultTimeout(30000);
-  const directErrors = [];
-  directPage.on("pageerror", (error) => directErrors.push(error.message));
-  await directPage.addInitScript((settings) => {
-    if (!localStorage.getItem("quant-collective-v1")) {
-      localStorage.setItem("quant-collective-v1", JSON.stringify(settings));
-    }
-  }, staleSettings);
-  try {
-    await directPage.goto(`${origin}/?portfolio=latest-es-nq#/portfolio/calendar`, {
-      waitUntil: "domcontentloaded",
-    });
-    const directContext = directPage.locator(".wb-context");
-    await expect(directContext).toContainText("5 books");
-    await expect(directContext).toContainText("2 markets");
-    await expect(directContext).toContainText("2024-01-01 to 2026-09-28");
-    await expect.poll(() => new URL(directPage.url()).searchParams.get("portfolio")).toBe(null);
-    await expect(directPage.getByRole("textbox", { name: "Calendar month" })).toHaveValue("2026-09");
-    await expect(directPage.getByRole("button", { name: /^2026-09-28:/ })).toBeEnabled();
-    const previous = await directPage.evaluate(() =>
-      JSON.parse(localStorage.getItem("quant-collective-previous-v1")),
-    );
-    assert.ok(previous, "The direct link must retain the prior combination for restore");
-    assert.equal(previous.end, "2026-08-31");
-    assert.deepEqual(Object.keys(previous.copies).sort(), oldIds);
-    await directPage.screenshot({ path: `${folder}/direct-link-calendar.png`, animations: "disabled" });
-    await directPage.getByRole("link", { name: "Overview", exact: true }).click();
-    await directPage.getByRole("button", { name: "Restore previous combination", exact: true }).click();
-    await expect(directPage.locator(".wb-context")).toContainText("6 books");
-    await expect(directPage.locator(".wb-context")).toContainText("3 markets");
-    await expect(directPage.locator(".wb-context")).toContainText("2024-01-01 to 2026-08-31");
-    assert.deepEqual(directErrors, []);
-  } catch (error) {
-    await directPage.screenshot({ path: `${folder}/direct-link-failure.png`, animations: "disabled" });
-    throw error;
-  } finally {
-    await directPage.close();
-  }
   await writeFile(
     `${folder}/validation.json`,
     JSON.stringify({
       status: "PASS",
       catalog_generated_at: catalog.generated_at,
       latest_ids: latestIds,
-      restored_ids: oldIds,
-      latest_end: "2026-09-28",
-      restored_end: "2026-08-31",
+      previous_ids: oldIds,
+      latest_end: latestEnd,
       page_errors: errors,
-      direct_link: "PASS",
     }, null, 2),
   );
-  console.log(`PASS: latest ES/NQ view, direct link, September coverage, and persistent restore. ${folder}`);
+  console.log(`PASS: latest ES/NQ loads automatically, shows its latest coverage, and persists. ${folder}`);
 } catch (error) {
   await page.screenshot({ path: `${folder}/failure.png`, animations: "disabled" });
   throw error;

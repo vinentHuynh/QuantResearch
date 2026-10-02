@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Badge,
   Button,
@@ -15,6 +16,7 @@ import {
   Title,
 } from "@mantine/core";
 import {
+  IconArchive,
   IconArrowDown,
   IconArrowUp,
   IconArrowsSort,
@@ -26,31 +28,43 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import type { Metrics, RunInput } from "../../../shared/ts/workbenchModels.ts";
+import { archivedConfigurationForRun, isRunArchived } from "../../../shared/ts/researchArchive.ts";
 import { href } from "../../app/navigation";
 import { workbenchRequest as request } from "../../shared/api/workbench";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
 import { PageHeader } from "../../shared/ui/PageHeader";
+import { RunStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { useStrategyStages } from "../../shared/ui/strategyStageContext";
+import { strategyStageLabels } from "../../../shared/ts/strategyLifecycle.ts";
 import { NqMonthlyComparison } from "../datasets/NqMonthlyComparison";
 import { RefreshButton, WorkbenchAlerts } from "../workspace/WorkbenchChrome";
 import type { WorkbenchController } from "../workspace/useWorkbenchController";
 import { formatNumber, formatPercent, shortId, statusTone } from "../workspace/workbenchModel";
-import { runSortColumns, runSortOptions, runtimeSeconds } from "./model";
+import { canAddRunToPortfolio, canArchiveRun, runSortColumns, runSortOptions, runtimeSeconds } from "./model";
 
 export function RunsPage({ controller }: { controller: WorkbenchController }) {
+  const { statuses } = useStrategyStages();
+  const [stageFilter, setStageFilter] = useState("all");
   const {
     action,
+    activeRuns,
+    addRunToPortfolio,
+    archiveRuns,
+    archivedRuns,
+    archiveView,
     busy,
-    compareBlocked,
     compareRuns,
     comparison,
     counts,
     dashboardRefresh,
     filter,
-    filtered,
+    filtered: unfiltered,
     go,
     inspect,
     latestHistory,
     route,
+    restoreRuns,
+    restoreRunConfiguration,
     selected,
     setComparison,
     setDeletion,
@@ -74,6 +88,15 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
     viewOpen,
   } = controller;
   if (!state) return null;
+  const filtered = unfiltered.filter(run => stageFilter === "all" || statuses.byRun.get(run.id)?.kind === stageFilter);
+  const selectedRuns = filtered.filter(run => selected.includes(run.id));
+  const visibleSelected = selectedRuns.map(run => run.id);
+  const compareBlocked = busy || selectedRuns.length < 2 || selectedRuns.length > 8 || selectedRuns.some(run => run.status !== "Succeeded");
+  const archiveBlocked = busy || !selectedRuns.length || selectedRuns.some(run => !canArchiveRun(run));
+  const explicitArchiveIds = new Set(state.research_archive?.runs.map(run => run.id) || []);
+  const restoreBlocked = busy || !selectedRuns.length || selectedRuns.some(run => !explicitArchiveIds.has(run.id));
+  const clearRuns = archiveView ? archivedRuns : activeRuns;
+  const comparedArchiveIds = compareRuns.filter(run => !isRunArchived(run, state.research_archive)).map(run => run.id);
   const activeView = state.views.find(
     (view) => view.filter === filter && view.stage === stage && view.status === status,
   );
@@ -98,12 +121,12 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
                 <Menu.Item
                   color="red"
                   leftSection={<IconTrash size={14} />}
-                  disabled={!state.runs.length || busy}
+                  disabled={!clearRuns.length || busy}
                   onClick={() => void action(async () =>
-                    setDeletion(await request("/runs/delete-preview", { ids: state.runs.map((run) => run.id) })),
+                    setDeletion(await request("/runs/delete-preview", { ids: clearRuns.map((run) => run.id) })),
                   )}
                 >
-                  Clear all runs
+                  {archiveView ? "Clear all archived runs" : "Clear all active runs"}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -113,20 +136,23 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
         tabs={[
           {
             label: showAllAttempts ? "All attempts" : "Latest history",
-            count: showAllAttempts ? state.runs.length : latestHistory.length,
-            active: !experiments && !monthly && !activeView,
+            count: showAllAttempts ? activeRuns.length : latestHistory.length,
+            active: !archiveView && !experiments && !monthly && !activeView,
             onClick: () => {
-              setFilter("");
-              setStage("");
-              setStatus("");
+              if (!archiveView) {
+                setFilter("");
+                setStage("");
+                setStatus("");
+              }
               go("runs");
             },
           },
+          { label: "Archive", count: archivedRuns.length, active: archiveView, href: href("runs", "archive") },
           { label: "NQ monthly", active: monthly, href: href("runs", "nq-monthly") },
           { label: "Experiments", count: state.experiments.length, active: experiments, href: href("runs", "experiments") },
           ...state.views.map((view) => ({
             label: view.name,
-            active: !experiments && !monthly && activeView?.id === view.id,
+            active: !archiveView && !experiments && !monthly && activeView?.id === view.id,
             onClick: () => {
               setFilter(view.filter);
               setStage(view.stage);
@@ -136,7 +162,7 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
           })),
         ]}
         tabsExtra={
-          !experiments && !monthly && (
+          !archiveView && !experiments && !monthly && (
             <Popover opened={viewOpen} onChange={setViewOpen} position="bottom-start" withinPortal>
               <Popover.Target>
                 <button type="button" className="wb-tab-action" onClick={() => setViewOpen((open) => !open)}>
@@ -195,19 +221,21 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
         <div className="wb-content">
           <div className="wb-toolbar">
             <TextInput aria-label="Search runs" placeholder="Strategy, market, tags, or run ID" value={filter} onChange={(event) => setFilter(event.currentTarget.value)} />
+            <Select aria-label="Strategy stage filter" placeholder="All strategy stages" value={stageFilter} onChange={value => { setStageFilter(value || "all"); setSelected([]); }} data={[{ value: "all", label: "All strategy stages" }, ...Object.entries(strategyStageLabels).map(([value, label]) => ({ value, label }))]} />
             <Select aria-label="Run purpose" placeholder="All run purposes" clearable data={["Exploratory", "Evaluation", "Tracking"]} value={stage || null} onChange={(value) => setStage(value || "")} />
-            <Select aria-label="Execution" placeholder="All statuses" clearable data={["Queued", "Running", "Succeeded", "Failed", "Canceled", "Interrupted"]} value={status || null} onChange={(value) => setStatus(value || "")} />
+            <Select aria-label="Execution" placeholder="All statuses" clearable data={["Queued", "Running", "Summarizing", "Succeeded", "Failed", "Canceled", "Interrupted"]} value={status || null} onChange={(value) => setStatus(value || "")} />
             <Select aria-label="Sort" data={runSortOptions} value={sort} onChange={(value) => setSort(value || "created:desc")} />
-            <Switch size="sm" label="All attempts" checked={showAllAttempts} onChange={(event) => setShowAllAttempts(event.currentTarget.checked)} />
+            {!archiveView && <Switch size="sm" label="All attempts" checked={showAllAttempts} onChange={(event) => setShowAllAttempts(event.currentTarget.checked)} />}
             <span className="wb-toolbar-note">{state.limits.concurrency} workers · up to {state.limits.maxBatch} jobs per launch</span>
           </div>
           <div className="wb-statline">
-            <span><b>{counts.total}</b> recorded</span>
-            <span><b>{counts.active}</b> queued or running</span>
+            <span><b>{counts.total}</b> {archiveView ? "archived attempts" : "recorded"}</span>
+            <span><b>{counts.active}</b> in progress</span>
             <span><b>{counts.success}</b> succeeded</span>
             <span><b>{state.datasets.length}</b> dataset versions</span>
             {filtered.length !== counts.total && <span><b>{filtered.length}</b> shown</span>}
           </div>
+          {archiveView && <Text size="sm" c="dimmed" mb="md">Archived runs remain available for inspection and comparison. Restore a run or its archived configuration to show it in active history.</Text>}
           <section className="wb-table-card" aria-label="Run ledger">
             <ScrollArea>
               <Table miw={1100} highlightOnHover verticalSpacing="sm">
@@ -240,7 +268,7 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
                       <Table.Td onClick={(event) => event.stopPropagation()}>
                         <Checkbox
                           aria-label={`Compare ${run.id}`}
-                          disabled={["Queued", "Running"].includes(run.status)}
+                          disabled={busy || !canArchiveRun(run)}
                           checked={selected.includes(run.id)}
                           onChange={(event) => {
                             const checked = event.currentTarget.checked;
@@ -250,6 +278,7 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
                       </Table.Td>
                       <Table.Td>
                         <Text fw={600} size="sm">{strategyTitle(run.input.strategy.name)}</Text>
+                        <RunStageBadge runId={run.id} showFinding />
                         <Text size="xs" c="dimmed" ff="monospace">{shortId(run.id)} · code {shortId(run.input.source_hash)}</Text>
                         {run.tags && <Text size="xs">{run.tags}</Text>}
                       </Table.Td>
@@ -263,7 +292,15 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
                       <Table.Td ta="right" className="mono">{formatPercent(run.result?.metrics.max_drawdown)}</Table.Td>
                       <Table.Td ta="right">{formatNumber(run.result?.metrics.trades)}</Table.Td>
                       <Table.Td ta="right" c="dimmed">{run.started_at ? `${runtimeSeconds(run, now)!.toFixed(1)}s` : "—"}</Table.Td>
-                      <Table.Td onClick={(event) => event.stopPropagation()}><Button variant="subtle" size="compact-sm" onClick={() => void action(() => inspect(run))}>Inspect</Button></Table.Td>
+                      <Table.Td onClick={(event) => event.stopPropagation()}>
+                        <Group gap="xs" wrap="nowrap">
+                          <Button variant="subtle" size="compact-sm" onClick={() => void action(() => inspect(run))}>Inspect</Button>
+                          {canAddRunToPortfolio(run) && <Button variant="light" size="compact-sm" onClick={() => addRunToPortfolio(run.id)}>Add this run</Button>}
+                          {!archiveView && <Button variant="subtle" color="gray" size="compact-sm" leftSection={<IconArchive size={14} />} disabled={busy || !canArchiveRun(run)} onClick={() => void archiveRuns([run.id])}>Archive</Button>}
+                          {archiveView && explicitArchiveIds.has(run.id) && <Button variant="light" size="compact-sm" disabled={busy} onClick={() => void restoreRuns([run.id])}>Restore</Button>}
+                          {archiveView && archivedConfigurationForRun(run, state.research_archive) && <Button variant="light" size="compact-sm" disabled={busy} onClick={() => void restoreRunConfiguration(run.id)}>Restore configuration</Button>}
+                        </Group>
+                      </Table.Td>
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
@@ -272,35 +309,38 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
             {!filtered.length && (
               <div className="wb-empty">
                 <IconFlask size={36} />
-                <Title order={3} mt="sm">{state.runs.length ? "No matching runs" : "A clean research notebook"}</Title>
-                <Text c="dimmed" size="sm" mt="xs">{state.runs.length ? "Change the filters to see more experiments." : "Register your local ZIP data, choose a script, and launch your first experiment."}</Text>
-                <Button mt="md" variant="light" component="a" href={href(state.datasets.length ? "new-run" : "datasets")}>{state.datasets.length ? "Configure a run" : "Open datasets"}</Button>
+                <Title order={3} mt="sm">{archiveView ? archivedRuns.length ? "No matching archived runs" : "No archived runs" : activeRuns.length ? "No matching runs" : archivedRuns.length ? "No active runs" : "A clean research notebook"}</Title>
+                <Text c="dimmed" size="sm" mt="xs">{archiveView ? archivedRuns.length ? "Change the filters to see more archived attempts." : "Runs you archive will appear here for inspection or restoration." : activeRuns.length ? "Change the filters to see more experiments." : archivedRuns.length ? "Restore a run from Archive or launch a new experiment." : "Register your local ZIP data, choose a script, and launch your first experiment."}</Text>
+                {!archiveView && <Button mt="md" variant="light" component="a" href={!activeRuns.length && archivedRuns.length ? href("runs", "archive") : href(state.datasets.length ? "new-run" : "datasets")}>{!activeRuns.length && archivedRuns.length ? "View archive" : state.datasets.length ? "Configure a run" : "Open datasets"}</Button>}
               </div>
             )}
           </section>
-          {selected.length > 0 && (
+          {visibleSelected.length > 0 && (
             <div className="wb-selection-bar" role="toolbar" aria-label="Selected runs">
-              <span className="count">{selected.length} selected</span>
+              <span className="count">{visibleSelected.length} selected</span>
               <button
                 type="button"
                 className="primary"
                 disabled={compareBlocked}
-                onClick={() => void action(async () => setComparison(await request("/compare", { ids: selected, mode: "as-run" })))}
+                onClick={() => void action(async () => setComparison(await request("/compare", { ids: visibleSelected, mode: "as-run" })))}
               >
                 Compare as run
               </button>
               <button
                 type="button"
                 disabled={compareBlocked}
-                onClick={() => void action(async () => setComparison(await request("/compare", { ids: selected, mode: "aligned" })))}
+                onClick={() => void action(async () => setComparison(await request("/compare", { ids: visibleSelected, mode: "aligned" })))}
               >
                 Align evaluation interval
+              </button>
+              <button type="button" disabled={archiveView ? restoreBlocked : archiveBlocked} onClick={() => void (archiveView ? restoreRuns(visibleSelected) : archiveRuns(visibleSelected))} title={archiveView && restoreBlocked && !busy ? "Use Restore configuration on rows archived with their configuration." : undefined}>
+                {archiveView ? "Restore selected" : "Archive selected"}
               </button>
               <button
                 type="button"
                 className="danger"
                 disabled={busy}
-                onClick={() => void action(async () => setDeletion(await request("/runs/delete-preview", { ids: selected })))}
+                onClick={() => void action(async () => setDeletion(await request("/runs/delete-preview", { ids: visibleSelected })))}
               >
                 Delete selected
               </button>
@@ -311,7 +351,10 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
             <section className="wb-card">
               <div className="wb-card-head">
                 <Title order={2} className="wb-comparison-title" fz={16}>{comparison.mode} comparison</Title>
-                <Button size="xs" variant="subtle" onClick={() => setComparison(null)}>Close comparison</Button>
+                <Group gap="xs">
+                  <Button size="xs" variant="light" leftSection={<IconArchive size={14} />} disabled={busy || !comparedArchiveIds.length || compareRuns.some(run => !canArchiveRun(run))} onClick={() => void archiveRuns(comparedArchiveIds)}>Archive compared runs</Button>
+                  <Button size="xs" variant="subtle" onClick={() => setComparison(null)}>Close comparison</Button>
+                </Group>
               </div>
               <Text size="sm" c="dimmed" mb="sm">
                 {comparison.boundary || "Original windows and accounting assumptions are shown below. Different assumptions require new runs for a fair comparison."}

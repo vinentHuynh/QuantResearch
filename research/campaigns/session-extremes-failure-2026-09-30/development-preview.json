@@ -1,0 +1,14 @@
+{
+  "jobs": 2,
+  "parameters": [
+    {
+      "level_source": "prior-day",
+      "zone_half_width_atr": 0.1
+    },
+    {
+      "level_source": "overnight",
+      "zone_half_width_atr": 0.1
+    }
+  ],
+  "warmup": []
+}

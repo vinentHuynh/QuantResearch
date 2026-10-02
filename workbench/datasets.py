@@ -117,7 +117,9 @@ def ingest(root, destination):
             print(f'Import error: {archive.name}: {exc}', flush=True)
     # Preserve explicitly registered local cache versions when rescanning ZIPs.
     known = {record['id'] for record in records}
-    for manifest in sorted(destination.glob('*-mnq-cache-v1/dataset.json')):
+    local_manifests = [*destination.glob('*-mnq-cache-v1/dataset.json'),
+                       *destination.glob('*-mgc-cache-v1/dataset.json')]
+    for manifest in sorted(local_manifests):
         record = json.loads(manifest.read_text(encoding='utf-8'))
         if record['id'] not in known:
             records.append(record)

@@ -17,6 +17,7 @@ type Dependencies = {
   cleanEnvironment: () => NodeJS.ProcessEnv;
   put: (kind: string, id: string, body: unknown) => void;
   raw: (kind: string, id: string) => string | undefined;
+  onRegister?: (datasets: Dataset[]) => void;
 };
 
 type DatasetCatalog = {
@@ -34,12 +35,16 @@ export function createDatasets(dependencies: Dependencies) {
     const imported = JSON.parse(
       readFileSync(catalogFile, "utf8"),
     ) as DatasetCatalog;
+    const added: Dataset[] = [];
     for (const dataset of imported.datasets)
       // A catalog refresh must never rewrite an existing protocol-v1 row.
-      if (raw("dataset", dataset.id) === undefined)
+      if (raw("dataset", dataset.id) === undefined) {
         put("dataset", dataset.id, dataset);
+        added.push(dataset);
+      }
     if (imported.errors.length)
       importJob.error = JSON.stringify(imported.errors);
+    if (added.length) dependencies.onRegister?.(added);
   }
 
   function file(dataset: Dataset): string {

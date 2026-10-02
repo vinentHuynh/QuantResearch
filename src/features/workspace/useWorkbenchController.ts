@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
+import type { StrategyNextAction } from "../../../shared/ts/strategyLifecycle.ts";
 import type { Run, RunSummary } from "../../../shared/ts/workbenchModels.ts";
+import { archivedConfigurationForRun } from "../../../shared/ts/researchArchive.ts";
 import { navGroups, useRoute, type Page } from "../../app/navigation";
 import type { SearchResult } from "../../app/Shell";
 import {
@@ -16,7 +18,7 @@ import {
 } from "../new-run/model";
 import {
   compareRunValues,
-  latestRunsByConfiguration,
+  runHistoryGroups,
   runSortColumns,
 } from "../runs/model";
 import type {
@@ -38,6 +40,9 @@ export function useWorkbenchController() {
   const [state, setState] = useState<WorkbenchState | null>(null);
   const stateEtag = useRef("");
   const [route, go] = useRoute();
+  const [portfolioPickerOpen, setPortfolioPickerOpen] = useState(
+    route.page === "portfolio" && route.sub === "strategies",
+  );
   const [researchSelection, setResearchSelection] = useState("");
   const [dashboardRefresh, setDashboardRefresh] = useState(0);
   const [error, setError] = useState("");
@@ -60,7 +65,6 @@ export function useWorkbenchController() {
   const [detail, setDetail] = useState<Run | null>(null);
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState("");
-  const [reason, setReason] = useState("");
   const [presetName, setPresetName] = useState("");
   const [viewName, setViewName] = useState("");
   const [viewOpen, setViewOpen] = useState(false);
@@ -74,13 +78,20 @@ export function useWorkbenchController() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || response.statusText);
       stateEtag.current = response.headers.get("ETag") || "";
-      setState(data as WorkbenchState);
+      const next = data as WorkbenchState;
+      const visibleRunIds = new Set(next.runs.map(run => run.id));
+      setDetail(current => current && !visibleRunIds.has(current.id) ? null : current);
+      setSelected(current => current.every(id => visibleRunIds.has(id)) ? current : current.filter(id => visibleRunIds.has(id)));
+      setComparison(current => current && [...(current.runs || []), ...(current.rows || [])].some(run => !visibleRunIds.has(run.id)) ? null : current);
+      setDeletion(current => current && current.ids.some(id => !visibleRunIds.has(id)) ? null : current);
+      setState(next);
     } catch (caught) {
       setError(String(caught));
     }
   }, []);
 
   useEffect(() => {
+    if (route.page === "portfolio" && !portfolioPickerOpen) return;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
@@ -92,7 +103,7 @@ export function useWorkbenchController() {
       stopped = true;
       clearTimeout(timer);
     };
-  }, [refresh]);
+  }, [refresh, route.page, portfolioPickerOpen]);
 
   useEffect(() => {
     if (!detail || !["Queued", "Running"].includes(detail.status)) return;
@@ -107,6 +118,14 @@ export function useWorkbenchController() {
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [route.page]);
+
+  useEffect(() => {
+    setSelected([]);
+  }, [route.page, route.sub, filter, stage, status, showAllAttempts]);
+
+  useEffect(() => {
+    setComparison(null);
+  }, [route.page, route.sub]);
 
   useEffect(() => {
     try {
@@ -131,6 +150,35 @@ export function useWorkbenchController() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function archiveRuns(ids: string[]) {
+    if (!ids.length || busy) return;
+    await action(async () => {
+      await request("/runs/archive", { ids });
+      setSelected([]);
+      setComparison(null);
+      setNotice(`${ids.length === 1 ? "Run" : `${ids.length} runs`} archived. Restore from the Archive tab.`);
+    });
+  }
+
+  async function restoreRuns(ids: string[]) {
+    if (!ids.length || busy) return;
+    await action(async () => {
+      await request("/runs/unarchive", { ids });
+      setSelected([]);
+      const configurationStillArchived = state?.runs.some(run => ids.includes(run.id) && archivedConfigurationForRun(run, state.research_archive));
+      setNotice(`${ids.length === 1 ? "Run" : `${ids.length} runs`} restored.${configurationStillArchived ? " Runs with an archived configuration stay in Archive until that configuration is restored." : ""}`);
+    });
+  }
+
+  async function restoreRunConfiguration(runId: string) {
+    if (busy) return;
+    await action(async () => {
+      await request("/configurations/unarchive", { run_id: runId });
+      setSelected([]);
+      setNotice("Configuration restored. Individually archived runs remain in Archive.");
+    });
   }
 
   function change<K extends keyof Input>(key: K, value: Input[K]) {
@@ -184,7 +232,31 @@ export function useWorkbenchController() {
     setDetail(result);
     setNotes(result.notes || "");
     setTags(result.tags || "");
-    setReason("");
+  }
+
+  const handledRunLink = useRef("");
+  useEffect(() => {
+    const runId = route.page === "runs" && route.sub.startsWith("inspect~")
+      ? route.sub.slice("inspect~".length)
+      : "";
+    if (!runId) {
+      handledRunLink.current = "";
+      return;
+    }
+    if (!state || handledRunLink.current === runId) return;
+    handledRunLink.current = runId;
+    const run = state.runs.find(candidate => candidate.id === runId);
+    if (run) void action(() => inspect(run));
+    else setError(`Saved run ${runId} is no longer in the Workbench.`);
+    go("runs");
+  // The route and loaded run list drive this one-shot action.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.page, route.sub, state, go]);
+
+  function addRunToPortfolio(runId: string) {
+    setDetail(null);
+    setPortfolioPickerOpen(true);
+    go("portfolio", `add~${runId}`);
   }
 
   function reuse(run: Run) {
@@ -219,17 +291,18 @@ export function useWorkbenchController() {
   const [sortKey, sortDirection] = sort.split(":");
   const sortColumn = runSortColumns.find((column) => column.key === sortKey)!;
   const now = Date.now();
-  const latestHistory = useMemo(
-    () => latestRunsByConfiguration(state?.runs || []),
-    [state?.runs],
+  const { activeRuns, archivedRuns, latestHistory } = useMemo(
+    () => runHistoryGroups(state?.runs || [], state?.research_archive),
+    [state?.runs, state?.research_archive],
   );
   const latestRunIds = useMemo(
     () => new Set(latestHistory.map((run) => run.id)),
     [latestHistory],
   );
-  const historyRuns = showAllAttempts
-    ? state?.runs || []
-    : (state?.runs || []).filter((run) => latestRunIds.has(run.id));
+  const archiveView = route.page === "runs" && route.sub === "archive";
+  const historyRuns = archiveView
+    ? archivedRuns
+    : showAllAttempts ? activeRuns : activeRuns.filter((run) => latestRunIds.has(run.id));
   const filtered = historyRuns
     .filter(
       (run) =>
@@ -253,7 +326,7 @@ export function useWorkbenchController() {
       .filter((run): run is RunSummary => !!run);
   const counts = {
     total: historyRuns.length,
-    active: historyRuns.filter((run) => ["Running", "Queued"].includes(run.status)).length,
+    active: historyRuns.filter((run) => ["Running", "Queued", "Summarizing"].includes(run.status)).length,
     success: historyRuns.filter((run) => run.status === "Succeeded").length,
   };
   const compareBlocked =
@@ -268,7 +341,6 @@ export function useWorkbenchController() {
         workspace: latestHistory.length,
         runs: latestHistory.length,
         evaluations: (state.evaluations || []).length,
-        watchlist: state.watchlist.length,
         scripts: state.strategies.length,
         datasets: state.datasets.length,
       }
@@ -367,8 +439,30 @@ export function useWorkbenchController() {
     setDashboardRefresh((value) => value + 1);
   }
 
+  function stageAction(next: StrategyNextAction) {
+    if (next.kind === "open-evaluation" && next.evaluationId) {
+      setResearchSelection(next.evaluationId);
+      go("evaluations");
+    } else if (next.kind === "plan-evaluation" && next.runId) {
+      go("evaluations", `plan~${next.runId}`);
+    } else if (next.kind === "configure-run") {
+      if (next.runId) void action(async () => reuse(await request<Run>(`/runs/${next.runId}`)));
+      else if (next.strategyId) configure(next.strategyId);
+    } else if (["inspect-run", "review-readiness"].includes(next.kind) && next.runId) {
+      const run = state?.runs.find(candidate => candidate.id === next.runId);
+      if (run) void action(() => inspect(run));
+    } else if (next.kind === "open-portfolio") go("portfolio");
+    else go("scripts", "library");
+  }
+
   return {
     action,
+    activeRuns,
+    addRunToPortfolio,
+    archiveRuns,
+    archivedRuns,
+    archiveView,
+    stageAction,
     busy,
     change,
     chooseStrategy,
@@ -395,15 +489,17 @@ export function useWorkbenchController() {
     notes,
     notice,
     planned,
+    portfolioPickerOpen,
     planCombos,
     planDatasets,
     planTimeframes,
     presetName,
     preview,
-    reason,
     refresh,
     refreshAll,
     researchSelection,
+    restoreRuns,
+    restoreRunConfiguration,
     reuse,
     route,
     runInput,
@@ -419,7 +515,7 @@ export function useWorkbenchController() {
     setNotice,
     setPresetName,
     setPreview,
-    setReason,
+    setPortfolioPickerOpen,
     setResearchSelection,
     setSelected,
     setShowAllAttempts,

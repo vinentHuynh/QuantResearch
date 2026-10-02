@@ -31,14 +31,33 @@ export type CollectiveItem = {
   net_pnl: number;
   recent_pnl: number;
   trades: number;
+  /** Daily-close peak-to-trough dollar loss over the full saved history. */
+  max_drawdown_dollars?: number;
+  /** Most negative daily-close return from a previous equity peak. */
+  max_drawdown?: number;
+  /** Downsampled cumulative dollar P&L used by the portfolio strategy picker. */
+  chart_points?: number[];
   coverage: Coverage[];
   series_file: string;
   checksum: string;
+  /** Exact preserved baseline runs; populated by import or verified histories. */
+  source_run_ids?: string[];
+  research_status?: import("./strategyLifecycle.ts").StrategyStageStatus;
+  research_integrity_error?: string;
   latest_replay?: {
     start: string;
     end: string;
     dataset_id: string;
     extension_sha256: string;
+  };
+  /** Latest verified historical continuation. Original research evidence remains frozen. */
+  verified_replay?: {
+    dataset_id: string;
+    dataset_checksum: string;
+    end: string;
+    artifact_sha256: string;
+    published_at: string;
+    source_run_id?: string;
   };
 };
 export type CollectiveCatalog = {
@@ -575,8 +594,22 @@ export type DailyPoint = {
   equity: number;
   drawdown: number;
   trades: number;
+  /** Closed accepted trade gains on this exit date, after copies and sizing. */
+  grossProfit?: number;
+  /** Absolute closed accepted trade losses on this exit date. */
+  grossLoss?: number;
+  /** Number of accepted trades whose sized outcome is positive. */
+  winningTrades?: number;
   bySymbol: Record<string, number>;
   byStrategy: Record<string, number>;
+  /** Always-on P&L by strategy for this date. */
+  byStrategyBaseline?: Record<string, number>;
+  /** Accepted trades by strategy, assigned to their exit date. */
+  byStrategyTrades?: Record<string, number>;
+  /** Rejected trades by strategy, assigned to their exit date. */
+  byStrategySkipped?: Record<string, number>;
+  /** Sum of accepted replay size multipliers by strategy and exit date. */
+  byStrategyWeight?: Record<string, number>;
 };
 export function calculatePortfolio(
   items: CollectiveItem[],
@@ -630,8 +663,15 @@ export function calculatePortfolio(
         equity: 0,
         drawdown: 0,
         trades: 0,
+        grossProfit: 0,
+        grossLoss: 0,
+        winningTrades: 0,
         bySymbol: {},
         byStrategy: {},
+        byStrategyBaseline: {},
+        byStrategyTrades: {},
+        byStrategySkipped: {},
+        byStrategyWeight: {},
       } as DailyPoint,
     ]),
   );
@@ -744,16 +784,28 @@ export function calculatePortfolio(
       base.set(date, (base.get(date) || 0) + t.pnl * multiplier);
       if (replay.accepted.has(index)) {
         const weight = replay.weights.get(index) ?? 1,
-          value = t.pnl * multiplier * weight;
+          value = t.pnl * multiplier * weight,
+          point = byDate.get(date)!;
         trades++;
         totalTrades++;
         weightTotal += weight;
-        if (value > 0) wins++;
+        point.byStrategyTrades![item.id] = (point.byStrategyTrades![item.id] || 0) + 1;
+        point.byStrategyWeight![item.id] = (point.byStrategyWeight![item.id] || 0) + weight;
+        if (value > 0) {
+          wins++;
+          point.winningTrades = (point.winningTrades || 0) + 1;
+        }
         profit += Math.max(0, value);
         loss += Math.max(0, -value);
+        point.grossProfit = (point.grossProfit || 0) + Math.max(0, value);
+        point.grossLoss = (point.grossLoss || 0) + Math.max(0, -value);
         daily.set(date, (daily.get(date) || 0) + value);
         counts.set(date, (counts.get(date) || 0) + 1);
-      } else skipped++;
+      } else {
+        skipped++;
+        const point = byDate.get(date)!;
+        point.byStrategySkipped![item.id] = (point.byStrategySkipped![item.id] || 0) + 1;
+      }
     });
     weightSum += weightTotal;
     if (basis === "marked") {
@@ -777,6 +829,7 @@ export function calculatePortfolio(
       point.trades += counts.get(date) || 0;
       point.bySymbol[item.symbol] = (point.bySymbol[item.symbol] || 0) + value;
       point.byStrategy[item.id] = value;
+      point.byStrategyBaseline![item.id] = original;
       pnl += value;
       baseline += original;
       pnlPeak = Math.max(pnlPeak, pnl);

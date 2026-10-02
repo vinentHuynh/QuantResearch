@@ -16,6 +16,7 @@ import type {
   RunSummary,
 } from "../../../shared/ts/workbenchModels.ts";
 import { PageHeader } from "../../shared/ui/PageHeader";
+import { EvaluationStageBadge } from "../../shared/ui/StrategyStageBadge";
 import { EvaluationDetail } from "./EvaluationDetail";
 import {
   evaluationOutcomeColor as outcomeColor,
@@ -27,6 +28,7 @@ import { useResearchController } from "./useResearchController";
 export type { EvaluationView, RegimeView };
 
 export function ResearchPage({
+  initialRunId,
   selectedId,
   onSelect,
   alerts,
@@ -36,6 +38,7 @@ export function ResearchPage({
   refresh,
   inspect,
 }: {
+  initialRunId?: string;
   selectedId?: string;
   onSelect: (id: string) => void;
   alerts?: ReactNode;
@@ -47,6 +50,7 @@ export function ResearchPage({
 }) {
   const isMobile = useMediaQuery("(max-width: 900px)");
   const controller = useResearchController({
+    initialRunId,
     evaluations,
     refresh,
     runs,
@@ -99,8 +103,9 @@ export function ResearchPage({
       <div className="wb-ledger">
         <div className="wb-ledger-list">
           <div className="wb-ledger-tools">
+            <Text size="xs" c="dimmed">Recorded baseline outcomes</Text>
             <SegmentedControl
-              aria-label="Outcome filter"
+              aria-label="Recorded baseline outcome filter"
               size="xs"
               fullWidth
               value={outcomeFilter}
@@ -140,6 +145,7 @@ export function ResearchPage({
                 >
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <b>{evaluation.name}</b>
+                    <EvaluationStageBadge evaluationId={evaluation.id} />
                     <small>
                       {evaluation.created_at.slice(0, 10)} · {evaluation.jobs}{" "}
                       jobs · {evaluation.status}
@@ -155,6 +161,7 @@ export function ResearchPage({
                         : color(evaluation.status)
                     }
                   >
+                    Baseline outcome: {" "}
                     {evaluation.outcome === "Meets criteria"
                       ? "Meets"
                       : evaluation.outcome === "Does not meet criteria"

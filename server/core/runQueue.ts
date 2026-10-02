@@ -29,12 +29,26 @@ type Dependencies = {
   hash: (value: string | Buffer) => string;
   now: () => string;
   validateInput?: (input: Input) => void;
+  dataRevision?: () => string;
+  onTerminal?: (run: Run) => void;
 };
 
 export function createRunQueue(d: Dependencies) {
   let stopping = false;
   const active = new Map<string, ChildProcess>();
   const stoppingJobs = new Set<string>();
+  let pending: Run[] | null = null;
+  let observedRevision: string | undefined;
+
+  function queuedRuns() {
+    const revision = d.dataRevision?.();
+    if (pending === null || revision !== observedRevision) {
+      // all() returns newest first. Persisted queued jobs must resume oldest first.
+      pending = d.all<Run>("run").filter(run => run.status === "Queued").reverse();
+      observedRevision = revision;
+    }
+    return pending;
+  }
 
   function enqueue(input: Input, watchId?: string) {
     const id = randomUUID();
@@ -51,15 +65,13 @@ export function createRunQueue(d: Dependencies) {
       watch_id: watchId,
     };
     d.saveRun(run);
+    pending?.push(run);
     return run;
   }
 
   function pump() {
-    if (stopping) return;
-    const queued = d
-      .all<Run>("run")
-      .filter((run) => run.status === "Queued")
-      .reverse();
+    if (stopping || active.size >= d.concurrency) return;
+    const queued = queuedRuns();
     while (active.size < d.concurrency && queued.length) execute(queued.shift()!);
   }
 
@@ -173,6 +185,11 @@ export function createRunQueue(d: Dependencies) {
           current.error = String(error);
         }
         d.saveRun(current);
+        try {
+          d.onTerminal?.(current);
+        } catch (error) {
+          console.error("Tracking notification failed:", error);
+        }
       }
       pump();
     });
@@ -185,6 +202,7 @@ export function createRunQueue(d: Dependencies) {
     run.status = "Canceled";
     run.ended_at = d.now();
     d.saveRun(run);
+    if (pending) pending = pending.filter(candidate => candidate.id !== id);
     const child = active.get(id);
     if (child) {
       stoppingJobs.add(id);
@@ -194,7 +212,8 @@ export function createRunQueue(d: Dependencies) {
   }
 
   function recoverInterrupted() {
-    for (const run of d.all<Run>("run")) {
+    const persisted = d.all<Run>("run");
+    for (const run of persisted) {
       if (run.status !== "Running") continue;
       run.status = "Interrupted";
       run.ended_at = d.now();
@@ -202,6 +221,8 @@ export function createRunQueue(d: Dependencies) {
         "Supervisor restarted; completion was not confirmed. Retry creates a new attempt.";
       d.saveRun(run);
     }
+    pending = persisted.filter(run => run.status === "Queued").reverse();
+    observedRevision = d.dataRevision?.();
   }
 
   function stop() {

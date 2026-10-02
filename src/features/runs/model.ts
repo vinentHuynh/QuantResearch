@@ -1,4 +1,6 @@
 import type { RunSummary } from "../../../shared/ts/workbenchModels.ts";
+import { isPortfolioBaselineRun } from "../../../shared/ts/portfolioScriptCandidates.ts";
+import { isRunArchived, type ResearchArchive } from "../../../shared/ts/researchArchive.ts";
 import { strategyTitle } from "../../shared/formatting/strategyTitle.ts";
 
 export type RunSortValue = string | number | null | undefined;
@@ -116,6 +118,23 @@ function isNewerRun(candidate: RunSummary, current: RunSummary) {
 
 export function isInvalidRun(run: RunSummary) {
   return run.status === "Succeeded" && !run.result?.metrics;
+}
+
+/** Match the saved-history importer's baseline gate before offering navigation. */
+export function canAddRunToPortfolio(run: RunSummary) {
+  return run.status === "Succeeded" && !!run.result?.metrics && isPortfolioBaselineRun(run);
+}
+
+export function canArchiveRun(run: RunSummary) {
+  return !["Queued", "Running", "Summarizing"].includes(run.status);
+}
+
+/** Archive before grouping so an older, unarchived attempt can stay visible. */
+export function runHistoryGroups(runs: RunSummary[], archive?: ResearchArchive) {
+  const activeRuns: RunSummary[] = [];
+  const archivedRuns: RunSummary[] = [];
+  for (const run of runs) (isRunArchived(run, archive) ? archivedRuns : activeRuns).push(run);
+  return { activeRuns, archivedRuns, latestHistory: latestRunsByConfiguration(activeRuns) };
 }
 
 export function latestRunsByConfiguration(runs: RunSummary[]) {

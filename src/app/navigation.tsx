@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
-  IconChartDots,
   IconCode,
   IconDatabase,
-  IconEye,
-  IconFlask,
   IconLayersIntersect,
-  IconList,
   IconRoute,
 } from "@tabler/icons-react";
 
@@ -37,6 +33,8 @@ const defaults: Record<Page, string> = {
 };
 
 export function parseRoute(hash: string): Route {
+  if (hash === "#/watchlist" || hash === "#watchlist")
+    return { page: "workspace", sub: "" };
   // Links shared before the redesign keep working.
   if (hash === "#collective-strategies")
     return { page: "portfolio", sub: "strategies" };
@@ -53,7 +51,13 @@ export const href = (page: Page, sub?: string) =>
 export function useRoute() {
   const [route, setRoute] = useState(() => parseRoute(window.location.hash));
   useEffect(() => {
-    const sync = () => setRoute(parseRoute(window.location.hash));
+    if (["#/watchlist", "#watchlist"].includes(window.location.hash))
+      window.history.replaceState(null, "", href("workspace"));
+    const sync = () => {
+      if (["#/watchlist", "#watchlist"].includes(window.location.hash))
+        window.history.replaceState(null, "", href("workspace"));
+      setRoute(parseRoute(window.location.hash));
+    };
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
   }, []);
@@ -82,26 +86,16 @@ export function navGroups(counts: Partial<Record<Page, number>>) {
   });
   return [
     {
-      label: "Research flow",
+      label: "Main",
       items: [
-        item("workspace", "Research workspace", <IconRoute size={16} />),
-        item("scripts", "Scripts & library", <IconCode size={16} />),
-        item("runs", "Runs & compare", <IconList size={16} />),
-        item("evaluations", "Evaluations & regimes", <IconFlask size={16} />),
-      ],
-    },
-    {
-      label: "Portfolio",
-      items: [
-        item("scorecards", "Strategy scorecards", <IconChartDots size={16} />),
         item("portfolio", "Combined portfolio", <IconLayersIntersect size={16} />),
-        item("watchlist", "Watchlist", <IconEye size={16} />),
+        item("workspace", "Research", <IconRoute size={16} />),
+        item("scripts", "Scripts & library", <IconCode size={16} />),
       ],
     },
     {
-      label: "Data & studies",
+      label: "Tools",
       items: [
-        item("event-studies", "Pattern event studies", <IconChartDots size={16} />),
         item("datasets", "Datasets", <IconDatabase size={16} />),
       ],
     },

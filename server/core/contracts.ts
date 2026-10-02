@@ -51,6 +51,8 @@ export type Run = {
   notes?: string;
   tags?: string;
   watch_id?: string;
+  readiness_reviews?: import("../../shared/ts/readiness.ts").ReadinessReview[];
+  stage_assessments?: import("../../shared/ts/stageAssessments.ts").StageAssessment[];
 };
 
 export type Input = {
@@ -89,5 +91,11 @@ export type Input = {
     role: string;
     candidate: number;
     scenario: string;
+  };
+  /** Historical portfolio continuation, separate from research evidence. */
+  portfolio_replay?: {
+    item_id: string;
+    source_run_id: string;
+    anchor_start: string;
   };
 };

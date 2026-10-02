@@ -1,0 +1,110 @@
+{
+  "created_at": "2026-09-30T15:22:46.786Z",
+  "runs": [
+    {
+      "stage": "development",
+      "id": "7c1a40bf-7054-4ebd-94de-72f5901cb68e",
+      "parameters": {
+        "detector": "swing-1h",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "ae22148d-2a94-415f-a38c-d5c0cb64fcb9",
+      "parameters": {
+        "detector": "swing-4h",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "4d35b4a4-a1e6-4793-bc14-f10b64c8a65f",
+      "parameters": {
+        "detector": "opening-15m",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "d1004334-6522-465b-8029-e0803bf5c263",
+      "parameters": {
+        "detector": "opening-30m",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "e3f4200f-9d5d-40a9-a739-0e3b417e5500",
+      "parameters": {
+        "detector": "departure-swing",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "c49b4493-a2fe-413e-8876-a6eae7c5781d",
+      "parameters": {
+        "detector": "role-flip",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "33bdddd0-5ab8-4686-82d2-b1188ba4c86a",
+      "parameters": {
+        "detector": "rolling-20",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "2cfb9cbd-596d-416c-98c5-219a23a9f0ad",
+      "parameters": {
+        "detector": "round-100",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "be50ea13-5ee1-46de-9d3c-db373519c4d2",
+      "parameters": {
+        "detector": "daily-pivots",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "development",
+      "id": "84cb4684-f2ae-41e0-93e9-b12c401c6660",
+      "parameters": {
+        "detector": "generic-prior-bar",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    },
+    {
+      "stage": "later-round-100",
+      "id": "64f737fb-22df-46b2-8dfe-eaf2ed09a913",
+      "parameters": {
+        "detector": "round-100",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      }
+    }
+  ],
+  "evaluations": [
+    {
+      "detector": "round-100",
+      "id": "be9fa51a-f5e3-4b91-ad48-934c165af475"
+    }
+  ]
+}

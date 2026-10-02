@@ -1,0 +1,417 @@
+{
+  "schema_version": 1,
+  "scripts": [
+    {
+      "id": "aw-model-nq-revised",
+      "name": "AW Reversal - NQ revised exploratory research",
+      "archived_at": "2026-10-01T00:21:48.595Z",
+      "original_path": "strategies/aw_model_nq_revised.py",
+      "archive_path": "strategies_archive/aw-model-nq-revised/aw_model_nq_revised.py",
+      "file_hash": "d17065cdb7b69f33024e6bdfbf469a4ffbf243135aa72a14c38956f05f1bc768",
+      "strategy": {
+        "schema_version": 2,
+        "source_files": [
+          "strategies/_aw_news_calendar.py",
+          "strategies/_cme_index_calendar.py",
+          "strategies/aw_model_nq_revised.py"
+        ],
+        "id": "aw-model-nq-revised",
+        "name": "AW Reversal - NQ revised exploratory research",
+        "version": "0.3.2",
+        "description": "AW Reversal research with explicit bias policies, 1m or 3m signal candles, FVG limit variants, fixed $500 structural risk, news gate, and roll-segment resets.",
+        "migration_scope": "Post-inspection revision of the AW Model PDF interpretation. The prior 2022-August 2026 results are development data, not final out-of-sample evidence. The model uses causal confirmed bars, selected NQ volume-rolled contract segments, NQ OHLC as an MNQ execution-price proxy, conservative resting-limit fills, premarked PDH/PDL/ONH/ONL only, and frozen objective reward/location gates. Contract-specific overlap data, true MNQ limit fills, discretionary equal-high liquidity and flip-candle close foresight remain unavailable. Full method and tested variants are recorded in the revised protocol.",
+        "execution_model": "event-v1",
+        "timeframes": [
+          "1m"
+        ],
+        "default_session": "full-trading-day",
+        "required_session": "full-trading-day",
+        "default_warmup_days": 60,
+        "capabilities": [
+          "equity",
+          "trades",
+          "positions"
+        ],
+        "parameters": {
+          "bias_policy": {
+            "type": "enum",
+            "default": "aligned-only",
+            "choices": [
+              "aligned-only",
+              "mixed-flex",
+              "unrestricted"
+            ],
+            "description": "Aligned-only requires the frozen 2H majority; mixed-flex trades the majority when clear and allows either reversal on NONE/mixed days; unrestricted ignores the vote."
+          },
+          "bias_required": {
+            "type": "boolean",
+            "default": true,
+            "description": "Legacy compatibility: false with aligned-only selects unrestricted, preserving earlier no-bias run inputs."
+          },
+          "impulse_multiple": {
+            "type": "number",
+            "default": 1.25,
+            "minimum": 1,
+            "maximum": 3,
+            "description": "MSS directional body divided by the median of the preceding 60 minutes of completed signal candles."
+          },
+          "signal_timeframe": {
+            "type": "enum",
+            "default": "3m",
+            "choices": [
+              "1m",
+              "3m"
+            ],
+            "description": "Completed candle size for sweep, neckline, displacement, and FVG."
+          },
+          "entry_style": {
+            "type": "enum",
+            "default": "first-touch",
+            "choices": [
+              "first-touch",
+              "half-gap",
+              "fvg-confirmation-open"
+            ],
+            "description": "Two resting FVG limits; the third enters at the next open after FVG confirmation as a causal flip-entry proxy."
+          },
+          "management": {
+            "type": "enum",
+            "default": "be-only",
+            "choices": [
+              "be-only",
+              "pivot-trail"
+            ],
+            "description": "BE+2 after first internal pivot, then hold; optional subsequent confirmed-pivot trail."
+          },
+          "risk_budget": {
+            "type": "number",
+            "default": 500,
+            "minimum": 1,
+            "maximum": 10000,
+            "description": "Maximum planned structural dollars per trade, using NQ/MNQ contract equivalents."
+          },
+          "news_filter": {
+            "type": "boolean",
+            "default": true,
+            "description": "No new AW reversal before the listed FOMC, CPI, or NFP release."
+          },
+          "min_rr_primary": {
+            "type": "number",
+            "default": 1.5,
+            "minimum": 0,
+            "maximum": 10,
+            "description": "Minimum planned ERL reward / structural risk from 09:00 to 10:30 CT."
+          },
+          "min_rr_early": {
+            "type": "number",
+            "default": 2,
+            "minimum": 0,
+            "maximum": 10,
+            "description": "Minimum planned R:R during the selective 08:30-09:00 CT window."
+          }
+        },
+        "file": "strategies/aw_model_nq_revised.py",
+        "file_hash": "d17065cdb7b69f33024e6bdfbf469a4ffbf243135aa72a14c38956f05f1bc768",
+        "execution_source_hash": "d2b092b20e8ce6171f3e7efc797be349839467cf9e7bd10c8d450fb65dea5045"
+      }
+    },
+    {
+      "id": "aw-model-nq",
+      "name": "AW Reversal - NQ frozen research interpretation",
+      "archived_at": "2026-10-01T00:25:26.681Z",
+      "original_path": "strategies/aw_model_nq.py",
+      "archive_path": "strategies_archive/aw-model-nq/aw_model_nq.py",
+      "file_hash": "5dd308519b739564035341a46257d5c7c5f1e4b2c689d83f992aa1d068e04147",
+      "strategy": {
+        "schema_version": 2,
+        "source_files": [
+          "strategies/_cme_index_calendar.py",
+          "strategies/aw_model_nq.py"
+        ],
+        "id": "aw-model-nq",
+        "name": "AW Reversal - NQ frozen research interpretation",
+        "version": "0.2.0",
+        "description": "NQ-only completed-bar AW Reversal: pre-open 2H bias, premarked ERL sweep, 3m MSS/FVG, and first later 1m retrace.",
+        "migration_scope": "One fixed, causal interpretation of chapters 5, 6, 9-11 of the AW Model PDF, not author-verified rules. Pre-08:30 CT five 2H proxies are: (1) latest 2H failure to make a lower low/higher high; (2) premarked eligible external high/low still beyond price; (3) position below/above midpoint of the last five completed 2H bars; (4) an untouched strict 2H FVG wholly above/below price; (5) latest two completed 2H bars have higher highs/lows or lower highs/lows. A strict 3-of-5 directional vote is required by default. Prior day means the prior complete 08:30-to-calendar-declared-close CT cash session, including shortened valid sessions; overnight means prior 17:00-08:30 CT. Each 3m neckline is a strict pivot with two left and two right candles confirmed before a completed 3m wick-through/close-back sweep; the last two confirmed pivot highs and lows must both rise for shorts or fall for longs. The first strong 3m close through it within five subsequent completed 3m bars must be the middle candle of a strict 3-bar FVG. First later 1m physical gap touch schedules one NQ contract at the immediately following minute open, expiring if that minute is missing; event-v1 cannot model a resting limit entry. Stop is one tick beyond the swept extreme, target the nearest premarked opposing level still untaken at entry, with no discretionary R:R floor. A confirmed, still-untaken 3m pivot more than two points beyond planned entry and strictly before the target is frozen as a proxy first internal level; a later completed 1m close beyond it moves the stop to actual fill plus/minus two NQ points. If none exists, no BE move; subsequent discretionary trailing is omitted. Two submitted entries maximum per CT day; CME daytime calendar closes positions by 15:00 CT or earlier declared close. Intraminute fills, gaps, stop-first collisions, costs and final liquidation follow event-v1. Unadjusted continuous-contract roll gaps can contaminate 2H/3m structures because the workbench 1m selected bars omit instrument_id. No CPI/NFP/FOMC exclusion, equal-high/low pools, IFVG preference, manual significance, dollar-risk sizing, daily loss cap, or flip-candle entry. One contract can exceed the PDF risk ceiling. Historical execution is not live-trading validation.",
+        "execution_model": "event-v1",
+        "timeframes": [
+          "1m"
+        ],
+        "default_session": "full-trading-day",
+        "required_session": "full-trading-day",
+        "default_warmup_days": 60,
+        "capabilities": [
+          "equity",
+          "trades",
+          "positions"
+        ],
+        "parameters": {
+          "bias_policy": {
+            "type": "enum",
+            "default": "aligned-only",
+            "choices": [
+              "aligned-only",
+              "mixed-flex",
+              "unrestricted"
+            ],
+            "description": "Aligned-only requires the frozen 2H majority; mixed-flex trades the majority when clear and allows either reversal on NONE/mixed days; unrestricted ignores the vote."
+          },
+          "bias_required": {
+            "type": "boolean",
+            "default": true,
+            "description": "Legacy compatibility: false with aligned-only selects unrestricted, preserving earlier no-bias run inputs."
+          },
+          "impulse_multiple": {
+            "type": "number",
+            "default": 1.25,
+            "minimum": 1,
+            "maximum": 3,
+            "description": "MSS directional body divided by median of the preceding 20 complete 3m bodies."
+          }
+        },
+        "file": "strategies/aw_model_nq.py",
+        "file_hash": "5dd308519b739564035341a46257d5c7c5f1e4b2c689d83f992aa1d068e04147",
+        "execution_source_hash": "a3156d3e3ab24bcf64018947fcdb13a466c0ab1b87eb233a84c5f5bdddca272b"
+      }
+    },
+    {
+      "id": "aw-model-nq-pdf-sensitivity",
+      "name": "AW Reversal - NQ PDF sensitivity research",
+      "archived_at": "2026-10-01T00:25:43.419Z",
+      "original_path": "strategies/aw_model_nq_pdf_sensitivity.py",
+      "archive_path": "strategies_archive/aw-model-nq-pdf-sensitivity/aw_model_nq_pdf_sensitivity.py",
+      "file_hash": "e05f55d822f530919ddde650088e6dfde093b4d0650058fb2630e0188464b866",
+      "strategy": {
+        "schema_version": 2,
+        "source_files": [
+          "strategies/_aw_news_calendar.py",
+          "strategies/_cme_index_calendar.py",
+          "strategies/aw_model_nq_pdf_sensitivity.py"
+        ],
+        "id": "aw-model-nq-pdf-sensitivity",
+        "name": "AW Reversal - NQ PDF sensitivity research",
+        "version": "0.4.0",
+        "description": "Exploratory AW reversal interpretations of pre-sweep trend, displacement-leg FVG timing, and location judgment while preserving causal NQ execution and fixed structural risk.",
+        "migration_scope": "Retrospective sensitivity study after the 2020-September 2026 NQ data were inspected. These are alternative mechanical interpretations, not validation or out-of-sample results. The original revised adapter remains frozen. The study retains contract-segment resets, NQ OHLC as an MNQ execution-price proxy, conservative resting-limit fills, premarked PDH/PDL/ONH/ONL, and fixed risk sizing. Qualitative chart reading and true MNQ limit fills remain unavailable.",
+        "execution_model": "event-v1",
+        "timeframes": [
+          "1m"
+        ],
+        "default_session": "full-trading-day",
+        "required_session": "full-trading-day",
+        "default_warmup_days": 60,
+        "capabilities": [
+          "equity",
+          "trades",
+          "positions"
+        ],
+        "parameters": {
+          "bias_policy": {
+            "type": "enum",
+            "default": "aligned-only",
+            "choices": [
+              "aligned-only",
+              "mixed-flex",
+              "unrestricted"
+            ],
+            "description": "Aligned-only requires the frozen 2H majority; mixed-flex trades the majority when clear and allows either reversal on NONE/mixed days; unrestricted ignores the vote."
+          },
+          "bias_required": {
+            "type": "boolean",
+            "default": true,
+            "description": "Legacy compatibility: false with aligned-only selects unrestricted, preserving earlier no-bias run inputs."
+          },
+          "impulse_multiple": {
+            "type": "number",
+            "default": 1.25,
+            "minimum": 1,
+            "maximum": 3,
+            "description": "MSS directional body divided by the median of the preceding 60 minutes of completed signal candles."
+          },
+          "trend_proxy": {
+            "type": "enum",
+            "default": "strict",
+            "choices": [
+              "strict",
+              "one-sided"
+            ],
+            "description": "Strict: two highs and two lows each trend before the sweep. Swept-side: two confirmed highs rise before a buy-side sweep or two confirmed lows fall before a sell-side sweep; the latest opposite confirmed pivot is still required as the neckline."
+          },
+          "fvg_window": {
+            "type": "enum",
+            "default": "immediate",
+            "choices": [
+              "immediate",
+              "leg-2"
+            ],
+            "description": "Immediate: strict gap confirms one signal candle after MSS, with MSS as middle. Leg-2: first strict gap may use MSS as third, middle, or first candle, through two subsequent completed signal candles. All later closes must remain beyond the neckline and all three FVG candles must be contiguous on one contract."
+          },
+          "location_gate": {
+            "type": "boolean",
+            "default": true,
+            "description": "Require the planned long entry below or short entry above the pre-open 2H range midpoint; false turns off only this hard location proxy."
+          },
+          "signal_timeframe": {
+            "type": "enum",
+            "default": "3m",
+            "choices": [
+              "1m",
+              "3m"
+            ],
+            "description": "Completed candle size for sweep, neckline, displacement, and FVG."
+          },
+          "entry_style": {
+            "type": "enum",
+            "default": "first-touch",
+            "choices": [
+              "first-touch",
+              "half-gap",
+              "fvg-confirmation-open"
+            ],
+            "description": "Two resting FVG limits; the third enters at the next open after FVG confirmation as a causal flip-entry proxy."
+          },
+          "management": {
+            "type": "enum",
+            "default": "be-only",
+            "choices": [
+              "be-only",
+              "pivot-trail"
+            ],
+            "description": "BE+2 after first internal pivot, then hold; optional subsequent confirmed-pivot trail."
+          },
+          "risk_budget": {
+            "type": "number",
+            "default": 500,
+            "minimum": 1,
+            "maximum": 10000,
+            "description": "Maximum planned structural dollars per trade, using NQ/MNQ contract equivalents."
+          },
+          "news_filter": {
+            "type": "boolean",
+            "default": true,
+            "description": "No new AW reversal before the listed FOMC, CPI, or NFP release."
+          },
+          "min_rr_primary": {
+            "type": "number",
+            "default": 1.5,
+            "minimum": 0,
+            "maximum": 10,
+            "description": "Minimum planned ERL reward / structural risk from 09:00 to 10:30 CT."
+          },
+          "min_rr_early": {
+            "type": "number",
+            "default": 2,
+            "minimum": 0,
+            "maximum": 10,
+            "description": "Minimum planned R:R during the selective 08:30-09:00 CT window."
+          }
+        },
+        "file": "strategies/aw_model_nq_pdf_sensitivity.py",
+        "file_hash": "e05f55d822f530919ddde650088e6dfde093b4d0650058fb2630e0188464b866",
+        "execution_source_hash": "574d38430f4505c6a608d63251d5569e35be66fba24bc01c774028aed6f8cf51"
+      }
+    },
+    {
+      "id": "consolidation-box-failure",
+      "name": "Consolidation box failure test",
+      "archived_at": "2026-10-01T18:49:00.893Z",
+      "original_path": "strategies/consolidation_box_failure.py",
+      "archive_path": "strategies_archive/consolidation-box-failure/consolidation_box_failure.py",
+      "file_hash": "6bde63b0114b7a4bea23a8d0d459e6076b072119546bc63193136c4988c794dd",
+      "strategy": {
+        "schema_version": 2,
+        "source_files": [
+          "strategies/_cme_index_calendar.py",
+          "strategies/consolidation_box_failure.py",
+          "strategies/multi_touch_cluster_failure.py"
+        ],
+        "id": "consolidation-box-failure",
+        "name": "Consolidation box failure test",
+        "version": "1.0.0",
+        "description": "Fade the first armed sweep and close inside a frozen zone at an objectively compact eight-bar range edge.",
+        "migration_scope": "NQ 15m full-day formation, calendar-adjusted regular-hour entries, one contract. Eight consecutive completed candles with high-low span <=2 completed ATR(14); one new box per false-to-true compact-range episode. Freeze each edge +/-0.10 formation ATR for 80 subsequent chart bars. First armed touch consumes the edge, including overnight or while another position is open. No same-formation-bar entry. Same close-inside-zone trigger, next contiguous open, sweep-extreme stop and 20-bar exit as the original cluster test. Calendar and DST are preserved. Observed 15m continuity does not certify minute completeness. No matched generic-failure control, roll adjustment, tick-level ordering or event entry-delay stress.",
+        "execution_model": "event-v1",
+        "timeframes": [
+          "15m"
+        ],
+        "default_session": "full-trading-day",
+        "required_session": "full-trading-day",
+        "default_warmup_days": 30,
+        "warmup_bars": {
+          "parameter": "box_bars",
+          "multiplier": 1,
+          "offset": 14
+        },
+        "capabilities": [
+          "equity",
+          "trades",
+          "positions"
+        ],
+        "parameters": {
+          "box_bars": {
+            "type": "integer",
+            "default": 8,
+            "minimum": 4,
+            "maximum": 32,
+            "description": "Completed consecutive 15m candles defining a box."
+          },
+          "max_range_atr": {
+            "type": "number",
+            "default": 2,
+            "minimum": 0.5,
+            "maximum": 4,
+            "description": "Maximum box high-low span in completed formation ATR(14)."
+          },
+          "zone_half_width_atr": {
+            "type": "number",
+            "default": 0.1,
+            "minimum": 0.05,
+            "maximum": 0.2,
+            "description": "Edge-zone half-width in frozen formation ATR."
+          }
+        },
+        "file": "strategies/consolidation_box_failure.py",
+        "file_hash": "6bde63b0114b7a4bea23a8d0d459e6076b072119546bc63193136c4988c794dd",
+        "execution_source_hash": "8ef52cf3d558be32cb091605c7a2422b059d5dc9928ebcdae33d8fee18c6081f"
+      }
+    },
+    {
+      "id": "mgc-overnight-block",
+      "name": "MGC overnight block 18:00–06:00",
+      "archived_at": "2026-10-01T18:49:27.442Z",
+      "original_path": "strategies/mgc_overnight_block.py",
+      "archive_path": "strategies_archive/mgc-overnight-block/mgc_overnight_block.py",
+      "file_hash": "47462d1be26d787eb97c50b2a71334217c8c5555882065f1295684c3f47cdc0b",
+      "strategy": {
+        "schema_version": 2,
+        "source_files": [
+          "strategies/mgc_overnight_block.py"
+        ],
+        "id": "mgc-overnight-block",
+        "name": "MGC overnight block 18:00–06:00",
+        "version": "1.0.0",
+        "execution_model": "event-v1",
+        "description": "One MGC contract long from the first available 18:00-hour open until the 05:55 bar close (06:00 New York), flat across the daily halt.",
+        "timeframes": [
+          "5m"
+        ],
+        "default_session": "full-trading-day",
+        "required_session": "full-trading-day",
+        "default_warmup_days": 2,
+        "capabilities": [
+          "equity",
+          "trades",
+          "positions"
+        ],
+        "legacy_sources": [
+          "scripts/mgc/mgc_overnight_block_backtest.py"
+        ],
+        "migration_scope": "Ports only the pre-named long one-contract 18:00–06:00 MGC clock block. A completed 16:55 bar schedules the first available 18:00-hour open, and a completed 05:55 bar exits at 06:00. Missing boundary quotes skip entry or fail a held exit. The original study filters hour cells using future bar counts; this causal adapter does not. Other scanned windows, GC-rescaled history, and permutation analyses are not ported. Workbench per-side costs, continuous-roll levels, and absent instrument IDs limit source ledger and executable-trade parity.",
+        "parameters": {},
+        "file": "strategies/mgc_overnight_block.py",
+        "file_hash": "47462d1be26d787eb97c50b2a71334217c8c5555882065f1295684c3f47cdc0b",
+        "execution_source_hash": "7c1068400ab69a972ffa34959a04d1616f72fd74fdaa27e15317e79e7bd5e1d4"
+      }
+    }
+  ]
+}

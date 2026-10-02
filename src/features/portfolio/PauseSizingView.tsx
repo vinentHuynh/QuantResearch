@@ -12,6 +12,8 @@ import {
 import { IconCheck, IconDownload, IconX } from "@tabler/icons-react";
 import { sizingSettings } from "../../../shared/ts/riskSizing.ts";
 import type { GateState } from "../../../shared/ts/portfolio.ts";
+import { collectiveProgress } from "../../../shared/ts/progress.ts";
+import { StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
 import {
   csvCell,
   dependenceVerdictCopy as verdictCopy,
@@ -157,7 +159,7 @@ export function PauseSizingView({
                       <Table.Td>{money(row.net)}</Table.Td>
                       <Table.Td>{money(row.drawdown)}</Table.Td>
                       <Table.Td>{money(row.worstDay)}</Table.Td>
-                      <Table.Td>{row.recovery?.toFixed(2) ?? "â€”"}</Table.Td>
+                      <Table.Td>{row.recovery?.toFixed(2) ?? "—"}</Table.Td>
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
@@ -198,7 +200,7 @@ export function PauseSizingView({
               Recorded contract quantities:{" "}
               {result.execution.quantitiesAvailable
                 ? "available"
-                : "missing â€” refresh evidence; unsupported ledgers remain unavailable"}
+                : "missing — refresh evidence; unsupported ledgers remain unavailable"}
               . Whole-contract rounding:{" "}
               {result.execution.wholeContracts ? "on" : "off"}. Shared margin
               assumption:{" "}
@@ -235,7 +237,7 @@ export function PauseSizingView({
                             );
                             return `${item?.name} / ${item?.symbol}`;
                           })
-                          .join(" â†” ")}
+                          .join(" → ")}
                       </Table.Td>
                       <Table.Td>{row.observations}</Table.Td>
                       <Table.Td>
@@ -377,6 +379,7 @@ export function PauseSizingView({
                           </Table.Td>
                           <Table.Td>
                             {item.name} / {item.symbol} / {item.timeframe}
+                            <StrategyStageBadge {...collectiveProgress(item)} />
                           </Table.Td>
                           <Table.Td>
                             {decision.action}: {decision.reason}
@@ -451,13 +454,13 @@ export function PauseSizingView({
                       <Table.Td>
                         {component.status?.cooldownUntil
                           ?.replace("T", " ")
-                          .slice(0, 16) || "â€”"}
+                          .slice(0, 16) || "—"}
                       </Table.Td>
                       <Table.Td>
                         {component.state === "Paused" &&
                         (component.status?.required || 0) > 0
                           ? `${component.status?.recoveryTrades}/${component.status?.required} trades; ${money(component.status?.recoveryPnl || 0)}`
-                          : "â€”"}
+                          : "—"}
                       </Table.Td>
                       <Table.Td>
                         {money(component.baseline - component.pnl)}
@@ -521,7 +524,7 @@ export function PauseSizingView({
                       <b>
                         {Number.isFinite(single.autocorrelation)
                           ? single.autocorrelation.toFixed(3)
-                          : "â€”"}
+                          : "—"}
                       </b>
                     </div>
                     <div>
@@ -529,7 +532,7 @@ export function PauseSizingView({
                       <b>
                         {Number.isFinite(single.runsZ)
                           ? single.runsZ.toFixed(2)
-                          : "â€”"}
+                          : "—"}
                       </b>
                     </div>
                     <div>
@@ -537,7 +540,7 @@ export function PauseSizingView({
                       <b>
                         {Number.isFinite(single.afterLoss)
                           ? money(single.afterLoss)
-                          : "â€”"}
+                          : "—"}
                       </b>
                     </div>
                     <div>
@@ -545,7 +548,7 @@ export function PauseSizingView({
                       <b>
                         {Number.isFinite(single.afterWin)
                           ? money(single.afterWin)
-                          : "â€”"}
+                          : "—"}
                       </b>
                     </div>
                   </div>
@@ -579,7 +582,7 @@ export function PauseSizingView({
                 <span>{result.trades.toLocaleString()} closed trades</span>
                 <span>{skipped.toLocaleString()} skipped</span>
                 {volatility ? (
-                  <span>average size Ã—{result.exposure.toFixed(2)}</span>
+                  <span>average size ×{result.exposure.toFixed(2)}</span>
                 ) : (
                   <span>
                     At cutoff{" "}
@@ -609,7 +612,7 @@ export function PauseSizingView({
                 <p className="wb-card-sub">
                   Runs test on win/loss signs, using trades closed before the
                   window when at least 30 exist, otherwise the window itself. z
-                  below âˆ’1.96 indicates clustering in the sample; above +1.96
+                  below −1.96 indicates clustering in the sample; above +1.96
                   indicates alternation. These diagnostics do not establish a
                   profitable pause rule or predict future outcomes.
                 </p>
@@ -643,22 +646,22 @@ export function PauseSizingView({
                           <Table.Td ta="right">
                             {Number.isFinite(dependence.autocorrelation)
                               ? dependence.autocorrelation.toFixed(3)
-                              : "â€”"}
+                              : "—"}
                           </Table.Td>
                           <Table.Td ta="right">
                             {Number.isFinite(dependence.runsZ)
                               ? dependence.runsZ.toFixed(2)
-                              : "â€”"}
+                              : "—"}
                           </Table.Td>
                           <Table.Td ta="right">
                             {Number.isFinite(dependence.afterLoss)
                               ? money(dependence.afterLoss)
-                              : "â€”"}
+                              : "—"}
                           </Table.Td>
                           <Table.Td ta="right">
                             {Number.isFinite(dependence.afterWin)
                               ? money(dependence.afterWin)
-                              : "â€”"}
+                              : "—"}
                           </Table.Td>
                           <Table.Td>
                             <Badge

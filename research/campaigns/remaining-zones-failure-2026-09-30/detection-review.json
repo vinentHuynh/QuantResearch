@@ -1,0 +1,192 @@
+[
+  {
+    "detector": "swing-1h",
+    "unscored_formations": 110,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 35,
+      "confirmed": "2021-12-01T03:00:00-06:00",
+      "side": -1,
+      "price": 16403.5,
+      "low": 16400.819642857143,
+      "high": 16406.180357142857,
+      "atr": 26.803571428571427,
+      "source": "swing-1h",
+      "source_end": "2021-12-01T03:00:00-06:00",
+      "origin_time": "2021-12-01T00:00:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "swing-4h",
+    "unscored_formations": 26,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 119,
+      "confirmed": "2021-12-02T01:00:00-06:00",
+      "side": -1,
+      "price": 16427.5,
+      "low": 16425.501785714285,
+      "high": 16429.498214285715,
+      "atr": 19.982142857142858,
+      "source": "swing-4h",
+      "source_end": "2021-12-02T01:00:00-06:00",
+      "origin_time": "2021-12-01T09:00:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "opening-15m",
+    "unscored_formations": 38,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 58,
+      "confirmed": "2021-12-01T08:45:00-06:00",
+      "side": 1,
+      "price": 16270.5,
+      "low": 16268.175,
+      "high": 16272.825,
+      "atr": 23.25,
+      "source": "opening-15m",
+      "source_end": "2021-12-01T08:45:00-06:00",
+      "origin_time": "2021-12-01T08:30:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "opening-30m",
+    "unscored_formations": 38,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 59,
+      "confirmed": "2021-12-01T09:00:00-06:00",
+      "side": 1,
+      "price": 16270.5,
+      "low": 16267.985714285714,
+      "high": 16273.014285714286,
+      "atr": 25.142857142857142,
+      "source": "opening-30m",
+      "source_end": "2021-12-01T09:00:00-06:00",
+      "origin_time": "2021-12-01T08:30:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "departure-swing",
+    "unscored_formations": 370,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 16,
+      "confirmed": "2021-11-30T22:15:00-06:00",
+      "side": 1,
+      "price": 16290.75,
+      "low": 16288.423214285714,
+      "high": 16293.076785714286,
+      "atr": 23.267857142857142,
+      "source": "departure-swing",
+      "source_end": "2021-11-30T22:15:00-06:00",
+      "origin_time": "2021-11-30T21:30:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "role-flip",
+    "unscored_formations": 340,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 16,
+      "confirmed": "2021-11-30T22:15:00-06:00",
+      "side": 1,
+      "price": 16321.25,
+      "low": 16318.923214285714,
+      "high": 16323.576785714286,
+      "atr": 23.267857142857142,
+      "source": "role-flip",
+      "source_end": "2021-11-30T22:15:00-06:00",
+      "origin_time": "2021-11-30T21:00:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "rolling-20",
+    "unscored_formations": 852,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 19,
+      "confirmed": "2021-11-30T23:00:00-06:00",
+      "side": 1,
+      "price": 16182.5,
+      "low": 16180.398214285715,
+      "high": 16184.601785714285,
+      "atr": 21.017857142857142,
+      "source": "rolling-20",
+      "source_end": "2021-11-30T23:00:00-06:00",
+      "origin_time": "2021-11-30T18:00:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "round-100",
+    "unscored_formations": 582,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 13,
+      "confirmed": "2021-11-30T21:30:00-06:00",
+      "side": 1,
+      "price": 16300.0,
+      "low": 16297.507142857143,
+      "high": 16302.492857142857,
+      "atr": 24.928571428571427,
+      "source": "round-100",
+      "source_end": "2021-11-30T21:30:00-06:00",
+      "origin_time": "2021-11-30T21:30:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "daily-pivots",
+    "unscored_formations": 36,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 149,
+      "confirmed": "2021-12-02T08:30:00-06:00",
+      "side": 1,
+      "price": 15679.666666666668,
+      "low": 15675.391666666668,
+      "high": 15683.941666666668,
+      "atr": 42.75,
+      "source": "daily-pivots",
+      "source_end": "2021-12-01T15:00:00-06:00",
+      "origin_time": "2021-12-01T15:00:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  },
+  {
+    "detector": "generic-prior-bar",
+    "unscored_formations": 3461,
+    "source_release_check": true,
+    "first_formation": {
+      "zone_id": 1,
+      "index": 13,
+      "confirmed": "2021-11-30T21:30:00-06:00",
+      "side": 1,
+      "price": 16307.75,
+      "low": 16305.257142857143,
+      "high": 16310.242857142857,
+      "atr": 24.928571428571427,
+      "source": "generic-prior-bar",
+      "source_end": "2021-11-30T21:30:00-06:00",
+      "origin_time": "2021-11-30T21:15:00-06:00"
+    },
+    "review": "First deterministic warmup-era formation; source available by activation; fixed zone and causal release reviewed."
+  }
+]

@@ -272,7 +272,8 @@ export function NqMonthlyComparison({
           <h2>How to read this campaign</h2>
           <Text size="sm" mt="xs">Rank uses net return divided by absolute maximum drawdown. A rank requires a completed, comparable run with trades and positive simulated equity throughout.</Text>
           <Text size="sm" mt="xs">These January–August 2026 dates were already inspected in earlier research. The ranking is descriptive historical evidence, not a fresh holdout or live trading approval.</Text>
-          <Text size="sm" mt="xs">Multi-speed momentum fell below zero simulated equity and is unranked at this capital level. Wyckoff made no trades.</Text>
+          {report.rows.some(row => row.strategy_id === "multi-speed-momentum") && <Text size="sm" mt="xs">Multi-speed momentum fell below zero simulated equity and is unranked at this capital level.</Text>}
+          {report.rows.some(row => row.strategy_id === "wyckoff-nq") && <Text size="sm" mt="xs">Wyckoff made no trades.</Text>}
           {report.zone_screen.attempts > 0 && <Text size="sm" mt="xs">The SND exit screen tested {report.zone_screen.attempts} settings. {report.zone_screen.actual_exit_profitable === 0 ? "No actual opposing-zone exit setting was profitable." : `${report.zone_screen.actual_exit_profitable} opposing-zone exit settings were profitable.`} The selected setting was {report.zone_screen.selected_exit || "unspecified"}.</Text>}
         </div>
       </div>

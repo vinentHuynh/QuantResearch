@@ -1,0 +1,21 @@
+{
+  "strategy_id": "consolidation-box-failure",
+  "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+  "timeframe": "15m",
+  "session": "full-trading-day",
+  "capital": 100000,
+  "fee": 2.5,
+  "slippage": 1,
+  "warmup_days": 30,
+  "timeout": 900,
+  "parameters": {
+    "box_bars": 8,
+    "max_range_atr": 2,
+    "zone_half_width_atr": 0.1
+  },
+  "hypothesis": "Frozen consolidation-box-failure-2026-09-30 protocol. Same first-armed-visit sweep/close-inside trigger and trade management; test frozen compact eight-bar box edges. Retrospective NQ history.",
+  "criteria": "See preserved PROTOCOL.md. No retuning, all attempts retained; independent stage gates per detector.",
+  "start": "2022-01-01",
+  "end": "2024-12-31",
+  "sweep": {}
+}

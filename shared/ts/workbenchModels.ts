@@ -94,6 +94,8 @@ export type RunInput = {
     candidate: number;
     scenario: string;
   };
+  /** Historical portfolio continuation; it does not award research milestones. */
+  portfolio_replay?: { item_id: string; source_run_id: string; anchor_start: string };
   strategy: Strategy;
   dataset: Dataset;
   source_hash: string;
@@ -117,6 +119,8 @@ export type RunSummary = {
   notes?: string;
   tags?: string;
   watch_id?: string;
+  readiness_reviews?: import("./readiness.ts").ReadinessReview[];
+  stage_assessments?: import("./stageAssessments.ts").StageAssessment[];
   log?: string;
   result?: {
     metrics: Metrics;

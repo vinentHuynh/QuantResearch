@@ -81,20 +81,93 @@ the workbench uses its own fixed-contract, next-open execution and accounting.
 
 ### New strategies
 
-**Runnable scripts**, **Library**, evaluations, scorecards and the portfolio
-picker use the same research milestones: **Backtested → Evaluation passed →
-Robustness checked**. A backtest establishes completed execution, not profit or
-validation. Evaluation requires complete passing declared scenarios; robustness
-requires the additional recorded historical execution and parameter checklist.
+**Runnable scripts**, **Library**, run history, evaluations, scorecards and the
+portfolio picker share current configuration stages: **Not backtested**, **Backtest
+in progress**, **Backtested · awaiting evaluation**, **Evaluation in progress**,
+**Failed checks · revise strategy**, **Retest required**, **Needs review**, and
+**Historical evaluation passed**, **Robustness and execution validated**,
+**Forward testing**, **Forward testing complete · readiness review needed**, and
+**Ready for practical use**. A completed backtest establishes execution; evaluation requires all
+declared current-source scenarios to pass with no unresolved matching failures.
+**Passed**, **In progress**, **Failed**, and **All** organize the Portfolio Add picker;
+Passed opens first. Each registered script has an expandable group of exact saved
+histories and eligible baseline runs. The collapsed group previews the history with
+the highest saved-window net P&L divided by maximum daily dollar drawdown, across
+all research statuses, using a compact net P&L, drawdown, trades, and Return/DD
+summary. Expanded histories show centered P&L, daily drawdown and that score;
+dates, source status, warnings, parameters and starting capital remain visible
+there. The collapsed plus action selects the displayed best history, importing
+an exact raw run first if needed. Scores use end-of-day equity for raw and
+imported histories. All shows
+every option, including benchmarks. Run IDs remain internal for exact selection
+and evidence links, while the picker and Combination rail use short Inspect run
+links without displaying UUIDs.
+**Benchmark** is a comparison category. Neither
+advances a strategy. Scripts appear in Add even before portfolio import;
+unimported completed baselines can be imported as exact single-run histories.
+Any intact imported history can be added regardless of validation outcome.
+Adding another history for the same script, market, and timeframe replaces that
+selection while preserving other markets and timeframes. **Add shown** skips
+strategy, market, and timeframe pairs already selected. An eligible saved run can
+also be added directly from Runs. The portfolio Add picker links back to source runs.
+Research retains source changes, failed checks and the five-stage progression:
+**Development backtest → Historical evaluation passed → Robustness and execution
+validated → Forward testing → Ready for practical use**. Earlier evaluated histories can be combined for historical portfolio
+research; only stage 5 represents a recorded practical-readiness acceptance.
+Imported `working`/`feasible` flags never advance this lifecycle.
+
+Codex can record a stage judgment through `POST /api/workbench/runs/:id/stage-assessments`.
+The body supplies `attemptedStage` (1–5), `outcome` (`passed`, `failed`, or
+`blocked`), `criteria`, `findings`, `evidence` references, and `reviewer`.
+The server supplies the ID, time, source/configuration identity, and evidence
+snapshot. A judgment cannot award a pass before the workbench's evaluation or
+readiness prerequisite exists. The research workspace shows the last completed
+stage separately from a failed or blocked attempted stage. A new attempt or changed
+evidence makes an older judgment stale without deleting it. An evidence-linked
+failed or blocked judgment on the same stage can supersede an aggregate evaluation
+pass when a stricter frozen per-fold or sample rule was not met; the display
+retains the prior completed stage until that issue is resolved.
+
+Open a configuration's **Development and practical readiness** panel from its
+next-step action or run evidence. After evaluation passes, record a named review
+with evidence references and findings for nearby parameters/selection,
+market/regime coverage, execution/fills/costs and risk/capital. Next freeze a
+prospective paper-test plan: future start, minimum calendar days and trades,
+minimum net return, and maximum drawdown. The start must follow all inspected
+historical windows. Record its actual external paper observations and
+reconciliation; failed results remain saved and block readiness. Passing the
+frozen criteria enables a separate acceptance of the operating/execution plan,
+risk/stop controls, monitoring and incident/rollback procedures.
+
+These later stages are named reviews of external evidence, not an automatically
+connected paper account or broker. The server assigns timestamps, validates
+prerequisites and chronology, and appends immutable review events to the seed
+run's `readiness_reviews`. Notes and tags remain separate. Every event is tied
+to an exact source/market/timeframe/session/parameter configuration and snapshot
+of its run/evaluation facts, including capital, costs and results. Changed source,
+changed evidence or additional attempts invalidate the later milestones until
+reviewed again. Historical replays never establish paper performance.
+Readiness acceptance records the reviewed operating scope; it does not execute
+trades. Tests: `tests/node/strategy-readiness.test.mjs` and the isolated fixture
+browser smoke test cover progression, skipped stages, invalidation and persistence.
 The run form's **Run purpose** records intent and never awards a milestone.
 
 Progress belongs to a source snapshot, symbol, timeframe, session and parameter
 configuration. Scripts and library sources are sorted by their most promising
 recorded result: validation strength, then return/drawdown and trade count.
-The default view shows only that result's market/chart, stage and short summary.
-**Testing details** contains the full evidence, reviews and job progress; script
-implementation information is under **Script details**. Expand **Results and next
-steps by configuration** for exact settings, findings and linked runs. A failed
+Runnable script cards show the stage and best qualifying run's market/chart,
+net P&L, drawdown, trade count and Return/DD; **Inspect best run** opens its
+record. **Research history** holds the runnable script's configuration evidence
+and findings. Library sources retain **Testing details** for full evidence,
+reviews and job progress, and the source drawer shows implementation information.
+Use **Archive script** on a runnable card to move its adapter into
+`strategies_archive/`. The **Archive** tab shows where it is stored and offers
+**Restore script**. Archived scripts and their saved runs, evaluations, and
+portfolio histories are hidden from active workbench pages; the source and
+historical records remain available for restoration. A script used as a source
+dependency by another runnable adapter must be archived after its dependents.
+Expand **Results and next steps by configuration** there for exact settings,
+findings and linked runs. A failed
 ES case cannot invalidate a passing NQ configuration. Matching unresolved checks
 remain attached across dates and cost settings. Incomplete evaluations are
 distinct from unmet criteria; completed, queued and summarizing jobs are separate
@@ -108,11 +181,25 @@ The structured `Testing review:` line in saved run notes records the adapter
 checksum, reviewed run IDs and issue fingerprints. New runs, changed failures,
 or a changed adapter require another review; a tag alone does not complete it.
 Market filtering retains the explicitly labeled adapter-wide review summary.
-These labels do not change the stored historical eligibility flags. Scorecards
+The shared status calculation supersedes imported eligibility flags for current
+stage display and filtering without rewriting those historical flags or histories.
+Portfolio histories are linked through exact preserved baseline run IDs and their
+verified ledgers. Unlinked, missing or mixed configurations require review; changed
+execution sources require retesting. Each row exposes missing checks and a matching
+action: configure a backtest, plan an evaluation with exact saved settings, inspect
+failed checks, or refresh portfolio evidence after a pass. Planning does not launch
+jobs. Refreshing imports histories and does not award a pass. Scorecards
 explicitly describe the latest evaluated configuration on the chosen market;
 script/library summaries include all recorded current-adapter configurations.
-Run/evaluation views establish only milestones supported by their records; the
-portfolio catalog additionally carries its reviewed robustness checklist.
+Run/evaluation, scorecard and portfolio views share the same evidence calculation.
+
+The active portfolio selection also tracks newer registered market data in the
+background. Supported books receive checksum-verified historical replays through
+complete UTC dates, while the portfolio keeps its previous P&L until publication.
+**Follow latest** controls whether the displayed P&L end date advances with the
+selected books' common coverage. Tracking replays are exploratory and do not
+change evaluation or practical-readiness milestones. See
+`COLLECTIVE_DASHBOARD.md` for supported books, accounting, and status behavior.
 
 **Most viable recorded run** considers positive, traded, non-training results
 matching the current adapter checksum. Passing evaluation baselines rank ahead
@@ -243,19 +330,6 @@ costs, and comparison/evaluation limits are specified in [the Pine audit](docs/w
   mark. Cut-interval trade counts are unavailable. To change simulation or
   initialization assumptions, launch new runs.
 
-## Watchlist
-
-Inspect a successful run and record a reason to **Freeze in watchlist**. Code,
-parameters, accounting assumptions, and instrument are frozen. **Run on latest
-data** resolves a specific dataset version when queued and performs a full
-historical replay. A changed/corrected dataset creates a new snapshot; original
-records remain available. No new data leaves the existing snapshot unchanged.
-
-Recent returns are relative to the last covered data month, not the computer's
-current month. Partial initial months and unavailable trailing windows are not
-presented as full-month performance. Tracking status is relative to registered
-datasets. These replays are not prospective paper trading.
-
 ## Evaluation and regime research
 
 **Evaluations & regimes** adds rolling walk-forward selection, complete candidate
@@ -371,6 +445,26 @@ Validate with `npm run test:dashboard`, then `npm run test:dashboard-browser`
 with the app running. Browser checks and screenshots are saved below
 `$env:WORKBENCH_ARTIFACTS/workbench-validation/dashboard-*` (default
 `artifacts/workbench-validation/dashboard-*`).
+
+## Archiving runs and configurations
+
+**Runs & compare** has an **Archive** action on each finished run and
+**Archive selected** for a selection. The **Archive** tab keeps archived runs
+inspectable and offers **Restore**. The active latest-history view selects from
+unarchived attempts.
+
+In **Research**, select a configuration and choose **Archive configuration**.
+This hides that exact source, strategy, market, timeframe, session, and parameter
+group from active configurations and runs. Matching future attempts stay archived
+until the configuration is restored. Its **Archive** tab offers
+**Restore configuration**; runs archived individually remain archived.
+
+Archiving preserves inputs, results, artifacts, evaluations, and stage evidence.
+Active work must finish before it can be archived. Archive metadata is saved in
+the workbench database, separately from the research records. The API actions are
+`POST /api/workbench/runs/archive` and `/runs/unarchive` with `{"ids":["<run-id>"]}`,
+and `/configurations/archive` and `/configurations/unarchive` with
+`{"run_id":"<run-id>"}`.
 
 ## Removing obsolete runs
 

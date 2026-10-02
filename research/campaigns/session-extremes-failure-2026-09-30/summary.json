@@ -1,0 +1,453 @@
+[
+  {
+    "run_id": "739faf2a-dd89-4bcf-80f5-5884ba3e942a",
+    "status": "Succeeded",
+    "source": "prior-day",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": null,
+    "source_hash": "914cef2a17853f36cb67b1b0acc6f962fb48450d6b8afa30c38ea673b3e5d113",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "checks": {
+      "artifact_hashes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true
+    },
+    "failures": [
+      "Trade count 42 below 100"
+    ],
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.17009999999999992,
+      "net_pnl": 17010.0,
+      "max_drawdown": -0.027650713456680576,
+      "underwater_bars": 27169,
+      "current_underwater_bars": 0,
+      "cagr": 0.05384916275059237,
+      "sharpe": 0.7119259815501493,
+      "volatility": 0.06218443674974713,
+      "trades": 42,
+      "observations": 70843,
+      "costs": 630.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": 0.0
+        },
+        {
+          "month": "2022-02",
+          "return": -0.008199999999999985
+        },
+        {
+          "month": "2022-03",
+          "return": -0.003932244404113772
+        },
+        {
+          "month": "2022-04",
+          "return": 0.0990990990990992
+        },
+        {
+          "month": "2022-05",
+          "return": -0.004052311659605845
+        },
+        {
+          "month": "2022-06",
+          "return": -0.005455890512298889
+        },
+        {
+          "month": "2022-07",
+          "return": -0.006834030683403047
+        },
+        {
+          "month": "2022-08",
+          "return": 0.0
+        },
+        {
+          "month": "2022-09",
+          "return": 0.0389458409399428
+        },
+        {
+          "month": "2022-10",
+          "return": -0.003604415408875905
+        },
+        {
+          "month": "2022-11",
+          "return": -0.0034365815057653126
+        },
+        {
+          "month": "2022-12",
+          "return": 0.0
+        },
+        {
+          "month": "2023-01",
+          "return": -0.0026770724624529674
+        },
+        {
+          "month": "2023-02",
+          "return": -0.002502274795268433
+        },
+        {
+          "month": "2023-03",
+          "return": -0.0029190421892816287
+        },
+        {
+          "month": "2023-04",
+          "return": 0.007867892594117354
+        },
+        {
+          "month": "2023-05",
+          "return": 0.02773113057686194
+        },
+        {
+          "month": "2023-06",
+          "return": -0.002075605016781501
+        },
+        {
+          "month": "2023-07",
+          "return": -0.0013718635217063735
+        },
+        {
+          "month": "2023-08",
+          "return": 0.009173092262696025
+        },
+        {
+          "month": "2023-09",
+          "return": 0.0006586747464101261
+        },
+        {
+          "month": "2023-10",
+          "return": -0.0016236615762682538
+        },
+        {
+          "month": "2023-11",
+          "return": -0.002241659707265642
+        },
+        {
+          "month": "2023-12",
+          "return": 0.0
+        },
+        {
+          "month": "2024-01",
+          "return": -0.0017180616740087862
+        },
+        {
+          "month": "2024-02",
+          "return": -0.001941661886059709
+        },
+        {
+          "month": "2024-03",
+          "return": 0.0
+        },
+        {
+          "month": "2024-04",
+          "return": -0.005394172525091778
+        },
+        {
+          "month": "2024-05",
+          "return": -0.0027561680373415776
+        },
+        {
+          "month": "2024-06",
+          "return": 0.014844202737039236
+        },
+        {
+          "month": "2024-07",
+          "return": -0.0018009312132126754
+        },
+        {
+          "month": "2024-08",
+          "return": 0.0
+        },
+        {
+          "month": "2024-09",
+          "return": -0.0022882288228822656
+        },
+        {
+          "month": "2024-10",
+          "return": 0.03215278084064743
+        },
+        {
+          "month": "2024-11",
+          "return": 0.0
+        },
+        {
+          "month": "2024-12",
+          "return": 0.0
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 2.877483443708609,
+    "expectancy": 405.0,
+    "win_rate": 0.23809523809523808,
+    "max_drawdown_dollars": 3187.5,
+    "annual_net": {
+      "2022": 10195.0,
+      "2023": 3305.0,
+      "2024": 3510.0
+    },
+    "exit_reasons": {
+      "stop": 32,
+      "20-bar-time-exit": 10
+    },
+    "side_net": {
+      "-1": 12490.0,
+      "1": 4520.0
+    },
+    "top_10_winners": 26070.0,
+    "gross_winning_net": 26070.0,
+    "warmup": {
+      "status": "undeclared",
+      "required_bars": null,
+      "available_bars": null
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Prior day is the previous scheduled 08:30-15:00 CT regular session, shortened by the frozen CME index calendar; overnight is previous calendar day 17:00 to 08:30 CT. Require contiguous observed 15m source windows, not tick or minute completeness. Zones freeze at 08:30 using pre-open ATR; entries only during the regular session. First armed physical visit consumes a zone even without a trade; same close-inside-zone trigger, next-open entry, sweep-extreme stop and 20-bar exit as multi-touch cluster. Positions may carry beyond the regular close. Unadjusted continuous rolls, OHLC stop ordering, no matched generic-failure control, and no event entry-delay stress remain limitations."
+    ],
+    "submitted_entries": 42,
+    "expired_orders": 0,
+    "eligible": false
+  },
+  {
+    "run_id": "c9062cba-e171-48e6-bf6d-1a9009a8446c",
+    "status": "Succeeded",
+    "source": "overnight",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": null,
+    "source_hash": "914cef2a17853f36cb67b1b0acc6f962fb48450d6b8afa30c38ea673b3e5d113",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "checks": {
+      "artifact_hashes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true
+    },
+    "failures": [
+      "Trade count 61 below 100",
+      "Fewer than two profitable development years"
+    ],
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.07830000000000004,
+      "net_pnl": 7830.0,
+      "max_drawdown": -0.09195002715915268,
+      "underwater_bars": 57774,
+      "current_underwater_bars": 57774,
+      "cagr": 0.025489408623382115,
+      "sharpe": 0.34998349780674975,
+      "volatility": 0.06375010260755168,
+      "trades": 61,
+      "observations": 70843,
+      "costs": 915.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": 0.060899999999999954
+        },
+        {
+          "month": "2022-02",
+          "return": -0.0015081534546139697
+        },
+        {
+          "month": "2022-03",
+          "return": -0.007882563957330335
+        },
+        {
+          "month": "2022-04",
+          "return": 0.07854798039868682
+        },
+        {
+          "month": "2022-05",
+          "return": -0.009660344067048965
+        },
+        {
+          "month": "2022-06",
+          "return": -0.0042314373524564575
+        },
+        {
+          "month": "2022-07",
+          "return": 0.023259974950796236
+        },
+        {
+          "month": "2022-08",
+          "return": -0.007431369120475595
+        },
+        {
+          "month": "2022-09",
+          "return": 0.0
+        },
+        {
+          "month": "2022-10",
+          "return": -0.0019818550162952198
+        },
+        {
+          "month": "2022-11",
+          "return": -0.013503375843960996
+        },
+        {
+          "month": "2022-12",
+          "return": -0.010601655110713537
+        },
+        {
+          "month": "2023-01",
+          "return": -0.004521204448865168
+        },
+        {
+          "month": "2023-02",
+          "return": 0.0
+        },
+        {
+          "month": "2023-03",
+          "return": -0.007266781724043936
+        },
+        {
+          "month": "2023-04",
+          "return": 0.012215207246774717
+        },
+        {
+          "month": "2023-05",
+          "return": -0.004881355932203402
+        },
+        {
+          "month": "2023-06",
+          "return": 0.006767497842576242
+        },
+        {
+          "month": "2023-07",
+          "return": 0.004105386628169283
+        },
+        {
+          "month": "2023-08",
+          "return": -0.0009884530709439732
+        },
+        {
+          "month": "2023-09",
+          "return": 0.0
+        },
+        {
+          "month": "2023-10",
+          "return": -0.0057566899033055785
+        },
+        {
+          "month": "2023-11",
+          "return": 0.0
+        },
+        {
+          "month": "2023-12",
+          "return": -0.009770660876645354
+        },
+        {
+          "month": "2024-01",
+          "return": -0.002375405417751608
+        },
+        {
+          "month": "2024-02",
+          "return": -0.0036631713906314367
+        },
+        {
+          "month": "2024-03",
+          "return": 0.0
+        },
+        {
+          "month": "2024-04",
+          "return": 0.0
+        },
+        {
+          "month": "2024-05",
+          "return": -0.004503883450526214
+        },
+        {
+          "month": "2024-06",
+          "return": -0.003093116661280648
+        },
+        {
+          "month": "2024-07",
+          "return": 0.0
+        },
+        {
+          "month": "2024-08",
+          "return": -0.004677225155135689
+        },
+        {
+          "month": "2024-09",
+          "return": -0.015307309356534682
+        },
+        {
+          "month": "2024-10",
+          "return": 0.0
+        },
+        {
+          "month": "2024-11",
+          "return": -0.00756000756000752
+        },
+        {
+          "month": "2024-12",
+          "return": 0.026756808227004436
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 1.4146147736298649,
+    "expectancy": 128.36065573770492,
+    "win_rate": 0.13114754098360656,
+    "max_drawdown_dollars": 10580.0,
+    "annual_net": {
+      "2022": 10590.0,
+      "2023": -1135.0,
+      "2024": -1625.0
+    },
+    "exit_reasons": {
+      "stop": 53,
+      "20-bar-time-exit": 8
+    },
+    "side_net": {
+      "-1": 6810.0,
+      "1": 1020.0
+    },
+    "top_10_winners": 26715.0,
+    "gross_winning_net": 26715.0,
+    "warmup": {
+      "status": "undeclared",
+      "required_bars": null,
+      "available_bars": null
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Prior day is the previous scheduled 08:30-15:00 CT regular session, shortened by the frozen CME index calendar; overnight is previous calendar day 17:00 to 08:30 CT. Require contiguous observed 15m source windows, not tick or minute completeness. Zones freeze at 08:30 using pre-open ATR; entries only during the regular session. First armed physical visit consumes a zone even without a trade; same close-inside-zone trigger, next-open entry, sweep-extreme stop and 20-bar exit as multi-touch cluster. Positions may carry beyond the regular close. Unadjusted continuous rolls, OHLC stop ordering, no matched generic-failure control, and no event entry-delay stress remain limitations."
+    ],
+    "submitted_entries": 61,
+    "expired_orders": 0,
+    "eligible": false
+  }
+]

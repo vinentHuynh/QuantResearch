@@ -1,0 +1,35 @@
+{
+  "name": "Remaining zones | round-100 | frozen 2025 evaluation",
+  "base": {
+    "strategy_id": "remaining-zone-failure",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "timeframe": "15m",
+    "session": "full-trading-day",
+    "capital": 100000,
+    "fee": 2.5,
+    "slippage": 1,
+    "warmup_days": 30,
+    "timeout": 900,
+    "parameters": {
+      "detector": "round-100",
+      "zone_half_width_atr": 0.1,
+      "swing_sides": 2
+    },
+    "hypothesis": "Remaining-zones-failure-2026-09-30 frozen bounded screen: seven families/nine detector candidates plus generic prior-bar benchmark, identical failure engine, no outcome-driven tuning. Retrospective NQ history.",
+    "criteria": "PROTOCOL.md frozen gates; sparse is inconclusive, economic failure rejects the tested configuration. All attempts retained.",
+    "start": "2024-01-01",
+    "end": "2025-12-31"
+  },
+  "train_days": 366,
+  "test_days": 365,
+  "folds": 1,
+  "metric": "net_pnl",
+  "min_trades": 20,
+  "min_test_trades": 40,
+  "min_return": 0,
+  "max_drawdown": 0.35,
+  "stress_multiple": 2,
+  "delay_bars": 0,
+  "sweep": {},
+  "hypothesis": "Remaining-zones-failure-2026-09-30 frozen bounded screen: seven families/nine detector candidates plus generic prior-bar benchmark, identical failure engine, no outcome-driven tuning. Retrospective NQ history."
+}

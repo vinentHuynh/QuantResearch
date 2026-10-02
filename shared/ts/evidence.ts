@@ -1,6 +1,9 @@
 import type { EvaluationView, RunSummary } from "./workbenchModels.ts";
 import { readTestingReviews, reviewIssueKey } from "./testingReview.ts";
 import { stageLabel, stageColor, type ResearchStage } from "./progress.ts";
+import { lifecycleStatus } from "./strategyLifecycle.ts";
+import { applyReadiness } from "./readiness.ts";
+import { applyStageAssessments } from "./stageAssessments.ts";
 
 export type TestingIssue = { id: string; title: string; reason: string; runId?: string; evaluationId?: string; scope?: string };
 export type TestingEvidence = ReturnType<typeof testingEvidence>;
@@ -25,8 +28,9 @@ const currentRun = (r: RunSummary, strategy: { file_hash: string; execution_sour
 const configurationSourceHash = (r: RunSummary) => r.input.protocol === 2
   ? v2ExecutionHash(r)
   : r.input.source_hash || r.input.strategy.file_hash;
-const configuration = (r: RunSummary) => JSON.stringify([configurationSourceHash(r), r.input.dataset.symbol, r.input.timeframe, r.input.session,
+export const runConfigurationKey = (r: RunSummary) => JSON.stringify([configurationSourceHash(r), r.input.dataset.symbol, r.input.timeframe, r.input.session,
   Object.entries(r.input.parameters).sort(([a], [b]) => a.localeCompare(b))]);
+const configuration = runConfigurationKey;
 export const viabilityExplanation = "Current execution source and positive traded runs only. Passing evaluation baselines rank first, then recorded passing cases, then exploratory runs, then failed-check candidates. Failures follow matching parameters, market, timeframe and session across dates and costs. Within each group: net return / maximum drawdown, then trade count and recency. Zero-drawdown samples rank last within their group. Dates, markets and assumptions can differ; this is a research comparison, not a status promotion.";
 
 export function testingEvidence(
@@ -35,26 +39,64 @@ export function testingEvidence(
   allEvaluations: EvaluationView[],
   symbol = "",
 ) {
-  const history = allRuns.filter(r => r.input.strategy.id === strategy.id && (!symbol || r.input.dataset.symbol === symbol));
+  const history = allRuns.filter(r => r.input.strategy.id === strategy.id && !r.input.portfolio_replay && (!symbol || r.input.dataset.symbol === symbol));
   const runs = history.filter(r => currentRun(r, strategy)).sort(newest);
   const runIds = new Set(runs.map(r => r.id));
   const byId = new Map(allRuns.map(r => [r.id, r]));
   const evaluations = allEvaluations.filter(e => e.folds.some(f => [...f.training, ...f.tests].some(id => runIds.has(id)))).sort(newest);
-  const issues: TestingIssue[] = [];
-  const evaluatedPass = new Set<string>();
-  const evaluatedFail = new Set<string>();
-  const incompleteTests = new Set<string>();
-  for (const e of evaluations) {
+  const evaluationFacts = evaluations.map(e => {
     const scenarios = e.result?.scenarios || [];
     const required = e.scenarios || ["Baseline", "Higher costs", "Delayed execution"];
     const children = e.folds.flatMap(f => [...f.training, ...f.tests]);
     const complete = children.length > 0 && children.every(id => byId.get(id)?.status === "Succeeded" && runIds.has(id));
     const pass = e.status === "Succeeded" && complete && required.length > 0 && required.every(name => scenarios.some(s => s.name === name && s.outcome === "Meets criteria" && s.metrics.net_pnl > 0));
+    const bad = scenarios.filter(s => s.outcome !== "Meets criteria" || s.metrics.net_pnl <= 0);
+    return { evaluation: e, children, pass, bad };
+  });
+  // A completed, passing replay may supersede an older execution interruption
+  // for the same source and settings. It does not erase the older record or any
+  // scenario that actually breached an economic criterion.
+  const latestPassByConfiguration = new Map<string, string>();
+  for (const { evaluation, pass } of evaluationFacts) {
+    if (!pass) continue;
+    for (const id of evaluation.folds.flatMap(f => f.tests)) {
+      const run = byId.get(id);
+      if (!run || !runIds.has(id)) continue;
+      const key = configuration(run);
+      const previous = latestPassByConfiguration.get(key);
+      if (!previous || evaluation.created_at > previous) latestPassByConfiguration.set(key, evaluation.created_at);
+    }
+  }
+  const supersededTechnicalEvaluationKeys = new Map<string, Set<string>>();
+  const supersededTechnicalRunIds = new Set<string>();
+  for (const { evaluation, children, bad } of evaluationFacts) {
+    if (active(evaluation.status) || evaluation.status === "Succeeded" || bad.length) continue;
+    const childRuns = children.map(id => byId.get(id)).filter((run): run is RunSummary => !!run && runIds.has(run.id));
+    if (!childRuns.some(run => !active(run.status) && run.status !== "Succeeded")) continue;
+    const keys = new Set(childRuns.map(configuration).filter(key => (latestPassByConfiguration.get(key) || "") > evaluation.created_at));
+    if (!keys.size) continue;
+    supersededTechnicalEvaluationKeys.set(evaluation.id, keys);
+    for (const run of childRuns) {
+      if (keys.has(configuration(run)) && !active(run.status) && run.status !== "Succeeded"
+        && (latestPassByConfiguration.get(configuration(run)) || "") > run.created_at)
+        supersededTechnicalRunIds.add(run.id);
+    }
+  }
+  const issues: TestingIssue[] = [];
+  const evaluatedPass = new Set<string>();
+  const evaluatedFail = new Set<string>();
+  const incompleteTests = new Set<string>();
+  for (const { evaluation: e, pass, bad } of evaluationFacts) {
     if (pass) {
       e.folds.flatMap(f => f.tests).forEach(id => evaluatedPass.add(id));
     } else if (!active(e.status)) {
-      const bad = scenarios.filter(s => s.outcome !== "Meets criteria" || s.metrics.net_pnl <= 0);
-      e.folds.flatMap(f => f.tests).forEach(id => (bad.length ? evaluatedFail : incompleteTests).add(id));
+      e.folds.flatMap(f => f.tests).forEach(id => {
+        if (bad.length) evaluatedFail.add(id);
+        else {
+          const run = byId.get(id);
+          if (!run || !supersededTechnicalEvaluationKeys.get(e.id)?.has(configuration(run))) incompleteTests.add(id);
+        }
+      });
       for (const s of bad) {
         const reasons: string[] = [];
         if (e.max_drawdown != null && Math.abs(s.metrics.max_drawdown) > e.max_drawdown)
@@ -114,20 +156,41 @@ export function testingEvidence(
     const failed = failedConfigurations.has(key);
     const incomplete = incompleteConfigurations.has(key);
     const passed = !failed && !incomplete && attempts.some(r => evaluatedPass.has(r.id) && r.input.research?.scenario === "Baseline");
-    const stage: ResearchStage = passed ? 2 : completed.length ? 1 : 0;
-    const busy = attempts.some(r => active(r.status));
-    const executionIssues = attempts.filter(r => !active(r.status) && r.status !== "Succeeded").length;
+    let stage: ResearchStage = passed ? 2 : completed.length ? 1 : 0;
+    const matchingEvaluations = evaluations.filter(e => e.folds.some(f => [...f.training, ...f.tests].some(id => attempts.some(r => r.id === id))));
+    const activeEvaluation = matchingEvaluations.find(e => active(e.status));
+    const busy = !!activeEvaluation || attempts.some(r => active(r.status));
+    const executionIssues = attempts.filter(r => !active(r.status) && r.status !== "Succeeded" && !supersededTechnicalRunIds.has(r.id)).length;
     const noTrades = completed.length > 0 && completed.every(r => !r.result?.metrics.trades);
-    const outcome = failed ? "Criteria not met" : incomplete ? "Evaluation incomplete" : passed ? "Declared checks passed" : noTrades ? "No trades" : executionIssues ? "Execution issues recorded" : "Validation pending";
+    const outcome = failed ? "Criteria not met" : incomplete ? "Evaluation incomplete" : noTrades ? "No trades" : executionIssues ? "Execution issues recorded" : activeEvaluation ? "Evaluation in progress" : passed ? "Declared checks passed" : "Validation pending";
+    const runId = (candidates.find(c => configuration(c.run) === key)?.run || completed.find(r => r.input.research?.role !== "Training") || sample).id;
+    const evaluationId = (activeEvaluation || matchingEvaluations[0])?.id;
+    const relevantIssues = issues.filter(issue =>
+      issue.runId ? attempts.some(r => r.id === issue.runId) && !supersededTechnicalRunIds.has(issue.runId)
+        : matchingEvaluations.some(e => e.id === issue.evaluationId) && !supersededTechnicalEvaluationKeys.get(issue.evaluationId || "")?.has(key));
+    const kind = strategy.id === "buy-hold" ? "benchmark" : failed ? "failed-checks" : noTrades || executionIssues ? "needs-review" : activeEvaluation ? "evaluation-running" : busy ? "backtest-running" : passed ? "evaluation-passed" : completed.length ? "validation-pending" : "not-tested";
+    const checks = relevantIssues.length ? relevantIssues.map(issue => `${issue.title}: ${issue.reason}`)
+      : passed ? [] : completed.length ? ["Complete a declared later-period evaluation with every required baseline and stress scenario."] : ["Complete a backtest with valid results."];
+    const historicalLifecycle = lifecycleStatus(kind, stage, busy ? `${outcome} · Testing in progress` : outcome, checks,
+      strategy.id === "buy-hold" ? undefined : passed && !activeEvaluation ? { kind: "open-portfolio", label: "Open portfolio · refresh histories to import this result" }
+      : evaluationId ? { kind: "open-evaluation", label: busy ? "View evaluation progress" : failed ? "Review failed checks" : "Complete evaluation", evaluationId }
+      : noTrades || executionIssues || failed || busy ? { kind: "inspect-run", label: "Inspect run & findings", runId }
+      : completed.length ? { kind: "plan-evaluation", label: "Plan evaluation", runId }
+      : { kind: "configure-run", label: "Configure backtest", runId, strategyId: strategy.id });
+    if (failed) historicalLifecycle.failedStage = 2;
+    const readinessLifecycle = applyReadiness(historicalLifecycle, attempts, evaluations, key, runId);
+    const lifecycle = applyStageAssessments(readinessLifecycle, sample, attempts, evaluations);
+    stage = lifecycle.stage;
     return { key, sourceHash: configurationSourceHash(sample), symbol: sample.input.dataset.symbol, timeframe: sample.input.timeframe, session: sample.input.session,
       parameters: sample.input.parameters, stage, outcome, busy, executionIssues, failed,
       total: attempts.length, completed: completed.length,
       next: failed ? "Inspect matching failures and revise or retest this configuration."
-        : passed ? "Complete execution and nearby-parameter checks."
+        : activeEvaluation ? "Follow the evaluation progress, then review every declared scenario."
+        : passed ? lifecycle.action?.label || "Review the next development stage."
         : noTrades ? "Check signal activity and data coverage before evaluating."
         : executionIssues ? "Inspect execution errors and rerun the affected attempts."
         : completed.length ? "Run a later-period baseline with declared stress checks." : "Complete a backtest.",
-      runId: (candidates.find(c => configuration(c.run) === key)?.run || sample).id,
+      runId, evaluationId, lifecycle,
     };
   }).sort((a, b) => b.stage - a.stage || a.symbol.localeCompare(b.symbol) || a.key.localeCompare(b.key));
   const stage = configurations.reduce<ResearchStage>((highest, c) => Math.max(highest, c.stage) as ResearchStage, 0);
@@ -152,6 +215,7 @@ export function testingEvidence(
   const status = stageLabel(stage);
   const review = reviewComplete ? "Complete" : inProgress || newEvidence ? "New evidence pending" : "Pending";
   return {
+    strategyId: strategy.id,
     status, tone: stageColor(stage), stage, configurations, passingConfigurations, failingConfigurations,
     scope: symbol || "All tested markets", inProgress, review,
     total: runs.length, terminal, queued, running, summarizing, succeeded: successful.length,

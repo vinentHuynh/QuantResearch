@@ -1,23 +1,46 @@
 import { Badge, Button, Group, Progress, Text, Tooltip } from "@mantine/core";
 import { useState } from "react";
 import { viabilityExplanation, type TestingEvidence } from "../../../shared/ts/evidence.ts";
-import { progressScope, stageColor, stageLabel } from "../../../shared/ts/progress.ts";
+import { progressScope } from "../../../shared/ts/progress.ts";
 import { ResearchStages } from "./ResearchStages";
+import { StrategyNextActionButton, StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { lifecycleStatus } from "../../../shared/ts/strategyLifecycle.ts";
 import "./strategyTesting.css";
 
 const cash = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const pct = (n: number) => `${(n * 100).toFixed(2)}%`;
 export type TestingActions = { inspectRun: (id: string) => void; openEvaluation: (id: string) => void };
 
-export function StrategyTesting({ evidence: e, compact = false, inspectRun, openEvaluation }: TestingActions & { evidence: TestingEvidence; compact?: boolean }) {
+export function StrategyTesting({ evidence: e, compact = false, runnableCard = false, inspectRun, openEvaluation }: TestingActions & { evidence: TestingEvidence; compact?: boolean; runnableCard?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const best = e.best;
   const configuration = best && e.configurations.find(c => c.runId === best.run.id);
-  const stage = configuration?.stage ?? e.stage;
+  const status = configuration?.lifecycle || e.configurations[0]?.lifecycle || lifecycleStatus(e.previousSource && !e.total ? "retest-required" : "not-tested", 0,
+    e.previousSource ? "Current source needs retesting." : "Complete a backtest, then plan its evaluation.", ["Backtest the current source, then complete its declared evaluation."],
+    { kind: "configure-run", label: "Configure current-source backtest", strategyId: e.strategyId });
+  const bestMetrics = best?.run.result?.metrics;
+  if (runnableCard) return <section className="strategy-testing-runnable" aria-label="Promising configuration">
+    <div className="strategy-testing-runnable-status">
+      <StrategyStageBadge {...status} />
+    </div>
+    {best && bestMetrics ? <div className="strategy-testing-best-run" aria-label="Best run summary" data-tier={best.tier}>
+      <Text className="strategy-testing-best-run-heading" size="xs" fw={600}>
+        Best run · <strong>{best.run.input.dataset.symbol} · {best.run.input.timeframe}</strong>
+      </Text>
+      <div className="strategy-testing-best-run-metrics">
+        <div className="strategy-testing-best-run-metric"><strong>{cash(bestMetrics.net_pnl)}</strong><span>Net P&amp;L</span></div>
+        <div className="strategy-testing-best-run-metric"><strong>{pct(Math.abs(bestMetrics.max_drawdown))}</strong><span>Drawdown</span></div>
+        <div className="strategy-testing-best-run-metric"><strong>{bestMetrics.trades}</strong><span>Trades</span></div>
+        <div className="strategy-testing-best-run-metric"><strong>{best.score?.toFixed(2) ?? "Unranked"}</strong><span>Return/DD</span></div>
+      </div>
+    </div> : <Text size="xs" c="dimmed" mt={6}>
+      {e.previousSource && !e.total ? "Current source needs retesting." : "No positive traded run for this market and source."}
+    </Text>}
+  </section>;
   return <section className={`strategy-testing testing-summary ${compact ? "strategy-testing-compact" : ""}`} aria-label="Promising configuration">
     <Group justify="space-between" gap="xs">
       <Text size="sm" fw={600}>{best ? `${best.run.input.dataset.symbol} · ${best.run.input.timeframe}` : "No promising result yet"}</Text>
-      <Badge color={stageColor(stage)} variant="light">{stageLabel(stage)}</Badge>
+      <StrategyStageBadge {...status} showFinding showAction />
     </Group>
     <Text size="xs" c={best?.tier === 0 ? "orange" : "dimmed"} mt={5}>
       {best ? `${best.tier >= 2 ? "Promising candidate" : best.tier === 1 ? "Early candidate" : "Checks unresolved"} · Return/DD ${best.score?.toFixed(2) ?? "unranked"}`
@@ -37,7 +60,7 @@ function DetailedTesting({ evidence: e, compact = false, inspectRun, openEvaluat
   return <section className={`strategy-testing ${compact ? "strategy-testing-compact" : ""}`} aria-label="Strategy testing evidence">
     <Group justify="space-between" gap="xs">
       <Text size="sm" fw={600}>Testing progress</Text>
-      <Badge color={e.tone} variant="light">{e.status}</Badge>
+      <Text size="xs" c="dimmed">Current-source configuration stages below</Text>
     </Group>
     <Text size="xs" c="dimmed" mt={5}>{e.scope} · Current source · Highest recorded milestone</Text>
     <ResearchStages stage={e.stage} />
@@ -53,11 +76,13 @@ function DetailedTesting({ evidence: e, compact = false, inspectRun, openEvaluat
       <summary>Results and next steps by configuration ({e.configurations.length})</summary>
       <Text size="xs" c="dimmed">{progressScope}</Text>
       <div className="testing-configuration-list">{e.configurations.map(c => <div key={c.key} className="testing-configuration">
-        <Group justify="space-between" gap={5}><Text size="xs" fw={600}>{c.symbol} · {c.timeframe} · {c.session}</Text><Badge size="xs" color={stageColor(c.stage)}>{stageLabel(c.stage)}</Badge></Group>
+        <Group justify="space-between" gap={5}><Text size="xs" fw={600}>{c.symbol} · {c.timeframe} · {c.session}</Text><StrategyStageBadge {...c.lifecycle} /></Group>
         <Text size="xs" c={c.failed ? "orange" : "dimmed"}>{c.outcome}{c.busy ? " · Testing in progress" : ""} · {c.completed}/{c.total} runs succeeded</Text>
         <Text size="xs" c="dimmed">Source {c.sourceHash.slice(0, 10)}</Text>
         <Text size="xs" className="testing-parameters">{Object.entries(c.parameters).map(([k,v]) => `${k}: ${String(v)}`).join(" · ") || "Default parameters"}</Text>
         <Text size="xs"><strong>Next:</strong> {c.next}</Text>
+        {c.lifecycle.checks.map((check, index) => <Text size="xs" key={index}>{check}</Text>)}
+        {c.lifecycle.action && <StrategyNextActionButton action={c.lifecycle.action} />}
         <Button size="compact-xs" variant="subtle" onClick={() => inspectRun(c.runId)}>Inspect configuration run</Button>
       </div>)}</div>
     </details>}

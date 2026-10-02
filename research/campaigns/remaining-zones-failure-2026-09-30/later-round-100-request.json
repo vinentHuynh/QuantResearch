@@ -1,0 +1,22 @@
+{
+  "strategy_id": "remaining-zone-failure",
+  "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+  "timeframe": "15m",
+  "session": "full-trading-day",
+  "capital": 100000,
+  "fee": 2.5,
+  "slippage": 1,
+  "warmup_days": 30,
+  "timeout": 900,
+  "parameters": {
+    "detector": "round-100",
+    "zone_half_width_atr": 0.1,
+    "swing_sides": 2
+  },
+  "hypothesis": "Remaining-zones-failure-2026-09-30 frozen bounded screen: seven families/nine detector candidates plus generic prior-bar benchmark, identical failure engine, no outcome-driven tuning. Retrospective NQ history.",
+  "criteria": "PROTOCOL.md frozen gates; sparse is inconclusive, economic failure rejects the tested configuration. All attempts retained.",
+  "start": "2026-01-01",
+  "end": "2026-09-28",
+  "stage": "Evaluation",
+  "development_end": "2025-12-31"
+}

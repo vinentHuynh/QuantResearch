@@ -363,6 +363,33 @@ try {
   assert(preservedV1Dataset);
   assert.equal(preservedV1Dataset.schema_version, undefined);
   assert.equal(preservedV1Dataset.path, fixturePath);
+  const trackingItemId = "1234567890abcdef1234";
+  await mkdir(join(home, "collective"), { recursive: true });
+  await writeFile(join(home, "collective", "index.json"), JSON.stringify({
+    version: 2,
+    generated_at: new Date().toISOString(),
+    items: [{
+      id: trackingItemId,
+      key: "fixture__pinned__manual",
+      name: "Pinned fixture",
+      symbol: "FIXTURE",
+      source: "Pinned workbench",
+      start: "2026-01-05",
+      end: "2026-01-09",
+      coverage: [{ start: "2026-01-05", end: "2026-01-09" }],
+    }],
+    errors: [],
+    definitions: { working: "", feasible: "", pnl: "" },
+  }));
+  const emptyTracking = await request("/collective/tracking");
+  assert.deepEqual(emptyTracking.selection, []);
+  const portfolioTracking = await request("/collective/tracking", { ids: [trackingItemId] }, "PUT");
+  assert.deepEqual(portfolioTracking.selection, [trackingItemId]);
+  assert.equal(portfolioTracking.items[trackingItemId].status, "manual-update-required");
+  const persistedTracking = await request("/collective/tracking");
+  assert.deepEqual(persistedTracking.selection, [trackingItemId]);
+  await request("/collective/tracking", { ids: ["unknown"] }, "PUT", 400);
+  await request(`/collective/tracking/${trackingItemId}/retry`, {}, "POST", 400);
   {
     const database = new DatabaseSync(join(home, "workbench.sqlite3"));
     try {
@@ -409,6 +436,23 @@ try {
   assert.equal(run.result.snapshot_hash, run.input.snapshot_hash);
   assert.equal(run.result.app_build_hash, run.input.app_build_hash);
   assert.equal(run.result.metrics.trades, 1);
+
+  // Exercise the actual HTTP import route and pinned-only worker against this
+  // isolated run ledger. The browser fixture mocks this endpoint.
+  const importStarted = await request("/collective/import", { runId: run.id });
+  assert.equal(typeof importStarted.running, "boolean");
+  let importStatus = importStarted;
+  for (let attempt = 0; importStatus.running && attempt < 150; attempt += 1) {
+    await delay(100);
+    importStatus = await request("/collective/status");
+  }
+  assert.equal(importStatus.running, false, JSON.stringify(importStatus));
+  assert.equal(importStatus.error, "", JSON.stringify(importStatus));
+  const importedCatalog = await request("/collective");
+  const exactHistory = importedCatalog.items.find((item) => item.source_run_ids?.length === 1
+    && item.source_run_ids[0] === run.id && item.coverage?.length === 1
+    && item.coverage[0].start === run.input.start && item.coverage[0].end === run.input.end);
+  assert(exactHistory, "The import endpoint must publish the exact single-run history");
 
   const retryRecord = await request(`/runs/${run.id}/retry`, {}, "POST", 201);
   const retry = await waitForRun(retryRecord.id);

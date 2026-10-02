@@ -87,7 +87,7 @@ export function ResearchPlanControls({
           placeholder="Use settings from a successful run"
           searchable
           data={runs
-            .filter((run) => run.status === "Succeeded" && !run.input.research)
+            .filter((run) => run.status === "Succeeded" && (!run.input.research || run.id === seedId))
             .map((run) => ({
               value: run.id,
               label: `${strategyTitle(run.input.strategy.name)} · ${run.input.dataset.symbol} · ${run.id.slice(0, 8)}`,

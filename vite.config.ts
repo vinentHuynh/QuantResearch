@@ -6,7 +6,11 @@ export default defineConfig({
   server: {
     host: "127.0.0.1",
     watch: {
+      usePolling: true,
+      interval: 500,
       ignored: [
+        "**/.venv/**",
+        "**/__pycache__/**",
         "**/data/**",
         "**/artifacts/**",
         "**/reports/**",

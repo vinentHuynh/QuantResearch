@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
 import { dashboardActionStatus } from "../../../shared/ts/dashboard.ts";
-import { scorecardStage, progressScope } from "../../../shared/ts/progress.ts";
+import { progressScope } from "../../../shared/ts/progress.ts";
 import { ResearchStages } from "../evaluations/ResearchStages";
+import { StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { useStrategyStages } from "../../shared/ui/strategyStageContext";
+import { scorecardLifecycle } from "../../../shared/ts/stageStatus.ts";
 import {
   Alert,
   Badge,
@@ -340,6 +343,8 @@ function IndividualDashboard({
     [error, setError] = useState("");
   const [selection, setSelection] = useState(() => remembered("selection")),
     [filter, setFilter] = useState("All strategies");
+  const { statuses } = useStrategyStages();
+  const lifecycle = (row: DashboardRow) => scorecardLifecycle(row, statuses);
   useEffect(() => {
     remember("market", market);
     remember("selection", selection);
@@ -388,17 +393,17 @@ function IndividualDashboard({
     (r) =>
       filter === "All strategies" ||
       (filter === "Shortlist"
-        ? ["Research candidate", "Conditional"].includes(r.status)
-        : ["Failed criteria", "Retest required", "Evidence repair needed", "Further testing needed", "Incomplete"].includes(r.status)),
+        ? lifecycle(r).stage >= 2 && !["failed-checks", "needs-review", "retest-required", "evaluation-running"].includes(lifecycle(r).kind)
+        : ["failed-checks", "retest-required", "needs-review", "validation-pending"].includes(lifecycle(r).kind)),
   );
   const selected = rows.find((r) => r.strategy_id === selection) || rows[0];
   const evaluated = data.rows.filter((r) => r.scenarios.length);
   const dates = evaluated.map((r) => r.end!).sort(),
     latestDate = dates.at(-1);
   const candidate = data.rows.filter(
-      (r) => r.status === "Research candidate",
+      (r) => lifecycle(r).stage >= 2 && !["failed-checks", "needs-review", "retest-required", "evaluation-running"].includes(lifecycle(r).kind),
     ).length,
-    conditional = data.rows.filter((r) => r.status === "Conditional").length;
+    conditional = data.rows.filter((r) => lifecycle(r).kind === "validation-pending").length;
   const scale = Math.max(
     ...rows.map((r) => Math.abs(baseline(r)?.metrics.net_pnl || 0)),
     1,
@@ -457,19 +462,19 @@ function IndividualDashboard({
           help="One latest evaluation per strategy and market. No portfolio P&L is implied."
         />
         <Metric
-          label="Research candidates"
+          label="Historical evaluation passed"
           value={String(candidate)}
           help="All declared latest scenarios are profitable and pass, complete trade evidence reconciles, adapter unchanged, and no earlier matching review flags."
         />
         <Metric
-          label="Conditional candidates"
+          label="Validation pending"
           value={String(conditional)}
-          help="Latest scenarios pass but earlier matching research checks remain flagged."
+          help="These configurations still need a complete passing declared evaluation."
         />
         <Metric
           label="Action needed"
           value={String(
-            data.rows.filter((r) => ["Failed criteria", "Retest required", "Evidence repair needed", "Further testing needed", "Incomplete"].includes(r.status)).length,
+            data.rows.filter((r) => ["failed-checks", "retest-required", "needs-review"].includes(lifecycle(r).kind)).length,
           )}
           help="A failed criterion, missing test, evidence repair, or source retest needs action. This does not mean the review is unfinished."
         />
@@ -493,7 +498,8 @@ function IndividualDashboard({
                 <Title order={2} mt={5}>
                   {strategyTitle(selected.name)}
                 </Title>
-                <ResearchStages stage={scorecardStage(selected)} />
+                <StrategyStageBadge {...lifecycle(selected)} showFinding showAction />
+                <ResearchStages stage={lifecycle(selected).stage} />
                 <Text size="xs" c="dimmed">{progressScope}</Text>
                 <Group mt="sm" gap="xs">
                   <Badge color={tone(selected.status)}>Latest evaluation: {selected.status}</Badge>
@@ -658,6 +664,7 @@ function IndividualDashboard({
                   >
                     <span className="sd-profit-label">
                       <span>{strategyTitle(r.name)}</span>
+                      <StrategyStageBadge {...lifecycle(r)} />
                       <strong>{cash(baseline(r)?.metrics.net_pnl)}</strong>
                     </span>
                     <ProfitBar
@@ -699,7 +706,7 @@ function IndividualDashboard({
               <Table.Tr>
                 {[
                   "Strategy",
-                  "Research status",
+                  "Current stage",
                   "Test through",
                   "Net profit",
                   "Drawdown",
@@ -725,9 +732,7 @@ function IndividualDashboard({
                     </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Badge color={tone(r.status)} variant="light">
-                      {r.status}
-                    </Badge>
+                    <StrategyStageBadge {...lifecycle(r)} showAction />
                   </Table.Td>
                   <Table.Td>{r.end || "—"}</Table.Td>
                   <Table.Td>{cash(baseline(r)?.metrics.net_pnl)}</Table.Td>

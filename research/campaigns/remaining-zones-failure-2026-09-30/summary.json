@@ -1,0 +1,2990 @@
+[
+  {
+    "run_id": "2cfb9cbd-596d-416c-98c5-219a23a9f0ad",
+    "status": "Succeeded",
+    "detector": "round-100",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.25905,
+      "net_pnl": 25905.0,
+      "max_drawdown": -0.24247660794065584,
+      "underwater_bars": 31290,
+      "current_underwater_bars": 4929,
+      "cagr": 0.07994737562177967,
+      "sharpe": 0.44044349864394955,
+      "volatility": 0.17512969954006674,
+      "trades": 837,
+      "observations": 70843,
+      "costs": 12555.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": 0.06495000000000006
+        },
+        {
+          "month": "2022-02",
+          "return": 0.007793793135828064
+        },
+        {
+          "month": "2022-03",
+          "return": 0.016864663405543823
+        },
+        {
+          "month": "2022-04",
+          "return": -0.09598204059192739
+        },
+        {
+          "month": "2022-05",
+          "return": 0.017281573079262147
+        },
+        {
+          "month": "2022-06",
+          "return": -0.003038907985851602
+        },
+        {
+          "month": "2022-07",
+          "return": 0.17069758145112934
+        },
+        {
+          "month": "2022-08",
+          "return": -0.03393375448181668
+        },
+        {
+          "month": "2022-09",
+          "return": -0.07771837582291341
+        },
+        {
+          "month": "2022-10",
+          "return": -0.011737089201877882
+        },
+        {
+          "month": "2022-11",
+          "return": 0.019293227980028194
+        },
+        {
+          "month": "2022-12",
+          "return": 0.02943834118038713
+        },
+        {
+          "month": "2023-01",
+          "return": -0.0005543749422526334
+        },
+        {
+          "month": "2023-02",
+          "return": 0.016732920403069285
+        },
+        {
+          "month": "2023-03",
+          "return": 0.016048372431351154
+        },
+        {
+          "month": "2023-04",
+          "return": 0.010872969707816926
+        },
+        {
+          "month": "2023-05",
+          "return": -0.013721671388101986
+        },
+        {
+          "month": "2023-06",
+          "return": 0.06682524010411983
+        },
+        {
+          "month": "2023-07",
+          "return": -0.013924529889360993
+        },
+        {
+          "month": "2023-08",
+          "return": 0.01945392491467568
+        },
+        {
+          "month": "2023-09",
+          "return": 0.017325075326414474
+        },
+        {
+          "month": "2023-10",
+          "return": -0.009132044426162111
+        },
+        {
+          "month": "2023-11",
+          "return": 0.009216207240119623
+        },
+        {
+          "month": "2023-12",
+          "return": -0.033319621554915635
+        },
+        {
+          "month": "2024-01",
+          "return": 0.01827659574468088
+        },
+        {
+          "month": "2024-02",
+          "return": 0.0656302889738607
+        },
+        {
+          "month": "2024-03",
+          "return": -0.03121568627450977
+        },
+        {
+          "month": "2024-04",
+          "return": -0.007367227979274582
+        },
+        {
+          "month": "2024-05",
+          "return": -0.014068999265965276
+        },
+        {
+          "month": "2024-06",
+          "return": 0.004591140339992528
+        },
+        {
+          "month": "2024-07",
+          "return": -0.00868741765480896
+        },
+        {
+          "month": "2024-08",
+          "return": 0.0739502429704697
+        },
+        {
+          "month": "2024-09",
+          "return": 0.027593541525669618
+        },
+        {
+          "month": "2024-10",
+          "return": -0.008656053592262292
+        },
+        {
+          "month": "2024-11",
+          "return": -0.025815268972324557
+        },
+        {
+          "month": "2024-12",
+          "return": -0.01870542847122092
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 1.1094816474018976,
+    "infinite_profit_factor": false,
+    "expectancy": 30.949820788530467,
+    "win_rate": 0.11708482676224612,
+    "max_drawdown_dollars": 28765.0,
+    "annual_net": {
+      "2022": 8230.0,
+      "2023": 9270.0,
+      "2024": 8405.0
+    },
+    "exit_reasons": {
+      "stop": 735,
+      "20-bar-time-exit": 102
+    },
+    "side_net": {
+      "-1": 22540.0,
+      "1": 3365.0
+    },
+    "top_10_winning_share": 0.2841116867286302,
+    "best_trade": 10910.0,
+    "day_cluster_expectancy_95": [
+      -51.988368925769365,
+      121.63833350311423
+    ],
+    "occupied_entry_days": 534,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 18734,
+      "expired_levels": 2329,
+      "levels_formed": 21067,
+      "submitted_entries": 837
+    },
+    "submitted_entries": 837,
+    "expired_orders": 0,
+    "eligible": true,
+    "disposition": "Eligible for next stage"
+  },
+  {
+    "run_id": "33bdddd0-5ab8-4686-82d2-b1188ba4c86a",
+    "status": "Succeeded",
+    "detector": "rolling-20",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Net P&L is not positive",
+      "Profit factor misses 1.05 gate",
+      "Marked drawdown exceeds 35%",
+      "Fewer than two profitable development years"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.47355,
+      "net_pnl": -47355.0,
+      "max_drawdown": -0.6106290163703738,
+      "underwater_bars": 59616,
+      "current_underwater_bars": 59616,
+      "cagr": -0.19282809227707765,
+      "sharpe": -0.5625067975338808,
+      "volatility": 0.2559063079136619,
+      "trades": 801,
+      "observations": 70843,
+      "costs": 12015.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.042300000000000004
+        },
+        {
+          "month": "2022-02",
+          "return": -0.05701159026835123
+        },
+        {
+          "month": "2022-03",
+          "return": 0.06018159672240064
+        },
+        {
+          "month": "2022-04",
+          "return": 0.02595435792991796
+        },
+        {
+          "month": "2022-05",
+          "return": -0.02992975669347453
+        },
+        {
+          "month": "2022-06",
+          "return": 0.0954454822121944
+        },
+        {
+          "month": "2022-07",
+          "return": -0.018010250514920778
+        },
+        {
+          "month": "2022-08",
+          "return": -0.05907028925418267
+        },
+        {
+          "month": "2022-09",
+          "return": 0.0027475375842405114
+        },
+        {
+          "month": "2022-10",
+          "return": 0.036654086749728476
+        },
+        {
+          "month": "2022-11",
+          "return": -0.06742469579094357
+        },
+        {
+          "month": "2022-12",
+          "return": -0.02534759358288774
+        },
+        {
+          "month": "2023-01",
+          "return": -0.014100735213431359
+        },
+        {
+          "month": "2023-02",
+          "return": -0.036284712560520904
+        },
+        {
+          "month": "2023-03",
+          "return": -0.020673326788704705
+        },
+        {
+          "month": "2023-04",
+          "return": -0.03408219824282088
+        },
+        {
+          "month": "2023-05",
+          "return": -0.015566815212746499
+        },
+        {
+          "month": "2023-06",
+          "return": -0.05965521518045391
+        },
+        {
+          "month": "2023-07",
+          "return": -0.027433394882616757
+        },
+        {
+          "month": "2023-08",
+          "return": -0.10197992948196366
+        },
+        {
+          "month": "2023-09",
+          "return": -0.060253699788583526
+        },
+        {
+          "month": "2023-10",
+          "return": -0.04712357383898447
+        },
+        {
+          "month": "2023-11",
+          "return": -0.057717441713394324
+        },
+        {
+          "month": "2023-12",
+          "return": -0.045637583892617406
+        },
+        {
+          "month": "2024-01",
+          "return": -0.017815283638068502
+        },
+        {
+          "month": "2024-02",
+          "return": -0.05556085918854414
+        },
+        {
+          "month": "2024-03",
+          "return": 0.023147680177903585
+        },
+        {
+          "month": "2024-04",
+          "return": -0.05848646512546929
+        },
+        {
+          "month": "2024-05",
+          "return": -0.07282266526757608
+        },
+        {
+          "month": "2024-06",
+          "return": 0.016976007243096447
+        },
+        {
+          "month": "2024-07",
+          "return": -0.02381482305809035
+        },
+        {
+          "month": "2024-08",
+          "return": 0.19813041495668027
+        },
+        {
+          "month": "2024-09",
+          "return": -0.11313035204567079
+        },
+        {
+          "month": "2024-10",
+          "return": -0.021993348353181008
+        },
+        {
+          "month": "2024-11",
+          "return": 0.05484861781483108
+        },
+        {
+          "month": "2024-12",
+          "return": 0.09494592346089847
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 0.769146394969044,
+    "infinite_profit_factor": false,
+    "expectancy": -59.11985018726592,
+    "win_rate": 0.08489388264669163,
+    "max_drawdown_dollars": 65090.0,
+    "annual_net": {
+      "2022": -8870.0,
+      "2023": -37805.0,
+      "2024": -680.0
+    },
+    "exit_reasons": {
+      "stop": 733,
+      "20-bar-time-exit": 68
+    },
+    "side_net": {
+      "-1": -14520.0,
+      "1": -32835.0
+    },
+    "top_10_winning_share": 0.4595785137062272,
+    "best_trade": 14990.0,
+    "day_cluster_expectancy_95": [
+      -128.60453088672176,
+      17.343250212352842
+    ],
+    "occupied_entry_days": 519,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 26308,
+      "expired_levels": 6451,
+      "levels_formed": 32763,
+      "submitted_entries": 801
+    },
+    "submitted_entries": 801,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Tested configuration failed"
+  },
+  {
+    "run_id": "4d35b4a4-a1e6-4793-bc14-f10b64c8a65f",
+    "status": "Succeeded",
+    "detector": "opening-15m",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Sparse: 79 trades below operational floor 100",
+      "Net P&L is not positive",
+      "Profit factor misses 1.05 gate",
+      "Fewer than two profitable development years"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.09204999999999997,
+      "net_pnl": -9205.0,
+      "max_drawdown": -0.14848521135193393,
+      "underwater_bars": 68392,
+      "current_underwater_bars": 68392,
+      "cagr": -0.031727459315819995,
+      "sharpe": -0.602680966124877,
+      "volatility": 0.04184837373314453,
+      "trades": 79,
+      "observations": 70843,
+      "costs": 1185.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.01849999999999996
+        },
+        {
+          "month": "2022-02",
+          "return": 0.041212429954151863
+        },
+        {
+          "month": "2022-03",
+          "return": -0.021918880571456523
+        },
+        {
+          "month": "2022-04",
+          "return": -0.004852183482567107
+        },
+        {
+          "month": "2022-05",
+          "return": 0.0
+        },
+        {
+          "month": "2022-06",
+          "return": -0.016788981602493203
+        },
+        {
+          "month": "2022-07",
+          "return": -0.004601226993865004
+        },
+        {
+          "month": "2022-08",
+          "return": -0.001129943502824804
+        },
+        {
+          "month": "2022-09",
+          "return": 0.0
+        },
+        {
+          "month": "2022-10",
+          "return": -0.004730563554092959
+        },
+        {
+          "month": "2022-11",
+          "return": -0.01663566852655507
+        },
+        {
+          "month": "2022-12",
+          "return": 0.0
+        },
+        {
+          "month": "2023-01",
+          "return": 0.03740674582326364
+        },
+        {
+          "month": "2023-02",
+          "return": 0.0
+        },
+        {
+          "month": "2023-03",
+          "return": -0.00800162058138354
+        },
+        {
+          "month": "2023-04",
+          "return": -0.0028588931999182776
+        },
+        {
+          "month": "2023-05",
+          "return": -0.008345279541265627
+        },
+        {
+          "month": "2023-06",
+          "return": -0.0023233001187464852
+        },
+        {
+          "month": "2023-07",
+          "return": -0.0023804595321879063
+        },
+        {
+          "month": "2023-08",
+          "return": -0.008455233945430018
+        },
+        {
+          "month": "2023-09",
+          "return": -0.013549568401778678
+        },
+        {
+          "month": "2023-10",
+          "return": -0.0007424692405599842
+        },
+        {
+          "month": "2023-11",
+          "return": -0.0017514064324382073
+        },
+        {
+          "month": "2023-12",
+          "return": 0.022382901802328714
+        },
+        {
+          "month": "2024-01",
+          "return": -0.0044721788871554535
+        },
+        {
+          "month": "2024-02",
+          "return": -0.011909736732135356
+        },
+        {
+          "month": "2024-03",
+          "return": 0.003859166842884232
+        },
+        {
+          "month": "2024-04",
+          "return": -0.0017378482279214458
+        },
+        {
+          "month": "2024-05",
+          "return": -0.008440599282549033
+        },
+        {
+          "month": "2024-06",
+          "return": -0.005479889338157018
+        },
+        {
+          "month": "2024-07",
+          "return": -0.000962927298988947
+        },
+        {
+          "month": "2024-08",
+          "return": -0.006211512717536838
+        },
+        {
+          "month": "2024-09",
+          "return": -0.0012931731235519273
+        },
+        {
+          "month": "2024-10",
+          "return": -0.02131103318046934
+        },
+        {
+          "month": "2024-11",
+          "return": -0.009095920617420039
+        },
+        {
+          "month": "2024-12",
+          "return": 0.01023643949930464
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 0.6270259319286872,
+    "infinite_profit_factor": false,
+    "expectancy": -116.51898734177215,
+    "win_rate": 0.0759493670886076,
+    "max_drawdown_dollars": 15500.0,
+    "annual_net": {
+      "2022": -4830.0,
+      "2023": 980.0,
+      "2024": -5355.0
+    },
+    "exit_reasons": {
+      "stop": 73,
+      "20-bar-time-exit": 6
+    },
+    "side_net": {
+      "-1": -7830.0,
+      "1": -1375.0
+    },
+    "top_10_winning_share": 1.0,
+    "best_trade": 4210.0,
+    "day_cluster_expectancy_95": [
+      -291.7863924050633,
+      94.94462025316444
+    ],
+    "occupied_entry_days": 79,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 1236,
+      "expired_levels": 312,
+      "levels_formed": 1548,
+      "submitted_entries": 79
+    },
+    "submitted_entries": 79,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Sparse / inconclusive"
+  },
+  {
+    "run_id": "64f737fb-22df-46b2-8dfe-eaf2ed09a913",
+    "status": "Succeeded",
+    "detector": "round-100",
+    "stage": "later-round-100",
+    "half_width": 0.1,
+    "start": "2026-01-01",
+    "end": "2026-09-28",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Net P&L is not positive",
+      "Profit factor misses 1.0 gate"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.12705,
+      "net_pnl": -12705.0,
+      "max_drawdown": -0.33086353825957326,
+      "underwater_bars": 10260,
+      "current_underwater_bars": 10260,
+      "cagr": null,
+      "sharpe": -0.305162129166353,
+      "volatility": 0.31935133058673076,
+      "trades": 291,
+      "observations": 17544,
+      "costs": 4365.0,
+      "first": "2026-01-01T23:15:00+00:00",
+      "last": "2026-09-28T23:45:00+00:00",
+      "monthly": [
+        {
+          "month": "2026-01",
+          "return": 0.01927499999999993
+        },
+        {
+          "month": "2026-02",
+          "return": 0.04839223958205596
+        },
+        {
+          "month": "2026-03",
+          "return": -0.027325472580947086
+        },
+        {
+          "month": "2026-04",
+          "return": -0.002116605734077348
+        },
+        {
+          "month": "2026-05",
+          "return": -0.05090628615503279
+        },
+        {
+          "month": "2026-06",
+          "return": -0.1764526615197074
+        },
+        {
+          "month": "2026-07",
+          "return": 0.048044899469594116
+        },
+        {
+          "month": "2026-08",
+          "return": -0.07335373389042543
+        },
+        {
+          "month": "2026-09",
+          "return": 0.10875432635823823
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 0.9086529819894309,
+    "infinite_profit_factor": false,
+    "expectancy": -43.65979381443299,
+    "win_rate": 0.12714776632302405,
+    "max_drawdown_dollars": 37175.0,
+    "annual_net": {
+      "2026": -12705.0
+    },
+    "exit_reasons": {
+      "stop": 253,
+      "20-bar-time-exit": 38
+    },
+    "side_net": {
+      "-1": -20505.0,
+      "1": 7800.0
+    },
+    "top_10_winning_share": 0.46601519227725907,
+    "best_trade": 7720.0,
+    "day_cluster_expectancy_95": [
+      -222.61939300157823,
+      152.4541719593518
+    ],
+    "occupied_entry_days": 162,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1913
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 8344,
+      "expired_levels": 701,
+      "levels_formed": 9043,
+      "submitted_entries": 291
+    },
+    "submitted_entries": 291,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Tested configuration failed"
+  },
+  {
+    "run_id": "65ec3e8a-37b3-4338-b047-c7c04e616fa1",
+    "status": "Succeeded",
+    "detector": "round-100",
+    "stage": "evaluation-Test",
+    "half_width": 0.1,
+    "start": "2025-01-01",
+    "end": "2025-12-31",
+    "fee": 5,
+    "slippage": 2,
+    "research": {
+      "evaluation_id": "be9fa51a-f5e3-4b91-ad48-934c165af475",
+      "fold": 0,
+      "role": "Test",
+      "candidate": 0,
+      "scenario": "Higher costs"
+    },
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.16254999999999997,
+      "net_pnl": 16255.0,
+      "max_drawdown": -0.3208207343412527,
+      "underwater_bars": 14816,
+      "current_underwater_bars": 2410,
+      "cagr": null,
+      "sharpe": 0.5152197271329714,
+      "volatility": 0.34439290234264536,
+      "trades": 311,
+      "observations": 23506,
+      "costs": 9330.0,
+      "first": "2025-01-01T23:15:00+00:00",
+      "last": "2025-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2025-01",
+          "return": 0.03289999999999993
+        },
+        {
+          "month": "2025-02",
+          "return": -0.11491915964759414
+        },
+        {
+          "month": "2025-03",
+          "return": -0.055895865237366005
+        },
+        {
+          "month": "2025-04",
+          "return": -0.014366817286525335
+        },
+        {
+          "month": "2025-05",
+          "return": -0.007523216174914804
+        },
+        {
+          "month": "2025-06",
+          "return": 0.06703778277863326
+        },
+        {
+          "month": "2025-07",
+          "return": -0.011488511488511488
+        },
+        {
+          "month": "2025-08",
+          "return": 0.07141654034023914
+        },
+        {
+          "month": "2025-09",
+          "return": -0.0222187287114185
+        },
+        {
+          "month": "2025-10",
+          "return": 0.07428050806581266
+        },
+        {
+          "month": "2025-11",
+          "return": 0.2387128959840359
+        },
+        {
+          "month": "2025-12",
+          "return": -0.06359242851389446
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 1.1273254220028983,
+    "infinite_profit_factor": false,
+    "expectancy": 52.266881028938904,
+    "win_rate": 0.12540192926045016,
+    "max_drawdown_dollars": 37135.0,
+    "annual_net": {
+      "2025": 16255.0
+    },
+    "exit_reasons": {
+      "stop": 271,
+      "20-bar-time-exit": 40
+    },
+    "side_net": {
+      "-1": 15490.0,
+      "1": 765.0
+    },
+    "top_10_winning_share": 0.6252084491384102,
+    "best_trade": 22685.0,
+    "day_cluster_expectancy_95": [
+      -170.50128968253966,
+      312.1720587879372
+    ],
+    "occupied_entry_days": 182,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1913
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 8351,
+      "expired_levels": 876,
+      "levels_formed": 9226,
+      "submitted_entries": 311
+    },
+    "submitted_entries": 311,
+    "expired_orders": 0,
+    "eligible": true,
+    "disposition": "Eligible for next stage"
+  },
+  {
+    "run_id": "7c1a40bf-7054-4ebd-94de-72f5901cb68e",
+    "status": "Succeeded",
+    "detector": "swing-1h",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Sparse: 97 trades below operational floor 100",
+      "Net P&L is not positive",
+      "Profit factor misses 1.05 gate",
+      "Fewer than two profitable development years"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.04410000000000003,
+      "net_pnl": -4410.0,
+      "max_drawdown": -0.10044330654529077,
+      "underwater_bars": 53380,
+      "current_underwater_bars": 53380,
+      "cagr": -0.014945941030164445,
+      "sharpe": -0.26563337361431494,
+      "volatility": 0.04252793397041111,
+      "trades": 97,
+      "observations": 70843,
+      "costs": 1455.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.0041999999999999815
+        },
+        {
+          "month": "2022-02",
+          "return": -0.004167503514762028
+        },
+        {
+          "month": "2022-03",
+          "return": 0.002571471789441837
+        },
+        {
+          "month": "2022-04",
+          "return": -0.010611546972440156
+        },
+        {
+          "month": "2022-05",
+          "return": -0.012606109896812878
+        },
+        {
+          "month": "2022-06",
+          "return": -0.004890604890604888
+        },
+        {
+          "month": "2022-07",
+          "return": 0.04004138644593902
+        },
+        {
+          "month": "2022-08",
+          "return": -0.0042280143255073455
+        },
+        {
+          "month": "2022-09",
+          "return": 0.03946251061491579
+        },
+        {
+          "month": "2022-10",
+          "return": -0.009130664616271766
+        },
+        {
+          "month": "2022-11",
+          "return": -0.003443425966341729
+        },
+        {
+          "month": "2022-12",
+          "return": 0.0010219972746738915
+        },
+        {
+          "month": "2023-01",
+          "return": -0.0036948806456317262
+        },
+        {
+          "month": "2023-02",
+          "return": -0.002049480310349905
+        },
+        {
+          "month": "2023-03",
+          "return": -0.015451567160530089
+        },
+        {
+          "month": "2023-04",
+          "return": 0.012217531661286252
+        },
+        {
+          "month": "2023-05",
+          "return": -0.005200922427751387
+        },
+        {
+          "month": "2023-06",
+          "return": -0.005672009864365002
+        },
+        {
+          "month": "2023-07",
+          "return": -0.0015376984126984627
+        },
+        {
+          "month": "2023-08",
+          "return": -0.013363803467633772
+        },
+        {
+          "month": "2023-09",
+          "return": -0.0009566968781470342
+        },
+        {
+          "month": "2023-10",
+          "return": -0.014364195353056775
+        },
+        {
+          "month": "2023-11",
+          "return": -0.0030169768868889557
+        },
+        {
+          "month": "2023-12",
+          "return": -0.003487716058880874
+        },
+        {
+          "month": "2024-01",
+          "return": 0.0029337588141438165
+        },
+        {
+          "month": "2024-02",
+          "return": -0.00944267679359545
+        },
+        {
+          "month": "2024-03",
+          "return": -0.0008807377473837308
+        },
+        {
+          "month": "2024-04",
+          "return": 0.005963183821622975
+        },
+        {
+          "month": "2024-05",
+          "return": -0.0024742268041236803
+        },
+        {
+          "month": "2024-06",
+          "return": -0.0023770152955766566
+        },
+        {
+          "month": "2024-07",
+          "return": 0.031182015953589604
+        },
+        {
+          "month": "2024-08",
+          "return": -0.005023106288929102
+        },
+        {
+          "month": "2024-09",
+          "return": -0.03220920840064623
+        },
+        {
+          "month": "2024-10",
+          "return": -0.0043296817944705746
+        },
+        {
+          "month": "2024-11",
+          "return": 0.007020485146958633
+        },
+        {
+          "month": "2024-12",
+          "return": -0.005358722230893287
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 0.8109324758842443,
+    "infinite_profit_factor": false,
+    "expectancy": -45.4639175257732,
+    "win_rate": 0.1134020618556701,
+    "max_drawdown_dollars": 10592.5,
+    "annual_net": {
+      "2022": 2845.0,
+      "2023": -5700.0,
+      "2024": -1555.0
+    },
+    "exit_reasons": {
+      "stop": 86,
+      "20-bar-time-exit": 11
+    },
+    "side_net": {
+      "-1": -5060.0,
+      "1": 650.0
+    },
+    "top_10_winning_share": 0.9830822098863335,
+    "best_trade": 4260.0,
+    "day_cluster_expectancy_95": [
+      -188.335,
+      131.63718122626145
+    ],
+    "occupied_entry_days": 94,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 3247,
+      "expired_levels": 1382,
+      "levels_formed": 4630,
+      "submitted_entries": 97
+    },
+    "submitted_entries": 97,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Sparse / inconclusive"
+  },
+  {
+    "run_id": "84cb4684-f2ae-41e0-93e9-b12c401c6660",
+    "status": "Succeeded",
+    "detector": "generic-prior-bar",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Net P&L is not positive",
+      "Profit factor misses 1.05 gate",
+      "Marked drawdown exceeds 35%",
+      "Fewer than two profitable development years"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.36985,
+      "net_pnl": -36985.0,
+      "max_drawdown": -0.6611241217798595,
+      "underwater_bars": 45894,
+      "current_underwater_bars": 45894,
+      "cagr": -0.14288745139029735,
+      "sharpe": -0.0701970919986963,
+      "volatility": 0.44936568800212534,
+      "trades": 2288,
+      "observations": 70843,
+      "costs": 34320.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.07604999999999995
+        },
+        {
+          "month": "2022-02",
+          "return": -0.07825098760755456
+        },
+        {
+          "month": "2022-03",
+          "return": -0.019550284741384316
+        },
+        {
+          "month": "2022-04",
+          "return": -0.05359281437125751
+        },
+        {
+          "month": "2022-05",
+          "return": -0.016102499209111
+        },
+        {
+          "month": "2022-06",
+          "return": 0.038519661747210776
+        },
+        {
+          "month": "2022-07",
+          "return": 0.11805319050125385
+        },
+        {
+          "month": "2022-08",
+          "return": -0.07559813912272928
+        },
+        {
+          "month": "2022-09",
+          "return": -0.052842849439817874
+        },
+        {
+          "month": "2022-10",
+          "return": 0.11284711240432665
+        },
+        {
+          "month": "2022-11",
+          "return": 0.006025123628715878
+        },
+        {
+          "month": "2022-12",
+          "return": 0.04082151533984968
+        },
+        {
+          "month": "2023-01",
+          "return": 0.08737073528214312
+        },
+        {
+          "month": "2023-02",
+          "return": -0.06689631071838653
+        },
+        {
+          "month": "2023-03",
+          "return": 0.024931785351238522
+        },
+        {
+          "month": "2023-04",
+          "return": 0.019053087644203215
+        },
+        {
+          "month": "2023-05",
+          "return": -0.08139534883720934
+        },
+        {
+          "month": "2023-06",
+          "return": -0.08208331009870073
+        },
+        {
+          "month": "2023-07",
+          "return": -0.0755725654577486
+        },
+        {
+          "month": "2023-08",
+          "return": -0.16895577314845234
+        },
+        {
+          "month": "2023-09",
+          "return": -0.011861458168590855
+        },
+        {
+          "month": "2023-10",
+          "return": -0.2339548655569782
+        },
+        {
+          "month": "2023-11",
+          "return": -0.04209976495168455
+        },
+        {
+          "month": "2023-12",
+          "return": -0.06014504607666726
+        },
+        {
+          "month": "2024-01",
+          "return": 0.16755627755859837
+        },
+        {
+          "month": "2024-02",
+          "return": 0.1751142913933612
+        },
+        {
+          "month": "2024-03",
+          "return": -0.1777740189445196
+        },
+        {
+          "month": "2024-04",
+          "return": -0.013680312692861518
+        },
+        {
+          "month": "2024-05",
+          "return": -0.027427260402544618
+        },
+        {
+          "month": "2024-06",
+          "return": 0.10776324254771597
+        },
+        {
+          "month": "2024-07",
+          "return": -0.21953344303552413
+        },
+        {
+          "month": "2024-08",
+          "return": 0.24023316383480098
+        },
+        {
+          "month": "2024-09",
+          "return": 0.01649999999999996
+        },
+        {
+          "month": "2024-10",
+          "return": -0.05046728971962622
+        },
+        {
+          "month": "2024-11",
+          "return": 0.030149191877331116
+        },
+        {
+          "month": "2024-12",
+          "return": 0.2675248918837374
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 0.9352163251007182,
+    "infinite_profit_factor": false,
+    "expectancy": -16.164772727272727,
+    "win_rate": 0.10795454545454546,
+    "max_drawdown_dollars": 70575.0,
+    "annual_net": {
+      "2022": -10695.0,
+      "2023": -46215.0,
+      "2024": 19925.0
+    },
+    "exit_reasons": {
+      "stop": 2035,
+      "20-bar-time-exit": 253
+    },
+    "side_net": {
+      "-1": -17240.0,
+      "1": -19745.0
+    },
+    "top_10_winning_share": 0.16115861138945337,
+    "best_trade": 14990.0,
+    "day_cluster_expectancy_95": [
+      -56.31692808791484,
+      26.925837426423772
+    ],
+    "occupied_entry_days": 774,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 131561,
+      "expired_levels": 9529,
+      "levels_formed": 141096,
+      "submitted_entries": 2288
+    },
+    "submitted_entries": 2288,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Descriptive benchmark"
+  },
+  {
+    "run_id": "ae22148d-2a94-415f-a38c-d5c0cb64fcb9",
+    "status": "Succeeded",
+    "detector": "swing-4h",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Sparse: 11 trades below operational floor 100",
+      "Net P&L is not positive",
+      "Profit factor misses 1.05 gate",
+      "Fewer than two profitable development years"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.0016500000000000403,
+      "net_pnl": -165.0,
+      "max_drawdown": -0.02982581136525564,
+      "underwater_bars": 66750,
+      "current_underwater_bars": 66750,
+      "cagr": -0.0005512090530090941,
+      "sharpe": -0.040488032074779974,
+      "volatility": 0.009828574818458736,
+      "trades": 11,
+      "observations": 70843,
+      "costs": 165.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.010800000000000032
+        },
+        {
+          "month": "2022-02",
+          "return": -0.0016174686615446632
+        },
+        {
+          "month": "2022-03",
+          "return": 0.006125961927905932
+        },
+        {
+          "month": "2022-04",
+          "return": -0.00422684043677346
+        },
+        {
+          "month": "2022-05",
+          "return": 0.0
+        },
+        {
+          "month": "2022-06",
+          "return": 0.0
+        },
+        {
+          "month": "2022-07",
+          "return": 0.0
+        },
+        {
+          "month": "2022-08",
+          "return": 0.0
+        },
+        {
+          "month": "2022-09",
+          "return": 0.0
+        },
+        {
+          "month": "2022-10",
+          "return": 0.0
+        },
+        {
+          "month": "2022-11",
+          "return": 0.0
+        },
+        {
+          "month": "2022-12",
+          "return": 0.0
+        },
+        {
+          "month": "2023-01",
+          "return": 0.0
+        },
+        {
+          "month": "2023-02",
+          "return": 0.0
+        },
+        {
+          "month": "2023-03",
+          "return": 0.0
+        },
+        {
+          "month": "2023-04",
+          "return": 0.014098741725200759
+        },
+        {
+          "month": "2023-05",
+          "return": 0.0
+        },
+        {
+          "month": "2023-06",
+          "return": 0.0
+        },
+        {
+          "month": "2023-07",
+          "return": 0.0
+        },
+        {
+          "month": "2023-08",
+          "return": 0.0
+        },
+        {
+          "month": "2023-09",
+          "return": -0.0008969503687462632
+        },
+        {
+          "month": "2023-10",
+          "return": 0.0
+        },
+        {
+          "month": "2023-11",
+          "return": 0.0
+        },
+        {
+          "month": "2023-12",
+          "return": 0.0
+        },
+        {
+          "month": "2024-01",
+          "return": 0.0
+        },
+        {
+          "month": "2024-02",
+          "return": -0.0015461346633416362
+        },
+        {
+          "month": "2024-03",
+          "return": 0.0
+        },
+        {
+          "month": "2024-04",
+          "return": 0.0
+        },
+        {
+          "month": "2024-05",
+          "return": 0.0
+        },
+        {
+          "month": "2024-06",
+          "return": 0.0
+        },
+        {
+          "month": "2024-07",
+          "return": 0.0
+        },
+        {
+          "month": "2024-08",
+          "return": 0.0
+        },
+        {
+          "month": "2024-09",
+          "return": -0.002597532344272957
+        },
+        {
+          "month": "2024-10",
+          "return": 0.0
+        },
+        {
+          "month": "2024-11",
+          "return": 0.0
+        },
+        {
+          "month": "2024-12",
+          "return": 0.0
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 0.9377358490566038,
+    "infinite_profit_factor": false,
+    "expectancy": -15.0,
+    "win_rate": 0.18181818181818182,
+    "max_drawdown_dollars": 3035.0,
+    "annual_net": {
+      "2022": -1055.0,
+      "2023": 1305.0,
+      "2024": -415.0
+    },
+    "exit_reasons": {
+      "stop": 9,
+      "20-bar-time-exit": 2
+    },
+    "side_net": {
+      "-1": -640.0,
+      "1": 475.0
+    },
+    "top_10_winning_share": 1.0,
+    "best_trade": 1395.0,
+    "day_cluster_expectancy_95": [
+      -341.8181818181818,
+      405.48863636363586
+    ],
+    "occupied_entry_days": 11,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 481,
+      "expired_levels": 634,
+      "levels_formed": 1114,
+      "submitted_entries": 11
+    },
+    "submitted_entries": 11,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Sparse / inconclusive"
+  },
+  {
+    "run_id": "be50ea13-5ee1-46de-9d3c-db373519c4d2",
+    "status": "Succeeded",
+    "detector": "daily-pivots",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Sparse: 52 trades below operational floor 100",
+      "Net P&L is not positive",
+      "Profit factor misses 1.05 gate",
+      "Fewer than two profitable development years"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.12539999999999996,
+      "net_pnl": -12540.0,
+      "max_drawdown": -0.13515117055202586,
+      "underwater_bars": 68385,
+      "current_underwater_bars": 68385,
+      "cagr": -0.043750535746674535,
+      "sharpe": -1.5307161135392893,
+      "volatility": 0.02346173334873154,
+      "trades": 52,
+      "observations": 70843,
+      "costs": 780.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.006750000000000034
+        },
+        {
+          "month": "2022-02",
+          "return": -0.013189025924993714
+        },
+        {
+          "month": "2022-03",
+          "return": -0.003264806407182519
+        },
+        {
+          "month": "2022-04",
+          "return": -0.007113977173857422
+        },
+        {
+          "month": "2022-05",
+          "return": -0.004329896907216524
+        },
+        {
+          "month": "2022-06",
+          "return": -0.005642990267136105
+        },
+        {
+          "month": "2022-07",
+          "return": -0.006820430051543758
+        },
+        {
+          "month": "2022-08",
+          "return": -0.01195219123505975
+        },
+        {
+          "month": "2022-09",
+          "return": -0.0009550084889643484
+        },
+        {
+          "month": "2022-10",
+          "return": -0.021030270844397236
+        },
+        {
+          "month": "2022-11",
+          "return": -0.0043940544645763024
+        },
+        {
+          "month": "2022-12",
+          "return": -0.0021249931891244023
+        },
+        {
+          "month": "2023-01",
+          "return": 0.010756798077973029
+        },
+        {
+          "month": "2023-02",
+          "return": -0.001890767651666625
+        },
+        {
+          "month": "2023-03",
+          "return": -0.007090279281229739
+        },
+        {
+          "month": "2023-04",
+          "return": 0.0
+        },
+        {
+          "month": "2023-05",
+          "return": -0.0015263014445352496
+        },
+        {
+          "month": "2023-06",
+          "return": 0.0
+        },
+        {
+          "month": "2023-07",
+          "return": -0.0006005350221106598
+        },
+        {
+          "month": "2023-08",
+          "return": -0.007374631268436627
+        },
+        {
+          "month": "2023-09",
+          "return": -0.008915304606240682
+        },
+        {
+          "month": "2023-10",
+          "return": 0.02990171580876222
+        },
+        {
+          "month": "2023-11",
+          "return": 0.0006200296535920913
+        },
+        {
+          "month": "2023-12",
+          "return": 0.0
+        },
+        {
+          "month": "2024-01",
+          "return": -0.0064119834042782875
+        },
+        {
+          "month": "2024-02",
+          "return": -0.00498915401301514
+        },
+        {
+          "month": "2024-03",
+          "return": 0.0
+        },
+        {
+          "month": "2024-04",
+          "return": -0.01073686505341187
+        },
+        {
+          "month": "2024-05",
+          "return": -0.0060051787780287524
+        },
+        {
+          "month": "2024-06",
+          "return": -0.00404611462143889
+        },
+        {
+          "month": "2024-07",
+          "return": -0.003672992375758244
+        },
+        {
+          "month": "2024-08",
+          "return": -0.0020666927330614815
+        },
+        {
+          "month": "2024-09",
+          "return": -0.008675696854360204
+        },
+        {
+          "month": "2024-10",
+          "return": -0.004629891028174571
+        },
+        {
+          "month": "2024-11",
+          "return": 0.0
+        },
+        {
+          "month": "2024-12",
+          "return": -0.007771285949288109
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 0.255786350148368,
+    "infinite_profit_factor": false,
+    "expectancy": -241.15384615384616,
+    "win_rate": 0.057692307692307696,
+    "max_drawdown_dollars": 13667.5,
+    "annual_net": {
+      "2022": -8430.0,
+      "2023": 1225.0,
+      "2024": -5335.0
+    },
+    "exit_reasons": {
+      "stop": 49,
+      "20-bar-time-exit": 3
+    },
+    "side_net": {
+      "-1": -3785.0,
+      "1": -8755.0
+    },
+    "top_10_winning_share": 1.0,
+    "best_trade": 2390.0,
+    "day_cluster_expectancy_95": [
+      -370.19711538461536,
+      -86.24759615384619
+    ],
+    "occupied_entry_days": 52,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 705,
+      "expired_levels": 843,
+      "levels_formed": 1548,
+      "submitted_entries": 52
+    },
+    "submitted_entries": 52,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Sparse / inconclusive"
+  },
+  {
+    "run_id": "c49b4493-a2fe-413e-8876-a6eae7c5781d",
+    "status": "Succeeded",
+    "detector": "role-flip",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Profit factor misses 1.05 gate",
+      "Fewer than two profitable development years"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.03875000000000006,
+      "net_pnl": 3875.0,
+      "max_drawdown": -0.14104844858258436,
+      "underwater_bars": 49723,
+      "current_underwater_bars": 8046,
+      "cagr": 0.012774470308631658,
+      "sharpe": 0.14691491720434657,
+      "volatility": 0.10946232262891402,
+      "trades": 350,
+      "observations": 70843,
+      "costs": 5250.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.00034999999999996145
+        },
+        {
+          "month": "2022-02",
+          "return": -0.003451207922772981
+        },
+        {
+          "month": "2022-03",
+          "return": 0.0074282272636017055
+        },
+        {
+          "month": "2022-04",
+          "return": -0.06456755679553605
+        },
+        {
+          "month": "2022-05",
+          "return": 0.14097784405624192
+        },
+        {
+          "month": "2022-06",
+          "return": -0.01087616113522849
+        },
+        {
+          "month": "2022-07",
+          "return": -0.02944785276073625
+        },
+        {
+          "month": "2022-08",
+          "return": 0.0014100943304482527
+        },
+        {
+          "month": "2022-09",
+          "return": -0.0011167759164846247
+        },
+        {
+          "month": "2022-10",
+          "return": -0.025228465875947848
+        },
+        {
+          "month": "2022-11",
+          "return": -0.030718595721338504
+        },
+        {
+          "month": "2022-12",
+          "return": 0.014199722179348617
+        },
+        {
+          "month": "2023-01",
+          "return": -0.006087353523055894
+        },
+        {
+          "month": "2023-02",
+          "return": 0.022456999948961442
+        },
+        {
+          "month": "2023-03",
+          "return": 0.023461288873358965
+        },
+        {
+          "month": "2023-04",
+          "return": -0.01180315075842564
+        },
+        {
+          "month": "2023-05",
+          "return": -0.030304525936528326
+        },
+        {
+          "month": "2023-06",
+          "return": 0.026721636891128497
+        },
+        {
+          "month": "2023-07",
+          "return": -0.01997818758675396
+        },
+        {
+          "month": "2023-08",
+          "return": -0.023926349334817187
+        },
+        {
+          "month": "2023-09",
+          "return": 0.019071310116086204
+        },
+        {
+          "month": "2023-10",
+          "return": -0.028834418226200142
+        },
+        {
+          "month": "2023-11",
+          "return": -0.026601036812064716
+        },
+        {
+          "month": "2023-12",
+          "return": 0.0053795255258486385
+        },
+        {
+          "month": "2024-01",
+          "return": 0.0417892878163626
+        },
+        {
+          "month": "2024-02",
+          "return": -0.002568053415511029
+        },
+        {
+          "month": "2024-03",
+          "return": 0.01642636457260549
+        },
+        {
+          "month": "2024-04",
+          "return": -0.022341557323065975
+        },
+        {
+          "month": "2024-05",
+          "return": -0.001347289874598423
+        },
+        {
+          "month": "2024-06",
+          "return": 0.014580738895807466
+        },
+        {
+          "month": "2024-07",
+          "return": 0.0468981741932184
+        },
+        {
+          "month": "2024-08",
+          "return": 0.0900830483634587
+        },
+        {
+          "month": "2024-09",
+          "return": -0.03576230169400374
+        },
+        {
+          "month": "2024-10",
+          "return": -0.024028629856850725
+        },
+        {
+          "month": "2024-11",
+          "return": 0.015476927472736879
+        },
+        {
+          "month": "2024-12",
+          "return": -0.02574563871693869
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 1.0427775017938952,
+    "infinite_profit_factor": false,
+    "expectancy": 11.071428571428571,
+    "win_rate": 0.10857142857142857,
+    "max_drawdown_dollars": 15262.5,
+    "annual_net": {
+      "2022": -1435.0,
+      "2023": -5120.0,
+      "2024": 10430.0
+    },
+    "exit_reasons": {
+      "stop": 312,
+      "20-bar-time-exit": 38
+    },
+    "side_net": {
+      "-1": 4855.0,
+      "1": -980.0
+    },
+    "top_10_winning_share": 0.5347236925682829,
+    "best_trade": 9400.0,
+    "day_cluster_expectancy_95": [
+      -93.50460755318883,
+      136.651751884082
+    ],
+    "occupied_entry_days": 295,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 12355,
+      "expired_levels": 1004,
+      "levels_formed": 13361,
+      "submitted_entries": 350
+    },
+    "submitted_entries": 350,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Tested configuration failed"
+  },
+  {
+    "run_id": "d1004334-6522-465b-8029-e0803bf5c263",
+    "status": "Succeeded",
+    "detector": "opening-30m",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Sparse: 83 trades below operational floor 100"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.023849999999999927,
+      "net_pnl": 2385.0,
+      "max_drawdown": -0.11347756734290404,
+      "underwater_bars": 68392,
+      "current_underwater_bars": 68392,
+      "cagr": 0.007900666485285646,
+      "sharpe": 0.1346291622527638,
+      "volatility": 0.06025354115115821,
+      "trades": 83,
+      "observations": 70843,
+      "costs": 1245.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": 0.06414999999999993
+        },
+        {
+          "month": "2022-02",
+          "return": 0.034064746511300203
+        },
+        {
+          "month": "2022-03",
+          "return": -0.007633587786259555
+        },
+        {
+          "month": "2022-04",
+          "return": -0.014423076923076872
+        },
+        {
+          "month": "2022-05",
+          "return": -0.018954703832752662
+        },
+        {
+          "month": "2022-06",
+          "return": 0.0
+        },
+        {
+          "month": "2022-07",
+          "return": -0.005445849315717233
+        },
+        {
+          "month": "2022-08",
+          "return": -0.0018093514903342323
+        },
+        {
+          "month": "2022-09",
+          "return": -0.0061534058385803725
+        },
+        {
+          "month": "2022-10",
+          "return": -0.004415646748260116
+        },
+        {
+          "month": "2022-11",
+          "return": -0.0015426890999373777
+        },
+        {
+          "month": "2022-12",
+          "return": -0.005311187291777264
+        },
+        {
+          "month": "2023-01",
+          "return": 0.032279986408426886
+        },
+        {
+          "month": "2023-02",
+          "return": -0.008182074673187212
+        },
+        {
+          "month": "2023-03",
+          "return": -0.010051204248056167
+        },
+        {
+          "month": "2023-04",
+          "return": -0.0004310344827586077
+        },
+        {
+          "month": "2023-05",
+          "return": 0.0007666139619568746
+        },
+        {
+          "month": "2023-06",
+          "return": -0.005649447024465015
+        },
+        {
+          "month": "2023-07",
+          "return": -0.0022148394241418012
+        },
+        {
+          "month": "2023-08",
+          "return": 0.0
+        },
+        {
+          "month": "2023-09",
+          "return": -0.009554601167784615
+        },
+        {
+          "month": "2023-10",
+          "return": 0.0
+        },
+        {
+          "month": "2023-11",
+          "return": -0.008623629719853865
+        },
+        {
+          "month": "2023-12",
+          "return": -0.013711421269903656
+        },
+        {
+          "month": "2024-01",
+          "return": -0.001046389954656446
+        },
+        {
+          "month": "2024-02",
+          "return": -0.0040403032721468835
+        },
+        {
+          "month": "2024-03",
+          "return": 0.0010016527269995912
+        },
+        {
+          "month": "2024-04",
+          "return": -0.0005003252113874312
+        },
+        {
+          "month": "2024-05",
+          "return": -0.005706562546928917
+        },
+        {
+          "month": "2024-06",
+          "return": 0.012686905301314111
+        },
+        {
+          "month": "2024-07",
+          "return": -0.003529704200845085
+        },
+        {
+          "month": "2024-08",
+          "return": -0.004240670524845336
+        },
+        {
+          "month": "2024-09",
+          "return": 0.0006513352372363723
+        },
+        {
+          "month": "2024-10",
+          "return": -0.0056078509913879415
+        },
+        {
+          "month": "2024-11",
+          "return": 0.0
+        },
+        {
+          "month": "2024-12",
+          "return": 0.03106747230614304
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 1.1003154574132492,
+    "infinite_profit_factor": false,
+    "expectancy": 28.734939759036145,
+    "win_rate": 0.12048192771084337,
+    "max_drawdown_dollars": 12627.5,
+    "annual_net": {
+      "2022": 3005.0,
+      "2023": -2660.0,
+      "2024": 2040.0
+    },
+    "exit_reasons": {
+      "stop": 73,
+      "20-bar-time-exit": 10
+    },
+    "side_net": {
+      "-1": 3005.0,
+      "1": -620.0
+    },
+    "top_10_winning_share": 1.0,
+    "best_trade": 8350.0,
+    "day_cluster_expectancy_95": [
+      -211.41158536585365,
+      337.35613884107846
+    ],
+    "occupied_entry_days": 82,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 1126,
+      "expired_levels": 422,
+      "levels_formed": 1548,
+      "submitted_entries": 83
+    },
+    "submitted_entries": 83,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Sparse / inconclusive"
+  },
+  {
+    "run_id": "e2afada6-c5da-4a51-9d4b-c54e6b8e20c1",
+    "status": "Succeeded",
+    "detector": "round-100",
+    "stage": "evaluation-Test",
+    "half_width": 0.1,
+    "start": "2025-01-01",
+    "end": "2025-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {
+      "evaluation_id": "be9fa51a-f5e3-4b91-ad48-934c165af475",
+      "fold": 0,
+      "role": "Test",
+      "candidate": 0,
+      "scenario": "Baseline"
+    },
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.20920000000000005,
+      "net_pnl": 20920.0,
+      "max_drawdown": -0.3101056450752321,
+      "underwater_bars": 14815,
+      "current_underwater_bars": 2410,
+      "cagr": null,
+      "sharpe": 0.6160171415198724,
+      "volatility": 0.3349354359951272,
+      "trades": 311,
+      "observations": 23506,
+      "costs": 4665.0,
+      "first": "2025-01-01T23:15:00+00:00",
+      "last": "2025-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2025-01",
+          "return": 0.036049999999999915
+        },
+        {
+          "month": "2025-02",
+          "return": -0.11037112108488978
+        },
+        {
+          "month": "2025-03",
+          "return": -0.05023326461972444
+        },
+        {
+          "month": "2025-04",
+          "return": -0.006796892848983327
+        },
+        {
+          "month": "2025-05",
+          "return": -0.001840243832307742
+        },
+        {
+          "month": "2025-06",
+          "return": 0.06686063259779917
+        },
+        {
+          "month": "2025-07",
+          "return": -0.0081814499797489
+        },
+        {
+          "month": "2025-08",
+          "return": 0.07317869977131664
+        },
+        {
+          "month": "2025-09",
+          "return": -0.01877219685438869
+        },
+        {
+          "month": "2025-10",
+          "return": 0.07569803516028961
+        },
+        {
+          "month": "2025-11",
+          "return": 0.23418573351278593
+        },
+        {
+          "month": "2025-12",
+          "return": -0.0581087396790777
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 1.1692762066593843,
+    "infinite_profit_factor": false,
+    "expectancy": 67.26688102893891,
+    "win_rate": 0.12540192926045016,
+    "max_drawdown_dollars": 36325.0,
+    "annual_net": {
+      "2025": 20920.0
+    },
+    "exit_reasons": {
+      "stop": 271,
+      "20-bar-time-exit": 40
+    },
+    "side_net": {
+      "-1": 17635.0,
+      "1": 3285.0
+    },
+    "top_10_winning_share": 0.6237154423722363,
+    "best_trade": 22700.0,
+    "day_cluster_expectancy_95": [
+      -155.50128968253966,
+      327.1720587879372
+    ],
+    "occupied_entry_days": 182,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1913
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 8351,
+      "expired_levels": 876,
+      "levels_formed": 9226,
+      "submitted_entries": 311
+    },
+    "submitted_entries": 311,
+    "expired_orders": 0,
+    "eligible": true,
+    "disposition": "Eligible for next stage"
+  },
+  {
+    "run_id": "e3f4200f-9d5d-40a9-a739-0e3b417e5500",
+    "status": "Succeeded",
+    "detector": "departure-swing",
+    "stage": "development",
+    "half_width": 0.1,
+    "start": "2022-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {},
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [
+      "Net P&L is not positive",
+      "Profit factor misses 1.05 gate",
+      "Fewer than two profitable development years"
+    ],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": -0.0746,
+      "net_pnl": -7460.0,
+      "max_drawdown": -0.28482972136222906,
+      "underwater_bars": 70779,
+      "current_underwater_bars": 70779,
+      "cagr": -0.02555347840587774,
+      "sharpe": -0.0966651007362869,
+      "volatility": 0.13230004713004898,
+      "trades": 309,
+      "observations": 70843,
+      "costs": 4635.0,
+      "first": "2022-01-02T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2022-01",
+          "return": -0.04600000000000004
+        },
+        {
+          "month": "2022-02",
+          "return": 0.007494758909853294
+        },
+        {
+          "month": "2022-03",
+          "return": -0.02325339437132601
+        },
+        {
+          "month": "2022-04",
+          "return": -0.03312739667660847
+        },
+        {
+          "month": "2022-05",
+          "return": -0.04896992398369504
+        },
+        {
+          "month": "2022-06",
+          "return": -0.009788589632203859
+        },
+        {
+          "month": "2022-07",
+          "return": 0.05667992512868514
+        },
+        {
+          "month": "2022-08",
+          "return": -0.013063935787434255
+        },
+        {
+          "month": "2022-09",
+          "return": 0.038925346345840994
+        },
+        {
+          "month": "2022-10",
+          "return": -0.03811477622415371
+        },
+        {
+          "month": "2022-11",
+          "return": 0.018577762810798593
+        },
+        {
+          "month": "2022-12",
+          "return": 0.08769561384174573
+        },
+        {
+          "month": "2023-01",
+          "return": -0.018110894399554156
+        },
+        {
+          "month": "2023-02",
+          "return": -0.027654524816840387
+        },
+        {
+          "month": "2023-03",
+          "return": -0.02456754749018364
+        },
+        {
+          "month": "2023-04",
+          "return": -0.0047326334113039215
+        },
+        {
+          "month": "2023-05",
+          "return": -0.023557061652820344
+        },
+        {
+          "month": "2023-06",
+          "return": -0.019087601455359593
+        },
+        {
+          "month": "2023-07",
+          "return": -0.027276877425245427
+        },
+        {
+          "month": "2023-08",
+          "return": -0.04628651883139745
+        },
+        {
+          "month": "2023-09",
+          "return": -0.02251337885218674
+        },
+        {
+          "month": "2023-10",
+          "return": -0.04744824114278523
+        },
+        {
+          "month": "2023-11",
+          "return": -0.012485961551165992
+        },
+        {
+          "month": "2023-12",
+          "return": -0.013379716350013338
+        },
+        {
+          "month": "2024-01",
+          "return": 0.014103607268782126
+        },
+        {
+          "month": "2024-02",
+          "return": 0.05890612463225464
+        },
+        {
+          "month": "2024-03",
+          "return": 0.0146492391235713
+        },
+        {
+          "month": "2024-04",
+          "return": -0.0112639243263426
+        },
+        {
+          "month": "2024-05",
+          "return": -0.020392749244713015
+        },
+        {
+          "month": "2024-06",
+          "return": -0.0001285016705216968
+        },
+        {
+          "month": "2024-07",
+          "return": 0.03386454183266929
+        },
+        {
+          "month": "2024-08",
+          "return": 0.15731244949965806
+        },
+        {
+          "month": "2024-09",
+          "return": -0.02647690655209456
+        },
+        {
+          "month": "2024-10",
+          "return": 0.003530644894356394
+        },
+        {
+          "month": "2024-11",
+          "return": -0.013743059754823816
+        },
+        {
+          "month": "2024-12",
+          "return": 0.03160358954350362
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 0.9089188694218913,
+    "infinite_profit_factor": false,
+    "expectancy": -24.142394822006473,
+    "win_rate": 0.10679611650485436,
+    "max_drawdown_dollars": 29210.0,
+    "annual_net": {
+      "2022": -4105.0,
+      "2023": -22155.0,
+      "2024": 18800.0
+    },
+    "exit_reasons": {
+      "stop": 276,
+      "20-bar-time-exit": 33
+    },
+    "side_net": {
+      "-1": -2285.0,
+      "1": -5175.0
+    },
+    "top_10_winning_share": 0.6511518570756935,
+    "best_trade": 14990.0,
+    "day_cluster_expectancy_95": [
+      -141.12402216931545,
+      123.21788246705462
+    ],
+    "occupied_entry_days": 261,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1928
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 11295,
+      "expired_levels": 3412,
+      "levels_formed": 14711,
+      "submitted_entries": 309
+    },
+    "submitted_entries": 309,
+    "expired_orders": 0,
+    "eligible": false,
+    "disposition": "Tested configuration failed"
+  },
+  {
+    "run_id": "ee80bcfd-2287-4846-8d66-9bcc4a95bcd0",
+    "status": "Succeeded",
+    "detector": "round-100",
+    "stage": "evaluation-Training",
+    "half_width": 0.1,
+    "start": "2024-01-01",
+    "end": "2024-12-31",
+    "fee": 2.5,
+    "slippage": 1,
+    "research": {
+      "evaluation_id": "be9fa51a-f5e3-4b91-ad48-934c165af475",
+      "fold": 0,
+      "role": "Training",
+      "candidate": 0,
+      "scenario": "Training"
+    },
+    "source_hash": "ebb4b3bc751a603a18a344210f15dacb3d17401f5b011fd15b4b9e8f4d72165c",
+    "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+    "failures": [],
+    "checks": {
+      "artifact_hashes_and_sizes": true,
+      "metrics_recalculated": true,
+      "trade_equity_cost_reconciliation": true,
+      "regular_session_entries": true,
+      "per_trade_costs": true,
+      "source_identity": true
+    },
+    "metrics": {
+      "version": "1.0.0",
+      "net_return": 0.08404999999999996,
+      "net_pnl": 8405.0,
+      "max_drawdown": -0.1331496786042241,
+      "underwater_bars": 11259,
+      "current_underwater_bars": 4929,
+      "cagr": null,
+      "sharpe": 0.459509827764165,
+      "volatility": 0.17271769124681835,
+      "trades": 282,
+      "observations": 23671,
+      "costs": 4230.0,
+      "first": "2024-01-01T23:15:00+00:00",
+      "last": "2024-12-31T22:00:00+00:00",
+      "monthly": [
+        {
+          "month": "2024-01",
+          "return": 0.02147499999999991
+        },
+        {
+          "month": "2024-02",
+          "return": 0.07687412809907235
+        },
+        {
+          "month": "2024-03",
+          "return": -0.036181818181818204
+        },
+        {
+          "month": "2024-04",
+          "return": -0.008583286172420324
+        },
+        {
+          "month": "2024-05",
+          "return": -0.01641137855579866
+        },
+        {
+          "month": "2024-06",
+          "return": 0.005368283600135415
+        },
+        {
+          "month": "2024-07",
+          "return": -0.01015008658841643
+        },
+        {
+          "month": "2024-08",
+          "return": 0.0865286484910337
+        },
+        {
+          "month": "2024-09",
+          "return": 0.031913228223191314
+        },
+        {
+          "month": "2024-10",
+          "return": -0.009969225434528162
+        },
+        {
+          "month": "2024-11",
+          "return": -0.029771025786962002
+        },
+        {
+          "month": "2024-12",
+          "return": -0.021659672397455032
+        }
+      ],
+      "basis": "USD; bar-close MTM including open P&L; daily observed UTC returns; 252 dates/year; RF=0; no cash flows",
+      "undefined_reason": "Sharpe requires varying returns; CAGR requires >=1 year and positive equity. Insolvent equity has no risk annualization."
+    },
+    "profit_factor": 1.108353745004512,
+    "infinite_profit_factor": false,
+    "expectancy": 29.80496453900709,
+    "win_rate": 0.13120567375886524,
+    "max_drawdown_dollars": 14862.5,
+    "annual_net": {
+      "2024": 8405.0
+    },
+    "exit_reasons": {
+      "stop": 242,
+      "20-bar-time-exit": 40
+    },
+    "side_net": {
+      "-1": 1035.0,
+      "1": 7370.0
+    },
+    "top_10_winning_share": 0.5901715615004361,
+    "best_trade": 10910.0,
+    "day_cluster_expectancy_95": [
+      -100.12081989580749,
+      187.50538711157705
+    ],
+    "occupied_entry_days": 186,
+    "warmup": {
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1748
+    },
+    "warnings": [
+      "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+      "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+      "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+      "Latest trading session is partial. Historical availability is not a live data subscription.",
+      "Historical event simulation: strategy-declared close, next-open, or resting limit entries. Scoring starts flat; final bar liquidates positions.",
+      "Resting limit entries become active after the completed decision bar, require one-tick penetration, and fill at the stated limit without gap price improvement. Entry-minute targets are not credited; stops can fill. Working brackets use one-minute OHLC and stop-first ties.",
+      "Market/stop slippage is charged as cash cost; limit fills pay commission only. Per-order contract economics are a price-path proxy when they differ from the source dataset.",
+      "TradingView data, margin liquidations, sub-minute Bar Magnifier, and intrabar recalculation can differ. TradingView parity is not certified.",
+      "NQ 15m, one contract. Nine detector candidates plus one generic prior-bar benchmark, 80-chart-bar lifetime, +/-0.10 formation ATR, completed-bar arming, first armed physical visit consumed even outside regular hours, close inside zone, next contiguous open, sweep stop and 20-bar exit. Regular-hour entries; positions can carry. HTF candles contain all expected observed 15m bars, which does not prove minute completeness. Strict two-left/two-right swings activate after confirmation. No matched location control, tick-order proof, roll adjustment, extra event-entry delay, or untouched-holdout claim. Prior studies with different lifetimes/visits are descriptive comparisons only."
+    ],
+    "funnel": {
+      "consumed_levels": 6104,
+      "expired_levels": 795,
+      "levels_formed": 6902,
+      "submitted_entries": 282
+    },
+    "submitted_entries": 282,
+    "expired_orders": 0,
+    "eligible": true,
+    "disposition": "Eligible for next stage"
+  }
+]

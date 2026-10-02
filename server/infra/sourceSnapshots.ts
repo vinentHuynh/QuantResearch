@@ -157,7 +157,7 @@ export function createSourceSnapshots(d: SnapshotDependencies) {
   function applicationBuildHash() {
     const files = [
       ...(d.sourceRoots ?? ["server", "src", "shared"].map((path) => join(d.root, path))).flatMap((folder) =>
-        walkFiles(folder, (path) => /\.(?:ts|tsx|json|css)$/.test(path)),
+        walkFiles(folder, (path) => /\.(?:ts|tsx|mjs|json|css)$/.test(path)),
       ),
       ...["package.json", "package-lock.json", "config/workbench-layout.json"]
         .map((path) => join(d.root, path))

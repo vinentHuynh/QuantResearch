@@ -1,0 +1,26 @@
+{
+  "jobs": 1,
+  "parameters": [
+    {
+      "detector": "round-100",
+      "zone_half_width_atr": 0.1,
+      "swing_sides": 2
+    }
+  ],
+  "warmup": [
+    {
+      "dataset_id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+      "symbol": "NQ",
+      "timeframe": "15m",
+      "parameters": {
+        "detector": "round-100",
+        "zone_half_width_atr": 0.1,
+        "swing_sides": 2
+      },
+      "status": "sufficient",
+      "required_bars": 142,
+      "available_bars": 1913,
+      "warning": null
+    }
+  ]
+}

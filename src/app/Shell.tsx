@@ -1,11 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Drawer, Modal, TextInput, UnstyledButton } from "@mantine/core";
+import { useState, type ReactNode } from "react";
+import { Modal, TextInput, UnstyledButton } from "@mantine/core";
 import { useHotkeys } from "@mantine/hooks";
 import {
-  IconDots,
   IconFlask,
-  IconList,
-  IconPlus,
+  IconCode,
+  IconLayersIntersect,
   IconRoute,
   IconSearch,
 } from "@tabler/icons-react";
@@ -41,19 +40,24 @@ export function Shell({
   route,
   counts,
   onSearch,
+  onSearchOpen,
   children,
 }: {
   route: Route;
   counts: Partial<Record<Page, number>>;
   onSearch: (query: string) => SearchResult[];
+  onSearchOpen?: () => void;
   children: ReactNode;
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [query, setQuery] = useState("");
-  useHotkeys([["mod+K", () => setSearchOpen(true)]]);
+  const openSearch = () => {
+    setSearchOpen(true);
+    onSearchOpen?.();
+  };
+  useHotkeys([["mod+K", openSearch]]);
   const groups = navGroups(counts);
-  const active = route.page === "new-run" ? "runs" : route.page;
+  const active = ["new-run", "runs", "evaluations", "scorecards", "event-studies", "watchlist"].includes(route.page) ? "workspace" : route.page;
   const results = searchOpen ? onSearch(query).slice(0, 14) : [];
   const close = () => {
     setSearchOpen(false);
@@ -63,8 +67,6 @@ export function Shell({
     close();
     result.run();
   };
-  // Close the mobile "More" drawer whenever navigation happens.
-  useEffect(() => setMoreOpen(false), [route.page, route.sub]);
   const navList = (
     <>
       {groups.map((group) => (
@@ -80,7 +82,7 @@ export function Shell({
   return (
     <div className="wb">
       <aside className="wb-sidebar" aria-label="Workbench">
-        <a href={href("workspace")} className="wb-brand">
+        <a href={href("portfolio")} className="wb-brand">
           <span className="wb-mark">
             <IconFlask size={18} />
           </span>
@@ -92,26 +94,26 @@ export function Shell({
         <button
           type="button"
           className="wb-search"
-          onClick={() => setSearchOpen(true)}
+          onClick={openSearch}
         >
           <IconSearch size={14} />
           <span>Search</span>
           <kbd>Ctrl K</kbd>
         </button>
-        <a href={href("new-run")} className="wb-new-run">
-          <IconPlus size={15} />
-          New run
+        <a href={href("workspace")} className="wb-new-run">
+          <IconFlask size={15} />
+          Research
         </a>
         <nav className="wb-nav" aria-label="Primary">
           {navList}
         </nav>
         <div className="wb-sidebar-foot">
           <span className="wb-sim-chip">Historical simulation</span>
-          <span>Research results are descriptive, not live signals.</span>
+          <span>Historical research</span>
         </div>
       </aside>
       <header className="wb-mobile-bar">
-        <a href={href("workspace")} className="wb-brand">
+        <a href={href("portfolio")} className="wb-brand">
           <span className="wb-mark">
             <IconFlask size={16} />
           </span>
@@ -121,7 +123,7 @@ export function Shell({
           type="button"
           className="wb-icon-button"
           aria-label="Search"
-          onClick={() => setSearchOpen(true)}
+          onClick={openSearch}
         >
           <IconSearch size={19} />
         </button>
@@ -129,59 +131,34 @@ export function Shell({
       <main className="wb-main">{children}</main>
       <nav className="wb-bottom-nav" aria-label="Primary, compact">
         <a
+          href={href("portfolio")}
+          className={active === "portfolio" ? "active" : ""}
+          aria-current={active === "portfolio" ? "page" : undefined}
+        >
+          <IconLayersIntersect size={19} />
+          Portfolio
+        </a>
+        <a
           href={href("workspace")}
           className={active === "workspace" ? "active" : ""}
-          aria-current={active === "workspace" ? "page" : undefined}
         >
           <IconRoute size={19} />
-          Workspace
+          Research
         </a>
-        <a
-          href={href("runs")}
-          className={active === "runs" && route.page !== "new-run" ? "active" : ""}
-        >
-          <IconList size={19} />
-          Runs
-        </a>
-        <a href={href("new-run")} className="wb-bottom-new">
+        <a href={href("scripts")} className="wb-bottom-new">
           <span>
-            <IconPlus size={19} />
+            <IconCode size={19} />
           </span>
-          New run
+          Scripts
         </a>
         <a
-          href={href("evaluations")}
-          className={active === "evaluations" ? "active" : ""}
+          href={href("datasets")}
+          className={active === "datasets" ? "active" : ""}
         >
           <IconFlask size={19} />
-          Evaluate
+          Data
         </a>
-        <button
-          type="button"
-          className={
-            ["scorecards", "watchlist", "scripts", "datasets"].includes(active)
-              ? "active"
-              : ""
-          }
-          onClick={() => setMoreOpen(true)}
-        >
-          <IconDots size={19} />
-          More
-        </button>
       </nav>
-      <Drawer
-        opened={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        position="bottom"
-        size="auto"
-        title="Workbench"
-        styles={{ content: { height: "auto", maxHeight: "92vh", borderRadius: "16px 16px 0 0" } }}
-        classNames={{ body: "wb-more-body" }}
-      >
-        <nav className="wb-nav wb-nav-light" aria-label="All pages">
-          {navList}
-        </nav>
-      </Drawer>
       <Modal
         opened={searchOpen}
         onClose={close}

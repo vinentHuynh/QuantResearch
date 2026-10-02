@@ -15,6 +15,14 @@ spec.loader.exec_module(builder)
 
 
 class CollectiveImportTests(unittest.TestCase):
+    def test_daily_risk_uses_full_saved_marks_and_starting_capital(self):
+        risk = builder.daily_risk({'2024-01-01': 20, '2024-01-02': -30,
+                                   '2025-01-01': 20}, 100)
+        self.assertEqual(risk, {'max_drawdown_dollars': 30,
+                                'max_drawdown': -0.25})
+        self.assertEqual(builder.daily_risk({'2024-01-01': 20}, 100),
+                         {'max_drawdown_dollars': 0, 'max_drawdown': 0})
+
     def test_refresh_extensions_uses_configured_workbench_home(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -137,7 +145,10 @@ class CollectiveImportTests(unittest.TestCase):
                 self.assertEqual(index['market_data_through']['ES'], dataset['last'])
                 self.assertEqual(len(index['items']), 1)
                 item = index['items'][0]; self.assertEqual(item['capital'], 1000); self.assertEqual(item['net_pnl'], 40)
+                self.assertEqual(item['max_drawdown_dollars'], 0)
+                self.assertEqual(item['max_drawdown'], 0)
                 self.assertTrue(item['working']); self.assertFalse(item['feasible'])
+                self.assertEqual(item['source_run_ids'], ['new-run'])
                 data = builder.read(state / 'collective' / item['series_file']); self.assertEqual(sum(d['pnl'] for d in data['daily']), 40)
                 self.assertEqual(data['provenance_version'],2)
                 self.assertTrue(data['daily'][-1]['terminal'])
@@ -148,6 +159,199 @@ class CollectiveImportTests(unittest.TestCase):
                 (run / 'trades.csv').write_text((run / 'trades.csv').read_text().replace(',40', ',400000'))
                 with self.assertRaises(SystemExit): builder.main()
                 rejected = builder.read(state / 'collective/index.json'); self.assertEqual(rejected['items'], []); self.assertIn('checksum mismatch', rejected['errors'][0]['error'])
+
+    def test_pinned_run_imports_exact_earlier_baseline_and_reports_bad_pins(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); state = root / 'data'; out = state / 'collective'; out.mkdir(parents=True)
+            source = root / 'strategy.py'; source.write_text('# fixture strategy\n')
+            strategy = {'id': 'fixture', 'name': 'Fixture strategy', 'file': 'strategy.py', 'file_hash': builder.sha(source)}
+            earlier = '11111111-1111-4111-8111-111111111111'
+            later = '22222222-2222-4222-8222-222222222222'
+            training = '33333333-3333-4333-8333-333333333333'
+            unknown = '44444444-4444-4444-8444-444444444444'
+            def fixture_run(run_id, start, end, pnl, research=None):
+                inp = {'strategy': strategy, 'dataset': {'symbol': 'ES'}, 'parameters': {'contracts': 1},
+                       'timeframe': '1h', 'session': 'full-trading-day', 'capital': 1000, 'fee': 1,
+                       'slippage': 1, 'start': start, 'end': end, 'source_hash': 'snapshot'}
+                if research:inp['research'] = research
+                folder = state / 'runs' / run_id; folder.mkdir(parents=True)
+                (folder / 'input.json').write_text(json.dumps(inp))
+                (folder / 'trades.csv').write_text(
+                    f'entry_time,exit_time,net_pnl\n{start}T12:00:00Z,{end}T12:00:00Z,{pnl}\n')
+                (folder / 'equity.csv').write_text(
+                    f'timestamp,equity\n{start}T12:00:00Z,1000\n{end}T12:00:00Z,{1000+pnl}\n')
+                (folder / 'manifest.json').write_text(json.dumps({
+                    'artifacts': [{'name': name, 'checksum': builder.sha(folder / name)}
+                                  for name in ('trades.csv', 'equity.csv')],
+                    'metrics': {'net_pnl': pnl},
+                }))
+                return {'id': run_id, 'input': inp, 'created_at': end, 'status': 'Succeeded'}
+            records = [
+                fixture_run(earlier, '2024-01-01', '2024-01-10', 20),
+                fixture_run(later, '2025-01-01', '2025-01-10', 40),
+                fixture_run(training, '2023-01-01', '2023-01-10', 60,
+                            {'role': 'Training', 'scenario': 'Training'}),
+            ]
+            with sqlite3.connect(state / 'workbench.sqlite3') as db:
+                db.execute('CREATE TABLE records (kind TEXT, id TEXT, body TEXT)')
+                db.executemany('INSERT INTO records VALUES (?,?,?)',
+                               [('run', record['id'], json.dumps(record)) for record in records])
+            db.close()
+            (out / 'pinned-runs.json').write_text(json.dumps([earlier, later]))
+            with patch.multiple(builder, ROOT=root, OUT=out, FIRST=root / 'missing-first',
+                                EXPANDED=root / 'missing-expanded', SND=root / 'missing-snd'), \
+                    patch.dict(os.environ, {'WORKBENCH_HOME': str(state)}), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                builder.main()
+                index = builder.read(out / 'index.json')
+                self.assertEqual(index['errors'], [])
+                self.assertEqual(len(index['items']), 2)
+                by_run = {item['source_run_ids'][0]: item for item in index['items']}
+                self.assertEqual(set(by_run), {earlier, later})
+                self.assertEqual(by_run[earlier]['net_pnl'], 20)
+                self.assertEqual(by_run[earlier]['source'], 'Pinned workbench')
+                self.assertFalse(by_run[earlier]['working'])
+                self.assertEqual(by_run[later]['net_pnl'], 40)
+                self.assertEqual(sum(day['pnl'] for day in builder.read(out / by_run[earlier]['series_file'])['daily']), 20)
+                index['items'] = [by_run[later]]
+                index['sources'] = [{'name': 'existing campaign'}]
+                index['errors'] = [{'key': 'existing', 'error': 'Preserved issue'}]
+                index['condition_calibration'] = {'sources': [], 'marker': 'preserved'}
+                builder.dump(out / 'index.json', index)
+                result = builder.pinned_only()
+                self.assertEqual(result['imported'], 1)
+                quick = builder.read(out / 'index.json')
+                self.assertEqual(len(quick['items']), 2)
+                self.assertEqual(quick['sources'], index['sources'])
+                self.assertEqual(quick['errors'], index['errors'])
+                self.assertEqual(quick['condition_calibration'], index['condition_calibration'])
+                self.assertEqual(next(item for item in quick['items'] if item['source_run_ids'] == [earlier])['net_pnl'], 20)
+                self.assertEqual(builder.pinned_only()['already_present'], 2)
+                self.assertEqual(builder.read(out / 'index.json'), quick)
+                (out / 'pinned-runs.json').write_text(json.dumps([earlier, training, unknown]))
+                with self.assertRaisesRegex(ValueError, 'not a baseline'):
+                    builder.pinned_only()
+                self.assertEqual(builder.read(out / 'index.json'), quick)
+                with self.assertRaises(SystemExit):builder.main()
+                rejected = builder.read(out / 'index.json')
+                self.assertEqual(len(rejected['items']), 2)
+                self.assertTrue(any(error['key'] == f'pinned:{training}' and 'not a baseline' in error['error']
+                                    for error in rejected['errors']))
+                self.assertTrue(any(error['key'] == f'pinned:{unknown}' and 'not in the workbench' in error['error']
+                                    for error in rejected['errors']))
+
+    def test_pinned_evaluation_fold_gets_single_run_history_beside_combined_history(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); state = root / 'data'; out = state / 'collective'; out.mkdir(parents=True)
+            source = root / 'strategy.py'; source.write_text('# fixture strategy\n')
+            strategy = {'id': 'fixture', 'name': 'Fixture strategy', 'file': 'strategy.py',
+                        'file_hash': builder.sha(source)}
+            first = '11111111-1111-4111-8111-111111111111'
+            second = '22222222-2222-4222-8222-222222222222'
+            def fixture_run(run_id, start, end, pnl):
+                inp = {'strategy': strategy, 'dataset': {'symbol': 'NQ'}, 'parameters': {'contracts': 1},
+                       'timeframe': '1d', 'session': 'full-trading-day', 'capital': 1000, 'fee': 1,
+                       'slippage': 1, 'start': start, 'end': end, 'source_hash': 'snapshot',
+                       'research': {'evaluation_id': 'evaluation', 'role': 'Test', 'scenario': 'Baseline'}}
+                folder = state / 'runs' / run_id; folder.mkdir(parents=True)
+                (folder / 'input.json').write_text(json.dumps(inp))
+                (folder / 'trades.csv').write_text(
+                    f'entry_time,exit_time,net_pnl\n{start}T12:00:00Z,{end}T12:00:00Z,{pnl}\n')
+                (folder / 'equity.csv').write_text(
+                    f'timestamp,equity\n{start}T12:00:00Z,1000\n{end}T12:00:00Z,{1000+pnl}\n')
+                (folder / 'manifest.json').write_text(json.dumps({
+                    'artifacts': [{'name': name, 'checksum': builder.sha(folder / name)}
+                                  for name in ('trades.csv', 'equity.csv')],
+                    'metrics': {'net_pnl': pnl},
+                }))
+                return {'id': run_id, 'input': inp, 'created_at': end, 'status': 'Succeeded'}
+            records = [fixture_run(first, '2024-01-01', '2024-01-10', 20),
+                       fixture_run(second, '2025-01-01', '2025-01-10', 40)]
+            evaluation = {'id': 'evaluation', 'status': 'Succeeded',
+                          'folds': [{'tests': [first]}, {'tests': [second]}],
+                          'scenarios': [], 'result': {'scenarios': []}}
+            with sqlite3.connect(state / 'workbench.sqlite3') as db:
+                db.execute('CREATE TABLE records (kind TEXT, id TEXT, body TEXT)')
+                db.executemany('INSERT INTO records VALUES (?,?,?)',
+                               [('run', record['id'], json.dumps(record)) for record in records]
+                               + [('evaluation', evaluation['id'], json.dumps(evaluation))])
+            db.close()
+            (out / 'pinned-runs.json').write_text(json.dumps([first]))
+            with patch.multiple(builder, ROOT=root, OUT=out, FIRST=root / 'missing-first',
+                                EXPANDED=root / 'missing-expanded', SND=root / 'missing-snd'), \
+                    patch.dict(os.environ, {'WORKBENCH_HOME': str(state)}), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                builder.main()
+                index = builder.read(out / 'index.json')
+                self.assertEqual(index['errors'], [])
+                self.assertEqual(len(index['items']), 2)
+                combined = next(item for item in index['items'] if len(item['source_run_ids']) == 2)
+                exact = next(item for item in index['items'] if item['source_run_ids'] == [first])
+                self.assertEqual(combined['net_pnl'], 60)
+                self.assertEqual(combined['coverage'], [
+                    {'start': '2024-01-01', 'end': '2024-01-10'},
+                    {'start': '2025-01-01', 'end': '2025-01-10'},
+                ])
+                self.assertEqual(exact['source'], 'Pinned workbench')
+                self.assertEqual(exact['net_pnl'], 20)
+                self.assertEqual(exact['coverage'], [{'start': '2024-01-01', 'end': '2024-01-10'}])
+                series = builder.read(out / exact['series_file'])
+                self.assertEqual({trade['source_run'] for trade in series['trades']}, {first})
+                self.assertEqual(sum(day['pnl'] for day in series['daily']), 20)
+                builder.main()
+                self.assertEqual({item['id'] for item in builder.read(out / 'index.json')['items']},
+                                 {combined['id'], exact['id']})
+
+    def test_pinned_only_collision_keeps_old_id_and_exact_id_through_full_refresh(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); state = root / 'data'; out = state / 'collective'; out.mkdir(parents=True)
+            source = root / 'strategy.py'; source.write_text('# fixture strategy\n')
+            run_id = '11111111-1111-4111-8111-111111111111'
+            inp = {'strategy': {'id': 'fixture', 'name': 'Fixture strategy', 'file': 'strategy.py',
+                                'file_hash': builder.sha(source)},
+                   'dataset': {'symbol': 'NQ'}, 'parameters': {'contracts': 1},
+                   'timeframe': '1d', 'session': 'full-trading-day', 'capital': 1000, 'fee': 1,
+                   'slippage': 1, 'start': '2024-01-01', 'end': '2024-01-10', 'source_hash': 'snapshot'}
+            folder = state / 'runs' / run_id; folder.mkdir(parents=True)
+            (folder / 'input.json').write_text(json.dumps(inp))
+            (folder / 'trades.csv').write_text(
+                'entry_time,exit_time,net_pnl\n2024-01-01T12:00:00Z,2024-01-10T12:00:00Z,20\n')
+            (folder / 'equity.csv').write_text(
+                'timestamp,equity\n2024-01-01T12:00:00Z,1000\n2024-01-10T12:00:00Z,1020\n')
+            (folder / 'manifest.json').write_text(json.dumps({
+                'artifacts': [{'name': name, 'checksum': builder.sha(folder / name)}
+                              for name in ('trades.csv', 'equity.csv')],
+                'metrics': {'net_pnl': 20},
+            }))
+            record = {'id': run_id, 'input': inp, 'created_at': '2024-01-10', 'status': 'Succeeded'}
+            with sqlite3.connect(state / 'workbench.sqlite3') as db:
+                db.execute('CREATE TABLE records (kind TEXT, id TEXT, body TEXT)')
+                db.execute('INSERT INTO records VALUES (?,?,?)', ('run', run_id, json.dumps(record)))
+            db.close()
+            (out / 'pinned-runs.json').write_text(json.dumps([run_id]))
+            with patch.multiple(builder, ROOT=root, OUT=out, FIRST=root / 'missing-first',
+                                EXPANDED=root / 'missing-expanded', SND=root / 'missing-snd'), \
+                    patch.dict(os.environ, {'WORKBENCH_HOME': str(state)}), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                base,payload = builder.prepare_pinned_run(run_id, record)
+                (out / base['series_file']).write_bytes(payload)
+                old = {**base, 'coverage': [{'start': '2023-01-01', 'end': '2024-01-10'}],
+                       'latest_replay': {'start': '2024-01-11', 'end': '2024-01-12',
+                                         'dataset_id': 'newer', 'extension_sha256': 'a'}}
+                builder.dump(out / 'index.json', {'version': 1, 'items': [old], 'errors': [],
+                                                   'sources': [], 'definitions': {}})
+                self.assertEqual(builder.pinned_only()['imported'], 1)
+                imported = builder.read(out / 'index.json')['items']
+                exact = next(item for item in imported if builder.exact_run_item(item, run_id, record))
+                self.assertNotEqual(exact['id'], old['id'])
+                self.assertEqual(exact['key'], base['key'] + '__exact')
+                self.assertEqual(builder.pinned_only()['already_present'], 1)
+                builder.main()
+                refreshed = builder.read(out / 'index.json')['items']
+                self.assertIn(old['id'], {item['id'] for item in refreshed})
+                self.assertIn(exact['id'], {item['id'] for item in refreshed})
+                self.assertEqual(next(item for item in refreshed if item['id'] == exact['id'])['checksum'],
+                                 exact['checksum'])
 
 
 if __name__ == '__main__':

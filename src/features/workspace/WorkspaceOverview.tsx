@@ -1,165 +1,114 @@
-import { Alert, Badge, Button, Group, ScrollArea, Table, Text } from "@mantine/core";
-import { IconPlayerPlay } from "@tabler/icons-react";
-import type { RunSummary } from "../../../shared/ts/workbenchModels.ts";
+import { useMemo, useState, type ReactNode } from "react";
+import { Alert, Badge, Button, Group, Select, Text, TextInput } from "@mantine/core";
+import { IconArchive, IconArchiveOff, IconSearch } from "@tabler/icons-react";
+import type { RunSummary, Strategy } from "../../../shared/ts/workbenchModels.ts";
+import { runConfigurationKey, testingEvidence } from "../../../shared/ts/evidence.ts";
+import { readinessChecks } from "../../../shared/ts/readiness.ts";
+import { researchStages } from "../../../shared/ts/progress.ts";
+import { lifecycleStatus, type StrategyStageStatus } from "../../../shared/ts/strategyLifecycle.ts";
 import { href } from "../../app/navigation";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
 import { PageHeader } from "../../shared/ui/PageHeader";
-import { isInvalidRun, latestRunsByConfiguration } from "../runs/model";
-import {
-  formatNumber,
-  formatPercent,
-  shortId,
-  statusTone,
-  type WorkbenchState,
-} from "./workbenchModel";
+import { StrategyNextActionButton, StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { isInvalidRun } from "../runs/model";
+import { isCurrentStrategyRun } from "../../../shared/ts/stageStatus.ts";
+import { isConfigurationArchived } from "../../../shared/ts/researchArchive.ts";
+import type { WorkbenchState } from "./workbenchModel";
+import "./researchWorkspace.css";
 
-export function WorkspaceOverview({
-  state,
-  onInspect,
-  onCleanup,
-}: {
+const stageNames = ["", "Backtest", "Historical validation", "Robustness", "Forward test", "Practical readiness"];
+const stageCriteria = ["", "Declared hypothesis, settings, and minimum traded result", "Frozen later-period baseline and stress criteria", "Parameter, coverage, execution, and risk evidence", "Frozen paper-test plan and reconciled observations", "Operating, risk, and monitoring checklist"];
+type ResearchRow = { id: string; strategy: Strategy; config?: ReturnType<typeof testingEvidence>["configurations"][number]; status: StrategyStageStatus };
+
+export function WorkspaceOverview({ state, onInspect, onCleanup, onArchiveConfiguration, busy, alerts }: {
   state: WorkbenchState;
   onInspect: (run: RunSummary) => void;
   onCleanup: (ids: string[]) => void;
+  onArchiveConfiguration: (runId: string, archived: boolean) => void;
+  busy: boolean;
+  alerts?: ReactNode;
 }) {
-  const latest = latestRunsByConfiguration(state.runs);
-  const completed = latest.filter((run) => run.status === "Succeeded").length;
+  const [query, setQuery] = useState("");
+  const [selection, setSelection] = useState("");
+  const [outcome, setOutcome] = useState("all");
+  const [showArchive, setShowArchive] = useState(false);
+  const rows = useMemo<ResearchRow[]>(() => state.strategies.flatMap<ResearchRow>(strategy => {
+    const evidence = testingEvidence(strategy, state.runs, state.evaluations || []);
+    if (!evidence.configurations.length) return [{ id: strategy.id, strategy, config: undefined, status: lifecycleStatus("not-tested", 0, "No backtest recorded.", [], { kind: "configure-run", label: "Configure backtest", strategyId: strategy.id }) }];
+    return evidence.configurations.map(config => ({ id: `${strategy.id}:${config.key}`, strategy, config, status: config.lifecycle }));
+  }).sort((a, b) => b.status.stage - a.status.stage || a.strategy.name.localeCompare(b.strategy.name)), [state]);
+  const archivedRow = (row: ResearchRow) => !!row.config && isConfigurationArchived(row.strategy.id, row.config.key, state.research_archive);
+  const archivedCount = rows.filter(archivedRow).length;
+  const listed = rows.filter(row => archivedRow(row) === showArchive
+    && `${row.strategy.name} ${row.config?.symbol || ""} ${row.config?.timeframe || ""}`.toLowerCase().includes(query.toLowerCase())
+    && (outcome === "all" || (outcome === "failed" ? row.status.kind === "failed-checks" : outcome === "passed" ? row.status.stage >= 2 && row.status.kind !== "failed-checks" : row.status.stage < 2 && row.status.kind !== "failed-checks")));
+  const selected = listed.find(row => row.id === selection) || listed[0];
+  const attempts = selected?.config ? state.runs.filter(run => run.input.strategy.id === selected.strategy.id && isCurrentStrategyRun(run, selected.strategy) && runConfigurationKey(run) === selected.config?.key) : [];
+  const seed = attempts.find(run => run.id === selected?.config?.runId) || attempts[0];
+  const evaluations = (state.evaluations || []).filter(evaluation => evaluation.folds.some(fold => [...fold.training, ...fold.tests].some(id => attempts.some(run => run.id === id))));
   const invalidRuns = state.runs.filter(isInvalidRun);
-  const invalid = invalidRuns.length;
-  const evaluations = state.evaluations || [];
-  const activeEvaluations = evaluations.filter((evaluation) =>
-    ["Queued", "Running", "Summarizing"].includes(evaluation.status),
-  ).length;
-  const flow = [
-    {
-      number: "01",
-      title: "Idea",
-      detail: "Find a source or record a question.",
-      metric: `${state.library?.total || state.strategies.length} sources`,
-      link: href("scripts", "library"),
-    },
-    {
-      number: "02",
-      title: "Strategy",
-      detail: "Choose an adapter and lock parameters.",
-      metric: `${state.strategies.length} runnable`,
-      link: href("scripts"),
-    },
-    {
-      number: "03",
-      title: "Backtest",
-      detail: "Run the historical simulation.",
-      metric: `${completed} latest complete`,
-      link: href("new-run"),
-    },
-    {
-      number: "04",
-      title: "Validation",
-      detail: "Check later data, costs, and nearby settings.",
-      metric: activeEvaluations
-        ? `${activeEvaluations} in progress`
-        : `${evaluations.length} recorded`,
-      link: href("evaluations"),
-    },
-    {
-      number: "05",
-      title: "Portfolio gates",
-      detail: "Only reviewed configurations reach the book.",
-      metric: `${state.watchlist.length} frozen`,
-      link: href("scorecards"),
-    },
-  ];
-  return (
-    <>
-      <PageHeader
-        crumb="Research flow"
-        title="Research workspace"
-        actions={
-          <Button component="a" href={href("new-run")} size="xs" leftSection={<IconPlayerPlay size={14} />}>
-            New backtest
-          </Button>
-        }
-      />
-      <div className="wb-content wb-workspace">
-        <section className="wb-workflow" aria-label="Research flow">
-          <div className="wb-card-head">
-            <div>
-              <h2>From idea to portfolio</h2>
-              <p className="wb-card-sub">Each step leaves a saved record for the next.</p>
-            </div>
-            <Badge color="teal" variant="light">Persistent workspace</Badge>
-          </div>
-          <div className="wb-flow-grid">
-            {flow.map((item, index) => (
-              <a className="wb-flow-step" href={item.link} key={item.title}>
-                <span className="wb-flow-number">{item.number}</span>
-                <span className="wb-flow-title">{item.title}</span>
-                <span className="wb-flow-detail">{item.detail}</span>
-                <span className="wb-flow-metric">{item.metric}</span>
-                {index < flow.length - 1 && <span className="wb-flow-arrow" aria-hidden="true">→</span>}
-              </a>
-            ))}
-          </div>
+  return <>
+    <PageHeader crumb="Research" title="Research" actions={<Button component="a" href={href("new-run")} size="xs">New backtest</Button>}
+      tabsLabel="Research views" tabs={[
+        { label: "Active configurations", count: rows.length - archivedCount, active: !showArchive, onClick: () => { setShowArchive(false); setSelection(""); } },
+        { label: "Archive", count: archivedCount, active: showArchive, onClick: () => { setShowArchive(true); setSelection(""); } },
+      ]}
+    />
+    {alerts}
+    <div className="wb-content wb-workspace">
+      <nav className="research-tools" aria-label="Research tools"><a href={href("runs")}>Runs & compare</a><a href={href("evaluations")}>Evaluations</a><a href={href("scorecards")}>Scorecards</a><a href={href("event-studies")}>Pattern studies</a></nav>
+      {showArchive && <Text size="sm" c="dimmed" mb="md">Archived configurations keep their runs, results, and evidence. Restore a configuration to show it and its matching runs in the active lists.</Text>}
+      {invalidRuns.length > 0 && <Alert color="yellow" title={`${invalidRuns.length} run records need cleanup`}><Group justify="space-between"><Text size="sm">Their result manifests are invalid.</Text><Button size="xs" variant="light" onClick={() => onCleanup(invalidRuns.map(run => run.id))}>Review cleanup</Button></Group></Alert>}
+      <div className="research-layout">
+        <section className="research-list" aria-label="Research configurations">
+          <div className="research-list-head"><h2>{showArchive ? "Archived configurations" : "Configurations"}</h2><Text size="xs" c="dimmed">{listed.length} shown</Text></div>
+          <TextInput aria-label="Search research configurations" placeholder="Strategy or market" leftSection={<IconSearch size={15} />} value={query} onChange={event => setQuery(event.currentTarget.value)} />
+          <Select aria-label="Filter research outcomes" value={outcome} onChange={value => setOutcome(value || "all")} data={[{ value: "all", label: "All outcomes" }, { value: "passed", label: "Validated" }, { value: "progress", label: "In progress" }, { value: "failed", label: "Failed checks" }]} />
+          <div className="research-list-scroll">{listed.map(row => <button key={row.id} type="button" className={`research-list-item${selected?.id === row.id ? " active" : ""}`} onClick={() => setSelection(row.id)}>
+            <strong>{strategyTitle(row.strategy.name)}</strong><span>{row.config ? `${row.config.symbol} · ${row.config.timeframe} · ${row.config.session}` : "No configuration yet"}</span><span className="research-list-stage">{row.status.failedStage ? `Failed at ${stageNames[row.status.failedStage]}` : row.status.blockedStage ? `Blocked at ${stageNames[row.status.blockedStage]}` : row.status.label}</span>
+          </button>)}</div>
+          {!listed.length && <Text size="sm" c="dimmed" p="sm">{showArchive && !archivedCount ? "No archived configurations yet." : "No configurations match."}</Text>}
         </section>
-
-        {invalid > 0 && (
-          <Alert color="yellow" title={`${invalid} completed run${invalid === 1 ? "" : "s"} need cleanup`}>
-            <Group justify="space-between" align="center" gap="sm">
-              <Text size="sm">These records have no valid result manifest and are excluded from latest evidence.</Text>
-              <Button size="xs" variant="light" color="orange" onClick={() => onCleanup(invalidRuns.map((run) => run.id))}>
-                Review cleanup
-              </Button>
-            </Group>
-          </Alert>
-        )}
-
-        <section className="wb-table-card">
-          <div className="wb-card-head wb-latest-head">
-            <div>
-              <h2>Latest history</h2>
-              <p className="wb-card-sub">One record per configuration, newest tested window first.</p>
-            </div>
-            <Group gap="xs">
-              <Badge variant="light" color="gray">{latest.length} configurations</Badge>
-              <Button component="a" href={href("runs")} variant="subtle" size="xs">All attempts</Button>
-            </Group>
-          </div>
-          <ScrollArea>
-            <Table miw={820} highlightOnHover verticalSpacing="sm">
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Configuration</Table.Th>
-                  <Table.Th>Tested through</Table.Th>
-                  <Table.Th>Status</Table.Th>
-                  <Table.Th ta="right">Net</Table.Th>
-                  <Table.Th ta="right">DD</Table.Th>
-                  <Table.Th ta="right">Trades</Table.Th>
-                  <Table.Th />
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {latest.slice(0, 10).map((run) => (
-                  <Table.Tr key={run.id}>
-                    <Table.Td>
-                      <Text fw={600} size="sm">{strategyTitle(run.input.strategy.name)}</Text>
-                      <Text size="xs" c="dimmed">{run.input.dataset.symbol} · {run.input.timeframe} · {shortId(run.id)}</Text>
-                    </Table.Td>
-                    <Table.Td><Text size="sm" className="mono">{run.input.end}</Text></Table.Td>
-                    <Table.Td><Badge color={statusTone(run.status)} variant="light" radius="xs">{run.status}</Badge></Table.Td>
-                    <Table.Td ta="right" className={`mono ${run.result?.metrics.net_return != null && run.result.metrics.net_return < 0 ? "wb-loss" : "wb-gain"}`}>
-                      {formatPercent(run.result?.metrics.net_return)}
-                    </Table.Td>
-                    <Table.Td ta="right" className="mono">{formatPercent(run.result?.metrics.max_drawdown)}</Table.Td>
-                    <Table.Td ta="right" className="mono">{formatNumber(run.result?.metrics.trades)}</Table.Td>
-                    <Table.Td><Button size="compact-xs" variant="subtle" onClick={() => onInspect(run)}>Inspect</Button></Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </ScrollArea>
-          {!latest.length && <div className="wb-empty"><Text>No backtests yet.</Text><Button component="a" href={href("new-run")} mt="sm">Start with a strategy</Button></div>}
-        </section>
+        {selected && <section className="research-detail" aria-label="Selected configuration">
+          <Group justify="space-between" align="start"><div><h2>{strategyTitle(selected.strategy.name)}</h2><Text size="sm" c="dimmed">{selected.config ? `${selected.config.symbol} · ${selected.config.timeframe} · ${selected.config.session}` : "Backtest needed"}</Text></div><StrategyStageBadge {...selected.status} /></Group>
+          {seed && <Group mt="sm" gap="xs">
+            <Button size="xs" variant="default" leftSection={showArchive ? <IconArchiveOff size={14} /> : <IconArchive size={14} />}
+              disabled={busy || (!showArchive && !!selected.config?.busy)}
+              title={!showArchive && selected.config?.busy ? "Wait for this configuration's active work to finish before archiving." : undefined}
+              onClick={() => onArchiveConfiguration(seed.id, !showArchive)}>
+              {showArchive ? "Restore configuration" : "Archive configuration"}
+            </Button>
+            <Text size="xs" c="dimmed">{showArchive ? "Results and evidence are preserved." : "Includes all matching runs; results and evidence are kept."}</Text>
+          </Group>}
+          <Text size="sm" mt="sm">{selected.status.finding}</Text>
+          {!showArchive && selected.status.action && <StrategyNextActionButton action={selected.status.action} />}
+          <div className="research-steps">{researchStages.map(stage => <StageRow key={stage.stage} number={stage.stage} status={selected.status} seed={seed} evaluations={evaluations} />)}</div>
+          <details className="research-evidence"><summary>Attempts and evidence ({attempts.length})</summary>
+            {selected.config && <Text size="xs" mt="xs">Parameters: {JSON.stringify(selected.config.parameters)}</Text>}
+            {attempts.map(run => <div className="research-attempt" key={run.id}><Text size="xs">{run.created_at.slice(0, 10)} · {run.status} · {run.input.start} to {run.input.end} · {run.result?.metrics.trades ?? "—"} trades</Text><Button size="compact-xs" variant="subtle" onClick={() => onInspect(run)}>Inspect {run.id.slice(0, 8)}</Button></div>)}
+            {evaluations.map(evaluation => <div className="research-attempt" key={evaluation.id}><Text size="xs">{evaluation.name} · {evaluation.outcome || evaluation.status}</Text><Button component="a" href={href("evaluations")} size="compact-xs" variant="subtle">Open evaluation</Button></div>)}
+            {attempts.flatMap(run => run.stage_assessments || []).map(assessment => <Text key={assessment.id} size="xs">{assessment.recordedAt.slice(0, 10)} · {stageNames[assessment.attemptedStage]} {assessment.outcome}: {assessment.findings}</Text>)}
+          </details>
+        </section>}
       </div>
-    </>
-  );
+    </div>
+  </>;
+}
+
+function StageRow({ number, status, seed, evaluations }: { number: 1 | 2 | 3 | 4 | 5; status: StrategyStageStatus; seed?: RunSummary; evaluations: WorkbenchState["evaluations"] }) {
+  const failed = status.failedStage === number || status.kind === "failed-checks" && !status.failedStage && number === Math.min(5, status.stage + 1);
+  const blocked = status.blockedStage === number;
+  const complete = status.stage >= number && !failed && !(number === 4 && status.kind === "forward-testing");
+  const waiting = !failed && !complete && (blocked || number === 4 && status.kind === "forward-testing" || number === 5 && status.kind === "forward-tested");
+  const label = failed ? "Failed" : complete ? "Complete" : waiting ? "Waiting for evidence" : number === status.stage + 1 ? "Next" : "Locked";
+  const criteria = number === 1 ? seed?.input.criteria || stageCriteria[number]
+    : number === 2 ? evaluations?.map(e => `${e.name}: return ≥ ${((e.min_return || 0) * 100).toFixed(1)}%, drawdown ≤ ${((e.max_drawdown || 0) * 100).toFixed(1)}%, trades ≥ ${e.min_test_trades ?? "declared minimum"}`).join("; ") || stageCriteria[number]
+    : number === 3 ? readinessChecks.robustness.map(c => c.label).join("; ")
+    : number === 4 ? seed?.readiness_reviews?.find(review => review.phase === "forward-plan")?.plan ? "Frozen paper-test criteria on the run record" : stageCriteria[number]
+    : readinessChecks.practical.map(c => c.label).join("; ");
+  return <div className={`research-step ${failed ? "failed" : complete ? "complete" : ""}`}>
+    <div className="research-step-title"><strong>{number}. {stageNames[number]}</strong><Badge size="xs" color={failed ? "red" : complete ? "teal" : waiting ? "blue" : "gray"}>{label}</Badge></div>
+    {(failed || blocked || number === status.stage + 1) && <Text size="xs" mt={4}>{failed || blocked ? status.finding : researchStages[number - 1].description}</Text>}
+    <details><summary>Criteria and evidence</summary><Text size="xs">{criteria}</Text>{failed && status.checks.map((check, index) => <Text size="xs" c="red" key={index}>{check}</Text>)}{number === 1 && seed && <Text size="xs">Run {seed.id}</Text>}{number === 2 && evaluations?.map(e => <Text size="xs" key={e.id}>{e.id} · {e.outcome || e.status}</Text>)}</details>
+  </div>;
 }

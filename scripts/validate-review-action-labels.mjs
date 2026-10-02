@@ -45,10 +45,12 @@ try {
   await page.getByRole('link',{name:'Scripts & library',exact:true}).click();
   const name=strategyTitle(state.strategies.find(s=>s.id==='short-term-reversal-minute').name);
   const card=page.locator('section.wb-card').filter({has:page.getByRole('heading',{name,exact:true})});
-  await card.getByText('Testing details',{exact:true}).click();
   await expect(card.getByText('Backtested',{exact:true}).first()).toBeVisible();
-  await expect(card.getByText(/4 reviewed · 0 awaiting review/)).toBeVisible();
-  checks.push('Completed script reviews remain completed and retain all four risk failures.');
+  await expect(card.locator('[aria-label="Best run summary"]')).toContainText(/Best run.*NQ.*5m/);
+  await expect(card.locator('.strategy-testing-best-run-metric').first().locator('strong')).toContainText('146,035');
+  await expect(card.locator('.strategy-testing-best-run-metric').first().locator('span')).toHaveText('Net P&L');
+  await expect(card.locator('.strategy-testing-best-run-metric')).toHaveCount(4);
+  checks.push('Script card keeps its Backtested status and shows the linked five-minute best run.');
   assert.deepEqual(errors,[]);
   const after=await(await fetch(origin+'/api/workbench/state?view=summary')).json();
   assert.equal(after.runs.length,state.runs.length);

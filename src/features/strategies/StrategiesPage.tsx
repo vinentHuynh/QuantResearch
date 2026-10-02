@@ -1,4 +1,5 @@
-import { Alert, Button, Code, Group, Select, SimpleGrid, Text, Title } from "@mantine/core";
+import { useState } from "react";
+import { Alert, Button, Code, Select, SimpleGrid, Text, TextInput, Title } from "@mantine/core";
 import { IconArrowUpRight, IconRefresh } from "@tabler/icons-react";
 import { comparePromising, testingEvidence } from "../../../shared/ts/evidence.ts";
 import { href } from "../../app/navigation";
@@ -8,12 +9,15 @@ import { PageHeader } from "../../shared/ui/PageHeader";
 import { StrategyTesting } from "../evaluations/StrategyTesting";
 import { WorkbenchAlerts } from "../workspace/WorkbenchChrome";
 import type { WorkbenchController } from "../workspace/useWorkbenchController";
-import { shortId } from "../workspace/workbenchModel";
 import { StrategyLibrary } from "./StrategyLibrary";
+import "./strategies.css";
 
 export function StrategiesPage({ controller }: { controller: WorkbenchController }) {
+  const [search, setSearch] = useState("");
+  const [archiveSearch, setArchiveSearch] = useState("");
   const {
     action,
+    busy,
     configure,
     go,
     inspect,
@@ -26,6 +30,11 @@ export function StrategiesPage({ controller }: { controller: WorkbenchController
   } = controller;
   if (!state) return null;
   const library = route.sub === "library";
+  const archived = route.sub === "archive";
+  const archivedScripts = state.archived_scripts || [];
+  const visibleArchivedScripts = [...archivedScripts]
+    .filter(script => `${script.name} ${script.id} ${script.original_path} ${script.archive_path}`.toLowerCase().includes(archiveSearch.toLowerCase()))
+    .sort((left, right) => right.archived_at.localeCompare(left.archived_at) || left.name.localeCompare(right.name));
   const evidence = Object.fromEntries(
     state.strategies.map((strategy) => [
       strategy.id,
@@ -64,16 +73,22 @@ export function StrategiesPage({ controller }: { controller: WorkbenchController
         }
         tabsLabel="Script views"
         tabs={[
-          { label: "Runnable scripts", count: state.strategies.length, active: !library, href: href("scripts") },
+          { label: "Runnable scripts", count: state.strategies.length, active: !library && !archived, href: href("scripts") },
           { label: "Library", count: state.library?.total, active: library, href: href("scripts", "library") },
+          { label: "Archive", count: archivedScripts.length, active: archived, href: href("scripts", "archive") },
         ]}
       />
       <WorkbenchAlerts controller={controller} />
-      <div className="wb-content">
-        <Group justify="space-between" align="end" mb="md">
-          <Text size="sm" c="dimmed">Most promising first — validation strength, then return / drawdown.</Text>
-          <Select
-            label="Testing evidence market"
+      <div className="wb-content scripts-page">
+        <div className="scripts-toolbar">
+          {!library && <TextInput
+            aria-label={archived ? "Search archived scripts" : "Search runnable strategies"}
+            placeholder={archived ? "Search archive" : "Search scripts"}
+            value={archived ? archiveSearch : search}
+            onChange={event => archived ? setArchiveSearch(event.currentTarget.value) : setSearch(event.currentTarget.value)}
+          />}
+          {!archived && <Select
+            aria-label="Testing evidence market"
             value={testingMarket}
             onChange={(value) => setTestingMarket(value || "")}
             data={[
@@ -82,62 +97,101 @@ export function StrategiesPage({ controller }: { controller: WorkbenchController
                 .sort()
                 .map((symbol) => ({ value: symbol, label: symbol })),
             ]}
-          />
-        </Group>
-        {library ? (
-          <StrategyLibrary library={state.library} configure={configure} evidence={evidence} testingActions={testingActions} />
-        ) : (
-          <>
-            <details className="wb-card">
-              <summary>Create your next strategy</summary>
-              <Text size="sm" mt="xs">
+          />}
+          {!library && !archived && <details className="scripts-create">
+            <summary>Create your next strategy</summary>
+            <div className="scripts-create-body">
+              <Text size="sm">
                 Copy <Code>strategies/_template.py</Code> to <Code>strategies/my_strategy.py</Code>, give it a unique <Code>STRATEGY['id']</Code>, and implement <Code>signals(bars, parameters)</Code>. The workbench picks it up automatically within five seconds.
               </Text>
               <Text size="sm" c="dimmed" mt="xs">
                 The template documents signal timing, parameters, and helper imports. Source snapshots preserve registered scripts and local helpers when you launch. Existing scripts can be wrapped by this small adapter.
               </Text>
-            </details>
+            </div>
+          </details>}
+        </div>
+        {library ? (
+          <StrategyLibrary library={state.library} configure={configure} evidence={evidence} testingActions={testingActions} />
+        ) : archived ? (
+          visibleArchivedScripts.length ? (
+            <SimpleGrid className="scripts-grid" cols={{ base: 1, lg: 2 }} spacing="sm">
+              {visibleArchivedScripts.map(script => (
+                  <section className="wb-card scripts-strategy-card" key={script.id}>
+                    <div className="scripts-strategy-heading">
+                      <Title order={3}>{strategyTitle(script.name)}</Title>
+                      <Text size="xs" c="dimmed">Archived {new Date(script.archived_at).toLocaleString()}</Text>
+                    </div>
+                    <Text size="xs" c="dimmed" mt="sm" className="scripts-archive-path">Stored at <Code>{script.archive_path}</Code></Text>
+                    <Text size="xs" c="dimmed" className="scripts-archive-path">Original location <Code>{script.original_path}</Code></Text>
+                    <div className="scripts-strategy-actions">
+                      <Button
+                        size="xs"
+                        variant="light"
+                        disabled={busy}
+                        onClick={() => void action(async () => {
+                          await request("/scripts/restore", { id: script.id });
+                          setNotice(`${strategyTitle(script.name)} restored.`);
+                        })}
+                      >
+                        Restore script
+                      </Button>
+                    </div>
+                  </section>
+                ))}
+            </SimpleGrid>
+          ) : (
+            <div className="wb-empty"><Text>{archivedScripts.length ? "No archived scripts match this search." : "No archived scripts yet."}</Text></div>
+          )
+        ) : (
+          <>
             {state.errors.map((error, index) => (
               <Alert key={index} color="red" title={error.file || "Discovery error"}>{error.error}</Alert>
             ))}
-            <SimpleGrid cols={{ base: 1, md: 2 }}>
+            <SimpleGrid className="scripts-grid" cols={{ base: 1, lg: 2 }} spacing="sm">
               {[...state.strategies]
+                .filter(strategy => `${strategy.name} ${strategy.description} ${strategy.id}`.toLowerCase().includes(search.toLowerCase()))
                 .sort(
                   (left, right) =>
                     comparePromising(evidence[left.id], evidence[right.id]) ||
                     left.name.localeCompare(right.name),
                 )
-                .map((strategy) => (
-                  <section className="wb-card" key={strategy.id}>
-                    <Group justify="space-between" wrap="nowrap" align="start">
+                .map((strategy) => {
+                  const summary = evidence[strategy.id];
+                  const bestRunId = summary.best?.run.id;
+                  return (
+                  <section className="wb-card scripts-strategy-card" key={strategy.id}>
+                    <div className="scripts-strategy-heading">
                       <Title order={3}>{strategyTitle(strategy.name)}</Title>
-                    </Group>
-                    <StrategyTesting evidence={evidence[strategy.id]} {...testingActions} />
-                    <details className="script-source-details">
-                      <summary>Script details</summary>
-                      <Text size="sm" c="dimmed" my="sm">{strategy.description}</Text>
-                      {strategy.migration_scope && <Text size="xs" mb="sm">{strategy.migration_scope}</Text>}
-                      <Text size="xs"><Code>{strategy.file}</Code> · {shortId(strategy.file_hash)}</Text>
-                      <Text size="sm" mt="sm">{strategy.timeframes.join(" · ")}</Text>
-                      <Text size="xs" c="dimmed" mt="xs">{Object.keys(strategy.parameters).join(", ")}</Text>
-                      <Text size="xs" mt="sm">
-                        Last successful run:{" "}
-                        {state.runs
-                          .find((run) => run.input.strategy.id === strategy.id && run.status === "Succeeded")
-                          ?.ended_at?.slice(0, 19)
-                          .replace("T", " ") || "No runs yet"}
-                      </Text>
-                    </details>
-                    <Button
-                      mt="md"
-                      variant="light"
-                      rightSection={<IconArrowUpRight size={15} />}
-                      onClick={() => configure(strategy.id)}
-                    >
-                      Configure run
-                    </Button>
+                      <Text size="xs" c="dimmed">{summary.configurations.length} configurations · {summary.failingConfigurations} failed · {summary.total} attempts</Text>
+                    </div>
+                    <StrategyTesting runnableCard evidence={summary} {...testingActions} />
+                    <div className="scripts-strategy-actions">
+                      <Button
+                        size="xs"
+                        variant="light"
+                        rightSection={<IconArrowUpRight size={15} />}
+                        onClick={() => configure(strategy.id)}
+                      >
+                        Configure run
+                      </Button>
+                      {bestRunId && <Button size="compact-xs" variant="subtle" onClick={() => testingActions.inspectRun(bestRunId)}>Inspect best run</Button>}
+                      <Button component="a" href={href("workspace")} size="compact-xs" variant="subtle">Research history</Button>
+                      <Button
+                        size="compact-xs"
+                        variant="subtle"
+                        disabled={busy}
+                        onClick={() => void action(async () => {
+                          await request("/scripts/archive", { id: strategy.id });
+                          setNotice(`${strategyTitle(strategy.name)} archived. Find it in Archive.`);
+                          go("scripts", "archive");
+                        })}
+                      >
+                        Archive script
+                      </Button>
+                    </div>
                   </section>
-                ))}
+                  );
+                })}
             </SimpleGrid>
           </>
         )}

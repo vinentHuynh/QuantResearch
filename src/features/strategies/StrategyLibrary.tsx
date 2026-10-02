@@ -153,6 +153,7 @@ export function StrategyLibrary({
                   </Badge>}
                   {[...e.adapters].sort((a,b) => comparePromising(evidence[a.id], evidence[b.id])).slice(0, 1).map(adapter => <div key={adapter.id}>
                     {e.adapters.length > 1 && <Text size="xs" c="dimmed">{strategyTitle(adapter.name)} · best of {e.adapters.length} adapters</Text>}
+                    {evidence[adapter.id] && <Text size="xs" c="dimmed">{evidence[adapter.id].configurations.length} configurations · {evidence[adapter.id].failingConfigurations} failed · {evidence[adapter.id].total} attempts</Text>}
                     {evidence[adapter.id] ? <StrategyTesting compact evidence={evidence[adapter.id]} {...testingActions} /> : <Text size="xs">Adapter unavailable; testing evidence cannot be matched.</Text>}
                   </div>)}
                 </Table.Td>

@@ -1,0 +1,15 @@
+{
+  "created_at": "2026-09-30T14:48:22.229Z",
+  "runs": [
+    {
+      "stage": "development",
+      "id": "7df959e6-c519-4001-b8f5-4a33e082f12d",
+      "parameters": {
+        "box_bars": 8,
+        "max_range_atr": 2,
+        "zone_half_width_atr": 0.1
+      }
+    }
+  ],
+  "evaluations": []
+}

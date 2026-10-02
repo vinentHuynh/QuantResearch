@@ -8,6 +8,7 @@ import {
   type GatePolicy,
 } from "./portfolio.ts";
 import { collectiveProgress } from "./progress.ts";
+import { strategyStageLabels } from "./strategyLifecycle.ts";
 
 export type PortfolioResult = ReturnType<typeof calculatePortfolio>;
 
@@ -40,6 +41,13 @@ export function selectedCollectiveItems(
   return (catalog?.items || []).filter((item) => copies[item.id] > 0);
 }
 
+export function itemsForLoadedSeries(
+  selected: CollectiveItem[],
+  loadedCatalog: CollectiveCatalog | null,
+) {
+  return selected.map((item) => loadedCatalog?.items.find((snapshot) => snapshot.id === item.id) || item);
+}
+
 export function filterCollectiveItems(
   catalog: CollectiveCatalog | null,
   filters: CollectiveFilters,
@@ -49,11 +57,14 @@ export function filterCollectiveItems(
     .filter(
       (item) =>
         (filters.milestone === "all" ||
+          (filters.milestone in strategyStageLabels
+            ? item.research_status?.kind === filters.milestone
+            :
           (filters.milestone === "working"
             ? item.working
             : filters.milestone === "feasible"
               ? item.feasible
-              : !item.working && !item.benchmark)) &&
+              : !item.working && !item.benchmark))) &&
         (!filters.markets.length || filters.markets.includes(item.symbol)) &&
         (filters.timeframe === "all" || item.timeframe === filters.timeframe) &&
         `${item.name} ${item.symbol} ${item.timeframe} ${item.session} ${item.source}`
@@ -87,6 +98,24 @@ export function hasLatestEsNqWindow(items: CollectiveItem[]) {
       items.some((item) => item.symbol === "ES") &&
       items.some((item) => item.symbol === "NQ") &&
       Boolean(window.end),
+  };
+}
+
+export function withLatestEsNq(
+  settings: CollectiveCalculationSettings,
+  catalog: CollectiveCatalog,
+): CollectiveCalculationSettings | null {
+  const items = latestEsNqItems(catalog);
+  const { available, window } = hasLatestEsNqWindow(items);
+  if (!available) return null;
+  return {
+    ...settings,
+    copies: Object.fromEntries(items.map((item) => [item.id, 1])),
+    start:
+      settings.start >= window.start && settings.start <= window.end
+        ? settings.start
+        : window.start,
+    end: window.end,
   };
 }
 
@@ -128,6 +157,15 @@ export function collectiveTestedWindow(
       (item) => histories.find((history) => history.id === item.id) || item,
     ),
   );
+}
+
+export function verifiedCommonEnd(
+  selected: CollectiveItem[],
+  histories: CollectiveSeries[],
+) {
+  if (!selected.length || selected.some((item) => !histories.some((history) => history.id === item.id)))
+    return "";
+  return collectiveTestedWindow(selected, histories).end;
 }
 
 export function summarizeCollectiveResult(result: PortfolioResult | null) {

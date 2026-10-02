@@ -1,0 +1,22 @@
+{
+  "created_at": "2026-09-30T14:32:50.258Z",
+  "runs": [
+    {
+      "stage": "development",
+      "id": "739faf2a-dd89-4bcf-80f5-5884ba3e942a",
+      "parameters": {
+        "level_source": "prior-day",
+        "zone_half_width_atr": 0.1
+      }
+    },
+    {
+      "stage": "development",
+      "id": "c9062cba-e171-48e6-bf6d-1a9009a8446c",
+      "parameters": {
+        "level_source": "overnight",
+        "zone_half_width_atr": 0.1
+      }
+    }
+  ],
+  "evaluations": []
+}

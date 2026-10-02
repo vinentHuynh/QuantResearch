@@ -1,0 +1,37 @@
+# Remaining-zone failure tests: frozen bounded screen
+
+Created September 30, 2026 before inspecting this campaign's scored outcomes. Continue the remaining seven families from the original list. Preserve earlier sparse prior-day/overnight results and the failed box result; do not reinterpret the search history as a fresh holdout. This campaign uses one common engine and records every attempted candidate.
+
+## Fixed candidates
+
+1. `swing-1h`: strict high/low beyond two completed higher-timeframe candles on each side, activated only after the second right candle completes. Build complete one-hour candles from each 17:00 Chicago session open.
+2. `swing-4h`: identical rule on complete four-hour candles. These are the two prespecified resolutions in one family, not a result-driven search.
+3. `opening-15m`: first completed regular-session 15-minute high/low, activated after the opening window ends.
+4. `opening-30m`: first two contiguous regular-session candles; otherwise identical.
+5. `departure-swing`: strict two-left/two-right 15-minute swing, then a completed close >=1.5 swing-confirmation ATR away in the expected direction within 40 chart bars. Activate only once both confirmation and departure are known.
+6. `role-flip`: confirmed 15-minute swing; a subsequent close crosses the original far edge by at least one tick within 80 bars. Freeze the opposite support/resistance role only after that close. The original pivot is a detector input, not a separately tradable zone in this candidate.
+7. `rolling-20`: completed contiguous 20-bar high/low, available to subsequent bars; exclude the signal bar from its formation. Suppress duplicate same-side prices while an identical level remains active.
+8. `round-100`: fixed NQ 100-point grid; at each completed close register the floor as support and the next higher grid level as resistance. Identical active same-side prices are suppressed. Grid step is fixed before results, not optimized.
+9. `daily-pivots`: previous complete scheduled 08:30-15:00 Chicago regular session, shortened by the preserved exchange calendar. P=(H+L+C)/3, S1=2P-H, R1=2P-L. Activate at the next regular open using the final pre-open candle. Missing prior sessions are not replaced by older observed history.
+10. `generic-prior-bar`: high/low of the immediately preceding completed candle; same deduplication and trade engine. This supplies a descriptive basic-sweep benchmark. It is not a matched-location control and does not establish the incremental causal value of a detector.
+
+There are nine detector candidates across seven families plus one benchmark. No added candidates or threshold tuning after outcomes. All ten are run even if another family fails. Distinct overlapping levels are retained; one position and at most one submitted entry per chart candle follow the shared engine's deterministic level order.
+
+## Common execution and detection review
+
+- NQ immutable dataset `3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1`, SHA-256 `67092a9b6201747c46ae08029068fd03b42c5def68339ac2434dba78a77386c7`, 15-minute full-trading-day bars, 30-day warmup, one contract and $100,000 starting capital.
+- Zone half-width +/-0.10 completed formation ATR(14), frozen at activation. Identical lifetime of 80 subsequent selected bars for every level. No sliding zones. Formation close may arm the level; the formation bar cannot trade it. Strict observed bar continuity is required for opening/rolling and higher-timeframe aggregation; this does not certify minute completeness.
+- First armed physical touch consumes a level, including shallow/nonqualifying touches, overnight touches and touches while occupied. Previous close and signal open must be on the approach side; sweep at least one tick beyond the far edge; close inside the small zone. The stronger close fully beyond the near edge is deliberately excluded and is not silently added after poor results.
+- Reversal enters at the next contiguous 15-minute open, expires if that opening is absent, stop one tick beyond sweep extreme, cancel if entry opens through stop. Same 20 entry-inclusive chart-bar time exit and exceptional-move target 1,000 signal ATR away as preceding tests.
+- New entries only 08:30-15:00 Chicago, capped by preserved holiday calendar, signal completion/next open before close. Positions may carry afterward. $2.50 commission/side and one tick slippage/side; one-minute OHLC stops and conservative ordering. No risk sizing, news filter, roll adjustment, matched control or additional event-delay stress.
+- Before scored launch, inspect deterministic formation charts and numerical rules on December 2021 (warmup-era examples, no scored P&L). Confirm source completion precedes level activation and no future-bar changes alter earlier detections. Review first available formations, not examples chosen for profitable outcomes. Save chart and audit evidence. Sparse preview detections are reported rather than invented.
+- Declare conservative warmup as 64*swing_sides+14=142 completed chart bars. Verify actual source windows for each detector separately.
+- Differences from preceding campaigns (especially daily expiry/visit eligibility and cluster widths) remain visible. Results compare complete configurations; even this common engine does not make different event populations statistically identical.
+
+## Frozen stage gates and analysis
+
+1. **Development:** 2022-01-01 through 2024-12-31, exactly these ten configurations. Successful, independently reconciled artifacts and sufficient warmup required. Fewer than 100 trades is **sparse / inconclusive for advancement**, not proof of no edge. For adequately sampled candidates require positive net P&L, net PF>=1.05, >=2 profitable Chicago exit-calendar years, and marked drawdown<=35%. Failure is rejection of the tested configuration only. The 100 floor and yearly/PF thresholds are operational screening gates, not statistical-significance guarantees.
+2. Report annual P&L, net expectancy, drawdown, costs, winner concentration and a seeded day-cluster bootstrap interval for average net P&L per trade. Resample whole trading days with trades grouped by entry Chicago date; pointwise exploratory intervals do not correct for the ten tested candidates, long dependence or source reuse. Do not select variants using later data. Benchmark comparison is descriptive; matched event controls remain future work.
+3. **Eligible survivors only:** Workbench walk-forward evaluation, one candidate/fold, 366 training days in 2024 and 365 test days in 2025, net-P&L selection metric, >=20 training trades. Baseline and doubled costs, no event delay. Each test scenario requires positive net P&L, PF>1, >=40 trades, drawdown<=35% and sufficient warmup. A sparse test is inconclusive. Record overlapping earlier research; 2025 is chronological later history, not certified untouched.
+4. **Only after both 2025 scenarios pass:** baseline and doubled-cost 2026-01-01 through 2026-09-28 tests, each positive P&L, PF>1, >=25 trades, drawdown<=35% and sufficient warmup. Then nearby half-widths 0.075/0.125 on development only; each positive P&L, PF>1, >=100 trades, >=2 profitable years, drawdown<=35%, sufficient warmup. Stop each candidate at a decisive failed or sparse stage, retain all failed attempts, and do not rescue it with additional dates/parameters.
+5. No transfer-market claim or automated Watchlist promotion. No live approval. Report stage reached separately from execution status and economic judgment.

@@ -1,27 +1,33 @@
 # Combined strategy dashboard
 
-Open `http://127.0.0.1:5173`. The app lands on **Portfolio → Combined
-portfolio**, and the sidebar link always returns to it.
+Open `http://127.0.0.1:5173`. The app lands on **Combined portfolio**.
 
-The portfolio starts with the seven configurations that passed the available
-later-period checks. It has four views: **Overview** (totals, chart, market and
+The first saved combination with all selected books available opens by default. The portfolio
+has four views: **Overview** (totals, chart, market and
 year tables), **Calendar** (daily P&L with the selected day's breakdown beside
 it), **Contributions**, and **Pause & sizing**. The **Combination** panel on
 the right stays visible in every view; **Add** opens the configuration picker.
-Individual evaluations are under **Portfolio → Strategy scorecards**.
+Individual evaluations and scorecards are linked from **Research**.
 
 ## Build a combination
 
-1. In **Add**, use the compact filter tabs above the configuration table.
-   The default **Evaluation passed** includes configurations with additional
-   robustness checks. Filter by milestone, market, timeframe, name or session;
-   **All tested** includes earlier research and benchmarks.
-2. Check configurations individually, or click **Apply visible strategies** to
-   replace the combination. Filtering alone does not remove selected books;
-   hidden selections are explicitly counted.
+1. In **Add**, use **Passed**, **In progress**, **Failed**, or **All**. Passed opens
+   first. Each script has an expandable group of exact histories. The collapsed
+   preview shows the highest saved-window P&L divided by maximum daily dollar
+   drawdown among the histories in the current tab and filters. It keeps the
+   summary to market, timeframe, net P&L, daily drawdown, trades, and Return/DD;
+   dates and research warnings remain in the expanded histories. The plus button
+   on a collapsed group adds that exact best history, importing its raw run first
+   when needed. All includes every registered script, including the benchmark.
+2. Expanded rows show the market/timeframe, saved dates, centered P&L, maximum
+   daily drawdown percentage, and risk-adjusted score. Any intact saved
+   history can be added, including failed or unfinished validation. **Add shown**
+   keeps existing selections. Filtering never removes selected books; selections
+   outside the view are counted. A completed result without a portfolio history
+   offers **Import exact run**; a script without a result offers **Research**.
 3. Set **Starting capital (USD)** in the Combination panel. It defaults to
-   $100,000 shared across the entire portfolio. Set whole-number copies of
-   each recorded book; two copies double its dollar P&L and exposure while total
+   $100,000 shared across the entire portfolio. Set whole-number copies under
+   **Add → Selected copies**; two copies double a book's dollar P&L and exposure while total
    capital stays fixed. This does not rerun risk-based sizing.
 4. In the Combination panel, choose dates and marked or closed-trade
    accounting. **Use common tested
@@ -30,35 +36,85 @@ Individual evaluations are under **Portfolio → Strategy scorecards**.
 5. Inspect the market curves, daily bars, yearly and strategy contributions,
    and the calendar. Click a calendar date for each strategy's contribution.
 
+In **Overview**, choose **All**, **1Y**, **YTD**, **6M**, or **1M** above the P&L
+chart. The choice updates combined net P&L, its return on shared starting capital,
+the chart, and the market and year P&L tables. Calendar periods end on the selected
+portfolio end date and stay within the selected tested window. The chart starts
+each period's cumulative P&L at zero. Drawdown, combination score, profit
+factor, win rate, and trade and day counts also use that period; drawdown starts
+from shared starting capital at the period boundary.
+
 Contributions lists **Strategy** and **Chart** separately; Chart identifies the
 market, timeframe and session. **Maximum drawdown** is each strategy's largest
 peak-to-trough dollar loss within the selected dates, starting its cumulative
 P&L at zero. It uses the chosen accounting basis, copies and active pause/sizing
 replay. Drawdowns are measured at daily observations and do not capture intraday
 extremes. Individual strategy drawdowns are not additive portfolio drawdown.
+The period selector on Contributions shares the Overview selection. It updates
+each strategy's P&L, drawdown, return contribution, always-on result, trade
+counts, skipped trades and average size. **At cutoff** reflects the common end
+date, which stays fixed as the period start changes.
 
-Selections and settings persist in the browser. From the Combination panel,
+The Combination list shows only each book's symbol, strategy name, P&L percentage,
+and drawdown percentage. P&L divides the book's net P&L by shared starting
+capital. Drawdown follows that book's daily P&L on an isolated equity path
+starting at shared capital and measures the largest decline from a running peak.
+Both follow the selected dates, accounting basis, copies, and pause/sizing policy.
+Use the **X** beside a book to remove it from the active combination. Change copy
+counts under **Add → Selected copies**. Save again to update a named combination.
+
+Settings and named combinations persist in the browser. On load, the first saved
+combination with all selected books available becomes the default; without one, the portfolio
+restores the active settings or its initial catalog selection. From the Combination panel,
 export daily P&L as CSV and save the combination, source identities and policy
 settings as JSON. Policy decision logs have a separate CSV export in **Pause &
 sizing**.
 
+The saved-combination picker keeps the loaded name visible while books or settings
+change. **Save** updates the selected combination and moves it to the top of the
+list. **Delete** removes that saved record while leaving the current portfolio
+active. Clear the picker selection to save a new named combination.
+
 ## Research milestones
 
-The picker uses the same milestones as scripts, library and evaluations, in the
-original compact table layout. The Evaluation passed tab includes Robustness
-checked configurations; Backtested only excludes both and benchmarks.
+The picker uses the exact same current-configuration statuses as scripts,
+library, runs and evaluations:
 
-- **Backtested:** a recorded simulation is available. Includes exploratory,
-  incomplete and failed-check configurations; inspect their findings before
-  planning the next baseline/stress evaluation. Coverage dates do not pass tests.
-- **Evaluation passed:** available later-period baseline, cost and declared
-  execution/risk checks passed. Maps to the existing `working` catalog flag.
-- **Robustness checked:** evaluation plus completed historical execution and
-  nearby-parameter checks. Maps to the existing `working` and `feasible` flags.
-- **Benchmarks:** comparison references, listed separately from validation stages.
+- **Not backtested:** no completed development result.
+- **Backtest in progress:** development runs are queued, running or summarizing.
+- **Backtested · awaiting evaluation:** development execution is complete;
+  declared later-period tests are still needed. Losses remain visible.
+- **Evaluation in progress:** a matching evaluation is queued, running or
+  summarizing, including when its child jobs have finished.
+- **Historical evaluation passed:** all declared current-source tests passed with
+  no unresolved matching failures. This is stage 2, distinct from practical readiness.
+- **Robustness and execution validated:** a named reviewer recorded the complete
+  parameter/coverage/execution/risk checklist against current evidence (stage 3).
+- **Forward testing:** a prospective paper-test plan was frozen before its start,
+  with predefined sample and return/drawdown criteria (stage 4).
+- **Forward testing complete · readiness review needed:** externally recorded
+  prospective observations met those frozen criteria; practical acceptance is pending.
+- **Ready for practical use:** the forward test passed and a named reviewer
+  accepted the operating, execution, risk and monitoring checklist (stage 5).
+- **Failed checks · revise strategy:** matching recorded checks failed.
+- **Retest required:** the execution source changed or is no longer registered.
+- **Needs review:** missing linkage, execution issues or incomplete evidence.
+- **Benchmark:** a passive comparison reference.
 
-Each row identifies the symbol, chart, coverage, original findings
-and exact parameters. A failure on another configuration does not invalidate
+The complete five-stage guide appears throughout the app. Each row distinguishes
+recorded practical acceptance from unfinished readiness. Later-stage reviews
+record named external evidence and its operating scope; they are not connected
+paper-account measurements or a broker execution system. New sources, changed
+evidence or new attempts invalidate previous readiness reviews. Historical
+historical replays cannot complete prospective testing. Imported `working` and
+`feasible` flags remain historical notes and cannot award a current stage.
+Research retains all configurations and failures. The picker selects one option
+per script without changing those records or awarding a research stage. Validation
+status does not prevent adding an intact history; missing or damaged histories
+must be imported or repaired before they can be combined.
+
+Research details retain coverage, original findings and exact parameters.
+A failure on another configuration does not invalidate
 a passing one. Adding a book includes its history for portfolio research; it
 does not promote its evidence. The milestones describe historical research,
 not live approval. Catalog eligibility and original evidence are preserved.
@@ -412,15 +468,38 @@ links. The extension is exploratory; prior evaluation labels apply to the
 earlier tested windows. ES sleeves cover September 29; NQ sleeves stop at the
 last complete common session on September 28. The seven-book combination still
 ends August 31 because its YM and MNQ sleeves were not refreshed.
-When a saved browser combination still ends in August, the portfolio offers
-**View latest ES/NQ**. It selects the five refreshed books, preserves an existing
-start date within their common window, and ends on September 28. The prior
-combination is retained in browser storage for **Restore previous combination**;
-the same view can be opened directly with `?portfolio=latest-es-nq#/portfolio/calendar`.
+On a first visit with no saved selection, the portfolio selects the five
+refreshed ES/NQ books. Later evidence refreshes preserve the selected books and
+copy counts. The active selection is saved on the local server so portfolio
+updates can continue after the browser closes; a named combination becomes the
+active selection when loaded.
+
+When a newer immutable dataset is registered, the workbench checks the active
+books for additional complete UTC dates. It queues background historical
+replays for books linked to saved workbench runs and for the two ES/NQ Expanded
+Overnight Session books. The original rules, costs, and source snapshots remain
+the reference. New ledgers must reconcile with the saved overlap and boundary
+accounting before a new checksum-verified history is published under the same
+portfolio ID. Existing P&L remains visible while a replay is pending or fails.
+Pinned exact-run histories and other older campaign books show **Manual update
+required** instead of silently presenting new dates. The book list shows market
+data through, simulated through, progress, errors, and retry when applicable.
+
+**Follow latest** advances the P&L end date to the selected books' latest
+common covered date after verified histories arrive. It is on for a new
+portfolio; typing an end date turns it off and preserves that historical cutoff.
+**Follow common start** sets the P&L start to the first date in the selected
+books' common continuous coverage. It is on for a new portfolio; typing a start
+date turns it off. A manually chosen start outside that coverage keeps the
+coverage warning visible until the date or selection changes.
+The latest registered bar can fall in an incomplete UTC day, so automatic
+tracking uses completed dates only. This is historical replay, not a live feed
+or prospective validation; the new dates do not advance research milestones.
 
 The importer writes immutable history files under `data/workbench/collective`
 and atomically publishes the index last. The API checks each history's hash before
-serving it. Original research artifacts and the workbench run ledger are unchanged.
+serving it. Original research artifacts and source run records are unchanged;
+new portfolio tracking runs are recorded separately in the workbench ledger.
 The refresh operation is local and accepts no strategy code or shell commands
 from the browser.
 

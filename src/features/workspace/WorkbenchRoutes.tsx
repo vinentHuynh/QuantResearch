@@ -1,20 +1,24 @@
+import { lazy, Suspense, type ReactNode } from "react";
 import { workbenchRequest as request } from "../../shared/api/workbench";
 import { CollectiveDashboard } from "../portfolio/CollectiveDashboardPage";
-import { ScorecardsPage } from "../scorecards/ScorecardsPage";
-import { ResearchPage } from "../evaluations/ResearchPage";
-import { EventStudies } from "../event-studies/EventStudiesPage";
-import { RunsPage } from "../runs/RunsPage";
-import { NewRunPage } from "../new-run/NewRunPage";
-import { StrategiesPage } from "../strategies/StrategiesPage";
-import { DatasetsPage } from "../datasets/DatasetsPage";
-import { WatchlistPage } from "../watchlist/WatchlistPage";
 import { ConnectingPage, WorkbenchAlerts } from "./WorkbenchChrome";
-import { WorkspaceOverview } from "./WorkspaceOverview";
 import type { WorkbenchController } from "./useWorkbenchController";
+
+const ScorecardsPage = lazy(() => import("../scorecards/ScorecardsPage").then((module) => ({ default: module.ScorecardsPage })));
+const ResearchPage = lazy(() => import("../evaluations/ResearchPage").then((module) => ({ default: module.ResearchPage })));
+const EventStudies = lazy(() => import("../event-studies/EventStudiesPage").then((module) => ({ default: module.EventStudies })));
+const RunsPage = lazy(() => import("../runs/RunsPage").then((module) => ({ default: module.RunsPage })));
+const NewRunPage = lazy(() => import("../new-run/NewRunPage").then((module) => ({ default: module.NewRunPage })));
+const StrategiesPage = lazy(() => import("../strategies/StrategiesPage").then((module) => ({ default: module.StrategiesPage })));
+const DatasetsPage = lazy(() => import("../datasets/DatasetsPage").then((module) => ({ default: module.DatasetsPage })));
+const WorkspaceOverview = lazy(() => import("./WorkspaceOverview").then((module) => ({ default: module.WorkspaceOverview })));
+
+const loadingPage = <div className="wb-content"><div className="wb-card">Loading page…</div></div>;
 
 export function WorkbenchRoutes({ controller }: { controller: WorkbenchController }) {
   const {
     action,
+    busy,
     dashboardRefresh,
     inspect,
     refresh,
@@ -22,36 +26,49 @@ export function WorkbenchRoutes({ controller }: { controller: WorkbenchControlle
     route,
     setDeletion,
     setResearchSelection,
+    setNotice,
     state,
   } = controller;
 
   if (route.page === "portfolio") {
     return (
       <CollectiveDashboard
+        researchState={state}
         refreshKey={dashboardRefresh}
         view={route.sub}
+        pickerOpen={controller.portfolioPickerOpen}
+        setPickerOpen={controller.setPortfolioPickerOpen}
         alerts={<WorkbenchAlerts controller={controller} />}
       />
     );
   }
-  if (route.page === "scorecards") return <ScorecardsPage controller={controller} />;
+  if (route.page === "scorecards") return <Suspense fallback={loadingPage}><ScorecardsPage controller={controller} /></Suspense>;
   if (!state) return <ConnectingPage controller={controller} />;
+  const workspace = <WorkspaceOverview
+    state={state}
+    busy={busy}
+    alerts={<WorkbenchAlerts controller={controller} />}
+    onInspect={(run) => void action(() => inspect(run))}
+    onCleanup={(ids) => void action(async () => {
+      setDeletion(await request("/runs/delete-preview", { ids }));
+    })}
+    onArchiveConfiguration={(runId, archived) => void action(async () => {
+      await request(`/configurations/${archived ? "archive" : "unarchive"}`, { run_id: runId });
+      controller.setSelected([]);
+      controller.setComparison(null);
+      setNotice(archived
+        ? "Configuration archived with its matching runs. Find it in Archive."
+        : "Configuration restored. Individually archived runs remain in Archive.");
+    })}
+  />;
+  let content: ReactNode;
   if (route.page === "workspace") {
-    return (
-      <WorkspaceOverview
-        state={state}
-        onInspect={(run) => void action(() => inspect(run))}
-        onCleanup={(ids) =>
-          void action(async () => {
-            setDeletion(await request("/runs/delete-preview", { ids }));
-          })
-        }
-      />
-    );
-  }
-  if (route.page === "evaluations") {
-    return (
+    content = workspace;
+  } else if (route.page === "evaluations") {
+    content = (
       <ResearchPage
+        key={route.sub}
+        initialRunId={route.sub.startsWith("plan~") ? route.sub.slice(5) : undefined}
         selectedId={researchSelection}
         onSelect={setResearchSelection}
         alerts={<WorkbenchAlerts controller={controller} />}
@@ -62,11 +79,11 @@ export function WorkbenchRoutes({ controller }: { controller: WorkbenchControlle
         inspect={(run) => void action(() => inspect(run))}
       />
     );
-  }
-  if (route.page === "runs") return <RunsPage controller={controller} />;
-  if (route.page === "event-studies") return <EventStudies datasets={state.datasets} />;
-  if (route.page === "new-run") return <NewRunPage controller={controller} />;
-  if (route.page === "scripts") return <StrategiesPage controller={controller} />;
-  if (route.page === "datasets") return <DatasetsPage controller={controller} />;
-  return <WatchlistPage controller={controller} />;
+  } else if (route.page === "runs") content = <RunsPage controller={controller} />;
+  else if (route.page === "event-studies") content = <EventStudies datasets={state.datasets} />;
+  else if (route.page === "new-run") content = <NewRunPage controller={controller} />;
+  else if (route.page === "scripts") content = <StrategiesPage controller={controller} />;
+  else if (route.page === "datasets") content = <DatasetsPage controller={controller} />;
+  else content = workspace;
+  return <Suspense fallback={loadingPage}>{content}</Suspense>;
 }

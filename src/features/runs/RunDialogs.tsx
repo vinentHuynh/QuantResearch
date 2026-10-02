@@ -15,8 +15,9 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { IconStar } from "@tabler/icons-react";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
+import { RunStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { ReadinessReviewPanel } from "../evaluations/ReadinessReviewPanel";
 import {
   WORKBENCH_API as API,
   workbenchRequest as request,
@@ -28,23 +29,23 @@ import {
   statusTone,
 } from "../workspace/workbenchModel";
 import { EquityChart } from "./EquityChart";
+import { canAddRunToPortfolio } from "./model";
 
 export function RunDialogs({ controller }: { controller: WorkbenchController }) {
   const {
     action,
+    addRunToPortfolio,
     busy,
     deletion,
     detail,
     inspect,
     notes,
-    reason,
     reuse,
     setComparison,
     setDeletion,
     setDetail,
     setNotes,
     setNotice,
-    setReason,
     setSelected,
     setTags,
     tags,
@@ -65,6 +66,8 @@ export function RunDialogs({ controller }: { controller: WorkbenchController }) 
               <Badge color={statusTone(detail.status)}>{detail.status}</Badge>
             </Group>
             <Text size="xs" c="dimmed">{detail.id} · {detail.input.stage}</Text>
+            <Group gap="sm"><Text size="sm" fw={600}>Strategy stage</Text><RunStageBadge runId={detail.id} showFinding /></Group>
+            <ReadinessReviewPanel key={detail.id} runId={detail.id} controller={controller} />
             <Text size="sm">
               {detail.input.dataset.symbol} · {detail.input.timeframe} · {detail.input.start} → {detail.input.end}
             </Text>
@@ -111,6 +114,9 @@ export function RunDialogs({ controller }: { controller: WorkbenchController }) 
                 Rerun identical inputs
               </Button>
               <Button variant="subtle" onClick={() => reuse(detail)}>Use settings</Button>
+              {canAddRunToPortfolio(detail) && (
+                <Button variant="light" onClick={() => addRunToPortfolio(detail.id)}>Add this run</Button>
+              )}
               <Button
                 component="a"
                 href={`${API}/runs/${detail.id}/export`}
@@ -176,25 +182,6 @@ export function RunDialogs({ controller }: { controller: WorkbenchController }) 
                     </Button>
                   ))}
                 </Group>
-                <Textarea
-                  label="Reason for freezing this configuration"
-                  value={reason}
-                  onChange={(event) => setReason(event.currentTarget.value)}
-                />
-                <Button
-                  leftSection={<IconStar size={16} />}
-                  variant="light"
-                  disabled={!reason.trim() || busy}
-                  onClick={() =>
-                    void action(async () => {
-                      await request("/watchlist", { run_id: detail.id, reason });
-                      setNotice("Configuration frozen in the watchlist.");
-                      setReason("");
-                    })
-                  }
-                >
-                  Freeze in watchlist
-                </Button>
               </>
             )}
             <Textarea

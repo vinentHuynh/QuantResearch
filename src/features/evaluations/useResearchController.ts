@@ -11,17 +11,20 @@ export function useResearchController({
   refresh,
   runs,
   selectedId,
+  initialRunId,
 }: {
   evaluations: EvaluationView[];
   refresh: () => Promise<void>;
   runs: RunSummary[];
   selectedId?: string;
+  initialRunId?: string;
 }) {
-  const [planOpen, setPlanOpen] = useState(false);
-  const [seedId, setSeedId] = useState("");
-  const [name, setName] = useState("Rolling trend evaluation");
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const initialRun = runs.find(run => run.id === initialRunId && run.status === "Succeeded");
+  const [planOpen, setPlanOpen] = useState(!!initialRun);
+  const [seedId, setSeedId] = useState(initialRun?.id || "");
+  const [name, setName] = useState(initialRun ? `${initialRun.input.strategy.name} evaluation` : "Rolling trend evaluation");
+  const [start, setStart] = useState(initialRun?.input.start || "");
+  const [end, setEnd] = useState(initialRun?.input.end || "");
   const [train, setTrain] = useState(60);
   const [test, setTest] = useState(30);
   const [folds, setFolds] = useState(3);
@@ -32,7 +35,7 @@ export function useResearchController({
   const [maxDrawdown, setMaxDrawdown] = useState(20);
   const [cost, setCost] = useState(2);
   const [delay, setDelay] = useState(1);
-  const [sweep, setSweep] = useState('{"lookback": [10, 20, 40]}');
+  const [sweep, setSweep] = useState(initialRun ? "{}" : '{"lookback": [10, 20, 40]}');
   const [hypothesis, setHypothesis] = useState("");
   const [preview, setPreview] = useState<{ jobs: number; folds: Fold[] } | null>(null);
   const [previewKey, setPreviewKey] = useState("");

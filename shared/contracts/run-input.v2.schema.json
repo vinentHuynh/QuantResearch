@@ -85,6 +85,16 @@
         "scenario": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false
+    },
+    "portfolio_replay": {
+      "type": "object",
+      "required": ["item_id", "source_run_id", "anchor_start"],
+      "properties": {
+        "item_id": { "$ref": "#/$defs/id" },
+        "source_run_id": { "$ref": "#/$defs/id" },
+        "anchor_start": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
     }
   },
   "allOf": [

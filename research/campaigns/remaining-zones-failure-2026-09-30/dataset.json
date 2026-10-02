@@ -1,0 +1,148 @@
+{
+  "id": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1",
+  "symbol": "NQ",
+  "source": "GLBX.MDP3",
+  "path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1-v1\\bars.parquet",
+  "checksum": "67092a9b6201747c46ae08029068fd03b42c5def68339ac2434dba78a77386c7",
+  "archive": "data/databento_updates/nq-2026-09-29/NQ-full-history-through-20260929T0918Z.zip",
+  "archive_checksum": "3b9114199a2f6f0e51b70a63edc43de00940ae5df8d047b3aaa6aa8424aac9f1",
+  "rows": 4835778,
+  "first": "2010-06-06T19:00:00-05:00",
+  "last": "2026-09-29T04:17:00-05:00",
+  "timeframe": "1m",
+  "timezone": "UTC",
+  "session": "CME Globex",
+  "currency": "USD",
+  "tick_size": 0.25,
+  "point_value": 20,
+  "query": {
+    "dataset": "GLBX.MDP3",
+    "schema": "ohlcv-1m",
+    "symbols": [
+      "NQ.v.0"
+    ],
+    "stype_in": "continuous",
+    "stype_out": "instrument_id",
+    "start": 1275782400000000000,
+    "end": 1790673480000000000,
+    "limit": null,
+    "encoding": "dbn",
+    "compression": "zstd"
+  },
+  "acquired_at": "2026-09-29T12:22:39.357809-05:00",
+  "registered_at": "2026-09-29T12:22:45.793982-05:00",
+  "quality": {
+    "duplicates": 0,
+    "unordered": 0,
+    "invalid_ohlc": 0,
+    "gaps_over_one_minute": 96105,
+    "contract_changes": 66
+  },
+  "warnings": [
+    "Continuous volume-rolled prices are unadjusted; contract rolls can affect signals and P&L.",
+    "Old history is preserved byte-for-value from the base dataset; only the tail was freshly acquired.",
+    "Gaps include exchange closures and no-trade minutes; no forward filling was performed.",
+    "Latest trading session is partial. Historical availability is not a live data subscription."
+  ],
+  "provenance": {
+    "kind": "local_composite_databento_archive",
+    "base_dataset_id": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3-v1",
+    "base_archive": "data\\mnq_dom_sample\\GLBX-20260907-6M58JWVVTK.zip",
+    "base_archive_sha256": "f47a454bc68f406890870d40be4517b1a85bf95c4604d8ba9298fc1aee09fba3",
+    "tail_file": "glbx-mdp3-20260904-20260929.ohlcv-1m.dbn.zst",
+    "tail_sha256": "9408ba15b03fbead1fa8f4d1616d561b8b4c63b3f5f4ea6a4d64dd2412feeb73",
+    "download": {
+      "request": {
+        "dataset": "GLBX.MDP3",
+        "symbols": [
+          "NQ.v.0"
+        ],
+        "stype_in": "continuous",
+        "schema": "ohlcv-1m",
+        "start": "2026-09-04T00:00:00Z",
+        "end": "2026-09-29T09:18:00Z"
+      },
+      "estimated_cost_usd": 0.086753591895,
+      "started_at_utc": "2026-09-29T12:21:00.396132-05:00",
+      "status": "downloaded",
+      "finished_at_utc": "2026-09-29T12:22:39.357809-05:00",
+      "sha256": "9408ba15b03fbead1fa8f4d1616d561b8b4c63b3f5f4ea6a4d64dd2412feeb73",
+      "bytes": 503081
+    },
+    "availability": {
+      "start": "2010-06-06T00:00:00.000000000Z",
+      "end": "2026-09-29T09:18:17.891359000Z",
+      "schema": {
+        "mbo": {
+          "start": "2017-05-21T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "mbp-1": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "mbp-10": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "tbbo": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "trades": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "bbo-1s": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "bbo-1m": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "ohlcv-1s": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "ohlcv-1m": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "ohlcv-1h": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "ohlcv-1d": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T00:00:00.000000001Z"
+        },
+        "definition": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "statistics": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "status": {
+          "start": "2010-06-06T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "cmbp-1": {
+          "start": "2017-05-21T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "cbbo-1s": {
+          "start": "2017-05-21T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        },
+        "cbbo-1m": {
+          "start": "2017-05-21T00:00:00.000000000Z",
+          "end": "2026-09-29T09:18:17.891359000Z"
+        }
+      }
+    },
+    "old_bars_preserved": true
+  }
+}

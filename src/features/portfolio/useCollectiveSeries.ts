@@ -10,12 +10,18 @@ export function useCollectiveSeries(
   setError: Dispatch<SetStateAction<string>>,
 ) {
   const [histories, setHistories] = useState<CollectiveSeries[]>([]);
+  const [seriesCatalog, setSeriesCatalog] = useState<CollectiveCatalog | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
-    if (!catalog || !ids) return () => controller.abort();
-    setHistories([]);
+    if (!catalog || !ids) {
+      setLoading(false);
+      return () => controller.abort();
+    }
+    // Keep the last verified series on screen while an updated catalog's
+    // histories load. The selected date window advances only after this fetch.
+    setLoading(true);
     fetch("/api/workbench/collective/series", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -28,7 +34,9 @@ export function useCollectiveSeries(
         return data as CollectiveSeries[];
       })
       .then((data) => {
+        if (controller.signal.aborted) return;
         setHistories(data);
+        setSeriesCatalog(catalog);
         setError("");
         setLoading(false);
       })
@@ -41,5 +49,5 @@ export function useCollectiveSeries(
     return () => controller.abort();
   }, [catalog, ids, setError]);
 
-  return { histories, setHistories, loading, setLoading };
+  return { histories, seriesCatalog, loading, setLoading };
 }
