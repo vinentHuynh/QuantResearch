@@ -217,6 +217,7 @@ rolls. `ninjatrader/` holds the equivalent NinjaTrader ports.
 - `evidence/` — tracked protocols, conclusions, manifests and checksums
 - `artifacts/` — ignored raw research output; override the root with `WORKBENCH_ARTIFACTS`
 - `data/workbench/` — durable app state
+- `dataset-archives/` — compressed market datasets, checksums, and [restore instructions](dataset-archives/README.md)
 - `docs/workbench/`, `docs/research/` — implementation history, inventories, research notes
 - `pine/`, `ninjatrader/` — platform-specific reference ports
 - `legacy/previous-dashboard/` — source-only archive of the retired dashboard API and UI, excluded from the build and test gates

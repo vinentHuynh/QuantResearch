@@ -38,7 +38,8 @@ coverage/
 tmp/
 .codex-skill-staging/
 
-# Transfer local datasets and generated results separately from Git.
+# Raw local datasets and generated results stay local.
+# Checked-in market snapshots live in dataset-archives/.
 /data/
 /artifacts/
 /reports/

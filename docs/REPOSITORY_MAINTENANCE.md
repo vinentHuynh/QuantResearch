@@ -15,10 +15,14 @@ The check exits with status `1` when Git tracks generated output or an
 unapproved file larger than 5 MiB. Generated output includes the top-level
 `reports/`, `artifacts/`, `tmp/`, `.codex-skill-staging/`, `build/`, `coverage/`,
 `dist/`, and `node_modules/` directories, conventional Python/tool caches,
-compiled Python files, and TypeScript build-info files. Only the six named parquet files
-that make up the committed `data/mnq_dom_sample/full_history` fixture are on the
-large-file allowlist; another file in the same directory is not implicitly
-allowed.
+compiled Python files, and TypeScript build-info files. The large-file allowlist
+contains the six named parquet files in the committed
+`data/mnq_dom_sample/full_history` fixture and the 17 market dataset ZIPs listed
+in [`dataset-archives/manifest.json`](../dataset-archives/manifest.json). Each
+approved path is written explicitly in `tools/maintenance/check-repo-hygiene.mjs`;
+another file in either directory is not implicitly allowed. The manifest records
+archive and source-file checksums; workbench databases and research results are
+excluded from these dataset archives.
 
 Failures list at most 50 paths per category and include the total count. Use
 `--json` for machine-readable output. `--root <path>` checks another worktree,

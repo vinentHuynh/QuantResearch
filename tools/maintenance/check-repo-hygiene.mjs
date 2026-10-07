@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 
 export const LARGE_FILE_LIMIT_BYTES = 5 * 1024 * 1024;
 
-// These are the only large, repository-owned fixture files. Keep this list at
-// file granularity so adding another file below data/mnq_dom_sample still needs
-// an explicit review.
+// These are the approved large fixture and dataset archive files. Keep this
+// list at file granularity so adding another file in either directory still
+// needs an explicit review.
 export const LARGE_FILE_ALLOWLIST = new Set([
   'data/mnq_dom_sample/full_history/ohlcv-1m/candles_1m.parquet',
   'data/mnq_dom_sample/full_history/ohlcv-resampled/candles_1d.parquet',
@@ -15,6 +15,23 @@ export const LARGE_FILE_ALLOWLIST = new Set([
   'data/mnq_dom_sample/full_history/ohlcv-resampled/candles_30m.parquet',
   'data/mnq_dom_sample/full_history/ohlcv-resampled/candles_4h.parquet',
   'data/mnq_dom_sample/full_history/ohlcv-resampled/candles_5m.parquet',
+  'dataset-archives/databento-cache.zip',
+  'dataset-archives/market-series.zip',
+  'dataset-archives/mnq-candles.zip',
+  'dataset-archives/source-GLBX-20260907-6M58JWVVTK.zip',
+  'dataset-archives/source-GLBX-20260907-FYC5GEKK84.zip',
+  'dataset-archives/source-GLBX-20260907-TDEWMKVFUE.zip',
+  'dataset-archives/source-GLBX-20260907-UE53XREPRP.zip',
+  'dataset-archives/update-es-2026-09-29.zip',
+  'dataset-archives/update-nq-2026-09-29.zip',
+  'dataset-archives/workbench-cl-79f02649cfee.zip',
+  'dataset-archives/workbench-es-1080435cff09.zip',
+  'dataset-archives/workbench-es-dc30057c7601.zip',
+  'dataset-archives/workbench-mgc-495500bd7e1d.zip',
+  'dataset-archives/workbench-mnq-d75574620d44.zip',
+  'dataset-archives/workbench-nq-3b9114199a2f.zip',
+  'dataset-archives/workbench-nq-f47a454bc68f.zip',
+  'dataset-archives/workbench-ym-332f3ffd1050.zip',
 ]);
 
 const GENERATED_ROOTS = new Map([
@@ -184,7 +201,7 @@ export function printHygieneReport(report) {
   if (report.ok) {
     console.log(
       `Repository hygiene check passed: ${report.checkedCount} tracked files; ` +
-        `${report.allowedLarge.length} approved large fixture file(s).`,
+        `${report.allowedLarge.length} approved large fixture and dataset archive file(s).`,
     );
     return;
   }
@@ -202,7 +219,7 @@ export function printHygieneReport(report) {
     printEntries(report.oversized, entry => `${entry.path} (${formatBytes(entry.size)})`);
   }
   console.error(
-    'Move generated output outside Git, or review and add an exact fixture path to the allowlist.',
+    'Move generated output outside Git, or review and add an exact fixture or dataset archive path to the allowlist.',
   );
 }
 
