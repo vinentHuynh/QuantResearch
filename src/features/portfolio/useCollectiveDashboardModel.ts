@@ -428,7 +428,10 @@ export function useCollectiveDashboardModel({
     }));
   }, []);
 
-  const refreshEvidence = useCallback(async (runId?: string) => {
+  const hasRun = useCallback((runId: string) => runsRef.current.some((run) => run.id === runId && run.status === "Succeeded" && !!run.result), []);
+
+  /** Resolves true when the import finished without an error. */
+  const refreshEvidence = useCallback(async (runId?: string): Promise<boolean> => {
     setRefreshing(true);
     setError("");
     if (runId) setImportState({ runId, phase: "importing" });
@@ -457,11 +460,13 @@ export function useCollectiveDashboardModel({
       pendingExactRun.current = exactRequest;
       if (runId) setImportState({ runId, phase: "verifying" });
       setReload((current) => current + 1);
+      return true;
     } catch (refreshError) {
       if (runId && pendingExactRun.current?.runId === runId) pendingExactRun.current = null;
       const message = refreshError instanceof Error ? refreshError.message : String(refreshError);
       setError(message);
       if (runId) setImportState({ runId, phase: "error", error: message });
+      return false;
     } finally {
       setRefreshing(false);
     }
@@ -674,6 +679,7 @@ export function useCollectiveDashboardModel({
     policy,
     railCollapsed,
     refreshEvidence,
+    hasRun,
     refreshing,
     retryTracking,
     result,
