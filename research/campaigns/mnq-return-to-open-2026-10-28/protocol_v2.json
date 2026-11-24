@@ -1,0 +1,54 @@
+{
+  "study_id": "mnq-return-to-open-2026-10-28",
+  "type": "descriptive first-stretch return-to-open frequency",
+  "threshold_points": [
+    40,
+    60,
+    80
+  ],
+  "trigger": "First touch/cross of either opening band during09:30 inclusive through09:45 exclusive. One event/date/threshold; both possible first directions retained if same-candle order is unknown.",
+  "reference": "Open of the observed09:30 one-minute candle, America/New_York",
+  "return": "After trigger, price touches or crosses the09:30 opening price in the opposite direction. Crossing by a gap counts; exact-price trade/limit fill is not established.",
+  "horizons": [
+    "before_09_45"
+  ],
+  "same_bar_order": "Close at/beyond the opening price, a later opposite opening-band touch under a first-direction branch, or target-extreme after a trigger at that candle first print can prove a trigger-minute return. Other favorable extrema only make return possible. No fixed intrabar path.",
+  "sample": "All fifteen observed09:30\u201309:44 minute bars, one instrument, valid finite tick-aligned OHLC. Exclude missing minutes without imputation.",
+  "periods": {
+    "all_history": [
+      "2019-05-06",
+      "2026-09-03"
+    ],
+    "available_2026": [
+      "2026-01-01",
+      "2026-09-03"
+    ]
+  },
+  "direction_breakdowns": [
+    "all",
+    "up",
+    "down",
+    "ambiguous"
+  ],
+  "limits": [
+    "No stop loss or trading costs are applied. Return frequency is not a trading win rate.",
+    "The initial move need not be a monotonic trend.",
+    "2026 is partial YTD because available MNQ data endsSeptember3.",
+    "Ranges express within-minute ordering uncertainty, not statistical confidence intervals.",
+    "No selection optimization or extension of the fixed threshold grid.",
+    "First15-minute completeness excludes three March2020 disruption dates; preserve these exclusions."
+  ],
+  "data_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1\\bars.parquet",
+  "data_sha256": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1",
+  "cash_calendar_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\mnq-ny-open-2026-10-28\\cash_calendar.csv",
+  "cash_calendar_sha256": "df32deccf38516788e6e9def42738daa18bb541a42ab06b705db86c48ddbb58d",
+  "revision": 2,
+  "amendment": {
+    "user_instruction": "invalidate after the first 15 min",
+    "prior_protocol_sha256": "cda2d961b67eed64cda8b02070fff0b0be6e3b83948fef2f8589ffc6eff18b98",
+    "prior_protocol_outcomes_scored": false,
+    "change": "Use only fixed09:45 ET deadline and first15-minute completeness. Remove1h/2h/full-session endpoints before scoring."
+  },
+  "window": "[09:30,09:45) America/New_York. Include only09:30 through09:44 minute bars; the09:45 candle is excluded.",
+  "status_at_freeze": "No outcomes scored under either protocol version"
+}

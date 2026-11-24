@@ -1,0 +1,8 @@
+{
+  "status": "Input and execution clarifications for the synthetic prototype; no historical results",
+  "protocol_sha256": "8f8047b2722bb6e1e1074ce443e2897bb5aeb26a1ba680873d8e683ddb1d1d6b",
+  "opening_reference_validation": "Reject an input whose first eligible opening reference is not within the09:30 minute. Even a09:30 timestamp only identifies the first supplied eligible trade; it does not certify full feed coverage. Historical import must reconcile that reference to preserved opening records and audit missing data.",
+  "event_identity": "Preserve both timestamp and supplied row/event index. Equal timestamps do not authorize reordering or merging distinct price events.",
+  "deadline_priority": "At09:45 the explicit deadline flatten takes priority. Records at/after09:45 do not trigger new entries or bracket exits, and the supplied mark is not used to infer earlier crossings. Missing required mark means an incomplete replay.",
+  "research_only": "The deadline mark and trade-price fills are explicit simulation assumptions. No actual order, executable quote, queue position or historical profitability is verified."
+}

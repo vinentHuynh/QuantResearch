@@ -1,0 +1,62 @@
+{
+  "review_date": "2026-10-28",
+  "question": "Does an immediately observed MNQ move away from the 09:30 cash open, reached within 15 minutes, identify a point threshold where continuation becomes more likely than an equal-distance retracement over the next 60 or 120 minutes?",
+  "scope": "Primary-source literature review only; no new local scored analysis, paid data, purchases, downloads of market data, or live actions.",
+  "finding": "None of the inspected sources validates a universal MNQ point cutoff for this exact first-touch, equal-barrier, 60/120-minute question. They motivate separating overnight gaps, opening moves, elapsed time, and volatility context; these are hypotheses to test, not established MNQ signals.",
+  "sources": [
+    {
+      "id": "gao_2018",
+      "citation": "Gao, Han, Li and Zhou, Market intraday momentum, Journal of Financial Economics 129(2), 394-414, August 2018.",
+      "url": "https://www.sciencedirect.com/science/article/pii/S0304405X18301351",
+      "institutional_record": "https://profiles.wustl.edu/en/publications/market-intraday-momentum/",
+      "doi": "10.1016/j.jfineco.2018.05.009",
+      "status": "Peer-reviewed journal article; publisher and author-institution abstract/data/method snippets inspected.",
+      "data": "SPY intraday TAQ transactions, 1993-02-01 through 2013-12-31; additional ETF checks.",
+      "supported_claim": "Return from the previous close to 10:00 predicts the 15:30-16:00 return. Reported predictability strengthens with volatility, volume and some news/economic conditions.",
+      "observable_when": "Its complete opening predictor is available at 10:00, including overnight information. It can precede the late-day trade but cannot be used for an immediate 09:30-09:45 entry.",
+      "limitations": "Different instrument, predictor, clock and target horizon. Positive regression or expected return does not establish an equal-barrier hit probability above 50 percent, an intraminute path, or a fixed MNQ point threshold. Do not relabel the previous-close-based predictor as a pure cash-open move."
+    },
+    {
+      "id": "grant_2005",
+      "citation": "Grant, Wolf and Yu, Intraday price reversals in the US stock index futures market: A 15-year study, Journal of Banking and Finance 29(5), 1311-1327, May 2005.",
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0378426604000949",
+      "doi": "10.1016/j.jbankfin.2004.04.006",
+      "status": "Peer-reviewed journal article; publisher abstract, data, research-methodology and conclusion snippets inspected.",
+      "data": "Lead S&P 500 futures contract, November 1987 through September 2002. Transaction-price changes with minute timestamps; opening-gap filters of ±0.10, ±0.20 and ±0.30 percent; displayed results focus on ±0.20 percent.",
+      "supported_claim": "The reported average pattern has approximately 10 minutes of initial continuation after large opening gaps, followed by reversal. Cost adjustments substantially weaken the statistical trading evidence.",
+      "observable_when": "The opening gap relative to the preceding close is observable at the open. Later average reversal timing is an estimated historical outcome, not a known same-day turning point.",
+      "limitations": "Opening gap is not a push formed after 09:30. Old S&P 500 market structure differs from modern MNQ. The study does not supply a point-value threshold or demonstrate that larger/faster MNQ pushes necessarily continue."
+    },
+    {
+      "id": "lundstrom_volatility_states",
+      "citation": "Christian Lundstrom, Day trading returns across volatility states, Umea Economic Studies 861, 2013; revised 2017-03-03; later IFTA Journal 2019, 76-89.",
+      "url": "https://umu.diva-portal.org/smash/get/diva2%3A732318/FULLTEXT02.pdf",
+      "bibliographic_record": "https://ideas.repec.org/p/hhs/umnees/0861.html",
+      "status": "University working-paper text inspected through indexed primary-PDF excerpts; direct PDF fetch timed out.",
+      "data": "Daily OHLC: S&P 500 futures 1991-01-02 through 2010-11-29; crude oil futures 1991-01-02 through 2011-01-26; CSI roll-adjusted series.",
+      "supported_claim": "Historical opening-range-breakout returns differ across volatility buckets, with better returns in higher realized-volatility states.",
+      "observable_when": "Section 2.3 uses deciles of same-day realized volatility. Equation 6 uses absolute log open-to-close return; same-day high-low range is a robustness proxy. These require future information at an opening entry.",
+      "limitations": "The retrospective volatility bucket is not a usable pre-open filter. Its endpoint partly overlaps with the breakout trade's close-based payoff. Results motivate testing lagged volatility normalization, but do not prove an ex-ante filter or a modern MNQ point cutoff. Daily OHLC cannot reconstruct intraminute stop/target order."
+    },
+    {
+      "id": "mesfin_2026_vvg",
+      "citation": "Mathias Mesfin, A Validated Volatility-Volume-Gap Classifier for Regime Identification in MNQ Intraday Data, arXiv 2605.11423v3.",
+      "url": "https://arxiv.org/abs/2605.11423v3",
+      "full_text_url": "https://arxiv.org/pdf/2605.11423",
+      "first_submitted": "2026-05-12",
+      "revised": "2026-09-16",
+      "status": "Real author preprint; not established as peer-reviewed. Abstract and full PDF inspected.",
+      "data": "947 complete MNQ RTH days of 5-minute OHLCV, December 2021 through August 2025; 40 unique classifier-positive days.",
+      "supported_claim": "Author reports distinctive conditional paths but all eight tested directional configurations fail its validation criteria; year dependence and small samples matter.",
+      "observable_when": "Features include the completed 09:30-10:00 return, overnight gap and first 5-minute volume deviation versus a 20-day baseline. Full classification is unavailable before 10:00 despite pre-market wording. Thresholds use expanding prior distributions; tercile/warmup choices followed exploratory testing.",
+      "limitations": "The 77.6 percent reversal figure uses 125 repeated analysis windows from 40 days and hindsight-selected intraday peaks; it is not an independent-day win rate or symmetric-barrier probability. Five-minute data cannot establish instant-entry order. The stated 50 percent random-walk benchmark for hindsight peak-to-close reversal is not justified by a fair equal-distance race."
+    }
+  ],
+  "research_implications_not_validated_signals": [
+    "Keep opening gap and the new move from 09:30 open as separate predictors.",
+    "Compare point size with percentage and strictly lagged volatility-normalized size; do not use final same-day range or return to classify an entry.",
+    "Elapsed seconds/minutes to first threshold and path efficiency are known at the trigger if event data exist; faster-is-more-persistent remains an unproven hypothesis here.",
+    "Use equal-distance continuation/retracement barriers with the same deadline and retain ambiguous/unresolved outcomes. Expected close-to-close returns and hindsight reversals answer different questions.",
+    "Any filtered result needs chronological validation and execution costs. None of these sources removes the need for actual tick/trade order in the user's instant-entry test."
+  ]
+}

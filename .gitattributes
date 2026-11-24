@@ -1,3 +1,9 @@
 # This report is preserved byte-for-byte as historical evidence. Its source
 # tables contain intentional trailing spaces, so diff checks must not rewrite it.
 evidence/campaigns/all-strategies-all-charts-2026-09-16/REPORT.md -whitespace
+
+# MNQ campaign files are fingerprinted by SHA-256 over their exact bytes
+# (protocols, evidence and the scripts that produced them, some with CRLF line
+# endings). Store them unchanged so recorded checksums verify on every checkout.
+research/campaigns/mnq-*/** -text
+evidence/campaigns/mnq-*/** -text

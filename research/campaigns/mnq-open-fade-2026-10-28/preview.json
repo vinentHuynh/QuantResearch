@@ -1,0 +1,21 @@
+{
+  "status": "validated_for_launch",
+  "data_sha256": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1",
+  "protocol_sha256": "0ba8ff955affde7e0ea76ee91e4d45b1e0e51a37c101bf5e22f427aabb606263",
+  "initial_grid_cases": 12,
+  "development_sessions": 1170,
+  "scheduled_evaluation_sessions": {
+    "2024": 252,
+    "2025": 250,
+    "2026": 169
+  },
+  "validation_checks": [
+    "Exact MNQ symbol and preserved dataset checksum",
+    "135 consecutive observed minutes required per cash session",
+    "One-contract nominal risk20/30/40 points plus costs",
+    "No more than one trade per day per configuration",
+    "No evaluation after a failed style",
+    "All history previously examined; no fresh holdout claim"
+  ],
+  "evaluation_launch": "Conditional on frozen development eligibility; later folds conditional on prior-fold passage"
+}

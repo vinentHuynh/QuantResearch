@@ -1,0 +1,12 @@
+{
+  "purpose": "Preserve already-scored minute-data evidence; no new backtest executed",
+  "source": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\mnq-open-fade-small-targets-2026-10-28\\all_attempts.csv",
+  "source_sha256": "f8e9dab7a47bc429715d17fdee0979135b7996b6fdc4b48ebdf242f1f36b0e9c",
+  "case_count": 6,
+  "ordering_scenarios_per_case": 2,
+  "new_trade_event_outcomes": null,
+  "stage": "Rules configured; intrabar sequence and fills remain unvalidated",
+  "legacy_failures_retained": true,
+  "source_and_current_replay_match": "Verified by read-only review agent",
+  "strategy_card": "reports/mnq-open-fade-intrabar-2026-10-28/strategy.html"
+}

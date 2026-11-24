@@ -1,0 +1,30 @@
+{
+  "study_id": "mnq-opening-scalp-2026-10-28",
+  "amendment": "fixed_contract_quantity",
+  "date": "2026-10-28",
+  "user_choice": "More contracts held simultaneously because dollar net profit per trade is small.",
+  "interpretation": "A fixed whole-contract quantity per session, chosen before trading; all contracts share one entry, stop, target and deadline exit.",
+  "candidate_sizes_for_arithmetic": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "default_contracts": 1,
+  "validation": "Positive whole-number integer, not boolean or fractional.",
+  "unchanged_rules": [
+    "One position at a time",
+    "Maximum 3 entries",
+    "Flat at 09:45 Eastern",
+    "Immediate fresh-crossing entries",
+    "Same point targets, stops and context policies"
+  ],
+  "cost_semantics": "Existing round_trip_cost_dollars remains PER CONTRACT. Position round-trip cost = contracts times this per-contract assumption. Default $2.24 per contract.",
+  "accounting": "gross_points remains unscaled per-contract price movement; contract_points = gross_points * contracts; gross, net and cost dollar amounts scale with quantity.",
+  "size_policy": "Fixed for the whole replay; no profit/loss-dependent increase, averaging down or partial exits are implemented.",
+  "strategy_selection": "Sizing is arithmetic sensitivity, not additional optimized signal variants or evidence that expectancy becomes positive.",
+  "execution_limit": "Assumes identical price-event fills across quantities; depth, market impact, partial fills and quantity-dependent slippage are not modeled.",
+  "baseline_source_sha256": "f820a75f9e53c6e6d500360add7584a7fdef3c5203e5e3e75e5564ecac4e8197",
+  "historical_backtest_performed": false,
+  "new_data_purchased": false
+}

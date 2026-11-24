@@ -1,0 +1,103 @@
+{
+  "study_id": "mnq-open-fade-2026-10-28",
+  "frozen_date": "2026-10-28",
+  "frozen_before_strategy_outcomes": true,
+  "hypothesis": "A 40-, 60-, or 80-point displacement from the 09:30 New York cash open during the first 15 minutes may support one opposite-direction trade targeting half that distance before an equal-distance stop or a one-/two-hour expiry. Compare immediate threshold entry with a completed one-minute close back inside the threshold.",
+  "user_choices": {
+    "entry_styles": [
+      "touch",
+      "confirm"
+    ],
+    "trigger_points": [
+      40,
+      60,
+      80
+    ],
+    "holding_minutes": [
+      60,
+      120
+    ]
+  },
+  "data_version": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1",
+  "market": "MNQ",
+  "timezone": "America/New_York",
+  "tick_size": 0.25,
+  "point_value_dollars": 2.0,
+  "contracts": 1,
+  "session_calendar": "Saved XNYS cash-session dates from the preceding opening study; exchange_calendars 4.13.2, cash holidays excluded, early closes retained",
+  "sample_quality": "Require all minute bars 09:30 through 11:44 inclusive, matching the preceding report's common 135-minute sample. No filling gaps; no within-window contract changes. The latest possible entry is 09:44 and latest required time-exit opening quote is 11:44. Preserve excluded dates and missing minutes. Excluding March 2020 disruption sessions can understate tail risk.",
+  "rules": {
+    "reference": "O = first trade/open of 09:30 minute; thresholds O+D and O-D remain fixed that day. Baseline assumes trigger monitoring can begin immediately after that first trade, without measuring first-minute high/low in advance.",
+    "direction": "First reached threshold locks the side for the session: short upper breach; long lower breach. No second trade, stop-and-reverse, averaging down, or size escalation.",
+    "entry_window": "09:30 <= actual entry minute start < 09:45 ET. No later entry, including confirmation/delay fills at or after 09:45.",
+    "touch": "Enter when first threshold is reached or passed. Nominal fill is the threshold level, including less-favorable treatment of gaps beyond it; all-in modeled execution friction is deducted separately.",
+    "confirm": "After first threshold breach, wait for a completed one-minute close strictly back inside that breached level; the breach minute may confirm. Fill at the next minute's open. First breach side stays locked if confirmation fails. No new side or opportunity later that session.",
+    "target_stop": "Both styles use target and stop distances D/2 points from nominal entry: D40=>20/20; D60=>30/30; D80=>40/40. For confirmation these are from the next-open fill, not the trigger level or cash open.",
+    "time_exit": "Exit at the opening quote exactly 60 or 120 minutes after the entry minute starts. For an intraminute touch, exact seconds are unavailable and this expires up to one minute early. Never count that deadline bar's later high/low. At the deadline opening quote, an already-working bracket has priority for an opening gap (target at its stated limit, adverse stop at the open); otherwise flatten at that open. The deadline high/low remain excluded.",
+    "exit_priority": "Known opening gaps resolve first. Stops gap to the adverse open; targets fill at their stated level without favorable gap improvement. Same-minute stop/target uncertainty uses the conservative branch for primary results and favorable branch as an explicit bound.",
+    "touch_entry_bar": "Do not credit a pre-entry favorable extreme as a certain target. A close through the target proves a post-entry crossing unless a stop could have come first. With uncertain target timing, conservative replay carries the trade unless stopped; favorable replay credits a feasible target. Stop and target ambiguity stays flagged.",
+    "dual_threshold_bar": "If both entry thresholds are first crossed within one minute and its open cannot order them, replay both feasible first-side branches and report conservative/favorable net bounds, including a no-fill confirmation branch when applicable. This is a data-resolution bound, not a strategy using future profit to choose its direction."
+  },
+  "costs": {
+    "commission_round_trip_dollars": 1.24,
+    "execution_friction_ticks_per_side": 1,
+    "baseline_round_trip_dollars": 2.24,
+    "stress_round_trip_dollars": 4.48,
+    "interpretation": "Illustrative costs, not a verified broker quote. Fees plus spread/slippage allowance are debited from nominal gross P&L per filled round trip. Bracket levels remain based on nominal entry."
+  },
+  "bounded_grid": "12 configurations: 2 styles x 3 triggers x 2 holding limits. One fixed entry window and 1:1 gross target/stop. Retain every attempted, losing, ineligible, zero-trade and ambiguous configuration.",
+  "development": {
+    "start": "2019-05-06",
+    "end": "2023-12-31",
+    "eligibility": {
+      "minimum_trades": 150,
+      "minimum_profit_factor": 1.1,
+      "net_profit_must_be_positive": true
+    },
+    "selection": "Within each entry style separately, select the eligible conservative-baseline configuration with highest total net P&L / maximum daily closed-equity drawdown. Break ties by larger net profit, then lower trigger, then shorter holding limit. If none eligible, stop that style at development failure. The thresholds are explicit research hurdles, not universal investment standards."
+  },
+  "chronological_evaluation": {
+    "folds": [
+      {
+        "train_end": "2023-12-31",
+        "test_start": "2024-01-01",
+        "test_end": "2024-12-31"
+      },
+      {
+        "train_end": "2024-12-31",
+        "test_start": "2025-01-01",
+        "test_end": "2025-12-31"
+      },
+      {
+        "train_end": "2025-12-31",
+        "test_start": "2026-01-01",
+        "test_end": "2026-09-03"
+      }
+    ],
+    "selection": "For each still-active style, refit only the same six configurations on expanding earlier training history using the frozen selection rule. Evaluate the selected configuration on the next fold. Stop that style immediately when no eligible training candidate remains or any required evaluation criterion fails. Do not inspect later strategy outcomes for a failed style.",
+    "required_scenarios": [
+      "conservative baseline at $2.24 round-trip cost",
+      "conservative doubled costs at $4.48",
+      "one additional minute of entry delay at baseline costs, entry cutoff unchanged"
+    ],
+    "delay_definition": "Touch: first breach schedules next-minute-open fill. Confirmation: add one extra minute after the normal next-open fill. Re-anchor fixed target/stop distances to actual delayed fill. Ignore later entries and keep first side locked.",
+    "per_scenario_criteria": {
+      "minimum_trades": 30,
+      "minimum_profit_factor": 1.05,
+      "net_profit_must_be_positive": true
+    },
+    "intrabar_sensitivity": "Also report favorable-order outcomes for each selected configuration; primary gates always use conservative results. A favorable scenario cannot rescue a conservative failure."
+  },
+  "robustness_if_evaluation_passes": "Only for styles passing all three historical folds, test the final selected trigger at -10% and +10%, keeping all other rules fixed, over 2024-01-01 through 2026-09-03 with conservative doubled costs. Each neighbor must have >=100 trades, positive net and PF>=1.05. No extra parameter search follows failure. Tick data / execution parity and new prospective observations remain untested even after a pass.",
+  "prior_exposure": "All years in this dataset have already appeared in the descriptive opening report and other research. Chronological separation controls selection within this experiment; later years are not certified globally unseen, and none are prospective.",
+  "workbench_scope": "Standalone, source-snapshotted historical replay. Current workbench event-v1 supports only one working limit and only completed-bar callbacks, so it cannot faithfully implement simultaneous first-touch directions from the first opening minute. No workbench engine changes, official run/evaluation ID, stage promotion, or live-trading readiness is claimed.",
+  "outputs": [
+    "frozen protocol",
+    "replay source and synthetic verification",
+    "all attempted configuration summaries",
+    "daily ledgers and selected trade exports",
+    "selection/failure ledger",
+    "PDF strategy comparison",
+    "artifact checksums"
+  ]
+}

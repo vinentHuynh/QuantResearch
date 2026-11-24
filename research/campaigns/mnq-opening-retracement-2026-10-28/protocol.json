@@ -1,0 +1,77 @@
+{
+  "study_id": "mnq-opening-retracement-2026-10-28",
+  "type": "descriptive first-stretch level-event study",
+  "question": "After the first 40, 60 or 80 point stretch from the 09:30 open, how often does price give back 5, 10 or 15 points toward the open before 09:45 Eastern?",
+  "thresholds_points": [
+    40,
+    60,
+    80
+  ],
+  "retracements_points": [
+    5,
+    10,
+    15
+  ],
+  "continuation_barrier_points": "threshold / 2 farther outward from the stretch level",
+  "reference": "Open of the observed 09:30 minute",
+  "window": "[09:30, 09:45) America/New_York; use only 09:30 through 09:44 bars",
+  "event": "First crossing of either opening band per threshold per day. If both are first touched in one minute, retain both admissible first-direction branches. A known minute open outside a band has first priority.",
+  "anchoring": "Fixed nominal levels relative to the 09:30 open, not unknown actual trade fills or hindsight session extremes. Gap breaches remain in the sample. An opening gap beyond the continuation barrier is continuation-first for that branch.",
+  "metrics": [
+    "any_retracement_before_deadline",
+    "retracement_before_continuation_barrier",
+    "continuation_before_retracement",
+    "neither_barrier_before_deadline"
+  ],
+  "ordering": "Use all OHLC-consistent event order possibilities, including pre-trigger favorable extremes and arbitrary revisits. No fixed O-H-L-C or O-L-H-C path. Carry unresolved target/stop/live states; union both possible first directions. A close beyond the retracement level or the later opposite opening-band touch can prove an entry-minute retracement.",
+  "percentages": "Guaranteed-event count / all triggered sessions to possible-event count / all triggered sessions. These are bounds from unresolved minute ordering, not confidence intervals or future probability guarantees. No-trigger sessions reported separately.",
+  "periods": {
+    "all_history": [
+      "2019-05-06",
+      "2026-09-03"
+    ],
+    "earlier_2019_2023": [
+      "2019-05-06",
+      "2023-12-31"
+    ],
+    "recent_2024_2026": [
+      "2024-01-01",
+      "2026-09-03"
+    ]
+  },
+  "period_status": "All periods have already been inspected in earlier work. Recent period is a descriptive stability comparison, not a fresh holdout.",
+  "breakdowns": [
+    "overall by declared period",
+    "known first-up and first-down direction with ambiguous first direction separate",
+    "calendar year"
+  ],
+  "evidence_rule": "Report every one of the 9 fixed combinations, all exclusions and no-trigger counts. Flag n < 100; no selection, optimization or profitability pass/fail. No expansion after results.",
+  "data_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1\\bars.parquet",
+  "data_sha256": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1",
+  "data_version": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1",
+  "calendar_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\mnq-ny-open-2026-10-28\\cash_calendar.csv",
+  "calendar_sha256": "df32deccf38516788e6e9def42738daa18bb541a42ab06b705db86c48ddbb58d",
+  "completeness": "Require all 15 observed minutes, one instrument_id, valid finite tick-aligned OHLC. No forward filling.",
+  "exclusions": "Preserve excluded cash dates with reason and missing minutes. Calendar reused from the preserved NYSE cash-session study.",
+  "limits": [
+    "Not a repeated-entry backtest or a trade win rate",
+    "No low-directional-progress filter tested; it requires reliable subminute history",
+    "No profit, costs, size or live execution evaluated",
+    "Unadjusted continuous MNQ series; original vendor request provenance not reconstructed",
+    "Does not assume a retracement from the final session high/low",
+    "Minute prices do not identify exact trigger trade time or executable fills"
+  ],
+  "execution": {
+    "workbench_api": "Unavailable at http://127.0.0.1:8001/api/workbench/state on initial check",
+    "method": "Standalone preserved descriptive analysis; no official workbench run or promotion",
+    "historical_outcomes_not_yet_scored": true,
+    "purchases": false
+  },
+  "verification": [
+    "Known synthetic edge cases",
+    "Independent method/source review",
+    "Reaggregate every summary from event ledger",
+    "Check percentage nesting and cutoff invariance",
+    "Verify source and protocol hashes"
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "study_id": "mnq-keltner-2026-10-26",
+  "created_at": "2026-10-26T13:52:16.026088+00:00",
+  "disposition": "No validated candle-extension size sweet spot under the frozen primary criteria; 0 of 16 cells pass.",
+  "stage": "Custom historical event study; no faithful KC workbench adapter or strategy milestone promotion.",
+  "control_limitation": "Original matched controls can overlap signal candles; retain original fields as failed diagnostic only. Same-match nonoverlap sensitivity is post-protocol and all test intervals include zero.",
+  "protocol_sha256": "8f289b0134b4c45159815e00f0308c497fb6925abcb8281cf9df0eb0577980da",
+  "dataset_sha256": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1",
+  "primary_test_cells": 16,
+  "directional_claims": 0,
+  "files": [
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/attempts.json",
+      "sha256": "67beefd72694e8daf9ed6b1840b73eb662e66782aaac6cf744c05c3587f02636",
+      "bytes": 2803
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/audit.json",
+      "sha256": "f0cbbed14c8e8244ab5421256299114bb55b4e4c96c26247cdf8e4ece7d450b9",
+      "bytes": 11726
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/cohort_summary.csv",
+      "sha256": "d6e0210a22a4210e74efa8fdc8c5af4223eefc147ee555fde400a3d36d9db1ca",
+      "bytes": 16032
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/control_overlap_sensitivity.csv",
+      "sha256": "682480ee03a698fb9770edde2d43a1131875c379813e2eecac1750fd78fc3782",
+      "bytes": 3197
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/horizon_summary.csv",
+      "sha256": "758b86b17133be4d1cb7e64c1486ca3e696dd6a47ec025b986832cf5b0b18cf6",
+      "bytes": 37756
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/independent_audit.json",
+      "sha256": "a5ce22f52faa7e6d136f695517a9c5d0bc1461ccbbec6e03b3218bb66dac65e8",
+      "bytes": 14734
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/open_state_summary.csv",
+      "sha256": "b6edf03052a8f982cbcf69f7912f21367df51f9daa1904637120f95f616df76a",
+      "bytes": 11751
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/primary_summary.csv",
+      "sha256": "97ed45e6d3392062c2c78d4ac1c0ed7c35455efa7cf1dbeaf6c1c8f92594be89",
+      "bytes": 61156
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/session_summary.csv",
+      "sha256": "3087aacb48cc16516bb847a7099232d2a53dbdd2f63dc7ac0f09a16e3db5d577",
+      "bytes": 82444
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/side_summary.csv",
+      "sha256": "f505e1a85de0d95d540ab32d2e7d293e94afd91f6ab08a6819d5e0a7ea713b0b",
+      "bytes": 12731
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/size_summary.csv",
+      "sha256": "5827a766e7c01ebe0c241f204f917e862bb1b1c75f370439890e91716418d106",
+      "bytes": 154419
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/statistical_result.json",
+      "sha256": "59f6ac278d2d3d155504b4abacbadd2767186c8ff1ed000a3860cd03a3708462",
+      "bytes": 36005
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/trend_summary.csv",
+      "sha256": "3dbb54923c2559c780f4847eed8f0bac9a1acec2d7f029db89b14fcab0bbd481",
+      "bytes": 24656
+    },
+    {
+      "path": "artifacts/mnq-keltner-2026-10-26/year_summary.csv",
+      "sha256": "d996d27c5c33604f4af3145859f04d9b5d23161106a4ec1f7e085f6d7e273f81",
+      "bytes": 24131
+    },
+    {
+      "path": "reports/mnq-keltner-2026-10-26/MNQ_Keltner_Statistical_Report.pdf",
+      "sha256": "29c4e17bbc54c61ae279180b9696ae80fb02a61b14be08b985090d0a5efa924c",
+      "bytes": 877468
+    },
+    {
+      "path": "reports/mnq-keltner-2026-10-26/MNQ_Keltner_Tables_and_Event_Data.zip",
+      "sha256": "767a2b4d1c0c471ec48d2066c4d806f3d1449e26662e9b36f7687a7cbe49e247",
+      "bytes": 48359221
+    },
+    {
+      "path": "reports/mnq-keltner-2026-10-26/report_quality.json",
+      "sha256": "3c7c1e3bf3cf9588e0b004324af7208109bf42bc2e9409c8d7c644330eae00ab",
+      "bytes": 677
+    }
+  ],
+  "sources": [
+    {
+      "path": "research/campaigns/mnq-keltner-2026-10-26/analyze.py",
+      "sha256": "ea68222c80919e675a6dd271fed95b594f268cf3db21382f65a05a49689dafd5"
+    },
+    {
+      "path": "research/campaigns/mnq-keltner-2026-10-26/build_events.py",
+      "sha256": "e770827e8bd41c1d847f3a69e8ef6d33b157b348eac655579126914b943a6929"
+    },
+    {
+      "path": "research/campaigns/mnq-keltner-2026-10-26/control_overlap_audit.py",
+      "sha256": "755aa572ae71f37324bce4e5f0131d00ba090ba05928834fe54792f70f270830"
+    },
+    {
+      "path": "research/campaigns/mnq-keltner-2026-10-26/package_results.py",
+      "sha256": "563fb19a52dabb27f9e2a4cf30c32e0d720f816eadea2898855aa1607bb6e11b"
+    },
+    {
+      "path": "research/campaigns/mnq-keltner-2026-10-26/report.py",
+      "sha256": "a80bc6e40eb24bf42c8a8de1eea205368f32fe484a7b89fa803af528616a6e82"
+    }
+  ]
+}
