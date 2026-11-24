@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "api": "node server/workbench.ts",
-    "dev:full": "concurrently -k -n API,WEB -c magenta,cyan \"npm run api\" \"npm run dev\"",
+    "dev:full": "concurrently -k -n API,WEB -c magenta,cyan \"node server/workbench.ts\" \"node scripts/wait-for-api.mjs && node node_modules/vite/bin/vite.js\"",
     "build": "tsc -b && tsc -p server/tsconfig.json && vite build",
     "lint": "eslint .",
     "check:hygiene": "node scripts/check-repo-hygiene.mjs",
