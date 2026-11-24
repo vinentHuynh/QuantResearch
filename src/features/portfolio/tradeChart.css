@@ -1,0 +1,108 @@
+.trade-candles {
+  border: 1px solid var(--mantine-color-gray-3);
+  border-radius: 8px;
+  padding: 12px;
+}
+.trade-ohlc,
+.trade-list {
+  font-variant-numeric: tabular-nums;
+}
+.trade-ohlc {
+  min-height: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 8px;
+  color: #486058;
+  font: 12px var(--mono, monospace);
+}
+.trade-canvas {
+  min-width: 0;
+}
+.trade-canvas svg {
+  display: block;
+  user-select: none;
+  touch-action: none;
+  cursor: grab;
+}
+.trade-canvas svg:active {
+  cursor: grabbing;
+}
+.trade-canvas svg:focus-visible,
+.trade-focus:focus-visible {
+  outline: 2px solid #26775e;
+  outline-offset: 2px;
+}
+.trade-canvas svg text {
+  font: 11px var(--mono, monospace);
+  fill: #50645b;
+}
+.trade-axis-tag rect {
+  fill: #334d42;
+}
+.trade-axis-tag text {
+  fill: white !important;
+}
+.trade-marker {
+  cursor: pointer;
+}
+.trade-canvas .trade-marker-label {
+  font-weight: 650;
+  stroke: white;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.trade-chart-key {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  color: #576860;
+  font-size: 13px;
+}
+.trade-chart-key small {
+  margin-left: auto;
+  font-size: 12px;
+}
+.trade-list {
+  overflow: auto;
+  max-height: 30vh;
+}
+.trade-list table {
+  min-width: 620px;
+  white-space: nowrap;
+}
+.trade-list thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+}
+.trade-list small {
+  display: block;
+  font-size: 12px;
+  color: #586960;
+}
+.trade-list tr[data-focused="true"] {
+  background: #eef6f1;
+}
+.trade-focus {
+  border: 0;
+  background: transparent;
+  padding: 3px 0;
+  color: #16614b;
+  font: inherit;
+  font-weight: 650;
+  text-transform: capitalize;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (max-width: 700px) {
+  .trade-candles {
+    padding: 8px;
+  }
+  .trade-chart-key small {
+    flex-basis: 100%;
+  }
+}

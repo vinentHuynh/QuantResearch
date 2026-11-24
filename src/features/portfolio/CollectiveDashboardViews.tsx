@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Badge,
   Button,
@@ -30,6 +31,7 @@ import {
   CollectivePnlChart as PnlChart,
 } from './CollectivePresentation';
 import { PortfolioPeriodSelector } from './PortfolioPeriodSelector';
+import { DayTradeViewer } from './DayTradeViewer';
 
 type Model = CollectiveDashboardModel;
 const periodLabels: Record<PortfolioPnlPeriod, string> = {
@@ -302,6 +304,7 @@ export function CollectiveOverviewView({ model }: { model: Model }) {
 }
 
 export function CollectiveCalendarView({ model }: { model: Model }) {
+  const [chartOpen, setChartOpen] = useState(false);
   const {
     day,
     month,
@@ -329,9 +332,14 @@ export function CollectiveCalendarView({ model }: { model: Model }) {
       <section className='wb-card' aria-live='polite'>
         {selectedDay ? (
           <>
-            <h2 className='wb-day-label'>
-              {weekday(day)} {day}
-            </h2>
+            <Group justify='space-between' gap='xs'>
+              <h2 className='wb-day-label'>
+                {weekday(day)} {day}
+              </h2>
+              <Button size='compact-sm' variant='light' onClick={() => setChartOpen(true)}>
+                View chart
+              </Button>
+            </Group>
             <div
               className='wb-day-total'
               style={{ color: tone(selectedDay.pnl) }}
@@ -422,6 +430,13 @@ export function CollectiveCalendarView({ model }: { model: Model }) {
           </>
         )}
       </section>
+      {chartOpen && selectedDay && model.chartItems.length > 0 &&
+        <DayTradeViewer day={day} items={model.chartItems}
+          initialId={[...model.chartItems].sort((a, b) =>
+            (selectedDay.byStrategyTrades?.[b.id] || 0) - (selectedDay.byStrategyTrades?.[a.id] || 0))[0].id}
+          copies={settings.copies} replays={result.tradeReplays} limits={settings}
+          previous={result.points[dayIndex - 1]?.date} next={result.points[dayIndex + 1]?.date}
+          onDay={value => { setDay(value); setMonth(value.slice(0, 7)); }} onClose={() => setChartOpen(false)}/>}
     </div>
   );
 }

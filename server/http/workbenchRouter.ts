@@ -18,6 +18,7 @@ import { createRunDeletion } from "../features/runs/runDeletion.ts";
 import { createResearchArchive } from "../features/runs/researchArchive.ts";
 import { createDashboard } from "../features/scorecards/dashboard.ts";
 import { createCollective } from "../features/portfolio/collective.ts";
+import { loadTradeChart } from "../features/portfolio/tradeChart.ts";
 import { createPortfolioRisk } from "../features/portfolio/portfolioRisk.ts";
 import { createPortfolioTracking } from "../features/portfolio/portfolioTracking.ts";
 import { createScriptArchive } from "../features/scripts/scriptArchive.ts";
@@ -689,6 +690,22 @@ const server = createServer(async (req, res) => {
       return json(res, { error: 'Unknown event-study operation' }, 404);
     }
     if (action === 'collective') {
+      if (req.method === 'POST' && parts[3] === 'chart') {
+        const query = await body(req);
+        const day = date(query.day, 'Chart day');
+        const [{ item, history }] = collective.histories([query.id]);
+        if (item.checksum !== query.checksum)
+          throw new Error('The saved history changed. Refresh the portfolio before opening its chart.');
+        if (!history.coverage.some(span => span.start <= day && day <= span.end))
+          throw new Error('The chart day is outside this saved history.');
+        const controller = new AbortController();
+        res.on('close', () => controller.abort());
+        return json(res, await loadTradeChart({
+          root, python, env: cleanEnvironment(), item, history, day, signal: controller.signal,
+          datasets: all<Dataset>('dataset'),
+          findRun: id => rawRecord('run', id) ? get<Run>('run', id) : undefined,
+        }));
+      }
       if (parts[3] === 'tracking') {
         if (req.method === 'GET' && parts.length === 4) {
           datasetService.register();

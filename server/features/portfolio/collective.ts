@@ -2,7 +2,7 @@ import { readFileSync, existsSync, statSync, mkdirSync, writeFileSync, renameSyn
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
-import type { CollectiveCatalog, CollectiveItem } from "../../../shared/ts/portfolio.ts";
+import type { CollectiveCatalog, CollectiveItem, CollectiveSeries } from "../../../shared/ts/portfolio.ts";
 import type { EvaluationView, RunSummary, Strategy } from "../../../shared/ts/workbenchModels.ts";
 import { portfolioStageStatus, strategyStageStatuses } from "../../../shared/ts/stageStatus.ts";
 import { lifecycleStatus } from "../../../shared/ts/strategyLifecycle.ts";
@@ -164,7 +164,7 @@ export function createCollective(
       return { ...index, refresh, evidence_error: evidenceStatus() };
     },
     status: () => ({ ...refresh, evidence_error: pinnedOnlyRefresh ? "" : evidenceStatus() }),
-    series: (ids: unknown) => {
+    histories: (ids: unknown) => {
       if (
         !Array.isArray(ids) ||
         ids.length > 100 ||
@@ -192,7 +192,7 @@ export function createCollective(
           throw new Error(
             "Saved portfolio history changed. Refresh evidence before combining it.",
           );
-        const history = JSON.parse(bytes.toString("utf8")) as { trades?: { source_run?: string }[] };
+        const history = JSON.parse(bytes.toString("utf8")) as CollectiveSeries;
         const linked = {
           ...item,
           source_run_ids: [...new Set([
@@ -200,11 +200,12 @@ export function createCollective(
             ...(history.trades || []).map(trade => trade.source_run).filter((runId): runId is string => !!runId),
           ])].filter(runId => runId !== item.verified_replay?.source_run_id && !trackingRunIds.has(runId)),
         };
-        if (isArchivedCollectiveItem(linked, archived, runStrategies))
+        if (archived.size && isArchivedCollectiveItem(linked, archived, runStrategies))
           throw new Error("Unknown strategy configuration. Refresh the catalog.");
-        return history;
+        return { item, history };
       });
     },
+    series: (ids: unknown): CollectiveSeries[] => api.histories(ids).map(row => row.history),
     rebuild: (pinnedOnly = false, onFailure?: () => void) => {
       if (refresh.running) return refresh;
       pinnedOnlyRefresh = pinnedOnly;

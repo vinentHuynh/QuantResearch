@@ -637,6 +637,7 @@ export function useCollectiveDashboardModel({
 
   return {
     accountingLabel,
+    chartItems: calculationSelected,
     annual,
     catalog,
     chartMode,

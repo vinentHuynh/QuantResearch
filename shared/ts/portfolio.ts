@@ -888,6 +888,7 @@ export function calculatePortfolio(
     components,
     dependence,
     benchmarks,
+    tradeReplays: replays,
     sizingDecisions,
     comparison: summarizeDaily(points.map((p) => p.pnl)),
     correlations,
