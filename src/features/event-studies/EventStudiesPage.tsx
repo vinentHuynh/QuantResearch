@@ -78,7 +78,7 @@ function PercentageSummary({ result }: { result: Result }) {
     : result.summaries.map(s => ({ key: s.family, name: names[s.family], pattern: s.pattern, comparisons: s.comparisons }));
   return <section aria-label="Pattern validity summary" className="wb-card">
     <Group justify="space-between" align="start" mb="lg"><div><Title order={3}>Pattern validity summary</Title><Text size="sm" c="dimmed" mt={4}>How often price bounced as expected after returning to the pattern.</Text></div><Badge color="gray" variant="light">{result.phase} results</Badge></Group>
-    <SimpleGrid cols={{ base: 1, xs: 2, lg: 4 }} spacing="md">
+    <ScrollArea><Table miw={560} aria-label="Pattern verdicts"><Table.Thead><Table.Tr><Table.Th>Pattern</Table.Th><Table.Th>Bounced as expected</Table.Th><Table.Th ta="right">Sample</Table.Th><Table.Th>Verdict</Table.Th></Table.Tr></Table.Thead><Table.Tbody>
       {rows.map(row => {
         const rate = row.pattern.rejection_rate;
         const count = row.pattern.reaction_denominator;
@@ -86,17 +86,15 @@ function PercentageSummary({ result }: { result: Result }) {
         const enoughToMeasure = count > 0 && rate !== null;
         const insufficient = !row.comparisons.rejection.interval_95;
         const color = !enoughToMeasure ? 'gray' : insufficient ? 'yellow' : finding.color === 'teal' ? 'teal' : 'gray';
-        return <article key={row.key} aria-label={row.name} style={{ padding: 18, border: '1px solid var(--line)', borderRadius: 8, display: 'flex', flexDirection: 'column' }}>
-          <Text fw={600} size="sm" mih={40}>{row.name}</Text>
-          <Text data-testid="bounce-percentage" style={{ fontSize: 38, lineHeight: 1.2, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{enoughToMeasure ? percent(rate) : '—'}</Text>
-          <Text size="xs" c="dimmed" mt={4}>{enoughToMeasure ? 'expected bounce rate' : 'No measurable returns yet'}</Text>
-          <Progress mt="md" mb="sm" size={5} value={enoughToMeasure ? rate! * 100 : 0} color={color} aria-label={`${row.name} expected bounce rate`}/>
-          <Text size="xs">{enoughToMeasure ? `${row.pattern.counts.rejection} of ${count} measured returns bounced` : `${row.pattern.detected} patterns found`}</Text>
-          <Text size="xs" fw={600} c={insufficient && enoughToMeasure ? 'yellow.9' : 'dimmed'} mt="sm">{!enoughToMeasure ? 'Not enough data' : insufficient ? 'Too little evidence to judge' : finding.label}</Text>
-        </article>;
+        return <Table.Tr key={row.key} aria-label={row.name} style={{ opacity: enoughToMeasure && count < 20 ? .6 : 1 }}>
+          <Table.Td fw={600}>{row.name}</Table.Td>
+          <Table.Td miw={200}><Group gap="sm" wrap="nowrap"><Text data-testid="bounce-percentage" fw={700} w={56} style={{ fontVariantNumeric: 'tabular-nums' }}>{enoughToMeasure ? percent(rate) : '—'}</Text><Progress flex={1} size={6} value={enoughToMeasure ? rate! * 100 : 0} color={color} aria-label={`${row.name} expected bounce rate`}/></Group></Table.Td>
+          <Table.Td ta="right" className="mono">{enoughToMeasure ? `${row.pattern.counts.rejection} of ${count}` : `${row.pattern.detected} found`}</Table.Td>
+          <Table.Td><Text size="sm" fw={600} c={insufficient && enoughToMeasure ? 'yellow.9' : 'dimmed'}>{!enoughToMeasure ? 'Not enough data' : insufficient ? 'Too little evidence to judge' : finding.label}</Text></Table.Td>
+        </Table.Tr>;
       })}
-    </SimpleGrid>
-    <Text size="xs" c="dimmed" mt="md">Percentage = expected bounces ÷ measurable returns. Unclear and unfinished reactions are excluded. This is an observed rate, not a confidence score or trading win rate.</Text>
+    </Table.Tbody></Table></ScrollArea>
+    <Text size="xs" c="dimmed" mt="md">Bounced = expected bounces ÷ measurable returns; unclear or unfinished reactions are left out. Faded rows have too few cases to judge. This is an observed rate, not a win rate.</Text>
     <Text size="xs" c="dimmed" mt={4}>Evidence labels use matched comparisons. A high percentage from a small sample does not establish an advantage.</Text>
   </section>;
 }

@@ -1717,3 +1717,7 @@ th[aria-sort="descending"] .wb-sort-header {
 }
 .wb-costs > summary { color: var(--muted); }
 .wb-mobile-bar .wb-link-button { color: #fff; background: var(--new-run); border-radius: 999px; padding: 5px 12px; text-decoration: none; font-weight: 600; font-size: 12.5px; }
+
+/* Evaluations: full-width list, details slide out */
+.wb-ledger { display: block; padding: 16px 24px; }
+.wb-ledger-list { position: static; max-height: none; min-height: 0; max-width: 960px; border: 1px solid var(--line); border-radius: 8px; }

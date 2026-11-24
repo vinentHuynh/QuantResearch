@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import {
   ActionIcon,
   Alert,
@@ -9,7 +9,6 @@ import {
   Group,
   NumberInput,
   Select,
-  Tabs,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -24,7 +23,6 @@ import type {
 } from "../../../shared/ts/workbenchModels.ts";
 import {
   canAddPortfolioCandidate,
-  portfolioPickerTab,
 } from "../../../shared/ts/portfolioCandidates.ts";
 import { bestPortfolioPreview, portfolioItemStrategyId, portfolioRiskDetails, portfolioScriptGroups, selectPortfolioHistory, type PortfolioDailyRisk } from "../../../shared/ts/portfolioScriptCandidates.ts";
 import { href } from "../../app/navigation";
@@ -35,13 +33,27 @@ import type { CollectiveSettings, PortfolioTracking } from "./collectiveViewMode
 import { formatMoney as money } from "./collectiveViewModel";
 import "./strategyPicker.css";
 
-const pickerTabs = [
-  { value: "passed", label: "Passed" },
-  { value: "progress", label: "In progress" },
-  { value: "failed", label: "Failed" },
-  { value: "all", label: "All" },
+const statusFilters = [
+  { value: "any", label: "Any status" },
+  { value: "needs-review", label: "Needs review" },
+  { value: "retest-required", label: "Retest required" },
+  { value: "validation-pending", label: "Awaiting evaluation" },
+  { value: "failed-checks", label: "Failed checks" },
 ] as const;
-type PickerTab = (typeof pickerTabs)[number]["value"];
+type StatusFilter = (typeof statusFilters)[number]["value"];
+type SortKey = "score" | "net" | "drawdown";
+
+const Sparkline = ({ points }: { points: number[] }) => {
+  if (points.length < 2) return <span className="wb-spark is-empty" aria-hidden="true" />;
+  const lo = Math.min(...points), hi = Math.max(...points), span = hi - lo || 1;
+  const d = points.map((v, i) => `${i ? "L" : "M"}${((i / (points.length - 1)) * 80).toFixed(1)} ${(22 - ((v - lo) / span) * 20).toFixed(1)}`).join(" ");
+  const up = points[points.length - 1] >= points[0];
+  return (
+    <svg className={`wb-spark ${up ? "is-up" : "is-down"}`} viewBox="0 0 80 24" width="80" height="24" aria-hidden="true">
+      <path d={d} fill="none" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+};
 
 type RiskResponse = {
   ready: Record<string, PortfolioDailyRisk>;
@@ -52,8 +64,7 @@ type RiskState = RiskResponse & { key: string };
 type ImportState = { runId?: string; phase: "idle" | "importing" | "verifying" | "error"; error?: string };
 type PickerOption = ReturnType<typeof portfolioScriptGroups>[number]["options"][number];
 
-const inTab = (row: PickerOption, value: PickerTab) =>
-  value === "all" || (row.status.kind !== "benchmark" && portfolioPickerTab(row.status.kind) === value);
+const matchesStatus = (row: PickerOption, value: StatusFilter) => value === "any" || row.status.kind === value;
 
 const drawdownText = (percent: number | null) => percent === null
   ? "Unavailable" : percent === 0 ? "0.00%" : `-${percent.toFixed(2)}%`;
@@ -111,23 +122,36 @@ export function StrategyPickerControls({
   tracking: PortfolioTracking | null;
 }) {
   const { statuses, onAction } = useStrategyStages();
-  const [tab, setTab] = useState<PickerTab>(focusRunId ? "all" : "passed");
-  useEffect(() => { if (focusRunId) setTab("all"); }, [focusRunId]);
+  const [status, setStatus] = useState<StatusFilter>("any");
+  const [sort, setSort] = useState<SortKey>("score");
+  useEffect(() => { if (focusRunId) setStatus("any"); }, [focusRunId]);
+  const openingCopies = useRef<Record<string, number>>({});
+  useEffect(() => { if (pickerOpen) openingCopies.current = { ...settings.copies }; }, [pickerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const groups = useMemo(
     () => portfolioScriptGroups(scripts, catalog, runs, statuses, { markets, timeframe, search }),
     [scripts, catalog, runs, statuses, markets, timeframe, search],
   );
   const byRun = useMemo(() => new Map(runs.map(run => [run.id, run])), [runs]);
-  const visible = useMemo(() => groups
-    .map(group => ({ ...group, options: group.options.filter(row => inTab(row, tab)) }))
-    .filter(group => group.options.length > 0), [groups, tab]);
-  const riskRunIds = useMemo(() => [...new Set(visible.flatMap(group => group.options.flatMap(row =>
-    !row.item && row.run?.status === "Succeeded" && row.run.result ? [row.run.id] : [])))].sort(), [visible]);
+  const filtered = useMemo(() => groups
+    .map(group => ({ ...group, options: group.options.filter(row => row.status.kind !== "benchmark" && matchesStatus(row, status)) }))
+    .filter(group => group.options.length > 0), [groups, status]);
+  const riskRunIds = useMemo(() => [...new Set(filtered.flatMap(group => group.options.flatMap(row =>
+    !row.item && row.run?.status === "Succeeded" && row.run.result ? [row.run.id] : [])))].sort(), [filtered]);
   const riskKey = JSON.stringify([catalog.generated_at, riskRunIds]);
   const [riskState, setRiskState] = useState<RiskState>({ key: "", ready: {}, pending: [], errors: {} });
-  const risk = riskState.key === riskKey
-    ? riskState : { key: riskKey, ready: {}, pending: riskRunIds, errors: {} };
+  const risk = useMemo(() => riskState.key === riskKey
+    ? riskState : { key: riskKey, ready: {}, pending: riskRunIds, errors: {} }, [riskState, riskKey, riskRunIds]);
+  const visible = useMemo(() => {
+    const key = (group: (typeof filtered)[number]) => {
+      const best = bestPortfolioPreview(group.options, risk.ready);
+      const details = best ? portfolioRiskDetails(best, risk.ready) : null;
+      if (sort === "net") return best?.pnl ?? -Infinity;
+      if (sort === "drawdown") return details?.maxDrawdownPercent == null ? -Infinity : -details.maxDrawdownPercent;
+      return details?.score ?? -Infinity;
+    };
+    return [...filtered].sort((a, b) => key(b) - key(a));
+  }, [filtered, risk, sort]);
   useEffect(() => {
     if (!pickerOpen || !riskRunIds.length) return;
     const controller = new AbortController();
@@ -174,49 +198,44 @@ export function StrategyPickerControls({
     void poll(riskRunIds, { ready: {}, pending: [], errors: {} });
     return () => { active = false; controller.abort(); if (timer) clearTimeout(timer); };
   }, [pickerOpen, riskKey, riskRunIds]);
-  const countForTab = (value: PickerTab) =>
-    groups.filter(group => group.options.some(row => inTab(row, value))).length;
+  const rerunCount = visible.filter(group => group.options.some(row => row.status.kind === "retest-required"
+    || (!!row.item && !row.item.source_run_ids?.length))).length;
   const shownIds = new Set(visible.flatMap(group => group.options.map(row => row.item?.id).filter(Boolean)));
   const hidden = selected.filter(item => !shownIds.has(item.id));
   const symbols = [...new Set([...catalog.items.map(item => item.symbol), ...runs.map(run => run.input.dataset.symbol)])].filter(Boolean).sort();
   const timeframes = [...new Set([...catalog.items.map(item => item.timeframe), ...runs.map(run => run.input.timeframe)])].filter(Boolean).sort();
   const selectedCount = selected.length;
-  const additions = visible.flatMap(group => {
-    const seenMarkets = new Set<string>();
-    return group.options.flatMap(row => {
-      if (!row.item || !canAddPortfolioCandidate(row.item)) return [];
-      const market = JSON.stringify([row.symbol, row.timeframe]);
-      if (seenMarkets.has(market)) return [];
-      seenMarkets.add(market);
-      const occupied = selected.some(item => item.symbol === row.symbol && item.timeframe === row.timeframe
-        && portfolioItemStrategyId(item, runs) === group.strategyId);
-      return occupied ? [] : [{ item: row.item, strategyId: group.strategyId }];
-    });
-  });
-  const addShown = () => {
-    let next = { ...settings.copies };
-    for (const addition of additions) next = selectPortfolioHistory(next, catalog, runs, addition.item, addition.strategyId);
-    if (Object.values(next).filter(value => value > 0).length <= 100) choose(next);
-  };
+  const addedCount = Object.keys(settings.copies).filter(id => settings.copies[id] > 0 && !(openingCopies.current[id] > 0)).length;
 
   return (
     <div className="collective-picker strategy-picker-simple">
-      <Tabs value={tab} onChange={value => setTab(value as PickerTab)} className="strategy-picker-tabs">
-        <Tabs.List grow aria-label="Strategy research status">
-          {pickerTabs.map(option => (
-            <Tabs.Tab key={option.value} value={option.value}>
-              {option.label} ({countForTab(option.value)})
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-        <Group className="strategy-picker-filters" gap="xs">
-          <Select aria-label="Market" placeholder="All markets" clearable value={markets[0] || null}
-            onChange={value => setMarkets(value ? [value] : [])} data={symbols} />
-          <Select aria-label="Timeframe" value={timeframe} onChange={value => setTimeframe(value || "all")}
-            data={[{ value: "all", label: "All timeframes" }, ...timeframes.map(value => ({ value, label: value }))]} />
-          <TextInput aria-label="Find a strategy" placeholder="Strategy, market, run ID, or parameters"
-            value={search} onChange={event => setSearch(event.currentTarget.value)} />
+      <div className="wb-add-filters">
+        <TextInput aria-label="Find a strategy" type="search" label="Search strategies" placeholder="Search by name, market, run ID or parameter"
+          value={search} onChange={event => setSearch(event.currentTarget.value)} />
+        <div className="wb-add-chips" role="group" aria-label="Market">
+          {symbols.map(symbol => {
+            const on = markets.includes(symbol);
+            return (
+              <button type="button" key={symbol} className={on ? "is-on" : undefined} aria-pressed={on}
+                onClick={() => setMarkets(on ? markets.filter(m => m !== symbol) : [...markets, symbol])}>{symbol}</button>
+            );
+          })}
+        </div>
+        <Group gap="xs" grow>
+          <Select label="Status" value={status} allowDeselect={false} onChange={value => setStatus((value || "any") as StatusFilter)}
+            data={statusFilters.map(option => ({ value: option.value, label: option.label }))} />
+          <Select label="Timeframe" value={timeframe} onChange={value => setTimeframe(value || "all")}
+            data={[{ value: "all", label: "Any timeframe" }, ...timeframes.map(value => ({ value, label: value }))]} />
+          <Select label="Sort" value={sort} allowDeselect={false} onChange={value => setSort((value || "score") as SortKey)}
+            data={[{ value: "score", label: "Best return ÷ drawdown" }, { value: "net", label: "Highest net P&L" }, { value: "drawdown", label: "Smallest drawdown" }]} />
         </Group>
+      </div>
+      {rerunCount > 0 && (
+        <Alert color="orange" title="Needs rerun" className="wb-add-rerun">
+          {rerunCount} of these {visible.length} were made with older code or aren’t linked to a research run. Rerun before trusting the numbers.
+        </Alert>
+      )}
+      <div className="strategy-picker-tabs">
         <Text size="xs" c="dimmed">
           Expand a strategy to choose an exact saved history. P&amp;L and daily drawdown cover each
           history's saved dates; the portfolio result uses the active portfolio window.
@@ -224,7 +243,7 @@ export function StrategyPickerControls({
         {importState?.phase === "error" && importState.error && (
           <Alert color="red" title="Exact run import failed" role="alert">{importState.error}</Alert>
         )}
-        <Tabs.Panel value={tab}>
+        <div>
           <div className="strategy-picker-rows" role="list" aria-label="Strategies and exact histories">
             {visible.map(group => {
               const first = group.options[0];
@@ -264,6 +283,7 @@ export function StrategyPickerControls({
                       <span className="strategy-picker-group-preview" data-preview-run-id={best.run?.id}>
                         {calculating ? <span className="strategy-picker-preview-pending">Calculating best run</span> : <>
                           {!best.item && !best.run ? <span className="strategy-picker-preview-empty">No saved history</span> : <>
+                            <Sparkline points={best.chart} />
                             <span className={bestRisk?.score === null ? "strategy-picker-preview-empty" : "strategy-picker-preview-title"}>
                               {bestRisk?.score === null ? "Unscored preview" : "Best run"}
                               {" · "}{best.symbol || "No market"}{" · "}{best.timeframe || "No timeframe"}
@@ -440,12 +460,12 @@ export function StrategyPickerControls({
           </div>
           {!visible.length && (
             <Text size="sm" c="dimmed" p="md">
-              No strategies match this tab and these filters.
-              {tab !== "all" && <Button size="compact-xs" variant="subtle" onClick={() => setTab("all")}>View all</Button>}
+              No strategies match these filters.
+              {status !== "any" && <Button size="compact-xs" variant="subtle" onClick={() => setStatus("any")}>Any status</Button>}
             </Text>
           )}
-        </Tabs.Panel>
-      </Tabs>
+        </div>
+      </div>
       {catalog.errors.length > 0 && (
         <details>
           <summary>{catalog.errors.length} import issues</summary>
@@ -488,12 +508,14 @@ export function StrategyPickerControls({
         </details>
       )}
       <div className="collective-picker-foot">
-        <Text size="sm"><b>{selected.length} selected</b>{hidden.length > 0 && " / " + hidden.length + " outside this view"}</Text>
+        <Text size="sm">
+          {addedCount > 0 ? <><b>{addedCount}</b> to add</> : <b>{selected.length} selected</b>}
+          {hidden.length > 0 && " · " + hidden.length + " outside this view"}
+        </Text>
         <Group gap="xs" ml="auto">
           <Button size="xs" variant="subtle" onClick={() => choose({})}>Clear</Button>
-          <Button size="xs" variant="default" disabled={!additions.length || selectedCount + additions.length > 100}
-            onClick={addShown}>Add shown ({additions.length})</Button>
-          <Button size="xs" onClick={() => setPickerOpen(false)}>Done</Button>
+          <Button size="xs" variant="default" onClick={() => { choose(openingCopies.current); setPickerOpen(false); }}>Cancel</Button>
+          <Button size="xs" onClick={() => setPickerOpen(false)}>{addedCount > 0 ? `Add ${addedCount} ${addedCount === 1 ? "strategy" : "strategies"}` : "Done"}</Button>
         </Group>
       </div>
     </div>

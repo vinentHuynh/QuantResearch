@@ -30,7 +30,6 @@ import {
   portfolioUpdatePresentation,
   signedClass as signed,
   valueTone as tone,
-  weekday,
 } from './collectiveViewModel';
 import {
   CollectiveCalendar as Calendar,
@@ -117,10 +116,19 @@ function YearBars({ annual, start, end }: { annual: Record<string, number>; star
   );
 }
 
-export function CollectiveOverviewView({ model, recentForm, onSettings }: {
+export type AddedSummary = {
+  count: number;
+  copies: Record<string, number>;
+  was: { net: number | null; drawdown: number | null; ratio: number | null; winRate: number | null };
+};
+
+export function CollectiveOverviewView({ model, recentForm, onSettings, added, onUndo, onDismiss }: {
   model: Model;
   recentForm: Record<string, RecentForm>;
   onSettings: () => void;
+  added?: AddedSummary | null;
+  onUndo?: () => void;
+  onDismiss?: () => void;
 }) {
   const {
     annual,
@@ -151,31 +159,41 @@ export function CollectiveOverviewView({ model, recentForm, onSettings }: {
   const setCopies = (id: string, value: number) =>
     choose({ ...settings.copies, [id]: Math.min(100, Math.max(1, value)) });
 
+  const was = added?.was;
   return (
     <>
+      {added && (
+        <div className='wb-added-banner' role='status'>
+          <span><b>{added.count} {added.count === 1 ? 'strategy' : 'strategies'} added</b> · the figures below include {added.count === 1 ? 'it' : 'them'}</span>
+          <button type='button' className='wb-link-button' onClick={onUndo}>Undo</button>
+          <button type='button' className='wb-link-button' aria-label='Dismiss' onClick={onDismiss}>Dismiss</button>
+        </div>
+      )}
       <section className='wb-kpi-cards' data-testid='portfolio-metrics' aria-label='Key figures'>
         <div className='wb-kpi-card'>
           <span className='wb-kpi-label'>Net P&amp;L · {periodLabels[pnlPeriod]}</span>
           <span className={`wb-kpi-value ${signed(periodPnl)}`} data-testid='portfolio-pnl'>{wholeMoney(periodPnl)}</span>
-          <span className='wb-kpi-note'>{pct(periodPnl / result.capital)} on starting capital</span>
+          <span className='wb-kpi-note'>{pct(periodPnl / result.capital)} on starting capital{was?.net != null && <> · Was {wholeMoney(was.net)}</>}</span>
         </div>
         <div className='wb-kpi-card'>
           <span className='wb-kpi-label'>Max drawdown</span>
           <span className='wb-kpi-value wb-loss'>{wholeMoney(-periodMetrics.maxDrawdownDollars)}</span>
           <span className='wb-kpi-note'>
             {pct(Math.abs(periodMetrics.maxDrawdown))} below peak · {settings.basis === 'marked' ? 'daily closes' : 'closed trades only'}
+            {was?.drawdown != null && <> · Was {wholeMoney(-was.drawdown)}</>}
           </span>
         </div>
         <div className='wb-kpi-card'>
           <span className='wb-kpi-label'>Return ÷ drawdown</span>
           <span className='wb-kpi-value'>{ratio?.toFixed(2) ?? '—'}</span>
-          <span className='wb-kpi-note'>{ratio != null ? `$${ratio.toFixed(2)} earned per $1 of drawdown` : 'No drawdown in this period'}</span>
+          <span className='wb-kpi-note'>{ratio != null ? `$${ratio.toFixed(2)} earned per $1 of drawdown` : 'No drawdown in this period'}{was?.ratio != null && <> · Was {was.ratio.toFixed(2)}</>}</span>
         </div>
         <div className='wb-kpi-card'>
           <span className='wb-kpi-label'>Win rate</span>
           <span className='wb-kpi-value'>{periodMetrics.winRate == null ? '—' : pct(periodMetrics.winRate)}</span>
           <span className='wb-kpi-note'>
             of {periodMetrics.trades.toLocaleString()} trades · profit factor {periodMetrics.profitFactor?.toFixed(2) ?? '—'}
+            {was?.winRate != null && <> · Was {pct(was.winRate)}</>}
           </span>
         </div>
       </section>
@@ -347,7 +365,7 @@ export function CollectiveCalendarView({ model }: { model: Model }) {
           <>
             <Group justify='space-between' gap='xs'>
               <h2 className='wb-day-label'>
-                {weekday(day)} {day}
+                {new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
               </h2>
               <Button size='compact-sm' variant='light' onClick={() => setChartOpen(true)}>
                 View chart
@@ -365,10 +383,11 @@ export function CollectiveCalendarView({ model }: { model: Model }) {
                 ? 'marked changes can occur without an exit.'
                 : 'only trades closing this day contribute.'}
             </Text>
-            <Table mt='sm'>
+            <Text size='xs' fw={600} c='dimmed' mt='md' tt='uppercase'>By strategy</Text>
+            <Table mt={4}>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>Strategy / chart</Table.Th>
+                  <Table.Th>Strategy</Table.Th>
                   <Table.Th ta='right'>Contribution</Table.Th>
                 </Table.Tr>
               </Table.Thead>

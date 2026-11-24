@@ -144,3 +144,24 @@
   --teal: #1e7a62;
   --teal-ink: #16634f;
 }
+
+/* Risk: recent form + short rule form */
+.wb-recent-form-row + .wb-recent-form-row { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--wb-line, #e6e8ee); }
+.wb-recent-form-row > header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.wb-recent-form-row > header h2 { margin: 0; font-size: 16px; flex: 1 1 auto; }
+.wb-recent-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 12px; }
+.wb-recent-form-grid strong { display: block; font-size: 20px; }
+.wb-condition-details { margin: 0 0 12px; }
+.wb-condition-details > summary { cursor: pointer; font-size: 13px; color: var(--mantine-color-dimmed); padding: 4px 0; }
+.wb-short-rule { display: grid; gap: 12px; max-width: 420px; margin-top: 12px; }
+
+/* Calendar: month summary tiles, day panel */
+.wb-month-sum { gap: 20px; }
+.wb-month-sum span { display: grid; gap: 2px; text-align: right; }
+.wb-month-sum small { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.wb-month-sum b { font-size: 18px; font-weight: 600; }
+.wb-day-label { font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--ink); font-family: inherit; font-weight: 600; }
+
+/* Overview after adding */
+.wb-added-banner { display: flex; gap: 14px; align-items: center; padding: 10px 14px; margin-bottom: 12px; border: 1px solid #b9dcc9; background: #eaf6ef; border-radius: 8px; font-size: 13.5px; }
+.wb-added-banner span { flex: 1; }

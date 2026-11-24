@@ -242,3 +242,14 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* Add strategies: filters, chips, sparkline */
+.wb-add-filters { display: grid; gap: 12px; margin-bottom: 12px; }
+.wb-add-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.wb-add-chips button { border: 1px solid var(--mantine-color-gray-4); background: #fff; border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
+.wb-add-chips button.is-on { background: #1d4e89; border-color: #1d4e89; color: #fff; }
+.wb-add-rerun { margin-bottom: 12px; }
+.wb-spark { flex: none; }
+.wb-spark path { stroke: #0b7a5a; }
+.wb-spark.is-down path { stroke: #b3261e; }
+.wb-spark.is-empty { display: inline-block; width: 80px; }
