@@ -50,7 +50,7 @@ const periodLabels: Record<PortfolioPnlPeriod, string> = {
 };
 
 export function CollectiveEmptyState({ model }: { model: Model }) {
-  const { computed, histories, hasRun, refreshEvidence, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
+  const { computed, histories, hasRun, refreshEvidence, refreshResearch, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
   const [rerun, setRerun] = useState<{ phase: 'idle' | 'starting' | 'running' | 'importing' | 'done' | 'error'; message?: string }>({ phase: 'idle' });
   const hasRunRef = useRef(hasRun);
   hasRunRef.current = hasRun;
@@ -106,8 +106,10 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
       if (pending.size) throw new Error('The runs are still going. Check Runs, then use the refresh icon beside “Updated” above.');
       setRerun({ phase: 'importing', message: 'Loading the new results into the portfolio…' });
       // The app learns about finished runs on its own schedule; wait until it has them before importing.
-      for (let attempt = 0; attempt < 60 && !launched.every((id) => hasRunRef.current(id)); attempt += 1)
+      for (let attempt = 0; attempt < 30 && !launched.every((id) => hasRunRef.current(id)); attempt += 1) {
+        await refreshResearch?.();
         await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
       if (!launched.every((id) => hasRunRef.current(id))) throw new Error('The new runs finished but have not shown up yet. Reload the page, then use Add strategies › Import exact run.');
       for (const id of launched) {
         if (!(await refreshEvidence(id))) throw new Error('Could not import a new run into the portfolio. The message above says why.');

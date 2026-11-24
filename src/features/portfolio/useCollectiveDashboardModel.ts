@@ -95,12 +95,14 @@ function loadCatalog(key: string): Promise<CollectiveCatalog> {
 
 export function useCollectiveDashboardModel({
   researchState,
+  refreshResearch,
   refreshKey,
   view,
   pickerOpen,
   setPickerOpen,
 }: {
   researchState?: WorkbenchState | null;
+  refreshResearch?: () => Promise<void>;
   refreshKey: number;
   view: string;
   pickerOpen: boolean;
@@ -680,6 +682,7 @@ export function useCollectiveDashboardModel({
     railCollapsed,
     refreshEvidence,
     hasRun,
+    refreshResearch,
     refreshing,
     retryTracking,
     result,

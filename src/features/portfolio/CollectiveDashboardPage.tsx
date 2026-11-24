@@ -15,6 +15,7 @@ import './portfolioRedesign.css';
 
 export function CollectiveDashboard({
   researchState,
+  refreshResearch,
   refreshKey,
   view,
   alerts,
@@ -22,6 +23,8 @@ export function CollectiveDashboard({
   setPickerOpen,
 }: {
   researchState?: WorkbenchState | null;
+  /** Reloads the Workbench's runs; the Portfolio page does not poll on its own. */
+  refreshResearch?: () => Promise<void>;
   refreshKey: number;
   view: string;
   alerts?: ReactNode;
@@ -31,7 +34,7 @@ export function CollectiveDashboard({
   const current: PortfolioView = view === 'calendar' || view === 'risk' ? view : 'overview';
   const isMobile = useMediaQuery('(max-width: 900px)');
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const model = useCollectiveDashboardModel({ refreshKey, view, researchState, pickerOpen, setPickerOpen });
+  const model = useCollectiveDashboardModel({ refreshKey, view, researchState, refreshResearch, pickerOpen, setPickerOpen });
   const {
     catalog,
     choose,
