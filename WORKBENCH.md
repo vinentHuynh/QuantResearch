@@ -11,7 +11,11 @@ npm run dev:full
 ```
 
 Open **http://127.0.0.1:5173**. The TypeScript API listens on loopback port
-8001. `npm run build` checks frontend and backend types and builds the UI;
+8001. `dev:full` waits for the API to listen before starting Vite, avoiding
+connection-refused errors while the initial strategy catalog loads. Both the
+readiness check and Vite proxy respect `WORKBENCH_PORT`. If the API cannot start
+within 60 seconds, the command exits with an error; check the API output above it.
+`npm run build` checks frontend and backend types and builds the UI;
 `npm start` then serves the built app and API at **http://127.0.0.1:8001**.
 On macOS/Linux, use `.venv/bin/python` for installation. The npm commands choose
 the platform's virtual environment automatically.

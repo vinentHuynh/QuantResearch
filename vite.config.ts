@@ -18,7 +18,7 @@ export default defineConfig({
       ],
     },
     proxy: {
-      "/api/workbench": "http://127.0.0.1:8001",
+      "/api/workbench": `http://127.0.0.1:${process.env.WORKBENCH_PORT || 8001}`,
     },
   },
 });
