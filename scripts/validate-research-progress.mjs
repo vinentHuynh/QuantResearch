@@ -59,8 +59,9 @@ try {
   await page.screenshot({path:folder+'/scorecard.png'});
   checks.push('Scorecard uses the same milestones and labels the outcome as the latest evaluated configuration.');
   await page.goto(origin+'/#/scripts');
-  await expect(page.getByRole('region',{name:'Promising configuration'}).first()).toBeVisible();
+  await expect(page.getByRole('region',{name:'Strategy research status'}).first()).toBeVisible();
   await expect(page.getByRole('region',{name:'Strategy testing evidence'})).toHaveCount(0);
+  await page.getByText(/Results and research history/).first().click();
   await expect(page.locator('[aria-label="Best run summary"]').first()).toBeVisible();
   await page.screenshot({path:folder+'/scripts-simple.png'});
   await page.getByRole('link',{name:'Library',exact:true}).click();
@@ -84,12 +85,13 @@ try {
   await page.reload();
   const card=page.locator('section.wb-card').filter({has:page.getByRole('heading',{name:strategyTitle(strategy.name),exact:true})});
   await expect(card.getByText('Evaluation passed',{exact:true}).first()).toBeVisible();
+  await card.getByText(/Results and research history/).click();
   const bestSummary=card.locator('[aria-label="Best run summary"]');
   await expect(bestSummary).toContainText(/Best run.*NQ.*1d/);
   await expect(bestSummary.locator('.strategy-testing-best-run-metric strong').nth(0)).toHaveText('$20,000');
   await expect(bestSummary.locator('.strategy-testing-best-run-metric strong').nth(1)).toHaveText('10.00%');
   await expect(bestSummary.locator('.strategy-testing-best-run-metric strong').nth(2)).toHaveText('100');
-  await expect(card.getByRole('region',{name:'Strategy testing evidence'})).toHaveCount(0);
+  await expect(card.getByRole('region',{name:'Strategy testing evidence'})).toBeVisible();
   await expect(card.getByText('Testing details',{exact:true})).toHaveCount(0);
   await expect(card.getByText('Script details',{exact:true})).toHaveCount(0);
   await card.scrollIntoViewIfNeeded();

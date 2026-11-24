@@ -14,28 +14,45 @@ export type TestingActions = { inspectRun: (id: string) => void; openEvaluation:
 export function StrategyTesting({ evidence: e, compact = false, runnableCard = false, inspectRun, openEvaluation }: TestingActions & { evidence: TestingEvidence; compact?: boolean; runnableCard?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const best = e.best;
-  const configuration = best && e.configurations.find(c => c.runId === best.run.id);
-  const status = configuration?.lifecycle || e.configurations[0]?.lifecycle || lifecycleStatus(e.previousSource && !e.total ? "retest-required" : "not-tested", 0,
+  const configuration = (best && e.configurations.find(c => c.runId === best.run.id)) || e.configurations[0];
+  const status = configuration?.lifecycle || lifecycleStatus(e.previousSource && !e.total ? "retest-required" : "not-tested", 0,
     e.previousSource ? "Current source needs retesting." : "Complete a backtest, then plan its evaluation.", ["Backtest the current source, then complete its declared evaluation."],
     { kind: "configure-run", label: "Configure current-source backtest", strategyId: e.strategyId });
   const bestMetrics = best?.run.result?.metrics;
-  if (runnableCard) return <section className="strategy-testing-runnable" aria-label="Promising configuration">
-    <div className="strategy-testing-runnable-status">
-      <StrategyStageBadge {...status} />
-    </div>
-    {best && bestMetrics ? <div className="strategy-testing-best-run" aria-label="Best run summary" data-tier={best.tier}>
-      <Text className="strategy-testing-best-run-heading" size="xs" fw={600}>
-        Best run · <strong>{best.run.input.dataset.symbol} · {best.run.input.timeframe}</strong>
-      </Text>
-      <div className="strategy-testing-best-run-metrics">
-        <div className="strategy-testing-best-run-metric"><strong>{cash(bestMetrics.net_pnl)}</strong><span>Net P&amp;L</span></div>
-        <div className="strategy-testing-best-run-metric"><strong>{pct(Math.abs(bestMetrics.max_drawdown))}</strong><span>Drawdown</span></div>
-        <div className="strategy-testing-best-run-metric"><strong>{bestMetrics.trades}</strong><span>Trades</span></div>
-        <div className="strategy-testing-best-run-metric"><strong>{best.score?.toFixed(2) ?? "Unranked"}</strong><span>Return/DD</span></div>
-      </div>
-    </div> : <Text size="xs" c="dimmed" mt={6}>
-      {e.previousSource && !e.total ? "Current source needs retesting." : "No positive traded run for this market and source."}
-    </Text>}
+  const [reviewing, setReviewing] = useState(false);
+  if (runnableCard) return <section className="strategy-testing-runnable" aria-label="Strategy research status">
+    <StrategyStageBadge {...status} />
+    {configuration && <Text size="xs" c="dimmed" mt={4}>{configuration.symbol} · {configuration.timeframe} · {configuration.session}</Text>}
+    <Text size="sm" mt={4}>{status.finding}</Text>
+    {status.kind === "failed-checks" ? <>
+      <Button size="xs" variant="light" mt="xs" aria-expanded={reviewing}
+        onClick={() => setReviewing(open => !open)}>{reviewing ? "Hide failed checks" : "Review failed checks"}</Button>
+      {reviewing && <div>
+        {status.checks.map((check, index) => <Text key={index} size="xs" mt="xs">{check}</Text>)}
+        {status.action && <StrategyNextActionButton action={{ ...status.action, label: status.action.label === "Review failed checks" ? "Open evaluation" : status.action.label }} />}
+      </div>}
+    </> : status.action ? <StrategyNextActionButton action={status.action} /> :
+      best && <Button size="xs" variant="light" mt="xs" onClick={() => inspectRun(best.run.id)}>Inspect benchmark run</Button>}
+    <details style={{ marginTop: 10 }} onToggle={event => setExpanded(event.currentTarget.open)}>
+      <summary>Results and research history ({e.total} attempts)</summary>
+      {expanded && <>
+        {best && bestMetrics ? <div className="strategy-testing-best-run" aria-label="Best run summary" data-tier={best.tier}>
+          <Text className="strategy-testing-best-run-heading" size="xs" fw={600}>
+            Best run · <strong>{best.run.input.dataset.symbol} · {best.run.input.timeframe}</strong>
+          </Text>
+          <div className="strategy-testing-best-run-metrics">
+            <div className="strategy-testing-best-run-metric"><strong>{cash(bestMetrics.net_pnl)}</strong><span>Net P&amp;L</span></div>
+            <div className="strategy-testing-best-run-metric"><strong>{pct(Math.abs(bestMetrics.max_drawdown))}</strong><span>Drawdown</span></div>
+            <div className="strategy-testing-best-run-metric"><strong>{bestMetrics.trades}</strong><span>Trades</span></div>
+            <div className="strategy-testing-best-run-metric"><strong>{best.score?.toFixed(2) ?? "Unranked"}</strong><span>Return/DD</span></div>
+          </div>
+        </div> : <Text size="xs" c="dimmed" mt={6}>
+          {e.previousSource && !e.total ? "Current source needs retesting." : "No positive traded run for this market and source."}
+        </Text>}
+        {best && <Button size="compact-xs" variant="subtle" onClick={() => inspectRun(best.run.id)}>Inspect best run</Button>}
+        <DetailedTesting evidence={e} showBest={false} inspectRun={inspectRun} openEvaluation={openEvaluation} />
+      </>}
+    </details>
   </section>;
   return <section className={`strategy-testing testing-summary ${compact ? "strategy-testing-compact" : ""}`} aria-label="Promising configuration">
     <Group justify="space-between" gap="xs">
@@ -54,7 +71,7 @@ export function StrategyTesting({ evidence: e, compact = false, runnableCard = f
   </section>;
 }
 
-function DetailedTesting({ evidence: e, compact = false, inspectRun, openEvaluation }: TestingActions & { evidence: TestingEvidence; compact?: boolean }) {
+function DetailedTesting({ evidence: e, compact = false, showBest = true, inspectRun, openEvaluation }: TestingActions & { evidence: TestingEvidence; compact?: boolean; showBest?: boolean }) {
   const best = e.best;
   const m = best?.run.result?.metrics;
   return <section className={`strategy-testing ${compact ? "strategy-testing-compact" : ""}`} aria-label="Strategy testing evidence">
@@ -118,7 +135,7 @@ function DetailedTesting({ evidence: e, compact = false, inspectRun, openEvaluat
         </div>
       </details>
     </div>}
-    <div className="testing-best">
+    {showBest && <div className="testing-best">
       <Group gap="xs" justify="space-between">
         <Tooltip label={viabilityExplanation} multiline w={350} withArrow><Text size="sm" fw={600}>Most viable recorded run</Text></Tooltip>
         {best && <Badge color={best.tier === 0 ? "red" : best.tier >= 2 ? "teal" : "gray"} size="xs">{best.run.input.dataset.symbol} · {best.run.input.timeframe}</Badge>}
@@ -135,7 +152,7 @@ function DetailedTesting({ evidence: e, compact = false, inspectRun, openEvaluat
         </details>
         <Button mt="xs" size="compact-xs" variant="light" onClick={() => inspectRun(best.run.id)}>Inspect most viable run</Button>
       </> : <Text size="xs" c="dimmed">No completed, positive, traded run for this source and market. Training-only and older-source results are excluded.</Text>}
-    </div>
+    </div>}
     {!compact && <Text size="xs" c="dimmed" mt="xs">Individual case passes do not complete evaluation. Robustness requires additional recorded checks. All milestones describe historical research.</Text>}
   </section>;
 }

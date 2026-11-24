@@ -62,6 +62,7 @@ export function CollectiveDashboard({
     importState,
     followLatestEnd,
     loadCombination,
+    newPortfolioError,
     loading,
     marketCount,
     markets,
@@ -106,6 +107,7 @@ export function CollectiveDashboard({
       hasResult={!!result}
       isMobile={isMobile}
       loadCombination={loadCombination}
+      newPortfolioError={newPortfolioError}
       result={result}
       retryTracking={retryTracking}
       saveCombination={saveCombination}

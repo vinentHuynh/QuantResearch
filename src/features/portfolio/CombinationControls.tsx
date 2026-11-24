@@ -35,6 +35,7 @@ export function CombinationControls({
   hasResult,
   isMobile,
   loadCombination,
+  newPortfolioError,
   result,
   retryTracking,
   saveCombination,
@@ -65,7 +66,8 @@ export function CombinationControls({
   loadCombination: (id: string | null) => void;
   result: PortfolioResult | null;
   retryTracking: (id: string) => Promise<void>;
-  saveCombination: () => void;
+  newPortfolioError: string;
+  saveCombination: (mode: "update" | "create") => void;
   savedBookName: string;
   savedBooks: SavedCombination[];
   selectedSavedBookId: string | null;
@@ -198,17 +200,12 @@ export function CombinationControls({
           <Button size="compact-sm" variant="subtle" color="red" onClick={deleteCombination}
             disabled={!selectedSavedBookId}>Delete</Button>
         </Group>
-        <Group gap={6} wrap="nowrap">
-          <TextInput
-            size="xs"
-            style={{ flex: 1 }}
-            placeholder={selectedSavedBookId ? "Clear selection to save a new combination" : "Name this combination"}
-            value={savedBookName}
-            onChange={(event) => setSavedBookName(event.currentTarget.value)}
-            disabled={Boolean(selectedSavedBookId)}
-          />
-          <Button size="compact-sm" variant="light" onClick={saveCombination} disabled={!selected.length}>Save</Button>
-        </Group>
+        {selectedSavedBookId && <Button size="compact-sm" variant="light"
+          onClick={() => saveCombination("update")} disabled={!selected.length}>Save changes</Button>}
+        <TextInput size="xs" label="New portfolio name" value={savedBookName} error={newPortfolioError || undefined}
+          onChange={event => setSavedBookName(event.currentTarget.value)} />
+        <Button size="compact-sm" variant="default" onClick={() => saveCombination("create")}
+          disabled={!selected.length || !savedBookName.trim() || !!newPortfolioError}>Save as new portfolio</Button>
       </div>
       <div className="wb-rail-section">
         <NumberInput

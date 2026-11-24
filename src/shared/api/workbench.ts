@@ -4,6 +4,7 @@ export async function workbenchRequest<T>(
   path: string,
   data?: unknown,
   method = "POST",
+  signal?: AbortSignal,
 ): Promise<T> {
   const response = await fetch(
     WORKBENCH_API + path,
@@ -11,6 +12,7 @@ export async function workbenchRequest<T>(
       ? undefined
       : {
           method,
+          signal,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },

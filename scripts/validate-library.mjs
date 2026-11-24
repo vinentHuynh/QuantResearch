@@ -64,7 +64,7 @@ try {
       exact: true,
     })
     .click();
-  await page.getByRole("button", { name: /Assumptions & record/ }).click();
+  await page.getByText(/^Costs and execution/).click();
   await page.getByLabel("Warmup calendar days", { exact: true }).waitFor();
   assert.equal(
     await page.getByLabel("Warmup calendar days", { exact: true }).inputValue(),
@@ -82,8 +82,9 @@ try {
       .locator("..")
       .locator("..");
     await card
-      .getByRole("button", { name: "Configure run", exact: true })
+      .getByRole("button", { name: /More actions/ })
       .click();
+    await page.getByRole("menuitem", { name: "Configure backtest" }).click();
     await page.getByRole("textbox", { name: "Timeframe", exact: true }).click();
     await page
       .getByRole("option", {
@@ -94,7 +95,7 @@ try {
       })
       .click();
     await page
-      .getByRole("textbox", { name: "Dataset version", exact: true })
+      .getByRole("textbox", { name: "Market / dataset version", exact: true })
       .click();
     await page.getByRole("option", { name: /^NQ ·/ }).first().click();
     await page
@@ -103,22 +104,20 @@ try {
     await page
       .getByLabel("End date (UTC, inclusive)", { exact: true })
       .fill(strategy.id === "rsi2-reversion" ? "2025-12-31" : "2026-08-31");
-    await page.getByRole("button", { name: /Assumptions & record/ }).click();
+    await page.getByText("Research notes and criteria", { exact: true }).click();
     await page
       .getByLabel("Question / hypothesis", { exact: true })
       .fill(
         `Strategy consolidation validation: ${strategy.id}; ported signals with workbench accounting`,
       );
-    await page.getByRole("button", { name: /Preview & launch/ }).click();
-    await page.getByRole("button", { name: "Validate & preview" }).click();
-    await page.getByText("1 job ready", { exact: true }).waitFor();
+    await page.getByText("1 run ready to launch", { exact: true }).waitFor();
     const launched = page.waitForResponse(
       (r) =>
         r.url().endsWith("/api/workbench/runs") &&
         r.request().method() === "POST",
     );
     await page
-      .getByRole("button", { name: "Launch 1 run", exact: true })
+      .getByRole("button", { name: "Launch backtest", exact: true })
       .click();
     const response = await launched;
     const result = await response.json();

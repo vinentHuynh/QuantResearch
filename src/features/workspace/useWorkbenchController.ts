@@ -24,7 +24,6 @@ import {
 import type {
   DeletionPreview,
   RunComparison,
-  WarmupCheck,
   WorkbenchState,
 } from "./workbenchModel";
 import { shortId } from "./workbenchModel";
@@ -51,9 +50,6 @@ export function useWorkbenchController() {
   const draft = useMemo(readDraft, []);
   const [input, setInput] = useState<Input>(draft?.input || initial);
   const [sweepText, setSweepText] = useState(draft?.sweepText || "{}");
-  const [preview, setPreview] = useState<number | null>(null);
-  const [warmupChecks, setWarmupChecks] = useState<WarmupCheck[]>([]);
-  const [step, setStep] = useState(draft?.step || 0);
   const [showAllAttempts, setShowAllAttempts] = useState(false);
   const [filter, setFilter] = useState("");
   const [testingMarket, setTestingMarket] = useState("");
@@ -131,12 +127,12 @@ export function useWorkbenchController() {
     try {
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ input, sweepText, step, saved_at: new Date().toISOString() }),
+        JSON.stringify({ input, sweepText, saved_at: new Date().toISOString() }),
       );
     } catch {
       // A draft is a convenience; the server remains the source of truth.
     }
-  }, [input, sweepText, step]);
+  }, [input, sweepText]);
 
   async function action(work: () => Promise<void>) {
     setBusy(true);
@@ -183,7 +179,6 @@ export function useWorkbenchController() {
 
   function change<K extends keyof Input>(key: K, value: Input[K]) {
     setInput((current) => ({ ...current, [key]: value }));
-    setPreview(null);
   }
 
   function chooseStrategy(id: string) {
@@ -208,23 +203,12 @@ export function useWorkbenchController() {
         ? current.timeframe
         : selectedStrategy.timeframes[0],
     }));
-    setPreview(null);
     setSweepText("{}");
   }
 
   function configure(id: string) {
     chooseStrategy(id);
-    setStep(0);
     go("new-run");
-  }
-
-  function runInput() {
-    return {
-      ...input,
-      dataset_ids: [...new Set([input.dataset_id, ...(input.dataset_ids || [])])],
-      timeframes: [...new Set([input.timeframe, ...(input.timeframes || [])])],
-      sweep: JSON.parse(sweepText),
-    };
   }
 
   async function inspect(run: RunSummary) {
@@ -270,9 +254,7 @@ export function useWorkbenchController() {
       sweep: {},
     });
     setSweepText("{}");
-    setPreview(null);
     setDetail(null);
-    setStep(0);
     go("new-run");
   }
 
@@ -283,7 +265,6 @@ export function useWorkbenchController() {
     if (values.length) next[key] = values;
     else delete next[key];
     setSweepText(JSON.stringify(next));
-    setPreview(null);
   }
 
   const strategy = state?.strategies.find((candidate) => candidate.id === input.strategy_id);
@@ -345,27 +326,6 @@ export function useWorkbenchController() {
         datasets: state.datasets.length,
       }
     : {};
-  const sweep = parseSweep(sweepText);
-  const planDatasets = [
-    ...new Set([input.dataset_id, ...(input.dataset_ids || [])].filter(Boolean)),
-  ].length;
-  const planTimeframes = [
-    ...new Set([input.timeframe, ...(input.timeframes || [])].filter(Boolean)),
-  ].length;
-  const planCombos = sweep
-    ? Object.values(sweep).reduce(
-        (count, values) =>
-          count * (Array.isArray(values) ? Math.max(1, values.length) : 1),
-        1,
-      )
-    : null;
-  const estimate =
-    planCombos === null
-      ? null
-      : Math.max(1, planDatasets) * planTimeframes * planCombos;
-  const planned = preview ?? estimate;
-  const maxBatch = state?.limits.maxBatch || 24;
-
   const search = useMemo(
     () =>
       (query: string): SearchResult[] => {
@@ -381,7 +341,7 @@ export function useWorkbenchController() {
           ),
           {
             group: "Pages",
-            label: "New run",
+            label: "New backtest",
             detail: "Research",
             run: () => go("new-run"),
           },
@@ -476,7 +436,6 @@ export function useWorkbenchController() {
     deletion,
     detail,
     error,
-    estimate,
     filter,
     filtered,
     go,
@@ -484,17 +443,11 @@ export function useWorkbenchController() {
     input,
     inspect,
     latestHistory,
-    maxBatch,
     navCounts,
     notes,
     notice,
-    planned,
     portfolioPickerOpen,
-    planCombos,
-    planDatasets,
-    planTimeframes,
     presetName,
-    preview,
     refresh,
     refreshAll,
     researchSelection,
@@ -502,7 +455,6 @@ export function useWorkbenchController() {
     restoreRunConfiguration,
     reuse,
     route,
-    runInput,
     search,
     selected,
     setComparison,
@@ -514,7 +466,6 @@ export function useWorkbenchController() {
     setNotes,
     setNotice,
     setPresetName,
-    setPreview,
     setPortfolioPickerOpen,
     setResearchSelection,
     setSelected,
@@ -522,13 +473,11 @@ export function useWorkbenchController() {
     setSort,
     setStage,
     setStatus,
-    setStep,
     setSweepText,
     setTags,
     setTestingMarket,
     setViewName,
     setViewOpen,
-    setWarmupChecks,
     showAllAttempts,
     sort,
     sortColumn,
@@ -536,16 +485,13 @@ export function useWorkbenchController() {
     stage,
     state,
     status,
-    step,
     strategy,
-    sweep,
     sweepText,
     tags,
     testingMarket,
     updateSweep,
     viewName,
     viewOpen,
-    warmupChecks,
   };
 }
 

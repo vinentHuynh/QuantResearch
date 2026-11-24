@@ -370,7 +370,7 @@ try {
     { route: "runs", heading: "Runs & compare" },
     { route: "runs/nq-monthly", heading: "Runs & compare", activeTab: "NQ monthly" },
     { route: "runs/experiments", heading: "Runs & compare", activeTab: "Experiments" },
-    { route: "new-run", heading: "New run" },
+    { route: "new-run", heading: "New backtest" },
     { route: "evaluations", heading: "Evaluations & regimes" },
     { route: "event-studies", heading: "Pattern event studies" },
     { route: "scripts", heading: "Scripts & library", activeTab: "Runnable scripts" },
@@ -473,8 +473,8 @@ try {
     await picker.getByRole("button", { name: "Done", exact: true }).click();
   };
   await setFixtureCopies(3);
-  await page.getByPlaceholder("Name this combination").fill("Fixture saved book");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("textbox", { name: "New portfolio name" }).fill("Fixture saved book");
+  await page.getByRole("button", { name: "Save as new portfolio", exact: true }).click();
   await expect(page.getByPlaceholder("Load a saved combination")).toHaveValue("Fixture saved book");
   await clearFixtureSelection();
   await page.getByTestId("selected-count").filter({ hasText: "0 books" }).waitFor();
@@ -526,7 +526,7 @@ try {
   await page.getByRole("option", { name: "Fixture saved book", exact: true }).click();
   await expect(page.getByPlaceholder("Load a saved combination")).toHaveValue("Fixture saved book");
   await setFixtureCopies(5);
-  await page.locator(".wb-saved-combinations").getByRole("button", { name: "Save", exact: true }).click();
+  await page.locator(".wb-saved-combinations").getByRole("button", { name: "Save changes", exact: true }).click();
   await expect(page.getByPlaceholder("Load a saved combination")).toHaveValue("Fixture saved book");
   await expect.poll(() => page.evaluate(() =>
     JSON.parse(localStorage.getItem("quant-collective-combinations-v1") || "[]"),
@@ -547,13 +547,13 @@ try {
   await page.getByTestId("selected-count").filter({ hasText: "1 book" }).waitFor();
   await expectFixtureCopies(5);
   await expect(page.getByPlaceholder("Load a saved combination")).toHaveValue("Fixture saved book");
-  await expect(page.getByPlaceholder("Clear selection to save a new combination")).toBeDisabled();
-  await page.locator(".wb-saved-combinations").getByRole("button", { name: "Clear saved combination" }).click();
-  await expect(page.getByPlaceholder("Load a saved combination")).toHaveValue("");
-  await expect(page.getByPlaceholder("Name this combination")).toBeEnabled();
+  await page.getByRole("textbox", { name: "New portfolio name" }).fill("Fixture saved book");
+  await expect(page.getByRole("button", { name: "Save as new portfolio" })).toBeDisabled();
+  await expect(page.getByText("A portfolio already has this name.")).toBeVisible();
   await expectFixtureCopies(5);
-  await page.getByPlaceholder("Name this combination").fill("Second saved book");
-  await page.locator(".wb-saved-combinations").getByRole("button", { name: "Save", exact: true }).click();
+  await setFixtureCopies(4);
+  await page.getByRole("textbox", { name: "New portfolio name" }).fill("Second saved book");
+  await page.locator(".wb-saved-combinations").getByRole("button", { name: "Save as new portfolio", exact: true }).click();
   await expect(page.getByPlaceholder("Load a saved combination")).toHaveValue("Second saved book");
   await expect.poll(() => page.evaluate(() =>
     JSON.parse(localStorage.getItem("quant-collective-combinations-v1") || "[]").map((book) => book.name),
@@ -563,7 +563,7 @@ try {
     JSON.parse(localStorage.getItem("quant-collective-combinations-v1") || "[]").map((book) => book.name),
   )).toEqual(["Fixture saved book"]);
   await expect(page.getByPlaceholder("Load a saved combination")).toHaveValue("");
-  await expectFixtureCopies(5);
+  await expectFixtureCopies(4);
   await page.getByPlaceholder("Load a saved combination").click();
   await page.getByRole("option", { name: "Fixture saved book", exact: true }).click();
   await page.locator(".wb-saved-combinations").getByRole("button", { name: "Delete", exact: true }).click();
@@ -669,7 +669,14 @@ try {
   await page.goto(`${base}/#/scripts`);
   await expect(page.getByRole("heading", { name: "Scripts & library", level: 1 })).toBeVisible();
   await page.getByLabel("Search runnable strategies").fill("moving average");
-  await expect(page.getByText(/configurations.*failed.*attempts/).first()).toBeVisible();
+  const card = page.locator(".scripts-strategy-card").first();
+  await expect(card.getByLabel("Strategy research status")).toBeVisible();
+  await expect(card.getByLabel("Strategy testing evidence")).toBeHidden();
+  await card.getByText(/Results and research history/).click();
+  await expect(card.getByLabel("Strategy testing evidence")).toBeVisible();
+  await card.getByRole("button", { name: /More actions/ }).click();
+  await expect(page.getByRole("menuitem", { name: "Archive script" })).toBeVisible();
+  await page.keyboard.press("Escape");
   await page.goto(`${base}/#/watchlist`);
   await expect(page.getByRole("heading", { name: "Research", level: 1 })).toBeVisible();
   assert.equal(new URL(page.url()).hash, "#/workspace");
