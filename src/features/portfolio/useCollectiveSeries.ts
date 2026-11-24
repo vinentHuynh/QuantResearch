@@ -19,34 +19,38 @@ export function useCollectiveSeries(
       setLoading(false);
       return () => controller.abort();
     }
-    // Keep the last verified series on screen while an updated catalog's
-    // histories load. The selected date window advances only after this fetch.
-    setLoading(true);
-    fetch("/api/workbench/collective/series", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: ids.split(",") }),
-      signal: controller.signal,
-    })
-      .then(async (response) => {
+    let retry: number | undefined;
+    const load = async () => {
+      // Keep the last verified histories visible until their replacements load.
+      setLoading(true);
+      let canRetry = true;
+      try {
+        const response = await fetch("/api/workbench/collective/series", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: ids.split(",") }),
+          signal: controller.signal,
+        });
+        canRetry = response.ok || response.status >= 500;
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
-        return data as CollectiveSeries[];
-      })
-      .then((data) => {
         if (controller.signal.aborted) return;
-        setHistories(data);
+        setHistories(data as CollectiveSeries[]);
         setSeriesCatalog(catalog);
         setError("");
-        setLoading(false);
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setError(String(error));
-          setLoading(false);
-        }
-      });
-    return () => controller.abort();
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setError(String(error));
+        if (canRetry) retry = window.setTimeout(load, 5000);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      controller.abort();
+      window.clearTimeout(retry);
+    };
   }, [catalog, ids, setError]);
 
   return { histories, seriesCatalog, loading, setLoading };

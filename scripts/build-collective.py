@@ -655,26 +655,37 @@ def main():
                 if not run:raise ValueError('Pinned run is not in the workbench run ledger.')
                 if run['status']!='Succeeded':raise ValueError('Pinned run did not succeed.')
                 if not baseline_run(run):raise ValueError('Pinned run is not a baseline test.')
-                exact_key=(f"{run['input']['strategy']['id']}__{run['input']['dataset']['symbol']}__"
-                           f"{run['input']['timeframe']}__pinned__{run_id}__exact")
-                keep_variant=any(item.get('key')==exact_key and exact_run_item(item,run_id,run)
+                pin_key=(f"{run['input']['strategy']['id']}__{run['input']['dataset']['symbol']}__"
+                         f"{run['input']['timeframe']}__pinned__{run_id}")
+                prior_pin=next((item for item in prior_items if item.get('key')==pin_key
+                                and item.get('source')=='Pinned workbench'
+                                and item.get('source_run_ids')==[run_id]),None)
+                # Rebuild the original pinned base even when a replay extends it.
+                # The overlay's base checksum must match the regenerated ledger.
+                keep_pin=prior_pin and (exact_run_item(prior_pin,run_id,run) or prior_pin.get('verified_replay'))
+                keep_variant=any(item.get('key')==pin_key+'__exact' and exact_run_item(item,run_id,run)
                                  for item in prior_items)
-                if not keep_variant and any(exact_run_item(item,run_id,run) for item in items):continue
+                if not (keep_pin or keep_variant) and any(exact_run_item(item,run_id,run) for item in items):continue
                 item,payload=prepare_pinned_run(run_id,run)
                 old_collision=next((old for old in prior_items if old.get('id')==item['id']
                                     and not exact_run_item(old,run_id,run)),None)
-                if old_collision and not any(current['id']==item['id'] for current in items):
+                if old_collision and not keep_pin and not any(current['id']==item['id'] for current in items):
                     # Preserve an older non-exact pinned choice and its ID.
                     items.append(old_collision)
-                if keep_variant or any(current['id']==item['id'] for current in items):
-                    item,payload=prepare_pinned_run(run_id,run,exact_variant=True)
-                if any(current['id']==item['id'] for current in items):
-                    raise ValueError(f'Pinned history ID collides with an existing item: {item["id"]}')
-                path=OUT/item['series_file']
-                if path.exists():
-                    if sha(path)!=item['checksum']:raise ValueError(f'Saved pinned history checksum changed: {path}')
-                else:write_bytes_atomic(path,payload)
-                items.append(item)
+                collision=any(current['id']==item['id'] for current in items)
+                prepared=[]
+                if not collision and (keep_pin or not keep_variant):
+                    prepared.append((item,payload))
+                if keep_variant or collision:
+                    prepared.append(prepare_pinned_run(run_id,run,exact_variant=True))
+                for item,payload in prepared:
+                    if any(current['id']==item['id'] for current in items):
+                        raise ValueError(f'Pinned history ID collides with an existing item: {item["id"]}')
+                    path=OUT/item['series_file']
+                    if path.exists():
+                        if sha(path)!=item['checksum']:raise ValueError(f'Saved pinned history checksum changed: {path}')
+                    else:write_bytes_atomic(path,payload)
+                    items.append(item)
             except Exception as ex:errors.append({'key':f'pinned:{run_id}','error':str(ex)})
     elif pins:
         errors.append({'key':'pinned-runs','error':'Workbench run ledger is missing; pinned runs cannot be imported.'})

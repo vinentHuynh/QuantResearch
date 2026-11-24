@@ -67,6 +67,29 @@ const legacyNqMomentum = {
   key: "multi-speed-momentum__NQ__1h",
   sourceRunId: "0e7f5f5c-37e1-4fc4-9619-8d999ba3fcdd",
 };
+const pinnedHistoryReplays = [
+  {
+    id: "9931ee9bcd2f35500f8f",
+    strategyId: "rsi2-reversion",
+    timeframe: "1d",
+    sourceRunId: "169a5692-dbb4-4000-8792-fc69d70bf092",
+  },
+  {
+    id: "f9323ec642ba74a3de10",
+    strategyId: "multi-speed-momentum",
+    timeframe: "1h",
+    sourceRunId: "74a20599-8397-40a9-8f04-120a5a25b9e3",
+  },
+] as const;
+
+/** These selected books keep their pinned baseline and portfolio identity. */
+function pinnedHistoryReplay(item: CollectiveItem) {
+  return pinnedHistoryReplays.find(replay => item.id === replay.id &&
+    item.key === `${replay.strategyId}__NQ__${replay.timeframe}__pinned__${replay.sourceRunId}` &&
+    item.source === "Pinned workbench" && item.symbol === "NQ" &&
+    item.timeframe === replay.timeframe && item.session === "full-trading-day" &&
+    item.source_run_ids?.length === 1 && item.source_run_ids[0] === replay.sourceRunId);
+}
 
 function canReplayLegacyNqMomentum(item: CollectiveItem): boolean {
   return item.id === legacyNqMomentum.id && item.key === legacyNqMomentum.key &&
@@ -86,9 +109,12 @@ export function completeUtcThrough(last: string): string {
 
 function sourceRun(item: CollectiveItem, runs: Run[]): Run | undefined {
   const ids = new Set(item.source_run_ids || []);
+  const pinned = pinnedHistoryReplay(item);
   return runs
     .filter(run => ids.has(run.id) && run.status === "Succeeded" && !run.input.portfolio_replay &&
-      run.input.dataset.symbol === item.symbol && run.input.start <= item.end)
+      run.input.dataset.symbol === item.symbol && run.input.start <= item.end &&
+      (!pinned || (run.input.strategy.id === pinned.strategyId &&
+        run.input.timeframe === pinned.timeframe && run.input.session === item.session)))
     .sort((a, b) => b.input.end.localeCompare(a.input.end) || b.created_at.localeCompare(a.created_at))[0];
 }
 
@@ -325,6 +351,8 @@ export function createPortfolioTracking(d: Dependencies) {
     const mode: Job["mode"] | null = overnightKeys.has(item.key) &&
         item.source === "Expanded" && item.latest_replay
       ? "overnight"
+      : pinnedHistoryReplay(item)
+        ? "run"
       : item.source === "Current workbench" && !item.key.includes("__pinned__") && item.source_run_ids?.length
         ? "run"
         : item.source === "Workbench" && item.source_run_ids?.length &&
@@ -340,8 +368,19 @@ export function createPortfolioTracking(d: Dependencies) {
       : item.coverage.at(-1)?.start || item.start;
     const lookbackDays = mode === "run"
       ? Math.max(0, Number(source!.input.warmup_days) || 0) : 4;
-    const requiredFirst = new Date(Date.parse(anchor + "T00:00:00Z") -
+    let requiredFirst = new Date(Date.parse(anchor + "T00:00:00Z") -
       lookbackDays * DAY).toISOString().slice(0, 10);
+    if (pinnedHistoryReplay(item)?.strategyId === "rsi2-reversion" && source?.input.dataset.checksum) {
+      const baselineFirst = new Date(source.input.dataset.first);
+      if (Number.isFinite(baselineFirst.getTime())) {
+        const first = baselineFirst.toISOString().slice(0, 10);
+        // The successful frozen RSI run requested 600 calendar days before
+        // the archive began. Preserve that exact request and its actual data
+        // coverage. Publication separately proves the old archive prefix and
+        // overlapping results are unchanged before accepting the extension.
+        if (first <= anchor && first > requiredFirst) requiredFirst = first;
+      }
+    }
     const available = sameSymbol
       .filter(dataset => {
         if (!dataset.checksum || dataset.first.slice(0, 10) > requiredFirst) return false;

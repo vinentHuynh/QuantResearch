@@ -1083,6 +1083,46 @@ try {
   await expectPeriodMetrics(periodCases[4]);
   await expect(periodPage.getByRole("textbox", { name: "P&L start" })).toHaveValue("2025-07-01");
   await expect(periodPage.getByRole("textbox", { name: "P&L end" })).toHaveValue("2026-09-30");
+
+  await periodPage.getByRole("switch", { name: /Follow latest/ }).check();
+  await periodPage.getByRole("link", { name: "Contributions", exact: true }).click();
+  await contributionRanges.getByRole("button", { name: "All time", exact: true }).click();
+  await expectContributionPeriod(periodCases[0]);
+  const refreshedEnd = "2026-10-02";
+  const refreshedCoverage = [{ start: periodSeries.coverage[0].start, end: refreshedEnd }];
+  const catalogResponse = await periodPage.request.get(`${base}/api/workbench/collective`);
+  const beforeRefresh = await catalogResponse.json();
+  let catalogAttempts = 0;
+  let seriesAttempts = 0;
+  await periodPage.route("**/api/workbench/collective", async route => {
+    if (++catalogAttempts === 1) {
+      await route.fulfill({ status: 503, json: { error: "Synthetic catalog refresh failure" } });
+      return;
+    }
+    await route.fulfill({ json: { ...beforeRefresh, items: beforeRefresh.items.map(item =>
+      item.id === periodSeries.id ? { ...item, end: refreshedEnd, coverage: refreshedCoverage } : item) } });
+  });
+  await periodPage.route("**/api/workbench/collective/series", async route => {
+    if (++seriesAttempts === 1) {
+      await route.fulfill({ status: 503, json: { error: "Synthetic series refresh failure" } });
+      return;
+    }
+    await route.fulfill({ json: [{ ...periodSeries, coverage: refreshedCoverage,
+      daily: [...periodSeries.daily, { date: refreshedEnd, pnl: 25 }] }] });
+  });
+  await periodPage.route("**/api/workbench/collective/tracking", route => route.fulfill({ json: {
+    selection: [periodSeries.id], items: { [periodSeries.id]: {
+      status: "up-to-date", dataset_last: "2026-10-04", simulated_through: refreshedEnd,
+    } },
+  } }));
+  await expect(periodPage.getByText("Synthetic catalog refresh failure", { exact: true })).toBeVisible({ timeout: 10000 });
+  await expectContributionPeriod(periodCases[0]);
+  await expect(periodPage.getByText(/Synthetic series refresh failure/)).toBeVisible({ timeout: 10000 });
+  await expectContributionPeriod(periodCases[0]);
+  await expect(periodPage.getByRole("textbox", { name: "P&L end" })).toHaveValue(refreshedEnd, { timeout: 12000 });
+  await expectContributionPeriod({ ...periodCases[0], pnl: "$144.00", contributionReturn: "0.14%" });
+  assert.equal(catalogAttempts, 2, "The next tracking poll should retry the catalog refresh once");
+  assert.equal(seriesAttempts, 2, "The newest histories should load after one transient error");
   await periodPage.close();
 
   assert.deepEqual(pageErrors, []);

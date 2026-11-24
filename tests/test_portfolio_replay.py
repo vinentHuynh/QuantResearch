@@ -98,6 +98,91 @@ class ReplayMergeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'complete endpoints'):
             replay.complete_overnight_sessions(pd.concat([bars,partial]),'2026-09-25','2026-09-28')
 
+    def test_weekend_cutoff_corrects_only_actual_final_marked_day(self):
+        item={**self.item,'end':'2026-01-04'}
+        old=copy.deepcopy(self.old)
+        old['coverage']=[{'start':'2026-01-01','end':'2026-01-04'}]
+        old['trades'][-1]=trade('2026-01-02',10,True)
+        new={'daily':[day('2026-01-01',5),day('2026-01-02',8),day('2026-01-05',12,True)],
+             'trades':[trade('2026-01-01',5),
+                       {**trade('2026-01-02',20),'exit':'2026-01-05T13:00:00+00:00'}]}
+        merged,audit=replay.replace_tail(item,old,new,'2026-01-01','2026-01-05')
+        self.assertEqual(audit['terminal_day'],'2026-01-02')
+        self.assertEqual(audit['terminal_mark_delta'],-2)
+        self.assertEqual([r['date'] for r in merged['daily']],['2026-01-01','2026-01-02','2026-01-05'])
+        changed=copy.deepcopy(new);changed['daily'][0]['pnl']=6
+        with self.assertRaisesRegex(ValueError,'marked P&L diverged'):
+            replay.replace_tail(item,old,changed,'2026-01-01','2026-01-05')
+
+    def test_published_drawdown_recomputed_from_updated_daily_marks(self):
+        item={**self.item,'max_drawdown_dollars':999,'max_drawdown':-.9}
+        series=copy.deepcopy(self.old)
+        series['daily'].append(day('2026-01-03',-20,True))
+        series['coverage']=[{'start':'2026-01-01','end':'2026-01-03'}]
+        updated,_=replay.item_for_series(item,series,{})
+        self.assertEqual(updated['max_drawdown_dollars'],20)
+        self.assertAlmostEqual(updated['max_drawdown'],-20/1015)
+        self.assertEqual(item['max_drawdown_dollars'],999)
+
+
+class OvernightBoundaryTest(unittest.TestCase):
+    def fixture(self,mark=30579.25):
+        old_trade={'entry':'2026-09-27T22:00:00+00:00','exit':'2026-09-28T10:00:00+00:00',
+                   'pnl':15.,'quantity':1,'cost':12.5,'exit_reason':'session_close','synthetic_exit':False}
+        raw=pd.DataFrame([{'entry_time':'2026-09-28T22:00:00+00:00','exit_time':'2026-09-29T10:00:00+00:00',
+                           'session_date':'2026-09-29','side':'long','entry':30560.5,'exit':30568.25,
+                           'quantity':1,'cost':12.5,'net_pnl':142.5,'reason':'session_close'}])
+        next_trade={'entry':raw.entry_time[0],'exit':raw.exit_time[0],'pnl':142.5,
+                    'quantity':1,'cost':12.5,'exit_reason':'session_close','synthetic_exit':False}
+        index=pd.to_datetime(['2026-09-28T22:00:00Z','2026-09-28T23:59:00Z','2026-09-29T09:59:00Z'])
+        source=pd.DataFrame({'open':[30560.5,mark,30568.25],'close':[30560.5,mark,30568.25]},index=index)
+        old={'id':'overnight','daily':[day('2026-09-27',5),day('2026-09-28',10,True)],
+             'trades':[old_trade],'coverage':[{'start':'2026-09-27','end':'2026-09-28'}]}
+        carry=(mark-30560.5)*20-6.25
+        new={'daily':[day('2026-09-27',5),day('2026-09-28',10+carry),day('2026-09-29',142.5-carry,True)],
+             'trades':[old_trade,next_trade]}
+        context={'source':source,'trades':raw,'tick_size':.25,'point':20}
+        return old,new,context
+
+    def test_actual_crossing_position_explains_only_terminal_mark(self):
+        for mark in (30579.25,30550.5):
+            with self.subTest(mark=mark):
+                old,new,context=self.fixture(mark);saved=copy.deepcopy(old)
+                with self.assertRaisesRegex(ValueError,'marked P&L diverged'):
+                    replay.verify_overlap(old,new,'2026-09-27','2026-09-28')
+                item={'id':'overnight','end':'2026-09-28'}
+                merged,audit=replay.replace_tail(item,old,new,'2026-09-27','2026-09-29',overnight_context=context)
+                self.assertAlmostEqual(audit['terminal_mark_delta'],(mark-30560.5)*20-6.25)
+                self.assertEqual(audit['overlap_trades'],1)
+                self.assertEqual(audit['overnight_boundary_carry']['entry_cost'],6.25)
+                self.assertEqual(sum(r['pnl'] for r in merged['daily']),157.5)
+                self.assertEqual(sum(t['pnl'] for t in merged['trades']),157.5)
+                self.assertEqual(old,saved)
+
+    def test_unexplained_marks_changed_trades_and_source_changes_fail_closed(self):
+        for mutation in ('early_mark','terminal_mark','old_trade','new_trade','entry_bar','missing_mark','cost','side','duplicate'):
+            with self.subTest(mutation=mutation):
+                old,new,context=self.fixture()
+                if mutation=='early_mark':new['daily'][0]['pnl']+=1
+                elif mutation=='terminal_mark':new['daily'][1]['pnl']+=1
+                elif mutation=='old_trade':new['trades'][0]={**new['trades'][0],'pnl':16}
+                elif mutation=='new_trade':new['trades'][1]['pnl']+=1
+                elif mutation=='entry_bar':context['source'].iloc[0,0]+=1
+                elif mutation=='missing_mark':context['source']=context['source'].iloc[[0,2]]
+                elif mutation=='cost':context['trades'].loc[0,'cost']=0
+                elif mutation=='side':context['trades'].loc[0,'side']='short'
+                elif mutation=='duplicate':context['trades']=pd.concat([context['trades'],context['trades']])
+                with self.assertRaises(ValueError):
+                    replay.verify_overnight_overlap(old,new,'2026-09-27','2026-09-28',**context)
+
+    def test_no_extension_or_crossing_position_cannot_exempt_divergence(self):
+        old,new,context=self.fixture()
+        audit=replay.verify_overnight_overlap(old,old,'2026-09-27','2026-09-28',**context)
+        self.assertEqual(audit['terminal_mark_delta'],0)
+        context['trades']=context['trades'].iloc[:0]
+        with self.assertRaisesRegex(ValueError,'unique new crossing session'):
+            replay.verify_overnight_overlap(old,new,'2026-09-27','2026-09-28',**context)
+
 
 class ReplayPublicationTest(unittest.TestCase):
     def fixture(self,state,legacy_nq_momentum=False):
@@ -153,6 +238,88 @@ class ReplayPublicationTest(unittest.TestCase):
             ])
         db.close()
         return out,item,series
+
+    def pinned_fixture(self,state,item_id,warmup_days=1):
+        out,item,series=self.fixture(state,legacy_nq_momentum=True)
+        spec=replay.PINNED_HISTORY_REPLAYS[item_id]
+        index=pd.to_datetime(['2025-12-31T00:00:00Z','2026-01-01T13:00:00Z','2026-01-02T23:59:00Z'])
+        original=pd.DataFrame({'open':[100.,101.,102.],'high':[101.,102.,103.],
+                               'low':[99.,100.,101.],'close':[100.,101.,102.],
+                               'volume':[1,1,1],'instrument_id':[1,1,1]},index=index)
+        original.index.name='ts_event'
+        original_path=state/'original.parquet';original.to_parquet(original_path)
+        extension=original.iloc[-1:].copy();extension.index=pd.DatetimeIndex(['2026-01-03T23:59:00Z'],name='ts_event')
+        current_path=state/'bars.parquet';pd.concat([original,extension]).to_parquet(current_path)
+        previous={'id':'old-data','symbol':'NQ','path':str(original_path),'checksum':builder.sha(original_path),
+                  'first':index[0].isoformat(),'last':index[-1].isoformat()}
+        current={**previous,'id':'new-data','path':str(current_path),'checksum':builder.sha(current_path),
+                 'last':'2026-01-03T23:59:00+00:00'}
+        with sqlite3.connect(state/'workbench.sqlite3') as db:
+            baseline=json.loads(db.execute("SELECT body FROM records WHERE kind='run' AND id=?",
+                                           (replay.LEGACY_NQ_MOMENTUM_RUN,)).fetchone()[0])
+            baseline['id']=spec['source_run_id'];inp=baseline['input']
+            inp.update(id=spec['source_run_id'],dataset=previous,timeframe=spec['timeframe'],warmup_days=warmup_days)
+            inp['strategy']['id']=spec['strategy_id']
+            tracked={**copy.deepcopy(inp),'id':'tracking','dataset':current,'end':'2026-01-03',
+                     'portfolio_replay':{'item_id':item_id,'source_run_id':spec['source_run_id']}}
+            db.execute('DELETE FROM records')
+            db.executemany('INSERT INTO records VALUES (?,?,?)',[
+                ('dataset','old-data',json.dumps(previous)),('dataset','new-data',json.dumps(current)),
+                ('run',spec['source_run_id'],json.dumps(baseline)),
+                ('run','tracking',json.dumps({'id':'tracking','status':'Succeeded','input':tracked}))])
+        db.close()
+        builder.dump(state/'runs'/'tracking'/'input.json',tracked)
+        series['id']=item_id
+        payload=json.dumps(series,separators=(',',':')).encode();checksum=hashlib.sha256(payload).hexdigest()
+        name=f'{item_id}-{checksum[:16]}.json';(out/name).write_bytes(payload)
+        item.update(id=item_id,source='Pinned workbench',timeframe=spec['timeframe'],
+                    key=f"{spec['strategy_id']}__NQ__{spec['timeframe']}__pinned__{spec['source_run_id']}",
+                    source_run_ids=[spec['source_run_id']],series_file=name,checksum=checksum)
+        builder.dump(out/'index.json',{'version':1,'items':[item],'errors':[],'sources':[]})
+        return out,item,series
+
+    def test_exact_pinned_histories_publish_without_replacing_saved_baseline(self):
+        for item_id,spec in replay.PINNED_HISTORY_REPLAYS.items():
+            with self.subTest(item_id=item_id),tempfile.TemporaryDirectory() as tmp:
+                state=Path(tmp)
+                warmup=2 if spec['strategy_id']=='rsi2-reversion' else 1
+                out,item,series=self.pinned_fixture(state,item_id,warmup_days=warmup)
+                with patch.object(builder,'OUT',out),patch.dict(os.environ,{'WORKBENCH_HOME':str(state)}):
+                    old_record=replay.sqlite_record('run',spec['source_run_id'])
+                    result=replay.publish_run(item_id,'tracking')
+                    audit=result['audit']['preserved_baseline_data']
+                    self.assertTrue(audit['original_prefix_verified'])
+                    self.assertEqual(audit['rows'],3)
+                    self.assertEqual('preserved_warmup_shortfall' in audit,spec['strategy_id']=='rsi2-reversion')
+                    updated=builder.read(out/'index.json')['items'][0]
+                    for key in ('id','source','source_run_ids','parameters','working','feasible'):
+                        self.assertEqual(updated[key],item[key])
+                    self.assertEqual(replay.sqlite_record('run',spec['source_run_id']),old_record)
+                    self.assertEqual(builder.read(out/item['series_file']),series)
+
+    def test_pinned_identity_and_original_data_changes_are_rejected(self):
+        item_id='9931ee9bcd2f35500f8f'
+        with tempfile.TemporaryDirectory() as tmp:
+            state=Path(tmp);out,item,_=self.pinned_fixture(state,item_id,warmup_days=2)
+            for field,value in [('id','other'),('key','other'),('source','Workbench'),('symbol','ES'),
+                                ('timeframe','1h'),('session','new-york-rth'),('source_run_ids',['other'])]:
+                with self.subTest(field=field):
+                    self.assertIsNone(replay.pinned_history_replay({**item,field:value}))
+            path=state/'bars.parquet';changed=pd.read_parquet(path);changed.iloc[0,0]+=1;changed.to_parquet(path)
+            with sqlite3.connect(state/'workbench.sqlite3') as db:
+                current=json.loads(db.execute("SELECT body FROM records WHERE kind='dataset' AND id='new-data'").fetchone()[0])
+                current['checksum']=builder.sha(path)
+                tracked=json.loads(db.execute("SELECT body FROM records WHERE kind='run' AND id='tracking'").fetchone()[0])
+                tracked['input']['dataset']=current
+                db.execute("UPDATE records SET body=? WHERE kind='dataset' AND id='new-data'",(json.dumps(current),))
+                db.execute("UPDATE records SET body=? WHERE kind='run' AND id='tracking'",(json.dumps(tracked),))
+            db.close()
+            builder.dump(state/'runs'/'tracking'/'input.json',tracked['input'])
+            with patch.object(builder,'OUT',out),patch.dict(os.environ,{'WORKBENCH_HOME':str(state)}):
+                with self.assertRaisesRegex(ValueError,'original dataset prefix'):
+                    replay.publish_run(item_id,'tracking')
+                self.assertEqual(builder.read(out/'index.json')['items'][0],item)
+                self.assertFalse((out/'verified-replays.json').exists())
 
     def test_publish_run_retains_original_record_and_refresh_overlay(self):
         with tempfile.TemporaryDirectory() as tmp:
