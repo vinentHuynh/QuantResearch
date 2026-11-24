@@ -1,0 +1,32 @@
+{
+  "study": "MNQ New York open: movement, recovery, and continuation",
+  "frozen_date": "2026-10-28",
+  "type": "Descriptive historical event study; no trading-strategy or holdout claim",
+  "hypothesis": "An opening directional push may retrace toward the cash opening price within one or two hours; compare this with additional same-direction extension and clean continuation.",
+  "data_version": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1",
+  "timezone": "America/New_York",
+  "opening_windows_minutes": [5, 10, 15],
+  "followup_minutes_after_checkpoint": [60, 120],
+  "session_calendar": "exchange_calendars 4.13.2 XNYS; early closes retained",
+  "primary_sample": "Common sessions with every 1-minute bar present from 09:30 inclusive through 11:45 exclusive; no contract change in that window. No filling missing bars.",
+  "initial_metrics": ["high-low range", "absolute close-open displacement", "maximum rise from open", "maximum fall from open", "signed close-open change", "range and displacement in basis points"],
+  "signal_definition": "O=09:30 open, E=last completed opening-window close, s=sign(E-O), A=abs(E-O). Future bars start at the checkpoint; flat openings excluded only from directional outcomes.",
+  "outcomes": {
+    "half_retrace": "Reach or pass E-s*0.5*A",
+    "full_retrace": "Reach or pass O",
+    "opposite_equal_move": "Reach or pass O-s*A",
+    "extension": "Reach or pass E+s*A",
+    "first_passage": "First full retracement versus first equal-size extension, with future bar open checked before intrabar extremes; unresolved same-minute order labeled ambiguous",
+    "clean_continuation": "Reach equal-size extension, never retrace half the initial displacement, and finish beyond E in the initial direction"
+  },
+  "subgroups": {
+    "all_nonflat": "A > 0",
+    "directional_push": "A >= 20 index points AND A/(opening high-low) >= 0.60; descriptive filter, not optimized",
+    "directions": ["up", "down"],
+    "displacement_bins_points": ["(0,10)", "[10,20)", "[20,40)", "[40,80)", "[80,infinity)"],
+    "periods": ["all", "2024 onward", "each calendar year"]
+  },
+  "uncertainty": "Headline 95% pointwise percentile intervals from 2000 seeded calendar-month cluster bootstrap samples; overlapping windows and subgroups are not independent trials; no multiplicity adjustment.",
+  "risk": "Report full-horizon adverse/favorable excursion for a hypothetical fade and lower/upper bounds on adverse excursion before first return. Prices are not executable trade results; no fees, slippage, stops or fill assumptions.",
+  "decision": "No profit-based pass/fail, parameter optimization, or stage promotion. Assess only historical frequencies and movement distributions; a separate specified causal trade backtest would be needed for an expectancy conclusion."
+}

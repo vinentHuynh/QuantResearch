@@ -1,0 +1,38 @@
+{
+  "quoted_at_utc": "2026-10-28T16:33:59.813999+00:00",
+  "purpose": "Price discovery only; no purchase or market-data request made",
+  "quote_scope": "Full calendar intervals including overnight data; opening-window requests may cost less",
+  "estimate_is_not_a_provider_enforced_spending_cap": true,
+  "entries": [
+    {
+      "label": "development_2019_2023",
+      "request": {
+        "dataset": "GLBX.MDP3",
+        "symbols": [
+          "MNQ.v.0"
+        ],
+        "stype_in": "continuous",
+        "schema": "trades",
+        "start": "2019-05-06T13:30:00Z",
+        "end": "2024-01-01T00:00:00Z"
+      },
+      "estimated_cost_usd": 707.76607811451,
+      "billable_uncompressed_bytes": 27141358560
+    },
+    {
+      "label": "evaluation_2024_only_if_development_passes",
+      "request": {
+        "dataset": "GLBX.MDP3",
+        "symbols": [
+          "MNQ.v.0"
+        ],
+        "stype_in": "continuous",
+        "schema": "trades",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2025-01-01T00:00:00Z"
+      },
+      "estimated_cost_usd": 218.891845285892,
+      "billable_uncompressed_bytes": 8394047472
+    }
+  ]
+}

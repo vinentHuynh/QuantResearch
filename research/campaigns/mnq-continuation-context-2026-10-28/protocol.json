@@ -1,0 +1,133 @@
+{
+  "study_id": "mnq-continuation-context-2026-10-28",
+  "created_date": "2026-10-28",
+  "stage": "bounded descriptive continuation research; no strategy selection or execution backtest",
+  "user_request": "Research whether an opening stretch distance makes further one-direction continuation more likely than retracement.",
+  "frozen_before_new_context_outcomes": true,
+  "previous_results_already_known": "The unconditional first-touch continuation study and prior fade failures are known and remain preserved. This is a user-requested contextual extension, not a fresh unseen experiment.",
+  "sources": {
+    "events": "reports/mnq-open-fade-small-targets-2026-10-28/continuation_events.csv",
+    "sessions": "reports/mnq-ny-open-2026-10-28/opening_sessions.csv",
+    "data_version": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1"
+  },
+  "entry_unchanged": "First touch of plus/minus40,60,80 points from09:30 cash open during09:30 inclusive..09:45 exclusive. No close confirmation, pullback wait or new entry threshold. First-side ambiguity preserved.",
+  "hypothesis": "Fixed point stretches may have different continuation associations depending on time to first touch and size relative to the opening range typical of the preceding20 eligible sessions.",
+  "primary": {
+    "barrier_definition": "balanced_20",
+    "continuation": "Travel another20 points in the initial direction before retracing20 points",
+    "horizon_minutes": 60
+  },
+  "supplemental": {
+    "horizon_minutes": 120,
+    "barrier_definition": "balanced_initial_move",
+    "interpretation": "AnotherD in initial direction before a fullD retracement to the open. Supplemental only; cannot rescue primary failure."
+  },
+  "context_families": {
+    "hit_time": {
+      "bins": [
+        {
+          "label": "09:30-09:34",
+          "minimum_minute_index": 0,
+          "maximum_minute_index": 4
+        },
+        {
+          "label": "09:35-09:39",
+          "minimum_minute_index": 5,
+          "maximum_minute_index": 9
+        },
+        {
+          "label": "09:40-09:44",
+          "minimum_minute_index": 10,
+          "maximum_minute_index": 14
+        }
+      ],
+      "causality": "Minute containing the first touch. This is available at the touch; no future candle close or end-of-minute volume is required. Exact seconds remain unknown."
+    },
+    "relative_stretch": {
+      "scale": "Median of the first15-minute high-low range over the previous20 eligible cash sessions, excluding the current day; minimum20 observations; chronological rolling median.shift(1). All cash dates included whether or not they trigger.",
+      "ratio": "D / trailing20_session_median_15m_range",
+      "bins": [
+        {
+          "label": "below_0.75x",
+          "lower_inclusive": 0,
+          "upper_exclusive": 0.75
+        },
+        {
+          "label": "0.75_to_below_1.25x",
+          "lower_inclusive": 0.75,
+          "upper_exclusive": 1.25
+        },
+        {
+          "label": "at_least_1.25x",
+          "lower_inclusive": 1.25,
+          "upper_exclusive": null
+        }
+      ],
+      "causality": "Known before09:30. Never use the current day's completed15-minute range to classify its intrabar entry. First20 cash sessions missing the baseline are recorded explicitly and excluded only from this context family.",
+      "carry_history_across_period_split": true
+    }
+  },
+  "bounded_scope": "Three triggers x two context families x three bins =18 primary cells per chronological period. Test families separately: no intersections, automatic best-level choice, new bins, refined cutoffs, indicators or further searches after failure.",
+  "periods": {
+    "development": [
+      "2019-05-06",
+      "2023-12-31"
+    ],
+    "chronological_check": [
+      "2024-01-01",
+      "2026-09-03"
+    ]
+  },
+  "prior_exposure": "All periods already appeared in descriptive research; the chronological check is not a globally unseen holdout or prospective observation.",
+  "summaries": "Retain all cells including empty/sparse/failed cells. Report n, certain/possible continuation, certain/possible retracement, unresolved/order ambiguity, first-direction ambiguity, mean/median ratio and reference range, and descriptive terminal direction separately if included. Show outcome-ambiguity percentage in every context cell; changing resolution is not automatically a behavioral change.",
+  "baseline": "For each trigger/period/horizon/barrier/context family, use all threshold-hit events with that family's covariate available. Relative-stretch baseline excludes only its initial20-session warmup. Do not condition on outcome certainty, winners or price reaching any future level.",
+  "uncertainty": {
+    "method": "Calendar-month cluster bootstrap including zero-event months throughout each period. Reuse shared sampled month multiplicities across bins and baselines within each period; seeded20261028;20000draws.",
+    "pointwise": "95% percentile intervals for certain and possible continuation rates; do not confuse statistical intervals with minute-order bounds.",
+    "minimum_events": 100,
+    "minimum_occupied_months": 12,
+    "primary_family_size": 18,
+    "multiplicity": "One-sided lower bound at alpha=0.05/18 for each primary cell's CERTAIN-continuation rate. This conservative Bonferroni bound accounts for18 contextual comparisons. Both chronological periods must pass, rather than cherry-picking one.",
+    "continuation_majority_flag": "For primary60m20/20 only: at least100 events and12 occupied months in EACH period AND each multiplicity-adjusted lower bound for certain continuation exceeds50%. Otherwise no supported contextual continuation-majority finding.",
+    "improvement": "Any comparison to an unfiltered cohort is descriptive; overlapping cohorts and partial identification prevent an automatic causal uplift claim. Do not rank or select using upper possible-continuation bounds.",
+    "empty_bootstraps": "Record count; suppress intervals if fewer than99% of draws have nonzero denominator."
+  },
+  "sample_limitations": "Inherits1841 complete cash-session sample; three March2020 disruption dates excluded for missing minutes. No forward filling. This may understate halt-related tail risk. Contract rolls, varying index level, price volatility and missing trade sequence limit transfer.",
+  "interpretation": "No average continuation threshold is defined by overlapping fixed observation levels. A larger average opening range is not a predicted one-direction move. The rolling range is a candidate normalization, not a validated signal.",
+  "verification": "Validate source hashes; reproduce prior unfiltered event aggregates; check each threshold/date/horizon/barrier event unique; exact bucket boundaries; first20-session warmup and no-lookahead with sentinel perturbation; sums of context bins equal available baseline; joint/known/ambiguous outcome identity; direct independent roll calculation and selected cell reconciliation.",
+  "data_acquisition": "No paid downloads or external market-data retrievals. Existing local records only, plus read-only published literature research.",
+  "workbench": {
+    "api_status": "unavailable at inspection",
+    "run_id": null,
+    "evaluation_id": null,
+    "promotion": false
+  },
+  "outputs": [
+    "protocol and checksum",
+    "enriched event ledger",
+    "context summary with all cells",
+    "yearly opening-range context",
+    "verification and lineage",
+    "source literature memo",
+    "readable research report"
+  ],
+  "fixed_context_contrasts": {
+    "predeclared_before_context_outcomes": true,
+    "pairs": [
+      {
+        "family": "hit_time",
+        "A": "09:30-09:34",
+        "B": "09:40-09:44"
+      },
+      {
+        "family": "relative_stretch",
+        "A": "at_least_1.25x",
+        "B": "below_0.75x"
+      }
+    ],
+    "scope": "Each of40/60/80 points separately; primary60m20/20 only; development and chronological-check periods separately. Six fixed contrasts per period; no fitted or chosen contrasts.",
+    "identification_bounds": "[certain_A - possible_B, possible_A - certain_B], in percentage points; preserve paired month resampling.",
+    "intervals": "Pointwise95% percentile intervals for each identification endpoint, only if both groups meet100events and12occupiedmonths and99% valid bootstrap draws.",
+    "interpretation": "Descriptive associations with no formal contrast-selection flag; no causal effect or executable profit claim. Report all six pairs even if sparse or crossing zero."
+  }
+}

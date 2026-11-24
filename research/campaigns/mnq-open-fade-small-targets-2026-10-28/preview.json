@@ -1,0 +1,349 @@
+{
+  "status": "validated_for_launch",
+  "protocol_sha256": "8a4f51c2fa2eb8e4872b5597f93a8ba922c8838eeea77edae6c7c5c01a818918",
+  "new_target_configurations": 36,
+  "original_control_configurations": 12,
+  "total_configurations": 48,
+  "development_sessions": 1170,
+  "all_source_sessions": 1841,
+  "baseline_cost_dollars": 2.24,
+  "grid": [
+    {
+      "mode": "touch",
+      "trigger": 40,
+      "target": 5,
+      "stop": 20.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 40,
+      "target": 10,
+      "stop": 20.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 40,
+      "target": 15,
+      "stop": 20.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 40,
+      "target": 20.0,
+      "stop": 20.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 40,
+      "target": 5,
+      "stop": 20.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 40,
+      "target": 10,
+      "stop": 20.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 40,
+      "target": 15,
+      "stop": 20.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 40,
+      "target": 20.0,
+      "stop": 20.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 60,
+      "target": 5,
+      "stop": 30.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 60,
+      "target": 10,
+      "stop": 30.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 60,
+      "target": 15,
+      "stop": 30.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 60,
+      "target": 30.0,
+      "stop": 30.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 60,
+      "target": 5,
+      "stop": 30.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 60,
+      "target": 10,
+      "stop": 30.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 60,
+      "target": 15,
+      "stop": 30.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 60,
+      "target": 30.0,
+      "stop": 30.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 80,
+      "target": 5,
+      "stop": 40.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 80,
+      "target": 10,
+      "stop": 40.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 80,
+      "target": 15,
+      "stop": 40.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 80,
+      "target": 40.0,
+      "stop": 40.0,
+      "horizon": 60
+    },
+    {
+      "mode": "touch",
+      "trigger": 80,
+      "target": 5,
+      "stop": 40.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 80,
+      "target": 10,
+      "stop": 40.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 80,
+      "target": 15,
+      "stop": 40.0,
+      "horizon": 120
+    },
+    {
+      "mode": "touch",
+      "trigger": 80,
+      "target": 40.0,
+      "stop": 40.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 40,
+      "target": 5,
+      "stop": 20.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 40,
+      "target": 10,
+      "stop": 20.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 40,
+      "target": 15,
+      "stop": 20.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 40,
+      "target": 20.0,
+      "stop": 20.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 40,
+      "target": 5,
+      "stop": 20.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 40,
+      "target": 10,
+      "stop": 20.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 40,
+      "target": 15,
+      "stop": 20.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 40,
+      "target": 20.0,
+      "stop": 20.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 60,
+      "target": 5,
+      "stop": 30.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 60,
+      "target": 10,
+      "stop": 30.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 60,
+      "target": 15,
+      "stop": 30.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 60,
+      "target": 30.0,
+      "stop": 30.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 60,
+      "target": 5,
+      "stop": 30.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 60,
+      "target": 10,
+      "stop": 30.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 60,
+      "target": 15,
+      "stop": 30.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 60,
+      "target": 30.0,
+      "stop": 30.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 80,
+      "target": 5,
+      "stop": 40.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 80,
+      "target": 10,
+      "stop": 40.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 80,
+      "target": 15,
+      "stop": 40.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 80,
+      "target": 40.0,
+      "stop": 40.0,
+      "horizon": 60
+    },
+    {
+      "mode": "confirm",
+      "trigger": 80,
+      "target": 5,
+      "stop": 40.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 80,
+      "target": 10,
+      "stop": 40.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 80,
+      "target": 15,
+      "stop": 40.0,
+      "horizon": 120
+    },
+    {
+      "mode": "confirm",
+      "trigger": 80,
+      "target": 40.0,
+      "stop": 40.0,
+      "horizon": 120
+    }
+  ],
+  "staging": "Only development-eligible candidates proceed to conditional chronological scenarios; existing failed controls must reproduce original ledgers."
+}

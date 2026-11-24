@@ -1,0 +1,50 @@
+{
+  "study_id": "mnq-return-to-open-2026-10-28",
+  "type": "descriptive first-stretch return-to-open frequency",
+  "threshold_points": [
+    40,
+    60,
+    80
+  ],
+  "trigger": "First touch/cross of either opening band during09:30 inclusive through09:45 exclusive. One event/date/threshold; both possible first directions retained if same-candle order is unknown.",
+  "reference": "Open of the observed09:30 one-minute candle, America/New_York",
+  "return": "After trigger, price touches or crosses the09:30 opening price in the opposite direction. Crossing by a gap counts; exact-price trade/limit fill is not established.",
+  "horizons": [
+    "by_09_45",
+    "within_60m_of_trigger",
+    "within_120m_of_trigger",
+    "by_cash_close"
+  ],
+  "relative_horizon": "Actual first-hit time is unknown within its minute. Lower bound excludes the candle starting at trigger-minute-start plusH minutes; upper bound includes it. No deadline-bar open is assumed timestamped at the minute boundary.",
+  "same_bar_order": "Close at/beyond the opening price, a later opposite opening-band touch under a first-direction branch, or target-extreme after a trigger at that candle first print can prove a trigger-minute return. Other favorable extrema only make return possible. No fixed intrabar path.",
+  "session_end": "Scheduled XNYS close:16:00 Eastern normally,13:00 on early-close dates; exclude the candle at the close.",
+  "sample": "Common sample complete from09:30 to scheduled cash close, sameinstrument, all observed minutes valid and tick-aligned. Exclude missing minutes without imputation; retain all exclusions.",
+  "periods": {
+    "all_history": [
+      "2019-05-06",
+      "2026-09-03"
+    ],
+    "available_2026": [
+      "2026-01-01",
+      "2026-09-03"
+    ]
+  },
+  "direction_breakdowns": [
+    "all",
+    "up",
+    "down",
+    "ambiguous"
+  ],
+  "limits": [
+    "No stop loss or trading costs are applied. Return frequency is not a trading win rate.",
+    "The initial move need not be a monotonic trend.",
+    "2026 is partial YTD because available MNQ data endsSeptember3.",
+    "Full-session completeness can exclude disruption days; report all exclusions.",
+    "Ranges express bar-order/timing uncertainty, not statistical confidence intervals.",
+    "No selection optimization or extension of the fixed threshold grid."
+  ],
+  "data_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\data\\workbench\\datasets\\d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1\\bars.parquet",
+  "data_sha256": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1",
+  "cash_calendar_path": "C:\\Users\\vince\\OneDrive\\Desktop\\Quant\\reports\\mnq-ny-open-2026-10-28\\cash_calendar.csv",
+  "cash_calendar_sha256": "df32deccf38516788e6e9def42738daa18bb541a42ab06b705db86c48ddbb58d"
+}

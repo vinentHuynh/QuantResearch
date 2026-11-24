@@ -1,0 +1,11 @@
+{
+  "research\\campaigns\\mnq-open-fade-intrabar-2026-10-28\\data_quote.json": "c2acc42708265cdf29765fe17594c24109a45258cf775c5c9a6b0730d8e028cb",
+  "research\\campaigns\\mnq-open-fade-intrabar-2026-10-28\\opening_windows_quote.json": "ca14bc6a4470097907e371745f6b241bc56bbe651f55b15707c39b02a67b3571",
+  "research\\campaigns\\mnq-open-fade-intrabar-2026-10-28\\preparation_evidence.json": "a2eb902ae66958972116316540cff77cd45b31297588b646b32dfb4d618517bf",
+  "research\\campaigns\\mnq-open-fade-intrabar-2026-10-28\\protocol.json": "9301995f3913f3bd6fee9dc3b33925aa29882a03e2a6f791c9a3696fa704eeed",
+  "research\\campaigns\\mnq-open-fade-intrabar-2026-10-28\\quote_verification.json": "d8c63b024454e046be11418ae49047d8c1e95bd9ca327a8368d4fa1eb2e90bca",
+  "research\\campaigns\\mnq-open-fade-intrabar-2026-10-28\\estimate_data.py": "e980344a27b388b79035b7b225ef7345e8cc7f391cd9e87acd13c5506de305f7",
+  "research\\campaigns\\mnq-open-fade-intrabar-2026-10-28\\quote_opening_windows.py": "4f448934cfc3b81e0be91341fbb64618be12a10f5fd228d989477ed3c707deb5",
+  "research\\campaigns\\mnq-open-fade-intrabar-2026-10-28\\prior_immediate_touch_evidence.csv": "785d068d54c0c40e2101b4e06365b0ecb5b9330fe91856ac0a1119e111bfd4f7",
+  "reports\\mnq-open-fade-intrabar-2026-10-28\\strategy.html": "2481d91dc93fb3386f587531defe19a16a7a70b182d10b17ccec44973893ee7c"
+}

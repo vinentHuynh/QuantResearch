@@ -1,0 +1,152 @@
+{
+  "study_id": "mnq-open-fade-small-targets-2026-10-28",
+  "frozen_date": "2026-10-28",
+  "frozen_before_strategy_outcomes": true,
+  "hypothesis": "User-requested smaller-target extension: holding the original entry triggers and stops fixed, do 5-, 10-, or 15-point fade profit targets improve net results? Separately, at which opening displacement does a balanced continuation-versus-pullback race favor continuation?",
+  "user_choices": {
+    "entry_styles": [
+      "touch",
+      "confirm"
+    ],
+    "trigger_points": [
+      40,
+      60,
+      80
+    ],
+    "holding_minutes": [
+      60,
+      120
+    ],
+    "profit_targets_points": [
+      5,
+      10,
+      15
+    ],
+    "stops_points_by_trigger": {
+      "40": 20,
+      "60": 30,
+      "80": 40
+    },
+    "original_target_controls": "Also rerun each trigger/2 target as an exact implementation control; these12 cases are repeats, not new search cases."
+  },
+  "data_version": "d75574620d4455b9108a74b83d6c954553ed1a8d53c12c2a80eb95c15f5eb9e1-mnq-cache-v1",
+  "market": "MNQ",
+  "timezone": "America/New_York",
+  "tick_size": 0.25,
+  "point_value_dollars": 2.0,
+  "contracts": 1,
+  "session_calendar": "Saved XNYS cash-session dates from the preceding opening study; exchange_calendars 4.13.2, cash holidays excluded, early closes retained",
+  "sample_quality": "Require all minute bars 09:30 through 11:44 inclusive, matching the preceding report's common 135-minute sample. No filling gaps; no within-window contract changes. The latest possible entry is 09:44 and latest required time-exit opening quote is 11:44. Preserve excluded dates and missing minutes. Excluding March 2020 disruption sessions can understate tail risk.",
+  "rules": {
+    "reference": "O = first trade/open of 09:30 minute; thresholds O+D and O-D remain fixed that day. Baseline assumes trigger monitoring can begin immediately after that first trade, without measuring first-minute high/low in advance.",
+    "direction": "First reached threshold locks the side for the session: short upper breach; long lower breach. No second trade, stop-and-reverse, averaging down, or size escalation.",
+    "entry_window": "09:30 <= actual entry minute start < 09:45 ET. No later entry, including confirmation/delay fills at or after 09:45.",
+    "touch": "Enter when first threshold is reached or passed. Nominal fill is the threshold level, including less-favorable treatment of gaps beyond it; all-in modeled execution friction is deducted separately.",
+    "confirm": "After first threshold breach, wait for a completed one-minute close strictly back inside that breached level; the breach minute may confirm. Fill at the next minute's open. First breach side stays locked if confirmation fails. No new side or opportunity later that session.",
+    "target_stop": "Stops remain D/2 points from nominal entry. Separately test targets5,10,15 points and the original D/2 control. Both styles retain identical stop sizing for each trigger. Confirmation brackets are anchored to its next-open fill. No stop or entry change is used to rescue a smaller target.",
+    "time_exit": "Exit at the opening quote exactly 60 or 120 minutes after the entry minute starts. For an intraminute touch, exact seconds are unavailable and this expires up to one minute early. Never count that deadline bar's later high/low. At the deadline opening quote, an already-working bracket has priority for an opening gap (target at its stated limit, adverse stop at the open); otherwise flatten at that open. The deadline high/low remain excluded.",
+    "exit_priority": "Known opening gaps resolve first. Stops gap to the adverse open; targets fill at their stated level without favorable gap improvement. Same-minute stop/target uncertainty uses the conservative branch for primary results and favorable branch as an explicit bound.",
+    "touch_entry_bar": "Do not credit a pre-entry favorable extreme as a certain target. A close through the target proves a post-entry crossing unless a stop could have come first. With uncertain target timing, conservative replay carries the trade unless stopped; favorable replay credits a feasible target. Stop and target ambiguity stays flagged.",
+    "dual_threshold_bar": "If both entry thresholds are first crossed within one minute and its open cannot order them, replay both feasible first-side branches and report conservative/favorable net bounds, including a no-fill confirmation branch when applicable. This is a data-resolution bound, not a strategy using future profit to choose its direction."
+  },
+  "costs": {
+    "commission_round_trip_dollars": 1.24,
+    "execution_friction_ticks_per_side": 1,
+    "baseline_round_trip_dollars": 2.24,
+    "stress_round_trip_dollars": 4.48,
+    "interpretation": "Illustrative costs, not a verified broker quote. Fees plus spread/slippage allowance are debited from nominal gross P&L per filled round trip. Bracket levels remain based on nominal entry."
+  },
+  "bounded_grid": "48 displayed configurations:2styles x3triggers x2horizons x(3newtargets+1originalcontrol). Exactly36new cases plus12 repeated controls. Conservative/favorable ordering are sensitivity bounds, not separate entry strategies. No finer target optimization follows a failure.",
+  "development": {
+    "start": "2019-05-06",
+    "end": "2023-12-31",
+    "eligibility": {
+      "minimum_trades": 150,
+      "minimum_profit_factor": 1.1,
+      "net_profit_must_be_positive": true
+    },
+    "selection": "Within each entry style, eligible conservative-baseline candidates must have >=150trades, PF>=1.10 and positive net. Select highest net P&L/max daily closed-equity drawdown. Ties: higher net profit, then lower trigger, shorter horizon, larger target. Prior controls must exactly reproduce original per-day results. If none eligible, stop this style. Do not loosen the research hurdles because targets are smaller."
+  },
+  "chronological_evaluation": {
+    "folds": [
+      {
+        "train_end": "2023-12-31",
+        "test_start": "2024-01-01",
+        "test_end": "2024-12-31"
+      },
+      {
+        "train_end": "2024-12-31",
+        "test_start": "2025-01-01",
+        "test_end": "2025-12-31"
+      },
+      {
+        "train_end": "2025-12-31",
+        "test_start": "2026-01-01",
+        "test_end": "2026-09-03"
+      }
+    ],
+    "selection": "For each still-active style, use the same fixed24cases per style on expanding earlier training history and the frozen eligibility/ranking. Evaluate the selected case on the next annual fold. Stop that style at its first eligibility or required-scenario failure; no later strategy outcomes for it are examined.",
+    "required_scenarios": [
+      "conservative baseline at $2.24 round-trip cost",
+      "conservative doubled costs at $4.48",
+      "one additional minute of entry delay at baseline costs, entry cutoff unchanged"
+    ],
+    "delay_definition": "Touch: first breach schedules next-minute-open fill. Confirmation: add one extra minute after the normal next-open fill. Re-anchor fixed target/stop distances to actual delayed fill. Ignore later entries and keep first side locked.",
+    "per_scenario_criteria": {
+      "minimum_trades": 30,
+      "minimum_profit_factor": 1.05,
+      "net_profit_must_be_positive": true
+    },
+    "intrabar_sensitivity": "Also report favorable-order outcomes for each selected configuration; primary gates always use conservative results. A favorable scenario cannot rescue a conservative failure."
+  },
+  "robustness_if_evaluation_passes": "Only after all annual folds pass, perturb the final target to80% and120% (nearest0.25point), holding trigger/stop/horizon fixed, and perturb trigger to90% and110%, holding target/stop/horizon fixed. Four cases over2024-01-01..2026-09-03 at conservative doubled costs; each needs>=100trades, positive net andPF>=1.05. Stop after a failure; no additional tuning. Tick execution and prospective evidence remain untested.",
+  "prior_exposure": "All years in this dataset have already appeared in the descriptive opening report and other research. Chronological separation controls selection within this experiment; later years are not certified globally unseen, and none are prospective.",
+  "workbench_scope": "Standalone, source-snapshotted historical replay. Current workbench event-v1 supports only one working limit and only completed-bar callbacks, so it cannot faithfully implement simultaneous first-touch directions from the first opening minute. No workbench engine changes, official run/evaluation ID, stage promotion, or live-trading readiness is claimed.",
+  "outputs": [
+    "frozen protocol",
+    "replay source and synthetic verification",
+    "all attempted configuration summaries",
+    "daily ledgers and selected trade exports",
+    "selection/failure ledger",
+    "PDF strategy comparison",
+    "artifact checksums",
+    "smaller-target win rates and breakeven-win-rate arithmetic",
+    "original-control parity results",
+    "continuation event ledgers and bound/uncertainty tables"
+  ],
+  "prior_campaign": {
+    "id": "mnq-open-fade-2026-10-28",
+    "result": "Both entry styles failed the original development screen; all12 original configurations remain failed.",
+    "authorization": "User explicitly requested smaller point targets and continuation threshold analysis after that failure. This is a new bounded extension; prior rules/results remain preserved."
+  },
+  "continuation_study": {
+    "purpose": "Separate descriptive first-touch threshold analysis, not an added strategy selection search.",
+    "thresholds_points": [
+      40,
+      60,
+      80,
+      100,
+      120,
+      160
+    ],
+    "entry_window": "First threshold reach/pass during09:30 inclusive to09:45 exclusive. Lock the first direction for each threshold independently; cohorts overlap and are not independent trials.",
+    "horizons_minutes": [
+      60,
+      120
+    ],
+    "primary_barriers": "From first threshold level, another20points in initial direction versus20points back. Equal distances permit comparison across thresholds. Time limit starts at first-hit minute start; deadline opening quote included, later high/low excluded.",
+    "secondary_barriers": "From first threshold, anotherDpoints versus a fullDpoint return to09:30open. This measures doubling the initial move versus full retracement.",
+    "outcomes": "Certain and possible continuation-first, retracement-first, unresolved. Use both feasible minute-order policies; no-price-order ambiguity is discarded. Denominator is every threshold-hit session, including unresolved and ambiguous cases; not just decisive outcomes.",
+    "implementation": "Zero-cost touch replay with stop_points=target_points=20(primary) orD(secondary). For this hypothetical FADE, a stop exit means continuation-first; a target exit means retracement-first. Conservative fade is upper bound of continuation; favorable fade is lower bound. Preserve actual first-side ambiguity. No executable momentum-profit claim.",
+    "periods": [
+      "all2019-05-06..2026-09-03",
+      "development2019-05-06..2023-12-31",
+      "2024onward",
+      "2026only"
+    ],
+    "breakdowns": "Yearly; up/down separately only when first direction is unambiguous. Terminal direction may be reported separately; do not confuse it with first passage.",
+    "uncertainty": "2000seeded calendar-month cluster bootstrap draws,seed20261028,whole calendar months including zero-event months, ratio of resampled counts to resampled threshold-hit days. Pointwise95%percentiles; no multiplicity adjustment. Suppress intervals with<100events or<10occupied months; mark sparse evidence. Daily overlapping thresholds remain correlated.",
+    "claim_rule": "A descriptive primary20/20 continuation-majority flag requires>=100events,>=10occupiedmonths and95%lower interval for CERTAIN continuation above50%. This does not establish a sharp or universal threshold, significance of differences among levels, or profitability after costs.",
+    "selection_independence": "Strategy candidate parameters and selection are fixed before this descriptive analysis; its outputs never alter the target grid or choose later-fold strategy parameters. All years have prior descriptive exposure."
+  }
+}

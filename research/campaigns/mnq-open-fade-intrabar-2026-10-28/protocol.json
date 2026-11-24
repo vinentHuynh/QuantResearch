@@ -1,0 +1,90 @@
+{
+  "study_id": "mnq-open-fade-intrabar-2026-10-28",
+  "status": "entry_rules_saved; awaiting trade-event data approval and an execution-model implementation",
+  "user_instruction": "Enter immediately at the stretch level. Do not wait for a candle to close or for price to turn back.",
+  "market": "MNQ",
+  "timezone": "America/New_York",
+  "contracts": 1,
+  "current_focus": {
+    "trigger_points": [
+      40,
+      60,
+      80
+    ],
+    "target_points": 15,
+    "stop_points_by_trigger": {
+      "40": 20,
+      "60": 30,
+      "80": 40
+    },
+    "holding_minutes": [
+      60,
+      120
+    ]
+  },
+  "target_selection_note": "The 15-point target is an inherited research focus, not a newly proven optimum for immediate entry. The earlier 5/10/15-point comparison and its failures remain preserved.",
+  "rules": {
+    "reference": "First eligible MNQ trade at or after 09:30:00 Eastern on the cash-session date. Verify it agrees with the saved minute open before comparing studies.",
+    "entry_window": "From the reference trade through, but excluding, 09:45:00 Eastern.",
+    "trigger": "First trade reaching or passing O + D signals a short; first trade reaching or passing O - D signals a long. Thresholds remain fixed that day.",
+    "entry": "Immediate touch model, with no bar-close or pullback condition. The exact trade-level fill model and executable-fill sensitivities must be frozen and tested before new scored results.",
+    "exit": "15-point target toward the opening price; stop 20/30/40 points beyond entry for trigger 40/60/80. Exit any remaining position at the 60- or 120-minute deadline measured from the actual modeled fill timestamp.",
+    "frequency": "One trade per cash session per separately simulated configuration. First trigger locks the side. No re-entry, size escalation, or automatic stop-and-reverse.",
+    "chart_interpretation": "The attached chart motivates a rapid counter-move. Its unlabeled blue/orange lines do not define an indicator-based entry rule."
+  },
+  "costs": {
+    "illustrative_round_trip_usd": 2.24,
+    "doubled_cost_usd": 4.48,
+    "note": "Inherited research assumptions; not a broker quote or evidence of actual fills."
+  },
+  "inherited_criteria": {
+    "development_dates": [
+      "2019-05-06",
+      "2023-12-31"
+    ],
+    "minimum_trades": 150,
+    "minimum_profit_factor": 1.1,
+    "net_profit_must_be_positive": true,
+    "selection": "Among eligible configurations, highest net P&L / maximum daily closed-equity drawdown; ties higher net, then lower trigger, then shorter horizon.",
+    "first_evaluation_dates": [
+      "2024-01-01",
+      "2024-12-31"
+    ],
+    "minimum_evaluation_trades": 30,
+    "minimum_evaluation_profit_factor": 1.05,
+    "required_evaluation_scenarios": "Baseline, doubled costs, and a tick-scale execution-delay sensitivity to be specified before scoring. The old one-minute delay is inappropriate as the sole stress for the new intrabar hypothesis.",
+    "progression": "First repair data resolution and freeze/verify fill modeling. Stop if no candidate passes development. Request later-period data only if development supports continuing."
+  },
+  "prior_evidence": {
+    "campaign": "mnq-open-fade-small-targets-2026-10-28",
+    "all_immediate_15_point_cases_failed_conservative_development_gate": true,
+    "why_finer_data": "Feasible one-minute ordering bounds span profits and losses; no intrabar fill sequence is observed.",
+    "confirmed_entry_result": "The 79.49% development win rate and its selected 2024 results apply to the old candle-confirmed rule and must not be attributed to immediate touch.",
+    "prior_exposure": "Existing minute and descriptive results have been inspected. No historical interval is certified globally unseen; no prospective result exists."
+  },
+  "acquisition": {
+    "provider": "Databento",
+    "dataset": "GLBX.MDP3",
+    "symbol": "MNQ.v.0",
+    "stype_in": "continuous",
+    "schema": "trades",
+    "development_windows": "Only previously eligible development sessions whose minute range reaches at least one 40-point threshold during the entry window; each requested 09:30\u00e2\u20ac\u201c11:46 Eastern. Select solely on entry reachability, never trade outcome.",
+    "subset_reason": "All 60/80-point trigger days are included among 40-point trigger days. Keep all eligible non-trigger dates in the session ledger with no trade.",
+    "limitations": "Trade events resolve observed price order, not queue position or guaranteed order fills. They do not provide a full quote/order book. Data gaps, event ordering, symbols and bar reconciliation require validation.",
+    "payment_authorized": false,
+    "downloaded": false,
+    "quotes": "data_quote.json and opening_windows_quote.json",
+    "quote_note": "Metadata estimates only; not provider-enforced billing caps. Re-estimate the exact approved requests before any later paid retrieval.",
+    "quoted_development_cost_usd": 201.682019233699,
+    "quoted_request_count": 724,
+    "exact_quote_sha256": "ca14bc6a4470097907e371745f6b241bc56bbe651f55b15707c39b02a67b3571"
+  },
+  "workbench": {
+    "api_checked": "http://127.0.0.1:8001/api/workbench/state",
+    "api_status": "unavailable",
+    "official_run_id": null,
+    "evaluation_id": null,
+    "stage_promoted": false,
+    "note": "Existing bar-event adapter does not faithfully implement two-sided immediate touch from the opening trade. This file configures research; it is not a new executable workbench adapter."
+  }
+}

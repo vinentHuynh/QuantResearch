@@ -1,0 +1,130 @@
+{
+  "study_id": "mnq-opening-scalp-2026-10-28",
+  "created_date": "2026-10-28",
+  "status": "Prototype specification; no historical trade-event results",
+  "user_hypothesis": "Within the opening15minutes, observed two-way fluctuation may support small counter-move scalps while persistent directional moves should be avoided.",
+  "user_confirmed": {
+    "entry": "Immediate at stretch, no candle-close or turn-back confirmation",
+    "flat_by": "09:45 America/New_York",
+    "maximum_trades": 3,
+    "simultaneous_positions": 1
+  },
+  "market": "MNQ",
+  "timezone": "America/New_York",
+  "contracts": 1,
+  "tick_size_points": 0.25,
+  "point_value_dollars": 2,
+  "reference": "First eligible trade at or after09:30 establishes fixed open O.",
+  "retained_candidate_grid": {
+    "stretch_points": [
+      40,
+      60,
+      80
+    ],
+    "target_points": [
+      5,
+      10,
+      15
+    ],
+    "stop_points_by_stretch": {
+      "40": 20,
+      "60": 30,
+      "80": 40
+    },
+    "note": "Retained candidates from earlier research, not optimized settings or a recommendation. Earlier1/2h results do not test this15minute-flat setup."
+  },
+  "rules": {
+    "entry": "Fade a fresh outward crossing of O+D (short) or O-D (long) before09:45, when the selected policy is eligible. Immediate price-event benchmark; no confirmation of the current candle required.",
+    "rearm": "After an exit or rejected crossing, a subsequent observed trade must be strictly inside BOTH entry bands. Only a later outward crossing may initiate a new trade. A rejected crossing cannot fill later merely because the filter becomes eligible while price remains outside.",
+    "concurrency": "One position at a time, at most3 entries. An exit event cannot also re-arm or open another trade. No averaging down or size escalation.",
+    "deadline": "Cancel all new entries at09:45. Any open position is flattened at09:45 using an explicitly supplied contemporaneous deadline mark. If a needed mark is unavailable, the replay is incomplete; do not silently substitute a later tick, a future bar extreme or an unverified stale price.",
+    "stop_target": "Target and stop are anchored to the modeled entry. Triggering-event high/low data do not exist in the event model; only subsequent ordered price records can resolve exits."
+  },
+  "policies": [
+    {
+      "id": "all_open",
+      "purpose": "Unfiltered opening baseline",
+      "eligible_from": "09:30"
+    },
+    {
+      "id": "after_two_minutes",
+      "purpose": "Unfiltered comparison with the same initial observation time as the filtered policy",
+      "eligible_from": "09:32"
+    },
+    {
+      "id": "low_directional_progress",
+      "purpose": "Fixed candidate proxy for two-way conditions; not a validated trend detector",
+      "eligible_from": "At least120seconds of observed session history",
+      "feature": "E=absolute(current observed price minus last observed price at/before120seconds earlier) / high-low range of the price observations from that boundary anchor through the current event",
+      "allow_when": "A boundary anchor exists, range>0, E<=0.35",
+      "timing": "Uses only information already observed at the trigger. It does not wait for any candle to close. In the first2minutes it is unclassified and skips entries.",
+      "limitation": "A low E describes a return toward the start of the recent window; it cannot guarantee the next move is indecisive. The separate09:32 baseline distinguishes the policy from merely skipping the first2minutes."
+    }
+  ],
+  "bounded_configurations": 27,
+  "execution": {
+    "input": "Ordered trade-price events for one cash session. Preserve supplied ordering for equal timestamps. No reconstructed OHLC path is treated as observed trades.",
+    "fill": "Illustrative zero-latency price-event benchmark at the observed crossing price, including gaps, with explicit trading friction. This is not evidence of executable bid/ask fills or queue priority.",
+    "targets": "Exit at the stated target when a subsequent event crosses it; no favorable gap improvement.",
+    "stops": "Exit at the worse observed price when a subsequent event reaches or gaps beyond the stop.",
+    "costs": {
+      "round_trip_usd": 2.24,
+      "stress_round_trip_usd": 4.48,
+      "note": "Inherited illustrative fees and execution friction, not a verified broker quote."
+    },
+    "latency": "No historical latency validation in this prototype. Freeze and implement any supported trade/quote latency stress before a scored historical campaign.",
+    "deadline_mark": "An explicit research execution mark, not an invented guaranteed fill. Provenance and contemporaneous timestamp must be retained by the historical adapter."
+  },
+  "research_gates": {
+    "no_historical_launch_before": "Valid ordered trade-event dataset, deadline-mark provenance, approved acquisition if needed, data audit, execution-model verification and saved launch preview.",
+    "development_period": [
+      "2019-05-06",
+      "2023-12-31"
+    ],
+    "minimum_trades": 150,
+    "minimum_profit_factor": 1.1,
+    "positive_net_required": true,
+    "candidate_selection": "Only low_directional_progress candidates may be selected for the filtered hypothesis; eligible configuration with highest net / maximum daily closed-equity drawdown. Ties higher net, lower stretch, larger target. Retain both matched unfiltered controls and all failed/zero-trade cells. Do not infer filter value from improvement over all_open alone.",
+    "chronological_first_check": [
+      "2024-01-01",
+      "2024-12-31"
+    ],
+    "minimum_check_trades": 30,
+    "minimum_check_profit_factor": 1.05,
+    "subsequent_progression": "Stop if development fails. If supported, evaluate selected configuration chronologically with baseline, doubled costs and a separately frozen supported execution-delay scenario. Later years only if priorfold passes. All years were previously inspected in other studies, so none is globally unseen.",
+    "required_reports": [
+      "Everyentryandexit",
+      "filledandrejectedcrossings",
+      "target/stop/timeexitcounts",
+      "netexpectancyanddrawdown",
+      "per-dayresultsincludingnofills",
+      "maximumdailyentries",
+      "last-exitclockchecks",
+      "coststress",
+      "unfilteredcomparisons",
+      "uncertaintiesanddataexclusions"
+    ]
+  },
+  "data_feasibility": {
+    "local_history": "One-minute MNQ OHLCV only; finest local history remains unchanged.",
+    "limitation": "Minute candles do not reveal how many fresh intraminute excursion/re-entry cycles occurred or their order. Independently choosing favorable ordering for each trade does not create valid three-trade session bounds, because each exit changes later entry opportunities.",
+    "current_scope": "Build and synthetically verify an event replay; do not fabricate historical trades, reuse the old1/2h win rates, or label a few assumed OHLC paths as all-feasible bounds.",
+    "new_data_purchased": false,
+    "paid_download_authorized": false,
+    "prior_quote": "The earlier $201.68 quote concerned longer09:30–11:46 windows and is not a necessary purchase commitment for this revised15-minute scope."
+  },
+  "interpretation": "The proposed advantage must come from a repeatable tendency for small counter-moves in conditions identifiable at entry, sufficient after losses and costs. Randomness or a high target-hit percentage alone does not establish positive expectancy.",
+  "workbench": {
+    "official_run_id": null,
+    "evaluation_id": null,
+    "live_orders": false,
+    "note": "Standalone event prototype. Existing minute-close workbench engine does not faithfully implement this repeated intrabar-entry rule."
+  },
+  "outputs": [
+    "Frozenproposal",
+    "Eventreplay",
+    "Focusedsynthetictests",
+    "Independentreview",
+    "Updatedreadablestrategycard"
+  ]
+}
