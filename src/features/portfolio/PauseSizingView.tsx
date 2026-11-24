@@ -31,8 +31,13 @@ import { strategyTitle } from "../../../shared/ts/formatting.ts";
 
 export function PauseSizingView({
   model,
+  showCondition = true,
+  showBenchmarks = true,
 }: {
   model: CollectiveDashboardModel;
+  /** The Risk tab shows recent form and position size in their own cards. */
+  showCondition?: boolean;
+  showBenchmarks?: boolean;
 }) {
   const {
     accountingLabel,
@@ -87,15 +92,15 @@ export function PauseSizingView({
     <div className="wb-policy">
       <PauseSizingControls policy={currentPolicy} updatePolicy={policy} />
       <div className="collective-policy-results">
-        <StrategyConditionPanel
+        {showCondition && <StrategyConditionPanel
           catalog={catalog}
           items={selected}
           histories={histories}
           end={settings.end}
           enabled={currentPolicy.enabled}
           permissions={result?.components || []}
-        />
-        {result && (
+        />}
+        {result && showBenchmarks && (
           <section className="wb-card" data-testid="sizing-benchmarks">
             <div className="wb-card-head">
               <h2>Fixed-size benchmarks</h2>

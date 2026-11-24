@@ -329,7 +329,7 @@ try {
   assert(preservedLibraryPaths.size >= 171, "Tracked and archived library inventory must retain its baseline");
   assert.equal(
     trackedLibrary.filter((entry) => entry.path.endsWith(".pine")).length,
-    21,
+    22,
   );
   assert.deepEqual(state.errors, []);
 
@@ -920,7 +920,7 @@ try {
   await expect(selectedRows).toHaveCount(2);
   await expect(selectedRows.locator(".wb-book-symbol")).toHaveText(["NQ", "ES"]);
   for (const row of await selectedRows.all()) {
-    await expect(row.locator(".wb-book-name")).toContainText(reversal.name);
+    await expect(row.locator(".wb-book-name")).toContainText(strategyTitle(reversal.name));
     await expect(row.locator(".wb-book-performance span")).toHaveText([/P&L/, /Drawdown/]);
     await expect(row.getByRole("button", { name: /^Remove / })).toHaveCount(1);
     await expect(row.locator("button")).toHaveCount(1);

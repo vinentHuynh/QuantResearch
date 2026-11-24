@@ -84,7 +84,7 @@ export function ResearchPage({
             leftSection={<IconPlus size={14} />}
             onClick={() => setPlanOpen(true)}
           >
-            Plan walk-forward evaluation
+            Plan evaluation
           </Button>
         }
       />

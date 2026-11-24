@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from "react";
-import { Badge, Button, Text, Tooltip } from "@mantine/core";
+import { Button, Text, Tooltip } from "@mantine/core";
 import { strategyStageStatuses } from "../../../shared/ts/stageStatus.ts";
 import { statusDisplay, type StrategyNextAction, type StrategyStageKind, type StrategyStageStatus } from "../../../shared/ts/strategyLifecycle.ts";
 import type { StageAssessment } from "../../../shared/ts/stageAssessments.ts";
@@ -26,7 +26,7 @@ export function StrategyStageBadge({ stage, label, finding, color, checks = [], 
   const description = finding || display?.description || (stage ? researchStages[stage - 1].description : "No completed backtest is recorded for this configuration.");
   return <div className="wb-strategy-stage" aria-label={`Strategy stage: ${text}`}>
     <Tooltip label={description} multiline w={300} withArrow>
-      <Badge className="wb-stage-badge" color={display?.color || color || stageColor(stage)} variant="light" radius="xs">{text}</Badge>
+      <span className={`wb-status-chip wb-stage-badge is-${display?.state || "plain"}`} data-color={display?.color || color || stageColor(stage)}>{text}</span>
     </Tooltip>
     {showFinding && display?.state !== "tracking" && <ResearchNote finding={finding || ""} checks={checks} assessment={assessment} compact={compact} />}
     {showAction && action && <StrategyNextActionButton action={action} />}

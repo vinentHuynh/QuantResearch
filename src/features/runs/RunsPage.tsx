@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ActionIcon,
   Badge,
   Button,
   Checkbox,
@@ -7,9 +8,9 @@ import {
   Menu,
   Popover,
   ScrollArea,
+  SegmentedControl,
   Select,
   Stack,
-  Switch,
   Table,
   Text,
   TextInput,
@@ -19,11 +20,13 @@ import {
   IconArchive,
   IconArrowDown,
   IconArrowUp,
+  IconAdjustmentsHorizontal,
   IconArrowsSort,
   IconDots,
   IconFlask,
   IconPlayerPlay,
   IconPlus,
+  IconSearch,
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
@@ -39,12 +42,26 @@ import { statusFilterLabels } from "../../../shared/ts/strategyLifecycle.ts";
 import { NqMonthlyComparison } from "../datasets/NqMonthlyComparison";
 import { RefreshButton, WorkbenchAlerts } from "../workspace/WorkbenchChrome";
 import type { WorkbenchController } from "../workspace/useWorkbenchController";
-import { formatNumber, formatPercent, shortId, statusTone } from "../workspace/workbenchModel";
-import { canAddRunToPortfolio, canArchiveRun, runSortColumns, runSortOptions, runtimeSeconds } from "./model";
+import { formatNumber, formatPercent, shortId } from "../workspace/workbenchModel";
+import { canAddRunToPortfolio, canArchiveRun, runSortColumns, runSortOptions } from "./model";
+
+const PAGE = 50;
+const sortable = (key: string, label: string) => ({ ...runSortColumns.find((column) => column.key === key)!, label });
+const runColumns: { key: string; label: string; numeric?: boolean; sortable: boolean }[] = [
+  { ...sortable("strategy", "Strategy"), sortable: true },
+  { ...sortable("data", "Market"), sortable: true },
+  { key: "window", label: "Window", sortable: false },
+  { ...sortable("stage", "Purpose"), sortable: true },
+  { ...sortable("return", "Net return"), sortable: true },
+  { ...sortable("drawdown", "Max DD"), sortable: true },
+  { ...sortable("trades", "Trades"), sortable: true },
+  { ...sortable("created", "Date"), numeric: true, sortable: true },
+];
 
 export function RunsPage({ controller }: { controller: WorkbenchController }) {
   const { statuses } = useStrategyStages();
   const [stageFilter, setStageFilter] = useState("all");
+  const [page, setPage] = useState({ key: "", count: PAGE });
   const {
     action,
     activeRuns,
@@ -55,7 +72,6 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
     busy,
     compareRuns,
     comparison,
-    counts,
     dashboardRefresh,
     filter,
     filtered: unfiltered,
@@ -88,6 +104,8 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
     viewOpen,
   } = controller;
   if (!state) return null;
+  const pageKey = [route.sub, filter, stage, status, sort, stageFilter, showAllAttempts].join("|");
+  const shown = page.key === pageKey ? page.count : PAGE;
   const filtered = unfiltered.filter(run => stageFilter === "all" || statuses.byRun.get(run.id)?.kind === stageFilter);
   const selectedRuns = filtered.filter(run => selected.includes(run.id));
   const visibleSelected = selectedRuns.map(run => run.id);
@@ -103,7 +121,6 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
   const experiments = route.sub === "experiments";
   const monthly = route.sub === "nq-monthly";
   const sortKey = sortColumn.key;
-  const now = Date.now();
 
   return (
     <>
@@ -219,30 +236,57 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
         </div>
       ) : (
         <div className="wb-content">
-          <div className="wb-toolbar">
-            <TextInput aria-label="Search runs" placeholder="Strategy, market, tags, or run ID" value={filter} onChange={(event) => setFilter(event.currentTarget.value)} />
-            <Select aria-label="Strategy stage filter" placeholder="All strategy stages" value={stageFilter} onChange={value => { setStageFilter(value || "all"); setSelected([]); }} data={[{ value: "all", label: "All strategy stages" }, ...Object.entries(statusFilterLabels).map(([value, label]) => ({ value, label }))]} />
-            <Select aria-label="Run purpose" placeholder="All run purposes" clearable data={["Exploratory", "Evaluation", "Tracking"]} value={stage || null} onChange={(value) => setStage(value || "")} />
-            <Select aria-label="Execution" placeholder="All statuses" clearable data={["Queued", "Running", "Summarizing", "Succeeded", "Failed", "Canceled", "Interrupted"]} value={status || null} onChange={(value) => setStatus(value || "")} />
-            <Select aria-label="Sort" data={runSortOptions} value={sort} onChange={(value) => setSort(value || "created:desc")} />
-            {!archiveView && <Switch size="sm" label="All attempts" checked={showAllAttempts} onChange={(event) => setShowAllAttempts(event.currentTarget.checked)} />}
-            <span className="wb-toolbar-note">{state.limits.concurrency} workers · up to {state.limits.maxBatch} jobs per launch</span>
-          </div>
-          <div className="wb-statline">
-            <span><b>{counts.total}</b> {archiveView ? "archived attempts" : "recorded"}</span>
-            <span><b>{counts.active}</b> in progress</span>
-            <span><b>{counts.success}</b> succeeded</span>
-            <span><b>{state.datasets.length}</b> dataset versions</span>
-            {filtered.length !== counts.total && <span><b>{filtered.length}</b> shown</span>}
+          <div className="wb-runs-toolbar">
+            <TextInput className="wb-runs-search" aria-label="Search runs" placeholder="Strategy, market, tags or run ID" leftSection={<IconSearch size={15} />} value={filter} onChange={(event) => setFilter(event.currentTarget.value)} />
+            <SegmentedControl
+              aria-label="Run purpose"
+              size="xs"
+              value={stage || "all"}
+              onChange={(value) => setStage(value === "all" ? "" : value)}
+              data={[
+                { value: "all", label: "All" },
+                { value: "Exploratory", label: "Exploratory" },
+                { value: "Evaluation", label: "Evaluation" },
+                { value: "Tracking", label: "Tracking" },
+              ]}
+            />
+            {!archiveView && (
+              <Select
+                aria-label="Show"
+                size="xs"
+                w={230}
+                value={showAllAttempts ? "every" : "latest"}
+                onChange={(value) => setShowAllAttempts(value === "every")}
+                allowDeselect={false}
+                data={[
+                  { value: "latest", label: `Latest run per setup · ${latestHistory.length.toLocaleString()}` },
+                  { value: "every", label: `Every run · ${activeRuns.length.toLocaleString()}` },
+                ]}
+              />
+            )}
+            <Popover position="bottom-end" withinPortal shadow="md">
+              <Popover.Target>
+                <Button size="xs" variant={stageFilter !== "all" || status ? "light" : "default"} leftSection={<IconAdjustmentsHorizontal size={14} />}>
+                  More filters{stageFilter !== "all" || status ? " · on" : ""}
+                </Button>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Stack gap="xs" w={260}>
+                  <Select label="Strategy stage" aria-label="Strategy stage filter" placeholder="All strategy stages" value={stageFilter} onChange={value => { setStageFilter(value || "all"); setSelected([]); }} data={[{ value: "all", label: "All strategy stages" }, ...Object.entries(statusFilterLabels).map(([value, label]) => ({ value, label }))]} comboboxProps={{ withinPortal: false }} />
+                  <Select label="Execution" aria-label="Execution" placeholder="All statuses" clearable data={["Queued", "Running", "Summarizing", "Succeeded", "Failed", "Canceled", "Interrupted"]} value={status || null} onChange={(value) => setStatus(value || "")} comboboxProps={{ withinPortal: false }} />
+                  <Select label="Sort" aria-label="Sort" data={runSortOptions} value={sort} onChange={(value) => setSort(value || "created:desc")} comboboxProps={{ withinPortal: false }} />
+                </Stack>
+              </Popover.Dropdown>
+            </Popover>
           </div>
           {archiveView && <Text size="sm" c="dimmed" mb="md">Archived runs remain available for inspection and comparison. Restore a run or its archived configuration to show it in active history.</Text>}
-          <section className="wb-table-card" aria-label="Run ledger">
+          <section className="wb-table-card wb-runs-table" aria-label="Run ledger">
             <ScrollArea>
-              <Table miw={1100} highlightOnHover verticalSpacing="sm">
+              <Table miw={980} highlightOnHover verticalSpacing="xs">
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th />
-                    {runSortColumns.slice(1).map((column) => (
+                    <Table.Th w={36} />
+                    {runColumns.map((column) => column.sortable ? (
                       <Table.Th
                         key={column.key}
                         ta={column.numeric ? "right" : undefined}
@@ -255,15 +299,18 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
                           onClick={() => setSort(`${column.key}:${sortKey === column.key && sortDirection === "asc" ? "desc" : "asc"}`)}
                         >
                           {column.label}
-                          {sortKey !== column.key ? <IconArrowsSort size={14} aria-hidden="true" /> : sortDirection === "asc" ? <IconArrowUp size={14} aria-hidden="true" /> : <IconArrowDown size={14} aria-hidden="true" />}
+                          {sortKey !== column.key ? <IconArrowsSort size={13} aria-hidden="true" /> : sortDirection === "asc" ? <IconArrowUp size={13} aria-hidden="true" /> : <IconArrowDown size={13} aria-hidden="true" />}
                         </button>
                       </Table.Th>
-                    ))}
-                    <Table.Th />
+                    ) : <Table.Th key={column.key}>{column.label}</Table.Th>)}
+                    <Table.Th w={44}><span className="visually-hidden">Actions</span></Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {filtered.map((run) => (
+                  {filtered.slice(0, shown).map((run) => {
+                    const done = run.status === "Succeeded" && !!run.result;
+                    const ret = run.result?.metrics.net_return;
+                    return (
                     <Table.Tr key={run.id} className={`wb-run-row${selected.includes(run.id) ? " selected" : ""}`} onClick={() => void action(() => inspect(run))}>
                       <Table.Td onClick={(event) => event.stopPropagation()}>
                         <Checkbox
@@ -276,36 +323,51 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
                           }}
                         />
                       </Table.Td>
-                      <Table.Td>
-                        <Text fw={600} size="sm">{strategyTitle(run.input.strategy.name)}</Text>
-                        <RunStageBadge runId={run.id} showFinding compact />
-                        <Text size="xs" c="dimmed" ff="monospace">{shortId(run.id)} · code {shortId(run.input.source_hash)}</Text>
-                        {run.tags && <Text size="xs">{run.tags}</Text>}
+                      <Table.Td className="wb-run-name">
+                        <strong>{strategyTitle(run.input.strategy.name)}</strong>
+                        <span className="wb-run-sub">{shortId(run.id)} · code {shortId(run.input.source_hash || "")}{run.tags ? ` · ${run.tags}` : ""}</span>
+                        <RunStageBadge runId={run.id} showFinding showAction={false} compact />
                       </Table.Td>
-                      <Table.Td>
-                        <Text size="sm">{run.input.dataset.symbol} · {run.input.timeframe}</Text>
-                        <Text size="xs" c="dimmed">{run.input.start} → {run.input.end}</Text>
+                      <Table.Td>{run.input.dataset.symbol} {run.input.timeframe}</Table.Td>
+                      <Table.Td className="wb-run-window">{run.input.start} – {run.input.end}</Table.Td>
+                      <Table.Td><span className={`wb-purpose is-${run.input.stage.toLowerCase()}`}>{run.input.stage}</span></Table.Td>
+                      <Table.Td ta="right" className={`mono ${!done ? (run.status === "Failed" || run.status === "Interrupted" ? "wb-loss" : "") : (ret || 0) < 0 ? "wb-loss" : "wb-gain"}`}>
+                        {done ? formatPercent(ret) : run.status}
                       </Table.Td>
-                      <Table.Td><Badge color={run.input.stage === "Evaluation" ? "violet" : "gray"} variant="light" radius="xs">{run.input.stage}</Badge></Table.Td>
-                      <Table.Td><Badge color={statusTone(run.status)} variant="light" radius="xs">{run.status}</Badge></Table.Td>
-                      <Table.Td ta="right" className={`mono ${(run.result?.metrics.net_return || 0) < 0 ? "wb-loss" : "wb-gain"}`}>{formatPercent(run.result?.metrics.net_return)}</Table.Td>
-                      <Table.Td ta="right" className="mono">{formatPercent(run.result?.metrics.max_drawdown)}</Table.Td>
-                      <Table.Td ta="right">{formatNumber(run.result?.metrics.trades)}</Table.Td>
-                      <Table.Td ta="right" c="dimmed">{run.started_at ? `${runtimeSeconds(run, now)!.toFixed(1)}s` : "—"}</Table.Td>
+                      <Table.Td ta="right" className="mono">{done ? formatPercent(run.result?.metrics.max_drawdown) : "—"}</Table.Td>
+                      <Table.Td ta="right">{done ? formatNumber(run.result?.metrics.trades) : "—"}</Table.Td>
+                      <Table.Td ta="right" c="dimmed">{new Date(run.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</Table.Td>
                       <Table.Td onClick={(event) => event.stopPropagation()}>
-                        <Group gap="xs" wrap="nowrap">
-                          <Button variant="subtle" size="compact-sm" onClick={() => void action(() => inspect(run))}>Inspect</Button>
-                          {canAddRunToPortfolio(run) && <Button variant="light" size="compact-sm" onClick={() => addRunToPortfolio(run.id)}>Add this run</Button>}
-                          {!archiveView && <Button variant="subtle" color="gray" size="compact-sm" leftSection={<IconArchive size={14} />} disabled={busy || !canArchiveRun(run)} onClick={() => void archiveRuns([run.id])}>Archive</Button>}
-                          {archiveView && explicitArchiveIds.has(run.id) && <Button variant="light" size="compact-sm" disabled={busy} onClick={() => void restoreRuns([run.id])}>Restore</Button>}
-                          {archiveView && archivedConfigurationForRun(run, state.research_archive) && <Button variant="light" size="compact-sm" disabled={busy} onClick={() => void restoreRunConfiguration(run.id)}>Restore configuration</Button>}
-                        </Group>
+                        <Menu position="bottom-end" withinPortal>
+                          <Menu.Target>
+                            <ActionIcon variant="subtle" color="gray" aria-label={`Actions for run ${shortId(run.id)}`}><IconDots size={16} /></ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown>
+                            <Menu.Item onClick={() => void action(() => inspect(run))}>Open results</Menu.Item>
+                            {canAddRunToPortfolio(run) && <Menu.Item onClick={() => addRunToPortfolio(run.id)}>Add this run to the portfolio</Menu.Item>}
+                            {!archiveView && <Menu.Item leftSection={<IconArchive size={14} />} disabled={busy || !canArchiveRun(run)} onClick={() => void archiveRuns([run.id])}>Archive</Menu.Item>}
+                            {archiveView && explicitArchiveIds.has(run.id) && <Menu.Item disabled={busy} onClick={() => void restoreRuns([run.id])}>Restore</Menu.Item>}
+                            {archiveView && archivedConfigurationForRun(run, state.research_archive) && <Menu.Item disabled={busy} onClick={() => void restoreRunConfiguration(run.id)}>Restore its setup</Menu.Item>}
+                          </Menu.Dropdown>
+                        </Menu>
                       </Table.Td>
                     </Table.Tr>
-                  ))}
+                    );
+                  })}
                 </Table.Tbody>
               </Table>
             </ScrollArea>
+            {filtered.length > 0 && (
+              <div className="wb-runs-foot">
+                <span>
+                  Showing {Math.min(shown, filtered.length).toLocaleString()} of {filtered.length.toLocaleString()}
+                  {!archiveView && !showAllAttempts ? " · Re-runs of the same setup are folded into one row." : ""} Click a row to open its results.
+                </span>
+                {filtered.length > shown && (
+                  <Button size="xs" variant="default" onClick={() => setPage({ key: pageKey, count: shown + PAGE })}>Show {Math.min(PAGE, filtered.length - shown)} more</Button>
+                )}
+              </div>
+            )}
             {!filtered.length && (
               <div className="wb-empty">
                 <IconFlask size={36} />

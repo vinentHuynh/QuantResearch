@@ -2,10 +2,12 @@ import { useState, type ReactNode } from "react";
 import { Modal, TextInput, UnstyledButton } from "@mantine/core";
 import { useHotkeys } from "@mantine/hooks";
 import {
-  IconFlask,
-  IconCode,
-  IconLayersIntersect,
-  IconRoute,
+  IconChartLine,
+  IconChartPie,
+  IconDatabase,
+  IconFlask2,
+  IconListDetails,
+  IconPlus,
   IconSearch,
 } from "@tabler/icons-react";
 import { href, navGroups, type NavItem, type Page, type Route } from "./navigation";
@@ -21,11 +23,6 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     >
       {item.icon}
       <span>{item.label}</span>
-      {item.count !== undefined && (
-        <span className="wb-nav-count" aria-hidden="true">
-          {item.count.toLocaleString()}
-        </span>
-      )}
     </a>
   );
 }
@@ -57,7 +54,7 @@ export function Shell({
   };
   useHotkeys([["mod+K", openSearch]]);
   const groups = navGroups(counts);
-  const active = ["new-run", "runs", "evaluations", "scorecards", "event-studies", "watchlist"].includes(route.page) ? "workspace" : route.page;
+  const active = route.page;
   const results = searchOpen ? onSearch(query).slice(0, 14) : [];
   const close = () => {
     setSearchOpen(false);
@@ -70,8 +67,8 @@ export function Shell({
   const navList = (
     <>
       {groups.map((group) => (
-        <div className="wb-nav-group" key={group.label}>
-          <div className="wb-nav-label">{group.label}</div>
+        <div className="wb-nav-group" key={group.label || "primary"}>
+          {group.label && <div className="wb-nav-label">{group.label}</div>}
           {group.items.map((item) => (
             <NavLink key={item.page} item={item} active={active === item.page} />
           ))}
@@ -84,11 +81,11 @@ export function Shell({
       <aside className="wb-sidebar" aria-label="Workbench">
         <a href={href("portfolio")} className="wb-brand">
           <span className="wb-mark">
-            <IconFlask size={18} />
+            <IconChartLine size={18} />
           </span>
           <span>
             <span className="wb-brand-name">Strategy Workbench</span>
-            <span className="wb-brand-sub">Local research</span>
+            <span className="wb-brand-sub">Historical simulation</span>
           </span>
         </a>
         <button
@@ -100,22 +97,22 @@ export function Shell({
           <span>Search</span>
           <kbd>Ctrl K</kbd>
         </button>
-        <a href={href("new-run")} className="wb-new-run">
-          <IconFlask size={15} />
+        <a
+          href={href("new-run")}
+          className={`wb-new-run${active === "new-run" ? " active" : ""}`}
+          aria-current={active === "new-run" ? "page" : undefined}
+        >
+          <IconPlus size={15} />
           New backtest
         </a>
         <nav className="wb-nav" aria-label="Primary">
           {navList}
         </nav>
-        <div className="wb-sidebar-foot">
-          <span className="wb-sim-chip">Historical simulation</span>
-          <span>Historical research</span>
-        </div>
       </aside>
       <header className="wb-mobile-bar">
         <a href={href("portfolio")} className="wb-brand">
           <span className="wb-mark">
-            <IconFlask size={16} />
+            <IconChartLine size={16} />
           </span>
           <span className="wb-brand-name">Strategy Workbench</span>
         </a>
@@ -131,34 +128,22 @@ export function Shell({
       </header>
       <main className="wb-main">{children}</main>
       <nav className="wb-bottom-nav" aria-label="Primary, compact">
-        <a
-          href={href("portfolio")}
-          className={active === "portfolio" ? "active" : ""}
-          aria-current={active === "portfolio" ? "page" : undefined}
-        >
-          <IconLayersIntersect size={19} />
-          Portfolio
-        </a>
-        <a
-          href={href("workspace")}
-          className={active === "workspace" ? "active" : ""}
-        >
-          <IconRoute size={19} />
-          Research
-        </a>
-        <a href={href("scripts")} className="wb-bottom-new">
-          <span>
-            <IconCode size={19} />
-          </span>
-          Scripts
-        </a>
-        <a
-          href={href("datasets")}
-          className={active === "datasets" ? "active" : ""}
-        >
-          <IconFlask size={19} />
-          Data
-        </a>
+        {[
+          { page: "portfolio" as const, label: "Portfolio", icon: <IconChartPie size={19} /> },
+          { page: "strategies" as const, label: "Strategies", icon: <IconFlask2 size={19} /> },
+          { page: "runs" as const, label: "Runs", icon: <IconListDetails size={19} /> },
+          { page: "data" as const, label: "Data", icon: <IconDatabase size={19} /> },
+        ].map((item) => (
+          <a
+            key={item.page}
+            href={href(item.page)}
+            className={active === item.page ? "active" : ""}
+            aria-current={active === item.page ? "page" : undefined}
+          >
+            {item.icon}
+            {item.label}
+          </a>
+        ))}
       </nav>
       <Modal
         opened={searchOpen}
