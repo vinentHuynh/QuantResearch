@@ -30,12 +30,14 @@ function closestPoint(points: RebasedChartPoint[], time: number): number {
   return low;
 }
 
-export function CollectivePnlChart({ points, mode, comparison, period, onPeriodChange }: {
+export function CollectivePnlChart({ points, mode, comparison, period, onPeriodChange, showPeriod = true }: {
   points: DailyPoint[];
   mode: string;
   comparison: boolean;
   period: PortfolioPnlPeriod;
   onPeriodChange: (period: PortfolioPnlPeriod) => void;
+  /** The portfolio header owns the period; the chart can leave it out. */
+  showPeriod?: boolean;
 }) {
   const [hover, setHover] = useState<number | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
@@ -113,7 +115,7 @@ export function CollectivePnlChart({ points, mode, comparison, period, onPeriodC
     <div className="collective-chart">
       <div className="collective-chart-toolbar">
         <span className="collective-chart-axis-title">{mode === "daily" ? "Daily P&L (USD)" : "Cumulative P&L (USD)"}</span>
-        <PortfolioPeriodSelector value={period} onChange={(value) => { onPeriodChange(value); setHover(null); }} />
+        {showPeriod && <PortfolioPeriodSelector value={period} onChange={(value) => { onPeriodChange(value); setHover(null); }} />}
       </div>
       <div className="collective-chart-plot" ref={plotRef}>
         <svg

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ActionIcon, Alert, Badge, Button, Code, Menu, Select, SimpleGrid, Text, TextInput, Title } from "@mantine/core";
 import { IconDots, IconRefresh } from "@tabler/icons-react";
 import { comparePromising, testingEvidence } from "../../../shared/ts/evidence.ts";
@@ -13,7 +13,7 @@ import type { WorkbenchController } from "../workspace/useWorkbenchController";
 import { StrategyLibrary } from "./StrategyLibrary";
 import "./strategies.css";
 
-export function StrategiesPage({ controller }: { controller: WorkbenchController }) {
+export function StrategiesPage({ controller, before }: { controller: WorkbenchController; before?: ReactNode }) {
   const [search, setSearch] = useState("");
   const [archiveSearch, setArchiveSearch] = useState("");
   const {
@@ -69,7 +69,7 @@ export function StrategiesPage({ controller }: { controller: WorkbenchController
               })
             }
           >
-            Scan scripts
+            Scan for new scripts
           </Button>
         }
         tabsLabel="Script views"
@@ -81,6 +81,7 @@ export function StrategiesPage({ controller }: { controller: WorkbenchController
       />
       <WorkbenchAlerts controller={controller} />
       <div className="wb-content scripts-page">
+        {before}
         <div className="scripts-toolbar">
           {!library && <TextInput
             aria-label={archived ? "Search archived scripts" : "Search runnable strategies"}

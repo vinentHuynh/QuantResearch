@@ -81,6 +81,8 @@ export function useWorkbenchController() {
       setComparison(current => current && [...(current.runs || []), ...(current.rows || [])].some(run => !visibleRunIds.has(run.id)) ? null : current);
       setDeletion(current => current && current.ids.some(id => !visibleRunIds.has(id)) ? null : current);
       setState(next);
+      // A dropped connection clears itself once the API answers again.
+      setError((current) => (current === "TypeError: Failed to fetch" ? "" : current));
     } catch (caught) {
       setError(String(caught));
     }
@@ -317,15 +319,7 @@ export function useWorkbenchController() {
     selected.some(
       (id) => state?.runs.find((run) => run.id === id)?.status !== "Succeeded",
     );
-  const navCounts: Partial<Record<Page, number>> = state
-    ? {
-        workspace: latestHistory.length,
-        runs: latestHistory.length,
-        evaluations: (state.evaluations || []).length,
-        scripts: state.strategies.length,
-        datasets: state.datasets.length,
-      }
-    : {};
+  const navCounts: Partial<Record<Page, number>> = {};
   const search = useMemo(
     () =>
       (query: string): SearchResult[] => {
@@ -335,14 +329,14 @@ export function useWorkbenchController() {
             group.items.map((item) => ({
               group: "Pages",
               label: item.label,
-              detail: group.label,
+              detail: "Page",
               run: () => go(item.page),
             })),
           ),
           {
             group: "Pages",
             label: "New backtest",
-            detail: "Research",
+            detail: "Page",
             run: () => go("new-run"),
           },
         ].filter((page) => !normalized || page.label.toLowerCase().includes(normalized));

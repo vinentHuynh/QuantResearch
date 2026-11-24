@@ -1,0 +1,146 @@
+/* Portfolio: header switcher, key figures, strategies table, settings drawer. */
+.wb-portfolio { max-width: 1240px; }
+.wb-portfolio-head .wb-page-top { align-items: flex-end; }
+.wb-portfolio-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink);
+  cursor: pointer;
+}
+.wb-portfolio-switch h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.wb-portfolio-switch svg { color: var(--muted); }
+.wb-portfolio-switch:hover h1 { color: var(--teal-ink); }
+.wb-portfolio-menu-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 2px 4px 6px; }
+.wb-portfolio-menu-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 8px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+}
+.wb-portfolio-menu-item span { font-weight: 600; font-size: 13.5px; }
+.wb-portfolio-menu-item small { grid-column: 1; font-size: 12px; color: var(--muted); }
+.wb-portfolio-menu-item svg { grid-row: 1 / span 2; grid-column: 2; color: var(--teal); }
+.wb-portfolio-menu-item:hover { background: #f1f5f2; }
+.wb-portfolio-menu-item.active { background: #eef6f2; }
+.wb-portfolio-save { display: flex; align-items: flex-end; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.wb-portfolio-save .mantine-TextInput-root { flex: 1; }
+.wb-inline-refresh { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 0; color: var(--muted); font: inherit; cursor: pointer; }
+.wb-inline-refresh:hover { color: var(--teal-ink); }
+.wb-spin { animation: wb-spin 1s linear infinite; }
+@keyframes wb-spin { to { transform: rotate(360deg); } }
+.wb-portfolio-head .collective-chart-ranges { background: var(--surface); }
+
+.wb-kpi-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.wb-kpi-card { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
+.wb-kpi-card .wb-kpi-label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.wb-kpi-card .wb-kpi-value { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.wb-kpi-card .wb-kpi-note { font-size: 12px; color: var(--muted); }
+@media (max-width: 1100px) { .wb-kpi-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.wb-year-bars { display: flex; align-items: stretch; gap: 10px; height: 240px; padding: 8px 4px 0; overflow-x: auto; }
+.wb-year-bar { flex: 1 0 56px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.wb-year-track { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--line); }
+.wb-year-track i { display: block; width: 70%; max-width: 54px; border-radius: 4px 4px 0 0; }
+.wb-year-track i.is-gain { background: #2e9a7c; }
+.wb-year-track i.is-loss { background: #c86b5c; }
+.wb-year-value { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.wb-year-label { font-size: 12px; color: var(--muted); }
+.wb-year-label small { display: block; text-align: center; font-size: 10.5px; }
+
+.wb-strategy-table { display: flex; flex-direction: column; min-width: 860px; font-size: 13.5px; }
+.wb-strategy-table > [role="row"] {
+  display: grid;
+  grid-template-columns: minmax(240px, 2.2fr) 112px 110px 120px 92px minmax(150px, 1.3fr) 36px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 4px;
+  border-top: 1px solid var(--line-soft);
+}
+.wb-strategy-table > .is-head { border-top: 0; padding-top: 4px; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.wb-strategy-table > [role="row"] > :nth-child(n+3):nth-child(-n+5) { text-align: right; }
+.wb-strategy-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.wb-strategy-cell .wb-book-name { font-size: 14px; }
+.wb-strategy-cell-meta { font-size: 12px; color: var(--muted); }
+.wb-strategy-cell .wb-book-symbol { font-weight: 700; color: var(--ink); }
+.wb-strategy-cell .wb-strategy-stage { margin-top: 2px; }
+.wb-size-stepper { display: inline-flex; align-items: center; gap: 8px; }
+.wb-size-stepper > span { min-width: 26px; text-align: center; font-weight: 700; }
+.wb-form { font-size: 12.5px; font-weight: 600; text-decoration: none; }
+.wb-form.is-watch { color: var(--watch); }
+.wb-form.is-weak { color: var(--loss); }
+.wb-form.is-ok { color: var(--teal-ink); }
+.wb-form.is-unknown { color: var(--muted); }
+.wb-add-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px dashed #b8c2bc;
+  border-radius: 8px;
+  background: #fafbf9;
+  color: var(--teal-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.wb-add-hint:hover { border-color: var(--teal); background: #f1f7f4; }
+.wb-portfolio-foot { font-size: 12.5px; color: var(--muted); padding: 4px 2px; }
+.wb-portfolio-foot .wb-link-button { font-size: 12.5px; }
+.wb-row-current td { background: #f1f7f4; font-weight: 600; }
+.wb-risk { display: flex; flex-direction: column; gap: 14px; }
+.wb-risk .wb-status-chip { font-size: 11px; }
+
+.wb-drawer-title { font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 600; }
+.wb-settings-form { display: flex; flex-direction: column; gap: 18px; }
+.wb-settings-fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.wb-settings-fieldset legend { font-size: 14px; font-weight: 600; margin-bottom: 6px; padding: 0; }
+.wb-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+}
+.wb-choice span { font-size: 12.5px; color: var(--muted); }
+.wb-choice.active { border: 1.5px solid #237f66; background: #f1f7f4; }
+.wb-choice:disabled { opacity: .55; cursor: not-allowed; }
+.wb-settings-help summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--teal-ink); }
+.wb-settings-actions { position: sticky; bottom: 0; background: var(--surface); padding: 12px 0 4px; border-top: 1px solid var(--line-soft); }
+@media (max-width: 700px) {
+  .wb-portfolio-switch h1 { font-size: 22px; }
+}
+/* Drawers and popovers render outside .wb, so they carry the palette themselves. */
+.wb-settings-form,
+.wb-portfolio-menu {
+  --line: #dce3dd;
+  --line-soft: #e9eee9;
+  --muted: #66756c;
+  --ink: #1b2521;
+  --surface: #ffffff;
+  --teal: #1e7a62;
+  --teal-ink: #16634f;
+}

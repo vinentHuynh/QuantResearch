@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import {
+  ActionIcon,
   Badge,
   Button,
   Group,
   ScrollArea,
-  Select,
+  SegmentedControl,
   Table,
   Text,
 } from '@mantine/core';
 import {
   IconChevronLeft,
   IconChevronRight,
+  IconMinus,
   IconPlus,
+  IconX,
 } from '@tabler/icons-react';
+import { href } from '../../app/navigation';
+import type { RecentForm } from './recentForm';
 import type { CollectiveDashboardModel } from './useCollectiveDashboardModel';
 import type { PortfolioPnlPeriod } from '../../../shared/ts/portfolioPeriods.ts';
 import { collectiveProgress } from '../../../shared/ts/progress.ts';
@@ -22,6 +27,7 @@ import {
   formatPercent as pct,
   coverageEndExplanation,
   gateStateColor as stateColor,
+  portfolioUpdatePresentation,
   signedClass as signed,
   valueTone as tone,
   weekday,
@@ -87,219 +93,225 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
   );
 }
 
-export function CollectiveOverviewView({ model }: { model: Model }) {
+const wholeMoney = (value: number) =>
+  `${value < 0 ? '−' : value > 0 ? '+' : ''}$${Math.abs(Math.round(value)).toLocaleString('en-US')}`;
+
+function YearBars({ annual, start, end }: { annual: Record<string, number>; start: string; end: string }) {
+  const entries = Object.entries(annual).sort();
+  const scale = Math.max(1, ...entries.map(([, pnl]) => Math.abs(pnl)));
+  return (
+    <div className='wb-year-bars' role='list' aria-label='P&L by year'>
+      {entries.map(([year, pnl]) => {
+        const partial = start > `${year}-01-01` || end < `${year}-12-31`;
+        return (
+          <div className='wb-year-bar' role='listitem' key={year} aria-label={`${year}${partial ? ' (partial year)' : ''}: ${money(pnl)}`}>
+            <span className={`wb-year-value ${signed(pnl)}`}>{wholeMoney(pnl)}</span>
+            <div className='wb-year-track'>
+              <i className={pnl < 0 ? 'is-loss' : 'is-gain'} style={{ height: `${Math.max(2, (Math.abs(pnl) / scale) * 100)}%` }} />
+            </div>
+            <span className='wb-year-label'>{year}{partial && <small> partial</small>}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function CollectiveOverviewView({ model, recentForm, onSettings }: {
+  model: Model;
+  recentForm: Record<string, RecentForm>;
+  onSettings: () => void;
+}) {
   const {
     annual,
     chartMode,
-    pnlPeriod,
+    choose,
+    periodComponents,
     periodMetrics,
     periodPoints,
     periodPnl,
     periodStart,
+    pnlPeriod,
     result,
+    retryTracking,
     selected,
     setChartMode,
+    setPickerOpen,
     setPnlPeriod,
     settings,
-    totals,
+    tracking,
     volatility,
   } = model;
   if (!result || !periodMetrics) return <CollectiveEmptyState model={model} />;
   const periodBaseline = periodPoints.reduce((total, point) => total + point.baseline, 0);
+  const view = chartMode === 'daily' || chartMode === 'years' ? chartMode : 'cumulative';
+  const components = new Map(periodComponents.map((component) => [component.id, component]));
+  const worstSingle = [...periodComponents].sort((a, b) => b.maxDrawdownDollars - a.maxDrawdownDollars)[0];
+  const ratio = periodMetrics.recoveryFactor;
+  const setCopies = (id: string, value: number) =>
+    choose({ ...settings.copies, [id]: Math.min(100, Math.max(1, value)) });
 
   return (
     <>
-      <div className='wb-kpis' data-testid='portfolio-metrics'>
-        <div className='wb-kpi lead'>
-          <span className='wb-kpi-label'>Combined net P&amp;L · {periodLabels[pnlPeriod]}</span>
-          <span className={`wb-kpi-value ${signed(periodPnl)}`} data-testid='portfolio-pnl'>
-            {money(periodPnl)}
-          </span>
+      <section className='wb-kpi-cards' data-testid='portfolio-metrics' aria-label='Key figures'>
+        <div className='wb-kpi-card'>
+          <span className='wb-kpi-label'>Net P&amp;L · {periodLabels[pnlPeriod]}</span>
+          <span className={`wb-kpi-value ${signed(periodPnl)}`} data-testid='portfolio-pnl'>{wholeMoney(periodPnl)}</span>
+          <span className='wb-kpi-note'>{pct(periodPnl / result.capital)} on starting capital</span>
+        </div>
+        <div className='wb-kpi-card'>
+          <span className='wb-kpi-label'>Max drawdown</span>
+          <span className='wb-kpi-value wb-loss'>{wholeMoney(-periodMetrics.maxDrawdownDollars)}</span>
           <span className='wb-kpi-note'>
-            {pct(periodPnl / result.capital)} on total portfolio capital · {periodStart} to {settings.end}
+            {pct(Math.abs(periodMetrics.maxDrawdown))} below peak · {settings.basis === 'marked' ? 'daily closes' : 'closed trades only'}
           </span>
         </div>
-        <div className='wb-kpi'>
-          <span className='wb-kpi-label'>Maximum drawdown</span>
-          <span className='wb-kpi-value'>
-            {money(periodMetrics.maxDrawdownDollars)}
-          </span>
+        <div className='wb-kpi-card'>
+          <span className='wb-kpi-label'>Return ÷ drawdown</span>
+          <span className='wb-kpi-value'>{ratio?.toFixed(2) ?? '—'}</span>
+          <span className='wb-kpi-note'>{ratio != null ? `$${ratio.toFixed(2)} earned per $1 of drawdown` : 'No drawdown in this period'}</span>
+        </div>
+        <div className='wb-kpi-card'>
+          <span className='wb-kpi-label'>Win rate</span>
+          <span className='wb-kpi-value'>{periodMetrics.winRate == null ? '—' : pct(periodMetrics.winRate)}</span>
           <span className='wb-kpi-note'>
-            {pct(Math.abs(periodMetrics.maxDrawdown))} ·{' '}
-            {settings.basis === 'marked'
-              ? 'daily closes'
-              : 'closed trades only'}
+            of {periodMetrics.trades.toLocaleString()} trades · profit factor {periodMetrics.profitFactor?.toFixed(2) ?? '—'}
           </span>
         </div>
-        <div className='wb-kpi'>
-          <span className='wb-kpi-label'>Combination score</span>
-          <span className='wb-kpi-value'>
-            {periodMetrics.recoveryFactor?.toFixed(2) || 'Undefined'}
-          </span>
-          <span className='wb-kpi-note'>
-            Period net P&amp;L ÷ max drawdown dollars
-          </span>
-        </div>
-        <div className='wb-kpi'>
-          <span className='wb-kpi-label'>Profit factor</span>
-          <span className='wb-kpi-value'>
-            {periodMetrics.profitFactor?.toFixed(2) ?? 'No finite ratio'}
-          </span>
-          <span className='wb-kpi-note'>Closed-trade gains ÷ losses</span>
-        </div>
-      </div>
-      <div className='wb-kpi-sub'>
-        <span>
-          Winning trades{' '}
-          <b>{periodMetrics.winRate == null ? 'none' : pct(periodMetrics.winRate)}</b> of{' '}
-          {periodMetrics.trades.toLocaleString()}
-        </span>
-        <span>
-          Positive days{' '}
-          <b>
-            {periodMetrics.positiveDays} / {periodMetrics.activeDays}
-          </b>
-        </span>
-        <span>
-          Total portfolio capital <b>{money(result.capital)}</b>
-        </span>
-        {settings.policy.enabled && (
-          <span>
-            {volatility
-              ? 'Effect of volatility scaling'
-              : 'Effect of pause rule'}{' '}
-            <b className={signed(periodPnl - periodBaseline)}>
-              {money(periodPnl - periodBaseline)}
-            </b>{' '}
-            vs always-on {money(periodBaseline)}
-            {volatility && ` · average size ×${result.exposure.toFixed(2)}`}
-          </span>
-        )}
-      </div>
-      {pnlPeriod !== 'all' && settings.policy.enabled && volatility && (
-        <Text size='xs' c='dimmed' mb='sm'>
-          Average size uses the full selected history.
+      </section>
+      {settings.policy.enabled && (
+        <Text size='sm' c='dimmed' mb='sm'>
+          {volatility ? 'Effect of volatility scaling' : 'Effect of the pause rule'}{' '}
+          <b className={signed(periodPnl - periodBaseline)}>{money(periodPnl - periodBaseline)}</b> vs always-on{' '}
+          {money(periodBaseline)}
+          {volatility && ` · average size ×${result.exposure.toFixed(2)}`}. Change it under Risk.
         </Text>
       )}
-      <section className='wb-card'>
+      <section className='wb-card' aria-label='P&L chart'>
         <div className='wb-card-head'>
-          <h2>Portfolio P&amp;L</h2>
-          <Select
-            aria-label='P&L chart mode'
+          <div>
+            <h2>P&amp;L</h2>
+            <Text size='xs' c='dimmed'>
+              {selected.length === 1
+                ? `${strategyTitle(selected[0].name)} · ${selected[0].symbol} ${selected[0].timeframe}`
+                : `${selected.length} strategies · ${periodStart} to ${settings.end}`}
+            </Text>
+          </div>
+          <SegmentedControl
+            aria-label='Chart view'
             size='xs'
-            w={220}
-            maw='100%'
-            value={chartMode}
-            onChange={(value) => setChartMode(value || 'cumulative')}
+            value={view}
+            onChange={setChartMode}
             data={[
-              { value: 'cumulative', label: 'Cumulative by market' },
-              { value: 'daily', label: 'Daily P&L bars' },
+              { value: 'cumulative', label: 'Cumulative' },
+              { value: 'daily', label: 'Daily' },
+              { value: 'years', label: 'By year' },
             ]}
           />
         </div>
-        <PnlChart
-          points={periodPoints}
-          mode={chartMode}
-          comparison={settings.policy.enabled}
-          period={pnlPeriod}
-          onPeriodChange={setPnlPeriod}
-        />
+        {view === 'years' ? (
+          <YearBars annual={annual} start={periodStart} end={settings.end} />
+        ) : (
+          <PnlChart
+            points={periodPoints}
+            mode={view}
+            comparison={settings.policy.enabled}
+            period={pnlPeriod}
+            onPeriodChange={setPnlPeriod}
+            showPeriod={false}
+          />
+        )}
       </section>
-      <div className='wb-two'>
-        <section className='wb-card'>
-          <h2>P&amp;L by market · {periodLabels[pnlPeriod]}</h2>
-          <Table data-testid='market-contributions' mt={6}>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Market</Table.Th>
-                <Table.Th ta='right'>Books</Table.Th>
-                <Table.Th ta='right'>Net P&amp;L</Table.Th>
-                <Table.Th w='28%' />
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {Object.entries(totals)
-                .sort()
-                .map(([symbol, pnl]) => {
-                  const scale = Math.max(
-                    1,
-                    ...Object.values(totals).map(Math.abs),
-                  );
-                  return (
-                    <Table.Tr key={symbol}>
-                      <Table.Td>{symbol}</Table.Td>
-                      <Table.Td ta='right'>
-                        {
-                          selected.filter((item) => item.symbol === symbol)
-                            .length
-                        }
-                      </Table.Td>
-                      <Table.Td ta='right' c={tone(pnl)} className='mono'>
-                        {money(pnl)}
-                      </Table.Td>
-                      <Table.Td>
-                        <div
-                          className='collective-bar'
-                          style={{
-                            width: `${(Math.abs(pnl) / scale) * 100}%`,
-                            background: tone(pnl),
-                          }}
-                        />
-                      </Table.Td>
-                    </Table.Tr>
-                  );
-                })}
-            </Table.Tbody>
-          </Table>
-        </section>
-        <section className='wb-card'>
-          <h2>P&amp;L by year · {periodLabels[pnlPeriod]}</h2>
-          <Table mt={6}>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Year</Table.Th>
-                <Table.Th ta='right'>Net P&amp;L</Table.Th>
-                <Table.Th w='35%' />
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {Object.entries(annual)
-                .sort()
-                .map(([year, pnl]) => {
-                  const scale = Math.max(
-                    1,
-                    ...Object.values(annual).map(Math.abs),
-                  );
-                  return (
-                    <Table.Tr key={year}>
-                      <Table.Td>
-                        {year}
-                        {periodStart > `${year}-01-01` || settings.end < `${year}-12-31` ? (
-                          <Text span size='xs' c='dimmed'>
-                            {' '}
-                            partial
-                          </Text>
-                        ) : null}
-                      </Table.Td>
-                      <Table.Td ta='right' c={tone(pnl)} className='mono'>
-                        {money(pnl)}
-                      </Table.Td>
-                      <Table.Td>
-                        <div
-                          className='collective-bar'
-                          style={{
-                            width: `${(Math.abs(pnl) / scale) * 100}%`,
-                            background: tone(pnl),
-                          }}
-                        />
-                      </Table.Td>
-                    </Table.Tr>
-                  );
-                })}
-            </Table.Tbody>
-          </Table>
-        </section>
-      </div>
+      <section className='wb-card' aria-label='Strategies'>
+        <div className='wb-card-head'>
+          <h2>
+            Strategies <span className='wb-group-count'>{selected.length}</span>
+          </h2>
+          <Button size='xs' leftSection={<IconPlus size={14} />} onClick={() => setPickerOpen(true)}>
+            Add strategy
+          </Button>
+        </div>
+        <ScrollArea>
+          <div className='wb-strategy-table' role='table' aria-label='Strategies in this portfolio' data-testid='selected-strategies'>
+            <div role='row' className='is-head'>
+              {['Strategy', 'Size', 'Net P&L', 'Max drawdown', 'Share of P&L', 'Recent form', ''].map((heading, index) => (
+                <span role='columnheader' key={index}>{heading || <span className='visually-hidden'>Remove</span>}</span>
+              ))}
+            </div>
+            {selected.map((item) => {
+              const component = components.get(item.id);
+              const copies = settings.copies[item.id] || 1;
+              const update = tracking?.items[item.id];
+              const updateNote = portfolioUpdatePresentation(item, update);
+              const form = recentForm[item.id];
+              const share = component && periodPnl ? component.pnl / periodPnl : null;
+              const name = strategyTitle(item.name);
+              return (
+                <div role='row' key={item.id} className='wb-strategy-table-row'>
+                  <div role='cell' className='wb-strategy-cell'>
+                    <strong className='wb-book-name'>{name}</strong>
+                    <span className='wb-strategy-cell-meta'>
+                      <span className='wb-book-symbol'>{item.symbol}</span> {item.timeframe} · {item.start} – {update?.simulated_through || item.end}
+                      {updateNote.attention && <span className='wb-book-update-attention' title={updateNote.title}> · {updateNote.label}</span>}
+                      {update?.status === 'failed' && (
+                        <button type='button' className='wb-link-button' onClick={() => void retryTracking(item.id)}> Retry update</button>
+                      )}
+                    </span>
+                    <StrategyStageBadge {...collectiveProgress(item)} compact />
+                  </div>
+                  <div role='cell' className='wb-size-stepper'>
+                    <ActionIcon size='sm' variant='default' aria-label={`Decrease size of ${name}`} disabled={copies <= 1} onClick={() => setCopies(item.id, copies - 1)}>
+                      <IconMinus size={12} />
+                    </ActionIcon>
+                    <span aria-label={`Size ${copies} times`}>{copies}×</span>
+                    <ActionIcon size='sm' variant='default' aria-label={`Increase size of ${name}`} disabled={copies >= 100} onClick={() => setCopies(item.id, copies + 1)}>
+                      <IconPlus size={12} />
+                    </ActionIcon>
+                  </div>
+                  <span role='cell' className={`mono ${component ? signed(component.pnl) : ''}`}>{component ? wholeMoney(component.pnl) : '—'}</span>
+                  <span role='cell' className='mono wb-loss'>{component ? wholeMoney(-component.maxDrawdownDollars) : '—'}</span>
+                  <span role='cell' className='mono'>{share == null ? '—' : `${Math.round(share * 100)}%`}</span>
+                  <span role='cell'>
+                    {form ? <a className={`wb-form is-${form.tone}`} href={href('portfolio', 'risk')}>{form.label}</a> : '—'}
+                  </span>
+                  <span role='cell'>
+                    <ActionIcon
+                      variant='subtle'
+                      color='gray'
+                      size='sm'
+                      aria-label={`Remove ${name} ${item.symbol} ${item.timeframe}`}
+                      title='Remove from portfolio'
+                      onClick={() => {
+                        const next = { ...settings.copies };
+                        delete next[item.id];
+                        choose(next);
+                      }}
+                    >
+                      <IconX size={14} />
+                    </ActionIcon>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+        {selected.length === 1 ? (
+          <button type='button' className='wb-add-hint' onClick={() => setPickerOpen(true)}>
+            <IconPlus size={14} /> Add another strategy to see how they combine. Drawdowns often offset each other.
+          </button>
+        ) : worstSingle && periodMetrics.maxDrawdownDollars < worstSingle.maxDrawdownDollars ? (
+          <Text size='sm' c='dimmed' mt='sm'>
+            The combined drawdown ({money(-periodMetrics.maxDrawdownDollars)}) is smaller than {strategyTitle(worstSingle.name)}’s
+            alone ({money(-worstSingle.maxDrawdownDollars)}): their losing stretches don’t line up. Adjust <b>Size</b> to lean on
+            the steadier strategies.
+          </Text>
+        ) : null}
+      </section>
+      <footer className='wb-portfolio-foot'>
+        {settings.basis === 'marked' ? 'Daily P&L marked at close (UTC)' : 'P&L counted when trades close (UTC)'}, net of
+        recorded fees and slippage. Each strategy runs as its own book: no position netting or shared margin.{' '}
+        <button type='button' className='wb-link-button' onClick={onSettings}>Change accounting or export</button>
+      </footer>
     </>
   );
 }
