@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { ActionIcon, Alert, Button, Code, Menu, Select, SimpleGrid, Text, TextInput, Title } from "@mantine/core";
+import { ActionIcon, Alert, Badge, Button, Code, Menu, Select, SimpleGrid, Text, TextInput, Title } from "@mantine/core";
 import { IconDots, IconRefresh } from "@tabler/icons-react";
 import { comparePromising, testingEvidence } from "../../../shared/ts/evidence.ts";
 import { href } from "../../app/navigation";
 import { workbenchRequest as request } from "../../shared/api/workbench";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
+import { strategySourceTags } from "../../../shared/ts/formatting.ts";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { StrategyTesting } from "../evaluations/StrategyTesting";
 import { WorkbenchAlerts } from "../workspace/WorkbenchChrome";
@@ -161,7 +162,7 @@ export function StrategiesPage({ controller }: { controller: WorkbenchController
                   <section className="wb-card scripts-strategy-card" key={strategy.id}>
                     <div className="scripts-strategy-heading">
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 8 }}>
-                        <Title order={3}>{strategyTitle(strategy.name)}</Title>
+                        <Title order={3}>{strategyTitle(strategy.name)}{strategySourceTags(strategy.name).map(tag => <Badge key={tag} size="xs" variant="outline" color="gray" ml={8} style={{ verticalAlign: "middle" }}>{tag}</Badge>)}</Title>
                         <Menu position="bottom-end" withinPortal>
                           <Menu.Target><ActionIcon variant="subtle" size="sm" aria-label={"More actions for " + strategyTitle(strategy.name)}><IconDots size={16} /></ActionIcon></Menu.Target>
                           <Menu.Dropdown>

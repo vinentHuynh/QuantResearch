@@ -28,6 +28,8 @@ import {
 } from "../../../shared/ts/portfolioCandidates.ts";
 import { bestPortfolioPreview, portfolioItemStrategyId, portfolioRiskDetails, portfolioScriptGroups, selectPortfolioHistory, type PortfolioDailyRisk } from "../../../shared/ts/portfolioScriptCandidates.ts";
 import { href } from "../../app/navigation";
+import { statusDisplay } from "../../../shared/ts/strategyLifecycle.ts";
+import { strategySourceTags, strategyTitle } from "../../../shared/ts/formatting.ts";
 import { useStrategyStages } from "../../shared/ui/strategyStageContext";
 import type { CollectiveSettings, PortfolioTracking } from "./collectiveViewModel";
 import { formatMoney as money } from "./collectiveViewModel";
@@ -257,7 +259,7 @@ export function StrategyPickerControls({
                   <button type="button" className="strategy-picker-group-head" aria-expanded={open}
                     onClick={() => setExpanded(current => ({ ...current, [group.strategyId]: !open }))}>
                     <span aria-hidden="true">{open ? "−" : "+"}</span>
-                    <span className="strategy-picker-group-name">{group.name}</span>
+                    <span className="strategy-picker-group-name">{strategyTitle(group.name)}{strategySourceTags(group.name).map(tag => <Badge key={tag} size="xs" variant="outline" color="gray" ml={6}>{tag}</Badge>)}</span>
                     {!open && best && (
                       <span className="strategy-picker-group-preview" data-preview-run-id={best.run?.id}>
                         {calculating ? <span className="strategy-picker-preview-pending">Calculating best run</span> : <>
@@ -291,15 +293,15 @@ export function StrategyPickerControls({
                         </>}
                       </span>
                     )}
-                    {open && <Badge size="xs" variant="light" color={mixedStatus ? "gray" : first.status.color}>
-                      {mixedStatus ? "Mixed research status" : first.status.label}
+                    {open && <Badge size="xs" variant="light" color={mixedStatus ? "gray" : statusDisplay(first.status).color}>
+                      {mixedStatus ? "Mixed research status" : statusDisplay(first.status).label}
                     </Badge>}
                     {historyCount > 0 && <span className="strategy-picker-group-count">
                       {historyCount} {historyCount === 1 ? "history" : "histories"}
                     </span>}
                   </button>
                   {showBestAction && <ActionIcon className="strategy-picker-best-add" size="sm" variant="light" color="teal"
-                    aria-label={bestSelected ? `Best run already added for ${group.name}` : `Add best run for ${group.name}`}
+                    aria-label={bestSelected ? `Best run already added for ${strategyTitle(group.name)}` : `Add best run for ${strategyTitle(group.name)}`}
                     title={bestSelected ? "Best run already added" : calculating ? "Calculating best run"
                       : !bestCanFit ? "Portfolio limit reached" : bestImportable ? "Import and add exact best run" : "Add best saved history"}
                     disabled={!canAddBest} loading={bestImporting}
@@ -312,7 +314,7 @@ export function StrategyPickerControls({
                   </ActionIcon>}
                   </div>
                   {open && (
-                    <div className="strategy-picker-options" role="list" aria-label={group.name + " histories"}>
+                    <div className="strategy-picker-options" role="list" aria-label={strategyTitle(group.name) + " histories"}>
                       {group.options.map(row => {
                         const item = row.item;
                         const ids = item?.source_run_ids || (row.run ? [row.run.id] : []);
@@ -341,7 +343,7 @@ export function StrategyPickerControls({
                             data-history-id={item?.id} data-run-id={ids.length === 1 ? ids[0] : undefined}>
                             <div className="strategy-picker-option-top">
                               <Checkbox
-                                aria-label={(included ? "Remove " : "Add ") + group.name + " " + row.symbol + " " + row.timeframe
+                                aria-label={(included ? "Remove " : "Add ") + strategyTitle(group.name) + " " + row.symbol + " " + row.timeframe
                                   + (start && end ? " " + start + " to " + end : "")}
                                 checked={included} disabled={!included && !canSelect}
                                 onChange={event => {
@@ -357,9 +359,9 @@ export function StrategyPickerControls({
                               <div className="strategy-picker-option-main">
                                 <Group gap="xs" wrap="wrap">
                                   <Text size="sm" fw={600}>{row.symbol || "No market"} / {row.timeframe || "No timeframe"}</Text>
-                                  <Badge size="xs" variant="light" color={row.status.color}>{row.status.label}</Badge>
+                                  <Badge size="xs" variant="light" color={statusDisplay(row.status).color} title={statusDisplay(row.status).description}>{statusDisplay(row.status).label}</Badge>
                                   {warnings.length > 0 && <Badge size="xs" variant="outline" color="orange">{warnings.length} run warning{warnings.length === 1 ? "" : "s"}</Badge>}
-                                  {checks.length > 0 && <Badge size="xs" variant="outline" color={row.status.color}>{checks.length} research note{checks.length === 1 ? "" : "s"}</Badge>}
+                                  {checks.length > 0 && <Badge size="xs" variant="outline" color={statusDisplay(row.status).color}>{checks.length} research note{checks.length === 1 ? "" : "s"}</Badge>}
                                   {composite && <Badge size="xs" variant="outline">Combined history - {ids.length} runs</Badge>}
                                   {item?.latest_replay && <Badge size="xs" variant="outline">Extended history</Badge>}
                                   {!item && <Badge size="xs" variant="outline">Not imported</Badge>}
@@ -456,10 +458,10 @@ export function StrategyPickerControls({
           <div className="strategy-picker-copies-list">
             {selected.map((item) => (
               <div className="strategy-picker-copies-row" key={item.id}>
-                <Text size="sm">{item.symbol} · {item.name}</Text>
+                <Text size="sm">{item.symbol} · {strategyTitle(item.name)}</Text>
                 <Group gap={6} wrap="nowrap">
                   <NumberInput
-                    aria-label={`Copies of ${item.name} ${item.symbol} ${item.timeframe}`}
+                    aria-label={`Copies of ${strategyTitle(item.name)} ${item.symbol} ${item.timeframe}`}
                     size="xs"
                     w={72}
                     min={1}

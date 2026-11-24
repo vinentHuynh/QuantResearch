@@ -200,6 +200,10 @@
 }
 .wb-stage-checks { font-size: 11px; color: var(--muted); margin-top: 4px; max-width: 320px; }
 .wb-strategy-stage { max-width: 360px; }
+.wb-research-note { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; max-width: 520px; }
+.wb-research-note .wb-note-label { text-transform: uppercase; letter-spacing: .04em; font-size: 10.5px; }
+.wb-research-note ul { margin: 2px 0 0; padding-left: 16px; display: flex; flex-direction: column; gap: 3px; }
+.wb-research-note .wb-note-findings summary { cursor: pointer; font-size: 11px; color: var(--muted); }
 .wb-strategy-stage .mantine-Button-label { white-space: normal; text-align: left; }
 .wb-page-head {
   background: var(--surface);

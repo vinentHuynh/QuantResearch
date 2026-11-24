@@ -24,8 +24,8 @@ export function strategyStageStatuses(strategies: Pick<Strategy, "id" | "file_ha
   const byRun = new Map<string, StrategyStageStatus>();
   for (const run of runs) {
     if (run.input.portfolio_replay) {
-      byRun.set(run.id, lifecycleStatus("needs-review", 1,
-        "Exploratory portfolio continuation; earlier research milestones do not validate these later dates."));
+      byRun.set(run.id, { ...lifecycleStatus("needs-review", 1,
+        "Exploratory portfolio continuation; earlier research milestones do not validate these later dates."), tracking: true });
       continue;
     }
     if (run.input.strategy.id === "buy-hold") {

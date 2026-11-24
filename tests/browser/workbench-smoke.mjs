@@ -10,6 +10,7 @@ import { extname, join, normalize, resolve } from "node:path";
 import { chromium, expect } from "@playwright/test";
 import { DatabaseSync } from "node:sqlite";
 import { createRecordRepository } from "../../server/infra/recordRepository.ts";
+import { strategyTitle } from "../../shared/ts/formatting.ts";
 
 const root = resolve(".");
 const dist = join(root, "dist");
@@ -665,7 +666,7 @@ try {
   await expect(page.getByRole("navigation", { name: "Research tools" })).toBeVisible();
   await page.getByRole("region", { name: "Research configurations" }).getByRole("button").filter({ hasText: "Moving-average trend" }).first().click();
   await expect(page.getByText("1. Backtest")).toBeVisible();
-  await expect(page.getByText("5. Practical readiness")).toBeVisible();
+  await expect(page.getByText("5. Ready", { exact: true })).toBeVisible();
   await page.goto(`${base}/#/scripts`);
   await expect(page.getByRole("heading", { name: "Scripts & library", level: 1 })).toBeVisible();
   await page.getByLabel("Search runnable strategies").fill("moving average");
@@ -826,7 +827,7 @@ try {
   const bestPnlRgb = bestPnlColor.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/)?.slice(1).map(Number);
   assert(bestPnlRgb && bestPnlRgb[1] > bestPnlRgb[0] && bestPnlRgb[1] > bestPnlRgb[2],
     `Positive best-run P&L should resolve to teal or green, received ${bestPnlColor}`);
-  for (const detail of ["Retest required", "2010-06-07", "2026-09-03", "run warning", "research note"])
+  for (const detail of ["Needs rerun", "2010-06-07", "2026-09-03", "run warning", "research note"])
     await expect(reversalPreview).not.toContainText(detail);
   const emptyStrategyGroup = exactPicker.locator('[data-strategy-id="moving-average"]');
   await expect(emptyStrategyGroup.locator(".strategy-picker-group-head")).toContainText("No saved history");
@@ -839,14 +840,14 @@ try {
   assert.equal(await exactPage.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2), false);
   await exactPage.screenshot({ path: join(screenshots, "exact-histories-collapsed-mobile.png"), fullPage: true });
   await exactPage.setViewportSize({ width: 1280, height: 900 });
-  const addBest = reversalGroup.getByRole("button", { name: `Add best run for ${reversal.name}` });
+  const addBest = reversalGroup.getByRole("button", { name: `Add best run for ${strategyTitle(reversal.name)}` });
   await addBest.click();
   await expect.poll(selectedExactIds).toEqual(["catalog-old-nq"]);
-  await expect(reversalGroup.getByRole("button", { name: `Best run already added for ${reversal.name}` })).toBeDisabled();
+  await expect(reversalGroup.getByRole("button", { name: `Best run already added for ${strategyTitle(reversal.name)}` })).toBeDisabled();
   await exactPage.getByRole("tab", { name: /^Failed \(/ }).click();
   await expect(reversalPreview).toContainText("$18,270");
   await expect(reversalPreview).toContainText(/Best run.*NQ.*1d/);
-  await expect(reversalPreview).not.toContainText("Failed checks");
+  await expect(reversalPreview).not.toContainText("Evaluation · Failed");
   await addBest.click();
   await expect.poll(selectedExactIds).toEqual(["catalog-new-nq"]);
   await exactPage.getByRole("tab", { name: /^All \(/ }).click();
@@ -876,8 +877,8 @@ try {
   await expect(oldRow).toContainText("2026-09-03");
   await expect(newRow).toContainText("2025-01-02");
   await expect(newRow).toContainText("2025-12-31");
-  await expect(oldRow).toContainText("Retest required");
-  await expect(newRow).toContainText("Failed checks");
+  await expect(oldRow).toContainText("Backtest · Needs rerun");
+  await expect(newRow).toContainText("Evaluation · Failed");
   await expect(oldRow).toContainText("Starting capital $100,000.00");
   await expect(oldRow).not.toContainText(oldId);
   await expect(newRow).not.toContainText(newId);
@@ -955,13 +956,13 @@ try {
   await exactPage.getByLabel("Find a strategy").fill(oldId);
   await expect(compositeGroup.locator(".strategy-picker-group-preview")).toHaveAttribute("data-preview-run-id", oldId);
   holdImport = true;
-  await compositeGroup.getByRole("button", { name: `Add best run for ${reversal.name}` }).click();
+  await compositeGroup.getByRole("button", { name: `Add best run for ${strategyTitle(reversal.name)}` }).click();
   await expect.poll(() => importedRuns.length).toBe(1);
   await expect.poll(selectedExactIds).toEqual(["catalog-es", "catalog-new-nq"]);
   releaseImport();
   holdImport = false;
   await expect.poll(selectedExactIds, { timeout: 10000 }).toEqual(["catalog-es", "catalog-old-nq"]);
-  await expect(compositeGroup.getByRole("button", { name: `Best run already added for ${reversal.name}` })).toBeDisabled();
+  await expect(compositeGroup.getByRole("button", { name: `Best run already added for ${strategyTitle(reversal.name)}` })).toBeDisabled();
   await exactPage.getByLabel("Find a strategy").clear();
   await compositeGroup.locator(".strategy-picker-group-head").click();
   await expect(compositeGroup.locator('[data-history-id="catalog-old-nq"]')).toBeVisible();
@@ -986,11 +987,11 @@ try {
   await failedImportGroup.locator(".strategy-picker-group-head").click();
   await exactPage.getByLabel("Find a strategy").fill(oldId);
   await expect(failedImportGroup.locator(".strategy-picker-group-preview")).toHaveAttribute("data-preview-run-id", oldId);
-  await failedImportGroup.getByRole("button", { name: `Add best run for ${reversal.name}` }).click();
+  await failedImportGroup.getByRole("button", { name: `Add best run for ${strategyTitle(reversal.name)}` }).click();
   await expect(exactPage.locator(".collective-picker:visible").getByRole("alert")
     .filter({ hasText: "Synthetic exact-run import failed." }).first()).toBeVisible();
   await expect.poll(selectedExactIds).toEqual(["catalog-es", "catalog-new-nq"]);
-  await expect(failedImportGroup.getByRole("button", { name: `Add best run for ${reversal.name}` })).toBeEnabled();
+  await expect(failedImportGroup.getByRole("button", { name: `Add best run for ${strategyTitle(reversal.name)}` })).toBeEnabled();
   await exactPage.getByRole("button", { name: "Done", exact: true }).click();
   await exactPage.goto(`${base}/#/runs`);
   await exactPage.getByLabel("Search runs").fill(oldId);

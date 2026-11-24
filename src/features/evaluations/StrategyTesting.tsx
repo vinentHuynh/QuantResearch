@@ -3,7 +3,7 @@ import { useState } from "react";
 import { viabilityExplanation, type TestingEvidence } from "../../../shared/ts/evidence.ts";
 import { progressScope } from "../../../shared/ts/progress.ts";
 import { ResearchStages } from "./ResearchStages";
-import { StrategyNextActionButton, StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { ResearchNote, StrategyNextActionButton, StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
 import { lifecycleStatus } from "../../../shared/ts/strategyLifecycle.ts";
 import "./strategyTesting.css";
 
@@ -23,7 +23,7 @@ export function StrategyTesting({ evidence: e, compact = false, runnableCard = f
   if (runnableCard) return <section className="strategy-testing-runnable" aria-label="Strategy research status">
     <StrategyStageBadge {...status} />
     {configuration && <Text size="xs" c="dimmed" mt={4}>{configuration.symbol} · {configuration.timeframe} · {configuration.session}</Text>}
-    <Text size="sm" mt={4}>{status.finding}</Text>
+    <ResearchNote finding={status.finding} checks={status.kind === "failed-checks" ? [] : status.checks} assessment={status.assessment} />
     {status.kind === "failed-checks" ? <>
       <Button size="xs" variant="light" mt="xs" aria-expanded={reviewing}
         onClick={() => setReviewing(open => !open)}>{reviewing ? "Hide failed checks" : "Review failed checks"}</Button>

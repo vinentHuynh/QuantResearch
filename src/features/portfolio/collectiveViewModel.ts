@@ -11,6 +11,7 @@ import {
 } from "../../../shared/ts/portfolio.ts";
 import { defaultSizing } from "../../../shared/ts/riskSizing.ts";
 import { collectiveTestedWindow, selectedCollectiveItems, withLatestEsNq, type PortfolioResult } from "../../../shared/ts/collective.ts";
+import { strategyTitle } from "../../../shared/ts/formatting.ts";
 
 export const formatMoney = (value: number) =>
   value.toLocaleString("en-US", {
@@ -169,7 +170,7 @@ export function coverageEndExplanation(
   if (!limiting.length) return null;
 
   const names = limiting.slice(0, 2).map(({ item }) =>
-    `${item.name} / ${item.symbol} / ${item.timeframe}`);
+    `${strategyTitle(item.name)} / ${item.symbol} / ${item.timeframe}`);
   const bookNames = names.join(" and ") +
     (limiting.length > 2 ? ` and ${limiting.length - 2} more` : "");
   const plural = limiting.length > 1;

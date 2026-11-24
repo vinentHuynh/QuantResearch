@@ -4,6 +4,7 @@ import { dashboardActionStatus } from "../../../shared/ts/dashboard.ts";
 import { progressScope } from "../../../shared/ts/progress.ts";
 import { ResearchStages } from "../evaluations/ResearchStages";
 import { StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { outcomeLabel } from "../../../shared/ts/formatting.ts";
 import { useStrategyStages } from "../../shared/ui/strategyStageContext";
 import { scorecardLifecycle } from "../../../shared/ts/stageStatus.ts";
 import {
@@ -310,7 +311,7 @@ function Stress({ scenarios }: { scenarios: DashboardScenario[] }) {
                   color={s.outcome === "Meets criteria" ? "teal" : "red"}
                   variant="light"
                 >
-                  {s.outcome}
+                  {outcomeLabel(s.outcome)}
                 </Badge>
               </Table.Td>
             </Table.Tr>

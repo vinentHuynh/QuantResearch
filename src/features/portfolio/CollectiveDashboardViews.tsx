@@ -32,6 +32,7 @@ import {
 } from './CollectivePresentation';
 import { PortfolioPeriodSelector } from './PortfolioPeriodSelector';
 import { DayTradeViewer } from './DayTradeViewer';
+import { strategyTitle } from "../../../shared/ts/formatting.ts";
 
 type Model = CollectiveDashboardModel;
 const periodLabels: Record<PortfolioPnlPeriod, string> = {
@@ -372,7 +373,7 @@ export function CollectiveCalendarView({ model }: { model: Model }) {
                       <Table.Tr key={item.id}>
                         <Table.Td>
                           <Text size='sm' fw={600}>
-                            {item.name}
+                            {strategyTitle(item.name)}
                           </Text>
                           <StrategyStageBadge {...collectiveProgress(item)} />
                           <Text size='xs' c='dimmed'>
@@ -486,7 +487,7 @@ export function CollectiveContributionsView({ model }: { model: Model }) {
               <Table.Tr key={component.id}>
                 <Table.Td>
                   <Text size='sm' fw={600}>
-                    {component.name}
+                    {strategyTitle(component.name)}
                   </Text>
                   {selected.find((item) => item.id === component.id) && (
                     <StrategyStageBadge
