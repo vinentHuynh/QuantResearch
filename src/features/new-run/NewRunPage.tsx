@@ -106,7 +106,7 @@ export function NewRunPage({ controller }: { controller: WorkbenchController }) 
           key={key}
           label={key.replaceAll("_", " ")}
           description={field.description}
-          checked={Boolean(input.parameters[key])}
+          checked={Boolean(input.parameters[key] ?? field.default)}
           onChange={(event) => change("parameters", { ...input.parameters, [key]: event.currentTarget.checked })}
         />
       ) : field.type === "enum" ? (
