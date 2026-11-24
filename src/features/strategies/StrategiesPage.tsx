@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Alert, Button, Code, Select, SimpleGrid, Text, TextInput, Title } from "@mantine/core";
-import { IconArrowUpRight, IconRefresh } from "@tabler/icons-react";
+import { ActionIcon, Alert, Button, Code, Menu, Select, SimpleGrid, Text, TextInput, Title } from "@mantine/core";
+import { IconDots, IconRefresh } from "@tabler/icons-react";
 import { comparePromising, testingEvidence } from "../../../shared/ts/evidence.ts";
 import { href } from "../../app/navigation";
 import { workbenchRequest as request } from "../../shared/api/workbench";
@@ -157,38 +157,26 @@ export function StrategiesPage({ controller }: { controller: WorkbenchController
                 )
                 .map((strategy) => {
                   const summary = evidence[strategy.id];
-                  const bestRunId = summary.best?.run.id;
                   return (
                   <section className="wb-card scripts-strategy-card" key={strategy.id}>
                     <div className="scripts-strategy-heading">
-                      <Title order={3}>{strategyTitle(strategy.name)}</Title>
-                      <Text size="xs" c="dimmed">{summary.configurations.length} configurations · {summary.failingConfigurations} failed · {summary.total} attempts</Text>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 8 }}>
+                        <Title order={3}>{strategyTitle(strategy.name)}</Title>
+                        <Menu position="bottom-end" withinPortal>
+                          <Menu.Target><ActionIcon variant="subtle" size="sm" aria-label={"More actions for " + strategyTitle(strategy.name)}><IconDots size={16} /></ActionIcon></Menu.Target>
+                          <Menu.Dropdown>
+                            <Menu.Item onClick={() => configure(strategy.id)}>Configure backtest</Menu.Item>
+                            <Menu.Divider />
+                            <Menu.Item color="red" disabled={busy} onClick={() => void action(async () => {
+                              await request("/scripts/archive", { id: strategy.id });
+                              setNotice(strategyTitle(strategy.name) + " archived. Find it in Archive.");
+                              go("scripts", "archive");
+                            })}>Archive script</Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
+                      </div>
                     </div>
                     <StrategyTesting runnableCard evidence={summary} {...testingActions} />
-                    <div className="scripts-strategy-actions">
-                      <Button
-                        size="xs"
-                        variant="light"
-                        rightSection={<IconArrowUpRight size={15} />}
-                        onClick={() => configure(strategy.id)}
-                      >
-                        Configure run
-                      </Button>
-                      {bestRunId && <Button size="compact-xs" variant="subtle" onClick={() => testingActions.inspectRun(bestRunId)}>Inspect best run</Button>}
-                      <Button component="a" href={href("workspace")} size="compact-xs" variant="subtle">Research history</Button>
-                      <Button
-                        size="compact-xs"
-                        variant="subtle"
-                        disabled={busy}
-                        onClick={() => void action(async () => {
-                          await request("/scripts/archive", { id: strategy.id });
-                          setNotice(`${strategyTitle(strategy.name)} archived. Find it in Archive.`);
-                          go("scripts", "archive");
-                        })}
-                      >
-                        Archive script
-                      </Button>
-                    </div>
                   </section>
                   );
                 })}

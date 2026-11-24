@@ -43,13 +43,6 @@ export const initialNewRunInput: NewRunInput = {
 
 export const NEW_RUN_DRAFT_KEY = "quant-workbench-draft-v2";
 
-export const newRunSteps = [
-  "Script & dataset",
-  "Parameters",
-  "Assumptions & record",
-  "Preview & launch",
-] as const;
-
 export function readNewRunDraft() {
   try {
     const value = JSON.parse(localStorage.getItem(NEW_RUN_DRAFT_KEY) || "null");
@@ -60,9 +53,6 @@ export function readNewRunDraft() {
           ? (value.input as NewRunInput)
           : initialNewRunInput,
       sweepText: typeof value.sweepText === "string" ? value.sweepText : "{}",
-      step: Number.isInteger(value.step)
-        ? Math.max(0, Math.min(3, value.step))
-        : 0,
     };
   } catch {
     return null;
@@ -72,7 +62,7 @@ export function readNewRunDraft() {
 export function parseSweep(text: string): Record<string, unknown[]> | null {
   try {
     const value = JSON.parse(text);
-    return value && typeof value === "object" && !Array.isArray(value)
+    return value && typeof value === "object" && !Array.isArray(value) && Object.values(value).every(Array.isArray)
       ? value
       : null;
   } catch {

@@ -107,28 +107,23 @@ try {
     );
     // A saved preset must restore the selected configuration and pass preflight.
     await page.goto(origin + "/#/new-run");
-    await page.getByRole("button", { name: /Parameters/ }).click();
 
     await page
-      .getByRole("textbox", { name: "Load saved preset", exact: true })
+      .getByRole("textbox", { name: "Use preset", exact: true })
       .click();
     const preset = state.presets.find(
       (p) => p.id === campaign.presets[strategy],
     );
-    await page.getByRole("option", { name: preset.name, exact: true }).click();
     const preview = page.waitForResponse(
       (r) => r.url().endsWith("/preview") && r.request().method() === "POST",
     );
-    await page.getByRole("button", { name: /Preview & launch/ }).click();
-    await page
-      .getByRole("button", { name: "Validate & preview", exact: true })
-      .click();
+    await page.getByRole("option", { name: preset.name, exact: true }).click();
     const response = await preview;
     assert(response.ok());
     assert.deepEqual((await response.json()).parameters, [
       campaign.selections[strategy].parameters,
     ]);
-    await expect(page.getByText("1 job ready", { exact: true })).toBeVisible();
+    await expect(page.getByText("1 run ready to launch", { exact: true })).toBeVisible();
     checks.push(
       `${strategy}: saved preset restores frozen parameters and validates`,
     );

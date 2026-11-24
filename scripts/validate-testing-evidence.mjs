@@ -15,6 +15,7 @@ try {
  await page.goto(origin+'/#/scripts',{waitUntil:'networkidle'});
  const name=strategyTitle(state.strategies.find(s=>s.id==='short-term-reversal-minute').name);
  const card=page.locator('section.wb-card').filter({has:page.getByRole('heading',{name,exact:true})});
+ await card.getByText(/Results and research history/).click();
  const bestSummary=card.locator('[aria-label="Best run summary"]');
  await bestSummary.waitFor();
  assert.match(await bestSummary.innerText(),/Best run.*NQ.*5m/);
@@ -70,6 +71,7 @@ try {
  await page.route('**/api/workbench/state?view=summary',route=>route.fulfill({json:fixture}));
  await page.goto(origin+'/#/scripts',{waitUntil:'networkidle'});
  await page.reload({waitUntil:'networkidle'});
+ await card.getByText(/Results and research history/).click();
  await bestSummary.waitFor();
  assert.match(await card.innerText(),/6 attempts/);
  assert.match(await bestSummary.innerText(),/Best run.*NQ/);

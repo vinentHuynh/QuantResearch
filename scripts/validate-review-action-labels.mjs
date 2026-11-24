@@ -46,6 +46,7 @@ try {
   const name=strategyTitle(state.strategies.find(s=>s.id==='short-term-reversal-minute').name);
   const card=page.locator('section.wb-card').filter({has:page.getByRole('heading',{name,exact:true})});
   await expect(card.getByText('Backtested',{exact:true}).first()).toBeVisible();
+  await card.getByText(/Results and research history/).click();
   await expect(card.locator('[aria-label="Best run summary"]')).toContainText(/Best run.*NQ.*5m/);
   await expect(card.locator('.strategy-testing-best-run-metric').first().locator('strong')).toContainText('146,035');
   await expect(card.locator('.strategy-testing-best-run-metric').first().locator('span')).toHaveText('Net P&L');

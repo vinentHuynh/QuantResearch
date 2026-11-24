@@ -100,9 +100,9 @@ export function Shell({
           <span>Search</span>
           <kbd>Ctrl K</kbd>
         </button>
-        <a href={href("workspace")} className="wb-new-run">
+        <a href={href("new-run")} className="wb-new-run">
           <IconFlask size={15} />
-          Research
+          New backtest
         </a>
         <nav className="wb-nav" aria-label="Primary">
           {navList}
@@ -119,6 +119,7 @@ export function Shell({
           </span>
           <span className="wb-brand-name">Strategy Workbench</span>
         </a>
+        <a href={href("new-run")} className="wb-link-button" style={{ marginLeft: "auto" }}>New backtest</a>
         <button
           type="button"
           className="wb-icon-button"

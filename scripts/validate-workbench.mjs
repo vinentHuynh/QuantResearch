@@ -32,23 +32,24 @@ try {
     .getByRole("heading", { name: "Moving-average trend", exact: true })
     .locator("..")
     .locator("..")
-    .getByRole("button", { name: "Configure run", exact: true })
+    .getByRole("button", { name: /More actions/ })
     .click();
+  await page.getByRole("menuitem", { name: "Configure backtest" }).click();
   await page
-    .getByRole("textbox", { name: "Dataset version", exact: true })
+    .getByRole("textbox", { name: "Market / dataset version", exact: true })
     .click();
   await page.getByRole("option", { name: /^NQ ·/ }).first().click();
   await page.getByLabel("Start date (UTC)", { exact: true }).fill("2026-08-03");
   await page
     .getByLabel("End date (UTC, inclusive)", { exact: true })
     .fill("2026-08-31");
-  await page.getByRole("button", { name: /Assumptions & record/ }).click();
+  await page.getByText("Research notes and criteria", { exact: true }).click();
   await page
     .getByLabel("Question / hypothesis", { exact: true })
     .fill(
       "Application validation: neighboring moving-average lookbacks across NQ, ES, YM and CL",
     );
-  await page.getByRole("button", { name: /Preview & launch/ }).click();
+  await page.getByRole("switch", { name: "Test multiple variants" }).check();
   for (const symbol of ["ES", "YM", "CL"]) {
     await page
       .getByRole("textbox", {
@@ -65,8 +66,7 @@ try {
   await page
     .getByLabel("Parameter sweep (JSON)", { exact: true })
     .fill('{"lookback": [10, 20]}');
-  await page.getByRole("button", { name: "Validate & preview" }).click();
-  await page.getByText("8 jobs ready", { exact: true }).waitFor();
+  await page.getByText("8 runs ready to launch", { exact: true }).waitFor();
   await page.screenshot({ path: `${output}/new-run.png`, fullPage: true });
   const launched = page.waitForResponse(
     (r) =>

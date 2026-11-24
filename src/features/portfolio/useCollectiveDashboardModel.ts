@@ -499,21 +499,24 @@ export function useCollectiveDashboardModel({
     }
   }, [view, baseCatalog, researchState, refreshEvidence, setPickerOpen]);
 
-  const saveCombination = useCallback(() => {
-    const selectedRecord = savedBooks.find((item) => item.id === selectedSavedBookId);
-    const name = selectedRecord?.name || savedBookName.trim() || `Combination ${savedBooks.length + 1}`;
+  const newName = savedBookName.trim();
+  const duplicateName = savedBooks.some(book => book.name.toLowerCase() === newName.toLowerCase());
+  const newPortfolioError = savedBooks.length >= 12 ? "All 12 saved portfolio slots are in use."
+    : duplicateName ? "A portfolio already has this name." : "";
+
+  const saveCombination = useCallback((mode: "update" | "create") => {
+    const existing = savedBooks.find(book => book.id === selectedSavedBookId);
+    if (!selected.length || (mode === "update" ? !existing : !newName || !!newPortfolioError)) return;
     const record: SavedCombination = {
-      id: selectedRecord?.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name,
+      id: mode === "update" ? existing!.id : crypto.randomUUID(),
+      name: mode === "update" ? existing!.name : newName,
       saved_at: new Date().toISOString(),
       settings,
     };
-    setSavedBooks((current) =>
-      [record, ...current.filter((item) => item.id !== record.id && item.name !== name)].slice(0, 12),
-    );
+    setSavedBooks(current => [record, ...current.filter(book => book.id !== record.id)]);
     setSelectedSavedBookId(record.id);
     setSavedBookName("");
-  }, [savedBookName, savedBooks, selectedSavedBookId, settings]);
+  }, [newName, newPortfolioError, savedBooks, selected.length, selectedSavedBookId, settings]);
 
   const deleteCombination = useCallback(() => {
     if (!selectedSavedBookId) return;
@@ -658,6 +661,7 @@ export function useCollectiveDashboardModel({
     latestEsNqAvailable,
     latestEsNqWindow,
     loadCombination,
+    newPortfolioError,
     loading,
     manualAction,
     manualBook,

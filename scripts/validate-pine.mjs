@@ -78,16 +78,17 @@ try {
     "Full Globex day",
   );
   await page
-    .getByRole("textbox", { name: "Dataset version", exact: true })
+    .getByRole("textbox", { name: "Market / dataset version", exact: true })
     .click();
   await page.getByRole("option", { name: /^NQ ·/ }).first().click();
   await page.getByLabel("Start date (UTC)", { exact: true }).fill("2026-08-03");
   await page
     .getByLabel("End date (UTC, inclusive)", { exact: true })
     .fill("2026-08-31");
-  await page.getByRole("button", { name: /Parameters/ }).click();
+  await page.getByText("Strategy parameters", { exact: true }).click();
   await page.getByLabel("risk budget", { exact: true }).fill("3000");
-  await page.getByRole("button", { name: /Assumptions & record/ }).click();
+  await page.getByText(/^Costs and execution/).click();
+  await page.getByText("Research notes and criteria", { exact: true }).click();
   assert.equal(
     await page.getByLabel("Warmup calendar days", { exact: true }).inputValue(),
     "600",
@@ -97,15 +98,13 @@ try {
     .fill(
       "Pine port validation: exercise full-size NQ bracket fills with an explicit $3000 test budget",
     );
-  await page.getByRole("button", { name: /Preview & launch/ }).click();
-  await page.getByRole("button", { name: "Validate & preview" }).click();
-  await page.getByText("1 job ready", { exact: true }).waitFor();
+  await page.getByText("1 run ready to launch", { exact: true }).waitFor();
   const launched = page.waitForResponse(
     (r) =>
       r.url().endsWith("/api/workbench/runs") &&
       r.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Launch 1 run", exact: true }).click();
+  await page.getByRole("button", { name: "Launch backtest", exact: true }).click();
   const response = await launched;
   const result = await response.json();
   assert.equal(response.status(), 201, JSON.stringify(result));

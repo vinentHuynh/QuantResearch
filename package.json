@@ -18,7 +18,7 @@
     "test:unit:python:adapters": "node scripts/run-python-unit-suite.mjs adapters",
     "test:unit:python": "node scripts/run-python-unit-suite.mjs all",
     "test:api:isolated": "node scripts/test-api-isolated.mjs",
-    "test:browser:fixture": "node scripts/test-browser-fixture.mjs",
+    "test:browser:fixture": "node tests/browser/workbench-flows.mjs && node scripts/test-browser-fixture.mjs",
     "test:real-data": "node scripts/run-real-data-validations.mjs",
     "test:workbench:all": "npm run check:hygiene && npm run build && npm run lint && npm run test:unit:ts && npm run test:unit:python && npm run test:deletion && npm run test:api:isolated && npm run test:event-studies:isolated && npm run test:browser:fixture",
     "test": "node scripts/python-command.mjs -m unittest discover -s tests -v",

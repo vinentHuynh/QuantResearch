@@ -45,7 +45,7 @@ and the full validation command list.
 ## The application
 
 Ten pages in three sidebar groups. Every view has its own address (for example
-`#/portfolio/calendar`), so any state is linkable. **New run** and **Search**
+`#/portfolio/calendar`), so any state is linkable. **New backtest** and **Search**
 (Ctrl/Cmd + K) are reachable from every page. Below 900px the sidebar collapses
 into a bottom bar.
 
@@ -75,14 +75,15 @@ into a bottom bar.
 
 ### Running an experiment
 
-**New run** is a four-step flow that will not let you skip the record-keeping:
+Open **New backtest** and load a preset or choose a strategy, dataset,
+timeframe, session and date range. Expand **Strategy parameters** or **Costs
+and execution** to change defaults. Choose **Evaluation** to enter the
+development boundary and pass criteria before launch.
 
-1. **Script & dataset** — pick an adapter, a dataset version, timeframe and session.
-2. **Parameters** — forms are generated from each adapter's declared parameter schema.
-3. **Assumptions & record** — capital, fees, slippage, execution delay, warmup, UTC
-   date window, development boundary, plus your **hypothesis and pass criteria**.
-4. **Preview & launch** — validate, see the resolved job count and warmup checks,
-   then explicitly launch.
+Turn on **Test multiple variants** to add datasets, timeframes or parameter
+values. The form checks the inputs automatically and shows the job count and
+warmup findings. Press **Launch backtest** or the numbered batch launch button
+to queue the work.
 
 Every resolved default is saved with the run. For a grid, add dataset versions
 and parameter arrays (`{"lookback": [10, 20, 40]}`); all dimensions form a
