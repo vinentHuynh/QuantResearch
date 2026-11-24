@@ -353,6 +353,42 @@ class CollectiveImportTests(unittest.TestCase):
                 self.assertEqual(next(item for item in refreshed if item['id'] == exact['id'])['checksum'],
                                  exact['checksum'])
 
+                # Once a pinned portfolio history has a verified extension, a
+                # full refresh must regenerate its frozen base before applying
+                # the extension, even if a workbench item has the same baseline.
+                overlay_end = '2024-01-12'
+                overlay_series = json.loads(payload)
+                overlay_series['coverage'][0]['end'] = overlay_end
+                overlay_series['daily'][-1]['terminal'] = False
+                overlay_series['daily'].append({'date': overlay_end, 'pnl': 0, 'terminal': True})
+                overlay_path = out / 'verified-pinned-fixture.json'
+                builder.dump(overlay_path, overlay_series)
+                checksum = builder.sha(overlay_path)
+                replay_manifest = state / 'runs' / 'verified-replay' / 'manifest.json'
+                replay_manifest.parent.mkdir()
+                builder.dump(replay_manifest, {'artifacts': []})
+                overlay = {**base, 'coverage': overlay_series['coverage'], 'end': overlay_end,
+                           'checksum': checksum, 'series_file': overlay_path.name,
+                           'verified_replay': {'end': overlay_end, 'dataset_checksum': 'fixture-data',
+                                               'source_run_id': replay_manifest.parent.name,
+                                               'artifact_sha256': builder.sha(replay_manifest)}}
+                builder.dump(out / 'verified-replays.json', {
+                    base['id']: {'base_checksum': base['checksum'], 'item': overlay},
+                })
+                for variants in ([], [exact]):
+                    with self.subTest(preserve_exact_variant=bool(variants)):
+                        index = builder.read(out / 'index.json')
+                        index['items'] = [overlay, *variants]
+                        builder.dump(out / 'index.json', index)
+                        builder.main()
+                        index = builder.read(out / 'index.json')
+                        self.assertEqual(index['errors'], [])
+                        pinned = {item['id']: item for item in index['items']
+                                  if item['source'] == 'Pinned workbench'}
+                        self.assertEqual(set(pinned), {item['id'] for item in [overlay, *variants]})
+                        self.assertEqual(pinned[base['id']], overlay)
+                        self.assertEqual((out / base['series_file']).read_bytes(), payload)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,116 @@
+//@version=6
+indicator("MNQ Keltner Reversal Candidates", shorttitle="MNQ KC Rev", overlay=true)
+
+// Exploratory candidates from the MNQ study dated 2026-10-26.
+// Defaults: full-session, standard 5-minute MNQ candles.
+// These mark signal conditions, not confirmed reversals or trading wins.
+// W = CLOSE outside + full outer wick [0.5, 1.0) signal ATR.
+// T = CLOSE outside + aligned prior EMA slope [0.0, 0.5) prior ATR.
+// W and T are separate alternatives. WT means BOTH qualify, not a tested edge.
+// All signals require a fresh, one-sided excursion and a CLOSED candle.
+// No future return, future data availability or later touch is used for marking.
+// TradingView feed/roll adjustment can differ from the study's contract-reset data.
+
+string groupKC = "Keltner channels"
+int emaLength = input.int(20, "EMA length", minval=1, group=groupKC)
+int atrLength = input.int(20, "ATR length", minval=1, group=groupKC)
+float multiplier = input.float(2.25, "ATR multiplier", minval=0.01, step=0.05, group=groupKC)
+string atrMethod = input.string("Simple (SMA)", "ATR smoothing", options=["Simple (SMA)", "Wilder (RMA)"], group=groupKC, tooltip="The research used the simple mean of true range. Changing these channel settings creates an untested variant.")
+
+string groupSignals = "Reversal candidates"
+bool enableWick = input.bool(true, "W: outer wick 0.5 to less than 1 ATR", group=groupSignals, tooltip="Requires a close outside the band. Measures the FULL outer wick: high minus max(open, close), or min(open, close) minus low. It is not just the wick portion outside the channel.")
+bool enableTrend = input.bool(true, "T: weak aligned prior trend", group=groupSignals, tooltip="Upper breach: (EMA[1] - EMA[6]) / ATR[1]. Lower breach: its negative. Requires 0 <= this value < 0.5. The signal candle is excluded from this trend measurement.")
+bool restrictTo5m = input.bool(true, "Only mark 5-minute charts", group=groupSignals, tooltip="Both reversal candidates were explored on 5-minute MNQ. Disable only to explore other intraday timeframes; those signals are not validated by this study.")
+
+string groupView = "Display"
+bool showChannel = input.bool(true, "Show Keltner channels", group=groupView)
+bool showFill = input.bool(false, "Shade channel", group=groupView)
+bool showMarkers = input.bool(true, "Show candidate markers", group=groupView)
+bool colorSignalBars = input.bool(false, "Color signal candles", group=groupView)
+bool showInfo = input.bool(true, "Show status and marker legend", group=groupView)
+color bullishColor = input.color(color.lime, "Potential upward reversal", group=groupView)
+color bearishColor = input.color(color.red, "Potential downward reversal", group=groupView)
+
+// Use the close as in the user's original study. Channels update intrabar;
+// the candidate conditions below can become true only on a confirmed bar.
+float basis = ta.ema(close, emaLength)
+float simpleAtr = ta.sma(ta.tr(true), atrLength)
+float wilderAtr = ta.atr(atrLength)
+float atrValue = atrMethod == "Simple (SMA)" ? simpleAtr : wilderAtr
+float upper = basis + multiplier * atrValue
+float lower = basis - multiplier * atrValue
+
+basisPlot = plot(showChannel ? basis : na, "EMA basis", color=color.orange, linewidth=2)
+upperPlot = plot(showChannel ? upper : na, "Upper channel", color=color.blue)
+lowerPlot = plot(showChannel ? lower : na, "Lower channel", color=color.blue)
+fill(upperPlot, lowerPlot, title="Channel shading", color=showFill and showChannel ? color.new(color.blue, 92) : na)
+
+bool is5m = timeframe.isminutes and timeframe.multiplier == 5
+bool timeframeAllowed = timeframe.isintraday and (not restrictTo5m or is5m)
+int warmupBars = math.max(100, math.max(emaLength, atrLength) + 5)
+bool ready = bar_index >= warmupBars + 1 and not na(basis[6]) and not na(upper[1]) and not na(lower[1]) and atrValue > 0 and atrValue[1] > 0
+bool confirmedReady = barstate.isconfirmed and timeframeAllowed and ready
+
+bool upperBreach = high > upper
+bool lowerBreach = low < lower
+bool dualBreach = upperBreach and lowerBreach
+
+// Fresh episode is based on the PREVIOUS candle's extreme and its OWN band.
+// A previous wick breach disqualifies this bar even if its close was inside.
+bool freshUpperClose = close > upper and not dualBreach and high[1] <= upper[1]
+bool freshLowerClose = close < lower and not dualBreach and low[1] >= lower[1]
+
+float upperWickAtr = atrValue > 0 ? (high - math.max(open, close)) / atrValue : na
+float lowerWickAtr = atrValue > 0 ? (math.min(open, close) - low) / atrValue : na
+float priorSlope = atrValue[1] > 0 ? (basis[1] - basis[6]) / atrValue[1] : na
+float upperAlignedSlope = priorSlope
+float lowerAlignedSlope = -priorSlope
+
+bool bearishWick = confirmedReady and enableWick and freshUpperClose and upperWickAtr >= 0.5 and upperWickAtr < 1.0
+bool bullishWick = confirmedReady and enableWick and freshLowerClose and lowerWickAtr >= 0.5 and lowerWickAtr < 1.0
+bool bearishTrend = confirmedReady and enableTrend and freshUpperClose and upperAlignedSlope >= 0.0 and upperAlignedSlope < 0.5
+bool bullishTrend = confirmedReady and enableTrend and freshLowerClose and lowerAlignedSlope >= 0.0 and lowerAlignedSlope < 0.5
+
+bool bearishCandidate = bearishWick or bearishTrend
+bool bullishCandidate = bullishWick or bullishTrend
+
+// One label per direction and bar. WT consolidates overlapping conditions.
+plotshape(showMarkers and bullishWick and not bullishTrend, title="Upward reversal: W", style=shape.labelup, location=location.belowbar, color=bullishColor, text="R-W", textcolor=color.black, size=size.tiny)
+plotshape(showMarkers and bullishTrend and not bullishWick, title="Upward reversal: T", style=shape.labelup, location=location.belowbar, color=bullishColor, text="R-T", textcolor=color.black, size=size.tiny)
+plotshape(showMarkers and bullishWick and bullishTrend, title="Upward reversal: WT", style=shape.labelup, location=location.belowbar, color=bullishColor, text="R-WT", textcolor=color.black, size=size.tiny)
+plotshape(showMarkers and bearishWick and not bearishTrend, title="Downward reversal: W", style=shape.labeldown, location=location.abovebar, color=bearishColor, text="R-W", textcolor=color.white, size=size.tiny)
+plotshape(showMarkers and bearishTrend and not bearishWick, title="Downward reversal: T", style=shape.labeldown, location=location.abovebar, color=bearishColor, text="R-T", textcolor=color.white, size=size.tiny)
+plotshape(showMarkers and bearishWick and bearishTrend, title="Downward reversal: WT", style=shape.labeldown, location=location.abovebar, color=bearishColor, text="R-WT", textcolor=color.white, size=size.tiny)
+barcolor(colorSignalBars ? (bullishCandidate ? bullishColor : bearishCandidate ? bearishColor : na) : na)
+
+// Inspect the exact candle anatomy in TradingView's Data Window.
+float eventSide = upperBreach and not lowerBreach ? 1.0 : lowerBreach and not upperBreach ? -1.0 : na
+float extremeExtensionAtr = eventSide == 1.0 ? (high - upper) / atrValue : eventSide == -1.0 ? (lower - low) / atrValue : na
+float closeExtensionAtr = eventSide == 1.0 ? math.max(close - upper, 0.0) / atrValue : eventSide == -1.0 ? math.max(lower - close, 0.0) / atrValue : na
+plot(atrValue, "ATR in points", display=display.data_window)
+plot(atrValue > 0 ? (high - low) / atrValue : na, "Candle range / ATR", display=display.data_window)
+plot(upperWickAtr, "Upper outer wick / ATR", display=display.data_window)
+plot(lowerWickAtr, "Lower outer wick / ATR", display=display.data_window)
+plot(extremeExtensionAtr, "Extreme extension beyond band / ATR", display=display.data_window)
+plot(closeExtensionAtr, "Close extension beyond band / ATR", display=display.data_window)
+plot(eventSide * priorSlope, "Prior slope aligned with breach / prior ATR", display=display.data_window)
+
+// Use one combined alert or individual alerts to avoid duplicate notifications.
+alertcondition(bullishCandidate, title="Potential upward reversal (W or T)", message="MNQ KC: potential UPWARD reversal candidate on {{ticker}} {{interval}}. Confirmed candle; close={{close}}. Exploratory condition, not a confirmed reversal.")
+alertcondition(bearishCandidate, title="Potential downward reversal (W or T)", message="MNQ KC: potential DOWNWARD reversal candidate on {{ticker}} {{interval}}. Confirmed candle; close={{close}}. Exploratory condition, not a confirmed reversal.")
+alertcondition(bullishCandidate or bearishCandidate, title="Any reversal candidate", message="MNQ KC: a reversal candidate marked on {{ticker}} {{interval}}. Confirmed candle; close={{close}}. See R-W / R-T / R-WT on chart.")
+alertcondition(bullishWick or bearishWick, title="W: outer-wick reversal candidate", message="MNQ KC: W candidate on {{ticker}} {{interval}}. Fresh outside close with full outer wick >=0.5 and <1 ATR. Close={{close}}.")
+alertcondition(bullishTrend or bearishTrend, title="T: weak-trend reversal candidate", message="MNQ KC: T candidate on {{ticker}} {{interval}}. Fresh outside close with aligned prior slope >=0 and <0.5 prior ATR. Close={{close}}.")
+
+var table info = table.new(position.top_right, 1, 4)
+if barstate.islast
+    if showInfo
+        bool defaultChannels = emaLength == 20 and atrLength == 20 and multiplier == 2.25 and atrMethod == "Simple (SMA)"
+        string status = not timeframe.isintraday ? "Use an intraday chart" : restrictTo5m and not is5m ? "Switch to 5m to show markers" : not ready ? "Warming up: " + str.tostring(warmupBars + 1) + " prior bars" : not enableWick and not enableTrend ? "Both candidates disabled" : "Closed-bar candidates active"
+        string context = syminfo.root != "MNQ" ? "Research instrument: MNQ" : not is5m ? "Other timeframe: exploratory" : not defaultChannels ? "Modified KC settings: exploratory" : "MNQ 5m | use full-session candles"
+        table.cell(info, 0, 0, "KC reversal candidates | exploratory", text_color=color.white, bgcolor=color.new(color.blue, 35), text_size=size.small)
+        table.cell(info, 0, 1, status, text_color=color.white, bgcolor=color.new(color.black, 20), text_size=size.small)
+        table.cell(info, 0, 2, "W: outer wick | T: weak prior trend | WT: both", text_color=color.white, bgcolor=color.new(color.black, 20), text_size=size.small)
+        table.cell(info, 0, 3, context, text_color=color.white, bgcolor=color.new(color.black, 20), text_size=size.small)
+    else
+        table.clear(info, 0, 0, 0, 3)

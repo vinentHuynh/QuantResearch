@@ -42,11 +42,12 @@ class PinePortTests(unittest.TestCase):
     def test_audit_accounts_for_every_pine_and_reuses_snd(self):
         result = discover(ROOT)
         entries = {e['path']: e for e in result['library']['entries'] if e['path'].endswith('.pine')}
-        self.assertEqual(len(entries), 21)
+        self.assertEqual(len(entries), 22)
         self.assertEqual(sum(e['role'] == 'Pine strategy' for e in entries.values()), 5)
         self.assertEqual(entries['SND_phase6_strategy.pine']['status'], 'Python port available')
         self.assertTrue(entries['SND_phase6_strategy.pine']['python_counterparts'])
         self.assertEqual(entries['pine/ib.pine']['status'], 'Indicator only')
+        self.assertEqual(entries['pine/mnq_keltner_reversal_candidates.pine']['status'], 'Indicator only')
         for entry in entries.values():
             if entry['role'] == 'Pine strategy' and entry['path'] != 'SND_phase6_strategy.pine':
                 self.assertEqual(len(entry['adapters']), 1)

@@ -68,10 +68,33 @@ export function createDatasets(dependencies: Dependencies) {
   function protocol(dataset: Dataset): Dataset {
     const absolute = file(dataset);
     const path = relative(state, absolute);
+    const { provider_quality_flags, quality_evidence, ...manifest } = dataset;
+    const hasQualityEvidence =
+      provider_quality_flags !== undefined || quality_evidence !== undefined;
+    let provenance = dataset.provenance;
+    if (hasQualityEvidence) {
+      if (
+        provenance !== undefined &&
+        (provenance === null ||
+          typeof provenance !== "object" ||
+          Array.isArray(provenance))
+      )
+        throw new Error("Dataset provenance must be an object");
+      // Legacy catalogs keep provider evidence at the top level. Preserve it
+      // inside the v2 extension object without rewriting the registered row.
+      provenance = {
+        ...provenance,
+        ...(provider_quality_flags !== undefined
+          ? { provider_quality_flags }
+          : {}),
+        ...(quality_evidence !== undefined ? { quality_evidence } : {}),
+      };
+    }
     return {
-      ...dataset,
+      ...manifest,
       schema_version: 2,
       path: path.split(sep).join("/"),
+      ...(hasQualityEvidence ? { provenance } : {}),
       ...(typeof dataset.archive === "string"
         ? { archive: dataset.archive.split("\\").join("/") }
         : {}),

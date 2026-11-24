@@ -3,13 +3,17 @@
 ## Result
 
 The original review covered **17 Pine files: 5 strategies and 12 indicators**.
-The validated workbench inventory now contains **21 Pine sources**; the four
+The workbench inventory now contains **22 Pine sources**; the five
 additional files are catalogued without extending the historical port claims
 below. Four Pine-specific execution variants have Python scripts and workbench
 registrations. SND now also
 has a native [workbench adapter](../../SND_WORKBENCH.md) reusing its original zone rules,
 with original, Phase 6 and Phase 7 research variants. None of these new ports has certified TradingView
 trade-export parity.
+
+The [MNQ Keltner reversal candidate indicator](../../pine/mnq_keltner_reversal_candidates.README.md)
+marks the exploratory outer-wick and weak-prior-trend conditions from the
+2026-10-26 study. It has no execution adapter or certified TradingView compilation/parity result.
 
 | Pine strategy | Python implementation | Finding |
 | --- | --- | --- |

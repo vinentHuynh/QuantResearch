@@ -79,7 +79,7 @@ const catalogRequests = new Map<string, Promise<CollectiveCatalog>>();
 function loadCatalog(key: string): Promise<CollectiveCatalog> {
   const existing = catalogRequests.get(key);
   if (existing) return existing;
-  const pending = fetch("/api/workbench/collective")
+  const pending = fetch("/api/workbench/collective", { cache: "no-store" })
     .then(async (response) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
@@ -115,7 +115,7 @@ export function useCollectiveDashboardModel({
   const desiredSelection = useRef<string[]>([]);
   const selectionSyncBusy = useRef(false);
   const catalogRef = useRef<CollectiveCatalog | null>(null);
-  const pendingCatalogRefresh = useRef("");
+  const trackingCatalogRefreshPending = useRef(false);
   const [savedBooks, setSavedBooks] = useState<SavedCombination[]>(savedCombinations);
   const [savedBookName, setSavedBookName] = useState("");
   const [selectedSavedBookId, setSelectedSavedBookId] = useState<string | null>(null);
@@ -156,21 +156,14 @@ export function useCollectiveDashboardModel({
     serverSelection.current = [...data.selection].sort().join(",");
     setTracking(data);
     const currentCatalog = catalogRef.current;
-    if (!currentCatalog) return;
-    const completed = Object.entries(data.items)
-      .filter(([id, state]) =>
-        state.status === "up-to-date" &&
-        Boolean(state.simulated_through) &&
-        state.simulated_through! > (currentCatalog.items.find((item) => item.id === id)?.end || ""),
-      )
-      .map(([id, state]) => `${id}:${state.simulated_through}`)
-      .sort()
-      .join(",");
-    if (completed && completed !== pendingCatalogRefresh.current) {
-      pendingCatalogRefresh.current = completed;
+    if (!currentCatalog || trackingCatalogRefreshPending.current) return;
+    const hasNewHistory = currentCatalog.items.some((item) => {
+      const state = data.items[item.id];
+      return state?.status === "up-to-date" && (state.simulated_through || "") > item.end;
+    });
+    if (hasNewHistory) {
+      trackingCatalogRefreshPending.current = true;
       setReload((current) => current + 1);
-    } else if (!completed) {
-      pendingCatalogRefresh.current = "";
     }
   }, []);
 
@@ -260,6 +253,11 @@ export function useCollectiveDashboardModel({
           pendingExactRun.current = null;
           setImportState({ runId: pending.runId, phase: "error", error: message });
         }
+      })
+      .finally(() => {
+        // Tracking can retry on the next poll if this request failed or if a
+        // second history finished while this catalog was loading.
+        if (active) trackingCatalogRefreshPending.current = false;
       });
     return () => { active = false; };
   }, [refreshKey, reload]);

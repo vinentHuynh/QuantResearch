@@ -58,6 +58,32 @@ function fixture() {
     close: () => { if (existsSync(state)) rmSync(state, { recursive: true, force: true }); } };
 }
 
+function pinnedFixture(strategy = 'rsi2-reversion') {
+  const f = fixture();
+  const rsi = strategy === 'rsi2-reversion';
+  const id = rsi ? '9931ee9bcd2f35500f8f' : 'f9323ec642ba74a3de10';
+  const sourceId = rsi ? '169a5692-dbb4-4000-8792-fc69d70bf092' : '74a20599-8397-40a9-8f04-120a5a25b9e3';
+  const timeframe = rsi ? '1d' : '1h';
+  const start = rsi ? '2012-01-01' : '2018-01-01';
+  const end = rsi ? '2026-08-31' : '2023-12-31';
+  const parameters = rsi
+    ? { trend_lookback: 200, entry_rsi: 10, exit_rsi: 70, contracts: 1 }
+    : { lookback: 60, contracts: 1 };
+  Object.assign(f.book, { id, key: `${strategy}__NQ__${timeframe}__pinned__${sourceId}`,
+    source: 'Pinned workbench', timeframe, start, end, source_run_ids: [sourceId],
+    coverage: [{ start, end }], parameters });
+  const source = f.runs[0];
+  source.id = sourceId;
+  Object.assign(source.input, { id: sourceId, start, end, timeframe, parameters,
+    fee: rsi ? 2.5 : 1.25, warmup_days: 600, delay_bars: 0 });
+  source.input.strategy.id = strategy;
+  source.input.dataset.first = '2010-06-07T00:00:00Z';
+  source.input.dataset.checksum = 'preserved-baseline-checksum';
+  f.dataset.first = '2010-06-07T00:00:00Z';
+  f.dataset.last = '2026-11-24T12:00:00Z';
+  return f;
+}
+
 test('a partial final UTC day is excluded from automatic replay', () => {
   assert.equal(completeUtcThrough('2026-09-30T10:00:00Z'), '2026-09-29');
   assert.equal(completeUtcThrough('2026-09-30T23:59:00Z'), '2026-09-30');
@@ -127,6 +153,107 @@ test('the frozen NQ 1h momentum book can replay while other unextended Workbench
     assert.equal(tracking.selection(['book']).items.book.status, 'manual-update-required');
     assert.equal(other.enqueued.length, 0);
   } finally { other.close(); }
+});
+
+test('the two selected pinned books retain their exact IDs, source runs and frozen settings', () => {
+  for (const strategy of ['rsi2-reversion', 'multi-speed-momentum']) {
+    const f = pinnedFixture(strategy);
+    try {
+      const original = structuredClone(f.runs[0].input);
+      const tracking = createPortfolioTracking(f.dependencies);
+      const state = tracking.selection([f.book.id]);
+      assert.deepEqual(state.selection, [f.book.id]);
+      assert.equal(state.items[f.book.id].status, 'queued');
+      assert.equal(f.enqueued.length, 1);
+      const replay = f.enqueued[0].input;
+      assert.deepEqual(replay.portfolio_replay, {
+        item_id: f.book.id, source_run_id: f.runs[0].id, anchor_start: original.start,
+      });
+      assert.equal(replay.end, '2026-11-23');
+      for (const field of ['protocol', 'strategy', 'start', 'timeframe', 'session', 'parameters',
+        'capital', 'fee', 'slippage', 'delay_bars', 'warmup_days', 'source_hash', 'source_snapshot']) {
+        assert.deepEqual(replay[field], original[field], `${strategy}: ${field}`);
+      }
+      assert.deepEqual(f.runs[0].input, original, 'the baseline is immutable');
+      assert.equal(f.book.end, original.end, 'queuing does not publish new history');
+      assert.equal(replay.research, undefined);
+      const recovered = createPortfolioTracking(f.dependencies);
+      assert.deepEqual(recovered.reconcile().selection, [f.book.id]);
+      assert.equal(f.enqueued.length, 1, 'restart must not duplicate the frozen replay');
+    } finally { f.close(); }
+  }
+});
+
+test('pinned replay support does not admit changed identities or mismatched baseline strategies', () => {
+  const mutations = [
+    f => { f.book.id = 'unrecognized-pinned-book'; },
+    f => { f.book.key += '-different'; },
+    f => { f.book.symbol = 'MNQ'; },
+    f => { f.book.timeframe = '1h'; },
+    f => { f.book.session = 'new-york-rth'; },
+    f => { f.book.source_run_ids = ['another-run']; },
+    f => { f.runs[0].input.strategy.id = 'another-strategy'; },
+    f => { f.runs[0].input.timeframe = '1h'; },
+    f => { f.runs[0].input.session = 'new-york-rth'; },
+  ];
+  for (const mutate of mutations) {
+    const f = pinnedFixture();
+    try {
+      mutate(f);
+      const state = createPortfolioTracking(f.dependencies).selection([f.book.id]);
+      assert.equal(state.items[f.book.id].status, 'manual-update-required');
+      assert.equal(f.enqueued.length, 0);
+    } finally { f.close(); }
+  }
+});
+
+test('a published pinned history still extends its original baseline on the next dataset', () => {
+  const f = pinnedFixture('multi-speed-momentum');
+  try {
+    const source = f.runs[0];
+    f.book.end = '2026-11-09';
+    f.book.coverage = [{ start: source.input.start, end: f.book.end }];
+    f.book.verified_replay = { dataset_checksum: 'previous-refresh-checksum',
+      end: f.book.end, source_run_id: 'previous-tracking-run' };
+    f.runs.push({ id: 'previous-tracking-run', status: 'Succeeded', created_at: '2026-11-11T12:00:00Z',
+      input: { ...source.input, end: f.book.end,
+        portfolio_replay: { item_id: f.book.id, source_run_id: source.id, anchor_start: source.input.start } } });
+    const state = createPortfolioTracking(f.dependencies).selection([f.book.id]);
+    assert.equal(state.items[f.book.id].status, 'queued');
+    assert.deepEqual(state.selection, [f.book.id]);
+    assert.equal(f.enqueued[0].input.portfolio_replay.source_run_id, source.id);
+    assert.equal(f.enqueued[0].input.start, '2018-01-01');
+    assert.equal(f.enqueued[0].input.source_snapshot, source.input.source_snapshot);
+    assert.deepEqual(f.book.source_run_ids, [source.id]);
+  } finally { f.close(); }
+});
+
+test('pinned RSI can retain original warmup coverage but cannot lose an original warmup date', () => {
+  const f = pinnedFixture();
+  try {
+    // The original successful run requests May 2010 onward, but the immutable
+    // archive begins June 7. That coverage is retained without changing 600 days.
+    const state = createPortfolioTracking(f.dependencies).selection([f.book.id]);
+    assert.equal(state.items[f.book.id].status, 'queued');
+    assert.equal(f.enqueued[0].input.warmup_days, 600);
+    assert.equal(f.enqueued[0].input.start, '2012-01-01');
+  } finally { f.close(); }
+  for (const mutate of [
+    f => { f.dataset.first = '2010-06-08T00:00:00Z'; },
+    f => { delete f.runs[0].input.dataset.checksum; },
+    f => { f.runs[0].input.dataset.first = 'invalid-date'; },
+    f => { f.runs[0].input.dataset.first = '2012-01-02T00:00:00Z'; },
+    f => { f.book.source = 'Current workbench'; f.book.key = 'rsi2-reversion__NQ__1d'; },
+  ]) {
+    const short = pinnedFixture();
+    try {
+      mutate(short);
+      const result = createPortfolioTracking(short.dependencies).selection([short.book.id]);
+      assert.equal(result.items[short.book.id].status, 'manual-update-required');
+      assert.match(result.items[short.book.id].error, /preserved replay start/);
+      assert.equal(short.enqueued.length, 0);
+    } finally { short.close(); }
+  }
 });
 
 test('duplicate registration does not queue twice and a short dataset requires manual update', () => {
