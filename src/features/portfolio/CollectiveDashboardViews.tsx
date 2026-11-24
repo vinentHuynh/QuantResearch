@@ -72,7 +72,7 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
         const symbol = source.input.dataset?.symbol;
         const newest = (state.datasets || [])
           .filter((dataset: { symbol: string }) => dataset.symbol === symbol)
-          .sort((a: { last: string }, b: { last: string }) => b.last.localeCompare(a.last))[0];
+          .sort((a: { last: string }, b: { last: string }) => String(b.last).localeCompare(String(a.last)))[0];
         if (!newest) continue;
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { strategy, dataset, retry_of, ...input } = source.input;
@@ -82,7 +82,7 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
           dataset_id: newest.id,
           dataset_ids: [newest.id],
           timeframes: [input.timeframe],
-          end: newest.last,
+          end: String(newest.last).slice(0, 10),
           sweep: {},
         };
         const response = await fetch(`${api}/runs`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
