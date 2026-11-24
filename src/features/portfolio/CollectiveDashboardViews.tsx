@@ -50,26 +50,64 @@ const periodLabels: Record<PortfolioPnlPeriod, string> = {
 };
 
 export function CollectiveEmptyState({ model }: { model: Model }) {
-  const { computed, histories, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
-  const [rerun, setRerun] = useState<{ phase: 'idle' | 'starting' | 'started' | 'error'; message?: string }>({ phase: 'idle' });
+  const { computed, histories, refreshEvidence, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
+  const [rerun, setRerun] = useState<{ phase: 'idle' | 'starting' | 'running' | 'importing' | 'done' | 'error'; message?: string }>({ phase: 'idle' });
   const runnable = selected.flatMap((item) => (item.source_run_ids?.length ? [item.source_run_ids[item.source_run_ids.length - 1]] : []));
+  const api = '/api/workbench';
+  const getJson = async (path: string) => {
+    const response = await fetch(api + path, { cache: 'no-store' });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+    return body;
+  };
+  /** Rerun each selected strategy with its saved settings, but through the newest data of its market. */
   const rerunStrategies = async () => {
     setRerun({ phase: 'starting' });
     try {
+      const state = await getJson('/state');
+      const launched: string[] = [];
       for (const id of runnable) {
-        const response = await fetch(`/api/workbench/runs/${encodeURIComponent(id)}/retry`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: '{}',
-        });
+        const source = (state.runs || []).find((run: { id: string }) => run.id === id);
+        if (!source) continue;
+        const symbol = source.input.dataset?.symbol;
+        const newest = (state.datasets || [])
+          .filter((dataset: { symbol: string }) => dataset.symbol === symbol)
+          .sort((a: { last: string }, b: { last: string }) => b.last.localeCompare(a.last))[0];
+        if (!newest) continue;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { strategy, dataset, retry_of, ...input } = source.input;
+        const payload = {
+          ...input,
+          strategy_id: strategy?.id || input.strategy_id,
+          dataset_id: newest.id,
+          dataset_ids: [newest.id],
+          timeframes: [input.timeframe],
+          end: newest.last,
+          sweep: {},
+        };
+        const response = await fetch(`${api}/runs`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body.error || `Could not start run ${id}`);
+        if (!response.ok) throw new Error(body.error || `Could not start the run for ${strategy?.name || id}`);
+        launched.push(...(Array.isArray(body) ? body : [body]).map((run: { id: string }) => run.id));
       }
-      const skipped = selected.length - runnable.length;
-      setRerun({
-        phase: 'started',
-        message: `Started ${runnable.length} ${runnable.length === 1 ? 'run' : 'runs'}${skipped ? ` (${skipped} without a saved run were skipped)` : ''}. When they finish, use the refresh button next to “Updated” above to load the new results.`,
-      });
+      if (!launched.length) throw new Error('None of the selected strategies has a saved run and newer market data to run on.');
+      setRerun({ phase: 'running', message: `Running ${launched.length} ${launched.length === 1 ? 'backtest' : 'backtests'} through the latest data…` });
+      const pending = new Set(launched);
+      for (let attempt = 0; pending.size && attempt < 900; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        for (const id of [...pending]) {
+          const run = await getJson(`/runs/${encodeURIComponent(id)}`);
+          if (run.status === 'Succeeded') pending.delete(id);
+          else if (['Failed', 'Cancelled', 'Canceled'].includes(run.status)) throw new Error(`A run ${run.status.toLowerCase()}. Open Runs to see why.`);
+        }
+      }
+      if (pending.size) throw new Error('The runs are still going. Check Runs, then use the refresh icon beside “Updated” above.');
+      setRerun({ phase: 'importing', message: 'Loading the new results into the portfolio…' });
+      for (const id of launched) {
+        await refreshEvidence(id);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+      setRerun({ phase: 'done', message: 'Updated to the latest data.' });
     } catch (error) {
       setRerun({ phase: 'error', message: error instanceof Error ? error.message : String(error) });
     }
@@ -105,13 +143,13 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
       {selected.length > 0 && (
         <>
           <Button mt='md' ml={computed.coverageGap ? 'xs' : 0} variant='default' leftSection={<IconRefresh size={14} />}
-            loading={rerun.phase === 'starting'} disabled={!runnable.length || rerun.phase === 'started'} onClick={() => void rerunStrategies()}
-            title={runnable.length ? 'Rerun each selected strategy with its saved settings' : 'None of the selected strategies has a saved run to repeat'}>
-            Run strategies again
+            loading={['starting', 'running', 'importing'].includes(rerun.phase)} disabled={!runnable.length} onClick={() => void rerunStrategies()}
+            title={runnable.length ? 'Rerun each selected strategy through the newest market data' : 'None of the selected strategies has a saved run to repeat'}>
+            Run strategies on latest data
           </Button>
           {rerun.message && (
             <Text size='sm' mt='sm' c={rerun.phase === 'error' ? 'red' : 'dimmed'} role={rerun.phase === 'error' ? 'alert' : 'status'}>
-              {rerun.message} {rerun.phase === 'started' && <a href={href('runs')}>View runs</a>}
+              {rerun.message} {['running', 'error'].includes(rerun.phase) && <a href={href('runs')}>View runs</a>}
             </Text>
           )}
         </>
