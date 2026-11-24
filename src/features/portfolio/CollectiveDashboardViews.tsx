@@ -14,6 +14,7 @@ import {
   IconChevronRight,
   IconMinus,
   IconPlus,
+  IconRefresh,
   IconX,
 } from '@tabler/icons-react';
 import { href } from '../../app/navigation';
@@ -50,6 +51,29 @@ const periodLabels: Record<PortfolioPnlPeriod, string> = {
 
 export function CollectiveEmptyState({ model }: { model: Model }) {
   const { computed, histories, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
+  const [rerun, setRerun] = useState<{ phase: 'idle' | 'starting' | 'started' | 'error'; message?: string }>({ phase: 'idle' });
+  const runnable = selected.flatMap((item) => (item.source_run_ids?.length ? [item.source_run_ids[item.source_run_ids.length - 1]] : []));
+  const rerunStrategies = async () => {
+    setRerun({ phase: 'starting' });
+    try {
+      for (const id of runnable) {
+        const response = await fetch(`/api/workbench/runs/${encodeURIComponent(id)}/retry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.error || `Could not start run ${id}`);
+      }
+      const skipped = selected.length - runnable.length;
+      setRerun({
+        phase: 'started',
+        message: `Started ${runnable.length} ${runnable.length === 1 ? 'run' : 'runs'}${skipped ? ` (${skipped} without a saved run were skipped)` : ''}. When they finish, use the refresh button next to “Updated” above to load the new results.`,
+      });
+    } catch (error) {
+      setRerun({ phase: 'error', message: error instanceof Error ? error.message : String(error) });
+    }
+  };
   const endExplanation = computed.coverageGap
     ? coverageEndExplanation(selected, histories, settings, testedWindow, tracking)
     : null;
@@ -77,6 +101,20 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
             ? 'Apply common tested window'
             : 'Review configurations'}
         </Button>
+      )}
+      {selected.length > 0 && (
+        <>
+          <Button mt='md' ml={computed.coverageGap ? 'xs' : 0} variant='default' leftSection={<IconRefresh size={14} />}
+            loading={rerun.phase === 'starting'} disabled={!runnable.length || rerun.phase === 'started'} onClick={() => void rerunStrategies()}
+            title={runnable.length ? 'Rerun each selected strategy with its saved settings' : 'None of the selected strategies has a saved run to repeat'}>
+            Run strategies again
+          </Button>
+          {rerun.message && (
+            <Text size='sm' mt='sm' c={rerun.phase === 'error' ? 'red' : 'dimmed'} role={rerun.phase === 'error' ? 'alert' : 'status'}>
+              {rerun.message} {rerun.phase === 'started' && <a href={href('runs')}>View runs</a>}
+            </Text>
+          )}
+        </>
       )}
       {!selected.length && (
         <Button
