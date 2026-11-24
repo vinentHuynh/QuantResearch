@@ -23,6 +23,7 @@ import {
   type PortfolioTracking,
   type SavedCombination,
 } from "./collectiveViewModel";
+import { strategyTitle } from "../../../shared/ts/formatting.ts";
 
 export function CombinationControls({
   capital,
@@ -129,7 +130,7 @@ export function CombinationControls({
               <div className="wb-book-summary">
                 <div className="wb-book-heading">
                   <span className="wb-book-symbol">{item.symbol}</span>
-                  <span className="wb-book-name">{item.name}</span>
+                  <span className="wb-book-name">{strategyTitle(item.name)}</span>
                 </div>
                 <div className="wb-book-performance">
                   <span title="P&L as a percentage of the portfolio's starting capital">
@@ -161,7 +162,7 @@ export function CombinationControls({
                 variant="subtle"
                 color="gray"
                 size="sm"
-                aria-label={`Remove ${item.name} ${item.symbol} ${item.timeframe}`}
+                aria-label={`Remove ${strategyTitle(item.name)} ${item.symbol} ${item.timeframe}`}
                 title="Remove from combination"
                 onClick={() => {
                   const next = { ...settings.copies };

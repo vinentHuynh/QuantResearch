@@ -20,6 +20,7 @@ import type {
 import { useStrategyStages } from "../../shared/ui/strategyStageContext";
 import { ResearchStages } from "./ResearchStages";
 import { EvaluationStageBadge, RunStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { outcomeLabel } from "../../../shared/ts/formatting.ts";
 import { workbenchRequest as send } from "../../shared/api/workbench";
 import { EvaluationChart } from "./EvaluationChart";
 import { ResearchDownloads as Downloads } from "./ResearchDownloads";
@@ -101,7 +102,7 @@ export function EvaluationDetail({
                 radius="xs"
                 variant="light"
               >
-                Baseline outcome: {current.outcome}
+                Baseline outcome: {outcomeLabel(current.outcome)}
               </Badge>
             )}
             {current.status !== "Succeeded" && (
@@ -210,7 +211,7 @@ export function EvaluationDetail({
                             radius="xs"
                             variant="light"
                           >
-                            {s.outcome}
+                            {outcomeLabel(s.outcome)}
                           </Badge>
                         </Table.Td>
                       </Table.Tr>
@@ -429,7 +430,7 @@ export function EvaluationDetail({
                         <Table.Td>{s.metrics.trades}</Table.Td>
                         <Table.Td>{number(s.metrics.costs)}</Table.Td>
                         <Table.Td>{number(s.metrics.sharpe)}</Table.Td>
-                        <Table.Td>{s.outcome}</Table.Td>
+                        <Table.Td>{outcomeLabel(s.outcome)}</Table.Td>
                       </Table.Tr>
                     ))}
                   </Table.Tbody>

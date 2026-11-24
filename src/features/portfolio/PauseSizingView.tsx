@@ -27,6 +27,7 @@ import { StrategyConditionPanel } from "./StrategyConditionPanel";
 import { PauseSizingControls } from "./PauseSizingControls";
 import { CollectiveEmptyState } from "./CollectiveDashboardViews";
 import type { CollectiveDashboardModel } from "./useCollectiveDashboardModel";
+import { strategyTitle } from "../../../shared/ts/formatting.ts";
 
 export function PauseSizingView({
   model,
@@ -274,7 +275,7 @@ export function PauseSizingView({
                   onChange={setManualBook}
                   data={selected.map((item) => ({
                     value: item.id,
-                    label: `${item.name} / ${item.symbol} / ${item.timeframe}`,
+                    label: `${strategyTitle(item.name)} / ${item.symbol} / ${item.timeframe}`,
                   }))}
                   searchable
                 />
@@ -378,7 +379,7 @@ export function PauseSizingView({
                             {decision.timestamp.replace("T", " ").slice(0, 16)}
                           </Table.Td>
                           <Table.Td>
-                            {item.name} / {item.symbol} / {item.timeframe}
+                            {strategyTitle(item.name)} / {item.symbol} / {item.timeframe}
                             <StrategyStageBadge {...collectiveProgress(item)} />
                           </Table.Td>
                           <Table.Td>
@@ -437,7 +438,7 @@ export function PauseSizingView({
                   {result.components.map((component) => (
                     <Table.Tr key={component.id}>
                       <Table.Td>
-                        {component.name} / {component.symbol} /{" "}
+                        {strategyTitle(component.name)} / {component.symbol} /{" "}
                         {
                           selected.find((item) => item.id === component.id)
                             ?.timeframe

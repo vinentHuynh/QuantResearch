@@ -17,6 +17,7 @@ import type {
 } from "../../../shared/ts/workbenchModels.ts";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { EvaluationStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { outcomeLabel } from "../../../shared/ts/formatting.ts";
 import { EvaluationDetail } from "./EvaluationDetail";
 import {
   evaluationOutcomeColor as outcomeColor,
@@ -112,8 +113,8 @@ export function ResearchPage({
               onChange={setOutcomeFilter}
               data={[
                 { value: "all", label: `All · ${evaluations.length}` },
-                { value: "meets", label: `Meets · ${meets.length}` },
-                { value: "fails", label: `Does not · ${fails.length}` },
+                { value: "meets", label: `Passed · ${meets.length}` },
+                { value: "fails", label: `Failed · ${fails.length}` },
               ]}
             />
             <TextInput
@@ -161,12 +162,7 @@ export function ResearchPage({
                         : color(evaluation.status)
                     }
                   >
-                    Baseline outcome: {" "}
-                    {evaluation.outcome === "Meets criteria"
-                      ? "Meets"
-                      : evaluation.outcome === "Does not meet criteria"
-                        ? "Does not"
-                        : evaluation.outcome || "Not scored"}
+                    Baseline outcome: {outcomeLabel(evaluation.outcome)}
                   </Badge>
                 </button>
               </li>

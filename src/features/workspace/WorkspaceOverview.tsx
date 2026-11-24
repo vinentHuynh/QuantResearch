@@ -5,18 +5,19 @@ import type { RunSummary, Strategy } from "../../../shared/ts/workbenchModels.ts
 import { runConfigurationKey, testingEvidence } from "../../../shared/ts/evidence.ts";
 import { readinessChecks } from "../../../shared/ts/readiness.ts";
 import { researchStages } from "../../../shared/ts/progress.ts";
-import { lifecycleStatus, type StrategyStageStatus } from "../../../shared/ts/strategyLifecycle.ts";
+import { lifecycleStatus, statusDisplay, type StrategyStageStatus } from "../../../shared/ts/strategyLifecycle.ts";
 import { href } from "../../app/navigation";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
+import { outcomeLabel } from "../../../shared/ts/formatting.ts";
 import { PageHeader } from "../../shared/ui/PageHeader";
-import { StrategyNextActionButton, StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
+import { ResearchNote, StrategyNextActionButton, StrategyStageBadge } from "../../shared/ui/StrategyStageBadge";
 import { isInvalidRun } from "../runs/model";
 import { isCurrentStrategyRun } from "../../../shared/ts/stageStatus.ts";
 import { isConfigurationArchived } from "../../../shared/ts/researchArchive.ts";
 import type { WorkbenchState } from "./workbenchModel";
 import "./researchWorkspace.css";
 
-const stageNames = ["", "Backtest", "Historical validation", "Robustness", "Forward test", "Practical readiness"];
+const stageNames = ["", "Backtest", "Evaluation", "Robustness", "Forward test", "Ready"];
 const stageCriteria = ["", "Declared hypothesis, settings, and minimum traded result", "Frozen later-period baseline and stress criteria", "Parameter, coverage, execution, and risk evidence", "Frozen paper-test plan and reconciled observations", "Operating, risk, and monitoring checklist"];
 type ResearchRow = { id: string; strategy: Strategy; config?: ReturnType<typeof testingEvidence>["configurations"][number]; status: StrategyStageStatus };
 
@@ -65,7 +66,7 @@ export function WorkspaceOverview({ state, onInspect, onCleanup, onArchiveConfig
           <TextInput aria-label="Search research configurations" placeholder="Strategy or market" leftSection={<IconSearch size={15} />} value={query} onChange={event => setQuery(event.currentTarget.value)} />
           <Select aria-label="Filter research outcomes" value={outcome} onChange={value => setOutcome(value || "all")} data={[{ value: "all", label: "All outcomes" }, { value: "passed", label: "Validated" }, { value: "progress", label: "In progress" }, { value: "failed", label: "Failed checks" }]} />
           <div className="research-list-scroll">{listed.map(row => <button key={row.id} type="button" className={`research-list-item${selected?.id === row.id ? " active" : ""}`} onClick={() => setSelection(row.id)}>
-            <strong>{strategyTitle(row.strategy.name)}</strong><span>{row.config ? `${row.config.symbol} · ${row.config.timeframe} · ${row.config.session}` : "No configuration yet"}</span><span className="research-list-stage">{row.status.failedStage ? `Failed at ${stageNames[row.status.failedStage]}` : row.status.blockedStage ? `Blocked at ${stageNames[row.status.blockedStage]}` : row.status.label}</span>
+            <strong>{strategyTitle(row.strategy.name)}</strong><span>{row.config ? `${row.config.symbol} · ${row.config.timeframe} · ${row.config.session}` : "No configuration yet"}</span><span className="research-list-stage">{statusDisplay(row.status).label}</span>
           </button>)}</div>
           {!listed.length && <Text size="sm" c="dimmed" p="sm">{showArchive && !archivedCount ? "No archived configurations yet." : "No configurations match."}</Text>}
         </section>
@@ -80,13 +81,13 @@ export function WorkspaceOverview({ state, onInspect, onCleanup, onArchiveConfig
             </Button>
             <Text size="xs" c="dimmed">{showArchive ? "Results and evidence are preserved." : "Includes all matching runs; results and evidence are kept."}</Text>
           </Group>}
-          <Text size="sm" mt="sm">{selected.status.finding}</Text>
+          <ResearchNote finding={selected.status.finding} checks={selected.status.checks} assessment={selected.status.assessment} />
           {!showArchive && selected.status.action && <StrategyNextActionButton action={selected.status.action} />}
           <div className="research-steps">{researchStages.map(stage => <StageRow key={stage.stage} number={stage.stage} status={selected.status} seed={seed} evaluations={evaluations} />)}</div>
           <details className="research-evidence"><summary>Attempts and evidence ({attempts.length})</summary>
             {selected.config && <Text size="xs" mt="xs">Parameters: {JSON.stringify(selected.config.parameters)}</Text>}
             {attempts.map(run => <div className="research-attempt" key={run.id}><Text size="xs">{run.created_at.slice(0, 10)} · {run.status} · {run.input.start} to {run.input.end} · {run.result?.metrics.trades ?? "—"} trades</Text><Button size="compact-xs" variant="subtle" onClick={() => onInspect(run)}>Inspect {run.id.slice(0, 8)}</Button></div>)}
-            {evaluations.map(evaluation => <div className="research-attempt" key={evaluation.id}><Text size="xs">{evaluation.name} · {evaluation.outcome || evaluation.status}</Text><Button component="a" href={href("evaluations")} size="compact-xs" variant="subtle">Open evaluation</Button></div>)}
+            {evaluations.map(evaluation => <div className="research-attempt" key={evaluation.id}><Text size="xs">{evaluation.name} · {evaluation.outcome ? outcomeLabel(evaluation.outcome) : evaluation.status}</Text><Button component="a" href={href("evaluations")} size="compact-xs" variant="subtle">Open evaluation</Button></div>)}
             {attempts.flatMap(run => run.stage_assessments || []).map(assessment => <Text key={assessment.id} size="xs">{assessment.recordedAt.slice(0, 10)} · {stageNames[assessment.attemptedStage]} {assessment.outcome}: {assessment.findings}</Text>)}
           </details>
         </section>}
@@ -100,15 +101,17 @@ function StageRow({ number, status, seed, evaluations }: { number: 1 | 2 | 3 | 4
   const blocked = status.blockedStage === number;
   const complete = status.stage >= number && !failed && !(number === 4 && status.kind === "forward-testing");
   const waiting = !failed && !complete && (blocked || number === 4 && status.kind === "forward-testing" || number === 5 && status.kind === "forward-tested");
-  const label = failed ? "Failed" : complete ? "Complete" : waiting ? "Waiting for evidence" : number === status.stage + 1 ? "Next" : "Locked";
+  const running = number === 4 && status.kind === "forward-testing";
+  const label = failed ? "Failed" : complete ? "Complete" : blocked ? "Blocked" : running ? "Running" : waiting || number === status.stage + 1 ? "Next up" : "Locked";
   const criteria = number === 1 ? seed?.input.criteria || stageCriteria[number]
     : number === 2 ? evaluations?.map(e => `${e.name}: return ≥ ${((e.min_return || 0) * 100).toFixed(1)}%, drawdown ≤ ${((e.max_drawdown || 0) * 100).toFixed(1)}%, trades ≥ ${e.min_test_trades ?? "declared minimum"}`).join("; ") || stageCriteria[number]
     : number === 3 ? readinessChecks.robustness.map(c => c.label).join("; ")
     : number === 4 ? seed?.readiness_reviews?.find(review => review.phase === "forward-plan")?.plan ? "Frozen paper-test criteria on the run record" : stageCriteria[number]
     : readinessChecks.practical.map(c => c.label).join("; ");
   return <div className={`research-step ${failed ? "failed" : complete ? "complete" : ""}`}>
-    <div className="research-step-title"><strong>{number}. {stageNames[number]}</strong><Badge size="xs" color={failed ? "red" : complete ? "teal" : waiting ? "blue" : "gray"}>{label}</Badge></div>
-    {(failed || blocked || number === status.stage + 1) && <Text size="xs" mt={4}>{failed || blocked ? status.finding : researchStages[number - 1].description}</Text>}
+    <div className="research-step-title"><strong>{number}. {stageNames[number]}</strong><Badge size="xs" color={failed ? "red" : complete ? "teal" : blocked ? "orange" : running ? "cyan" : label === "Next up" ? "blue" : "gray"}>{label}</Badge></div>
+    {(failed || blocked) && <Text size="xs" mt={4} c="dimmed">{status.checks.length ? `${status.checks.length} open check${status.checks.length === 1 ? "" : "s"}, listed in the note above.` : "See the note above."}</Text>}
+    {!failed && !blocked && number === status.stage + 1 && <Text size="xs" mt={4}>{researchStages[number - 1].description}</Text>}
     <details><summary>Criteria and evidence</summary><Text size="xs">{criteria}</Text>{failed && status.checks.map((check, index) => <Text size="xs" c="red" key={index}>{check}</Text>)}{number === 1 && seed && <Text size="xs">Run {seed.id}</Text>}{number === 2 && evaluations?.map(e => <Text size="xs" key={e.id}>{e.id} · {e.outcome || e.status}</Text>)}</details>
   </div>;
 }

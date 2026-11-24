@@ -16,6 +16,7 @@ import { workbenchRequest } from "../../shared/api/workbench";
 import { formatMoney } from "./collectiveViewModel";
 import { TradeCandles } from "./TradeCandles";
 import "./tradeChart.css";
+import { strategyTitle } from "../../../shared/ts/formatting.ts";
 
 const fmt = (value?: number) =>
   value === undefined
@@ -347,7 +348,7 @@ export function DayTradeViewer({
           />
         ) : (
           <Text fw={600}>
-            {item.symbol} · {item.name} · {item.timeframe}
+            {item.symbol} · {strategyTitle(item.name)} · {item.timeframe}
           </Text>
         )}
         <Group gap="xs" wrap="nowrap">

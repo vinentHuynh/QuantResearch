@@ -35,7 +35,7 @@ import { strategyTitle } from "../../shared/formatting/strategyTitle";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { RunStageBadge } from "../../shared/ui/StrategyStageBadge";
 import { useStrategyStages } from "../../shared/ui/strategyStageContext";
-import { strategyStageLabels } from "../../../shared/ts/strategyLifecycle.ts";
+import { statusFilterLabels } from "../../../shared/ts/strategyLifecycle.ts";
 import { NqMonthlyComparison } from "../datasets/NqMonthlyComparison";
 import { RefreshButton, WorkbenchAlerts } from "../workspace/WorkbenchChrome";
 import type { WorkbenchController } from "../workspace/useWorkbenchController";
@@ -221,7 +221,7 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
         <div className="wb-content">
           <div className="wb-toolbar">
             <TextInput aria-label="Search runs" placeholder="Strategy, market, tags, or run ID" value={filter} onChange={(event) => setFilter(event.currentTarget.value)} />
-            <Select aria-label="Strategy stage filter" placeholder="All strategy stages" value={stageFilter} onChange={value => { setStageFilter(value || "all"); setSelected([]); }} data={[{ value: "all", label: "All strategy stages" }, ...Object.entries(strategyStageLabels).map(([value, label]) => ({ value, label }))]} />
+            <Select aria-label="Strategy stage filter" placeholder="All strategy stages" value={stageFilter} onChange={value => { setStageFilter(value || "all"); setSelected([]); }} data={[{ value: "all", label: "All strategy stages" }, ...Object.entries(statusFilterLabels).map(([value, label]) => ({ value, label }))]} />
             <Select aria-label="Run purpose" placeholder="All run purposes" clearable data={["Exploratory", "Evaluation", "Tracking"]} value={stage || null} onChange={(value) => setStage(value || "")} />
             <Select aria-label="Execution" placeholder="All statuses" clearable data={["Queued", "Running", "Summarizing", "Succeeded", "Failed", "Canceled", "Interrupted"]} value={status || null} onChange={(value) => setStatus(value || "")} />
             <Select aria-label="Sort" data={runSortOptions} value={sort} onChange={(value) => setSort(value || "created:desc")} />
@@ -278,7 +278,7 @@ export function RunsPage({ controller }: { controller: WorkbenchController }) {
                       </Table.Td>
                       <Table.Td>
                         <Text fw={600} size="sm">{strategyTitle(run.input.strategy.name)}</Text>
-                        <RunStageBadge runId={run.id} showFinding />
+                        <RunStageBadge runId={run.id} showFinding compact />
                         <Text size="xs" c="dimmed" ff="monospace">{shortId(run.id)} · code {shortId(run.input.source_hash)}</Text>
                         {run.tags && <Text size="xs">{run.tags}</Text>}
                       </Table.Td>
