@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { Alert, Drawer, Group, Loader, Text } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { WorkbenchState } from '../workspace/workbenchModel';
@@ -9,6 +9,7 @@ import { PortfolioSettingsDrawer } from './PortfolioSettingsDrawer';
 import { RiskView } from './RiskView';
 import { useRecentForm } from './recentForm';
 import { useCollectiveDashboardModel } from './useCollectiveDashboardModel';
+import type { AddedSummary } from './CollectiveDashboardViews';
 import './collective.css';
 import './portfolioRedesign.css';
 
@@ -53,7 +54,24 @@ export function CollectiveDashboard({
     settings,
     timeframe,
     tracking,
+    periodMetrics,
+    periodPnl,
   } = model;
+  const snapshot = useRef<AddedSummary['was'] & { copies: Record<string, number> } | null>(null);
+  const wasOpen = useRef(false);
+  const [added, setAdded] = useState<AddedSummary | null>(null);
+  const strategyCount = (copies: Record<string, number>) => Object.values(copies).filter((n) => n > 0).length;
+  useEffect(() => {
+    if (pickerOpen && !wasOpen.current) {
+      snapshot.current = periodMetrics ? { copies: settings.copies, net: periodPnl, drawdown: periodMetrics.maxDrawdownDollars, ratio: periodMetrics.recoveryFactor ?? null, winRate: periodMetrics.winRate ?? null } : { copies: settings.copies, net: null, drawdown: null, ratio: null, winRate: null };
+    }
+    if (!pickerOpen && wasOpen.current && snapshot.current) {
+      const gained = strategyCount(settings.copies) - strategyCount(snapshot.current.copies);
+      const { copies, ...was } = snapshot.current;
+      setAdded(gained > 0 ? { count: gained, copies, was } : null);
+    }
+    wasOpen.current = pickerOpen;
+  }, [pickerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   const recentForm = useRecentForm(model);
   const watchCount = Object.values(recentForm).filter((form) => form.tone === 'watch' || form.tone === 'weak').length;
 
@@ -115,7 +133,7 @@ export function CollectiveDashboard({
               </Alert>
             )}
             {current === 'overview' && (
-              <CollectiveOverviewView model={model} recentForm={recentForm} onSettings={() => setSettingsOpen(true)} />
+              <CollectiveOverviewView model={model} recentForm={recentForm} onSettings={() => setSettingsOpen(true)} added={added} onUndo={() => { if (added) choose(added.copies); setAdded(null); }} onDismiss={() => setAdded(null)} />
             )}
             {current === 'calendar' && <CollectiveCalendarView model={model} />}
             {current === 'risk' && <RiskView model={model} />}
@@ -126,7 +144,7 @@ export function CollectiveDashboard({
         opened={pickerOpen}
         onClose={() => setPickerOpen(false)}
         position='right'
-        size={isMobile ? '100%' : 'min(1200px, 90vw)'}
+        size={isMobile ? '100%' : 'min(960px, 90vw)'}
         title={<span className='collective-drawer-title'>Add strategies</span>}
       >
         {picker || (catalog ? <Group><Loader size='sm' /><Text>Loading research history…</Text></Group> : loadingState)}

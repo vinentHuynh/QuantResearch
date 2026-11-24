@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Alert,
   Badge,
@@ -50,6 +50,7 @@ export function ResearchPage({
   inspect: (run: RunSummary) => void;
 }) {
   const isMobile = useMediaQuery("(max-width: 900px)");
+  const [detailOpen, setDetailOpen] = useState(Boolean(selectedId));
   const controller = useResearchController({
     initialRunId,
     evaluations,
@@ -137,11 +138,7 @@ export function ResearchPage({
                   }
                   onClick={() => {
                     onSelect(evaluation.id);
-                    if (isMobile) {
-                      document
-                        .querySelector(".wb-ledger-detail")
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }
+                    setDetailOpen(true);
                   }}
                 >
                   <span style={{ flex: 1, minWidth: 0 }}>
@@ -179,7 +176,26 @@ export function ResearchPage({
             Complete grids and selection records stay visible.
           </Text>
         </div>
-        {current ? (
+      </div>
+      {!evaluations.length && (
+        <section className="wb-card">
+          <h2>No evaluations yet</h2>
+          <p className="wb-card-sub">
+            Start with a declared chronological plan: choose a successful run, set folds and criteria, preview, then launch.
+          </p>
+          <Button mt="md" variant="light" leftSection={<IconPlus size={14} />} onClick={() => setPlanOpen(true)}>
+            Plan walk-forward evaluation
+          </Button>
+        </section>
+      )}
+      <Drawer
+        opened={detailOpen && !!current}
+        onClose={() => setDetailOpen(false)}
+        position="right"
+        size={isMobile ? "100%" : "min(860px, 92vw)"}
+        title={<span className="collective-drawer-title">{current?.name}</span>}
+      >
+        {current && (
           <EvaluationDetail
             current={current}
             runs={runs}
@@ -187,26 +203,8 @@ export function ResearchPage({
             inspect={inspect}
             controller={controller}
           />
-        ) : (
-          <div className="wb-ledger-detail">
-            <section className="wb-card">
-              <h2>No evaluations yet</h2>
-              <p className="wb-card-sub">
-                Start with a declared chronological plan: choose a successful
-                run, set folds and criteria, preview, then launch.
-              </p>
-              <Button
-                mt="md"
-                variant="light"
-                leftSection={<IconPlus size={14} />}
-                onClick={() => setPlanOpen(true)}
-              >
-                Plan walk-forward evaluation
-              </Button>
-            </section>
-          </div>
         )}
-      </div>
+      </Drawer>
       <Drawer
         opened={planOpen}
         onClose={() => setPlanOpen(false)}

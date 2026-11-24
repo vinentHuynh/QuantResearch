@@ -54,9 +54,9 @@ export function CollectiveCalendar({
           />
         </Group>
         <div className="wb-month-sum">
-          <span>Net <b style={{ color: tone(sum) }}>{money(sum)}</b></span>
-          <span><b>{inMonth.filter((point) => point.pnl > 0).length}</b> up days</span>
-          <span><b>{inMonth.filter((point) => point.pnl < 0).length}</b> down days</span>
+          <span><small>Month</small><b style={{ color: tone(sum) }}>{money(sum)}</b></span>
+          <span><small>Up days</small><b>{inMonth.filter((point) => point.pnl > 0).length}</b></span>
+          <span><small>Down days</small><b>{inMonth.filter((point) => point.pnl < 0).length}</b></span>
         </div>
       </div>
       <div className="collective-calendar">

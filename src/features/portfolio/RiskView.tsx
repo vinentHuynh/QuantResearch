@@ -4,6 +4,8 @@ import type { CollectiveDashboardModel } from "./useCollectiveDashboardModel";
 import { CollectiveContributionsView, CollectiveEmptyState } from "./CollectiveDashboardViews";
 import { PauseSizingView } from "./PauseSizingView";
 import { StrategyConditionPanel } from "./StrategyConditionPanel";
+import { RecentFormCards } from "./RecentFormCards";
+import { ShortRuleForm } from "./ShortRuleForm";
 import { formatMoney as money, signedClass as signed } from "./collectiveViewModel";
 
 function PositionSize({ model }: { model: CollectiveDashboardModel }) {
@@ -53,17 +55,31 @@ function PositionSize({ model }: { model: CollectiveDashboardModel }) {
 export function RiskView({ model }: { model: CollectiveDashboardModel }) {
   const { catalog, histories, result, selected, settings } = model;
   const [rulesOpen, setRulesOpen] = useState(settings.policy.enabled);
+  const [advanced, setAdvanced] = useState(false);
   if (!result) return <CollectiveEmptyState model={model} />;
   return (
     <div className="wb-risk">
-      <StrategyConditionPanel
-        catalog={catalog}
-        items={selected}
-        histories={histories}
-        end={settings.end}
-        enabled={settings.policy.enabled}
-        permissions={result.components || []}
+      <RecentFormCards
+        model={model}
+        onPause={(id) => {
+          model.setManualBook(id);
+          model.setManualAction("pause");
+          model.policy({ enabled: true, mode: "manual" });
+          setRulesOpen(true);
+          setAdvanced(true);
+        }}
       />
+      <details className="wb-condition-details">
+        <summary>Full condition details</summary>
+        <StrategyConditionPanel
+          catalog={catalog}
+          items={selected}
+          histories={histories}
+          end={settings.end}
+          enabled={settings.policy.enabled}
+          permissions={result.components || []}
+        />
+      </details>
       <PositionSize model={model} />
       <section className="wb-card" aria-label="Pause and resume rules">
         <div className="wb-card-head">
@@ -81,7 +97,13 @@ export function RiskView({ model }: { model: CollectiveDashboardModel }) {
             {rulesOpen ? "Hide rules" : "Set up a rule"}
           </Button>
         </div>
-        {rulesOpen && <PauseSizingView model={model} showCondition={false} showBenchmarks={settings.policy.enabled} />}
+        {rulesOpen && !advanced && <ShortRuleForm model={model} />}
+        {rulesOpen && (
+          <Button variant="subtle" size="compact-xs" mt="xs" onClick={() => setAdvanced((open) => !open)} aria-expanded={advanced}>
+            {advanced ? "Hide advanced options" : "Advanced options"}
+          </Button>
+        )}
+        {rulesOpen && advanced && <PauseSizingView model={model} showCondition={false} showBenchmarks={settings.policy.enabled} />}
       </section>
       {settings.policy.enabled && <CollectiveContributionsView model={model} />}
     </div>
