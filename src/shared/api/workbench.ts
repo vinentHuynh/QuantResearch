@@ -9,7 +9,7 @@ export async function workbenchRequest<T>(
   const response = await fetch(
     WORKBENCH_API + path,
     data === undefined
-      ? undefined
+      ? signal && { signal, cache: "no-store" }
       : {
           method,
           signal,

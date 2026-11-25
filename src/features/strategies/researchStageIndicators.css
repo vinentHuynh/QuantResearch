@@ -1,0 +1,15 @@
+.wb-strategy-group-head h2 {
+  margin: 6px 0 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+.wb-strategy-group-head p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.wb-stage-dots { display: inline-flex; gap: 4px; }
+.wb-stage-dots i { width: 22px; height: 6px; border-radius: 3px; background: #e3e7e1; }
+.wb-stage-dots i.is-done { background: #237f66; }
+.wb-stage-dots i.is-next { background: #6f98cf; }
+.wb-stage-dots i.is-running { background: #3aa2ad; }
+.wb-stage-dots i.is-blocked { background: #e0a050; }
+.wb-stage-dots i.is-rerun { background: #9b7fc8; }
+.wb-stage-dots i.is-failed { background: #c24a3a; }

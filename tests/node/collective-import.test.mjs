@@ -77,6 +77,7 @@ test('failed asynchronous import removes only its new pin', async (t) => {
   mkdirSync(folder);
   const runId = '11111111-1111-4111-8111-111111111111';
   const priorPin = '22222222-2222-4222-8222-222222222222';
+  const otherRun = '33333333-3333-4333-8333-333333333333';
   const pinsFile = join(folder, 'pinned-runs.json');
   const run = {
     id: runId, status: 'Succeeded', tags: '',
@@ -85,7 +86,7 @@ test('failed asynchronous import removes only its new pin', async (t) => {
       parameters: {}, research: { role: 'Test', scenario: 'Baseline' } },
   };
   const api = createCollective(root, root, process.execPath, () => '',
-    () => ({ strategies: [], runs: [run], evaluations: [] }));
+    () => ({ strategies: [], runs: [run, { ...run, id: otherRun }], evaluations: [] }));
   const awaitFailure = async () => {
     for (let attempt = 0; attempt < 200 && api.status().running; attempt++)
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -94,7 +95,8 @@ test('failed asynchronous import removes only its new pin', async (t) => {
   };
 
   writeFileSync(pinsFile, JSON.stringify([priorPin]));
-  assert.equal(api.importRun(runId).running, true);
+  assert.equal(api.importRuns([runId, otherRun]).running, true);
+  assert.deepEqual(JSON.parse(readFileSync(pinsFile, 'utf8')), [priorPin, runId, otherRun]);
   await awaitFailure();
   assert.deepEqual(JSON.parse(readFileSync(pinsFile, 'utf8')), [priorPin]);
 

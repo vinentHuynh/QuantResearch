@@ -16,6 +16,14 @@
   max-height: 60vh;
   overflow: auto;
 }
+.strategy-picker-stage,
+.strategy-picker-stage-list {
+  display: grid;
+  gap: 8px;
+}
+.strategy-picker-rows > [role="listitem"] + [role="listitem"] .strategy-picker-stage {
+  margin-top: 12px;
+}
 .strategy-picker-group {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -55,9 +63,16 @@
   min-width: 0;
   font-weight: 650;
 }
-.strategy-picker-group-head > .mantine-Badge-root {
+.strategy-picker-stage-status {
   grid-column: 3;
   grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.strategy-picker-stage-status .wb-status-chip {
+  margin: 0;
 }
 .strategy-picker-group-count {
   grid-column: 4;
@@ -190,14 +205,14 @@
     grid-column: 3;
     grid-row: 1;
   }
-  .strategy-picker-group-head > .mantine-Badge-root {
+  .strategy-picker-stage-status {
     grid-column: 2 / 4;
     grid-row: 2;
     justify-self: start;
   }
   .strategy-picker-group-preview {
     grid-column: 2 / 4;
-    grid-row: 2;
+    grid-row: 3;
   }
   .strategy-picker-preview-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -243,13 +258,8 @@
   overflow-wrap: anywhere;
 }
 
-/* Add strategies: filters, chips, sparkline */
+/* Add strategy filters */
 .wb-add-filters { display: grid; gap: 12px; margin-bottom: 12px; }
 .wb-add-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .wb-add-chips button { border: 1px solid var(--mantine-color-gray-4); background: #fff; border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
 .wb-add-chips button.is-on { background: #1d4e89; border-color: #1d4e89; color: #fff; }
-.wb-add-rerun { margin-bottom: 12px; }
-.wb-spark { flex: none; }
-.wb-spark path { stroke: #0b7a5a; }
-.wb-spark.is-down path { stroke: #b3261e; }
-.wb-spark.is-empty { display: inline-block; width: 80px; }

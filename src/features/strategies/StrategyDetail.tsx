@@ -11,8 +11,9 @@ import { strategyTitle } from "../../shared/formatting/strategyTitle";
 import { ResearchNote } from "../../shared/ui/StrategyStageBadge";
 import { useStrategyStages } from "../../shared/ui/strategyStageContext";
 import type { WorkbenchController } from "../workspace/useWorkbenchController";
+import { formatNumber, formatPercent } from "../workspace/workbenchModel";
 import { rowAttempts, rowEvaluations, type ResearchRow } from "./researchRows";
-import { StatusChip } from "./StrategiesOverview";
+import { StatusChip } from "./ResearchStageIndicators";
 import "./strategiesOverview.css";
 
 const stageNames = ["", "Backtest", "Evaluation", "Robustness", "Forward test", "Ready"];
@@ -47,6 +48,23 @@ function Section({ title, aside, children, label }: { title: string; aside?: Rea
       </div>
       {children}
     </section>
+  );
+}
+
+function RunFigures({ title, run, openRun }: { title: string; run?: RunSummary; openRun: (run: RunSummary) => void }) {
+  if (!run?.result) return null;
+  const metrics = run.result.metrics;
+  return (
+    <Section title={title} aside={<Text size="xs" c="dimmed">
+      {run.input.research?.scenario || run.input.stage} · {shortDate(run.input.start)} – {shortDate(run.input.end)}
+    </Text>}>
+      <div className="wb-detail-figures">
+        <div><b className={metrics.net_pnl < 0 ? "wb-loss" : "wb-gain"}>{metrics.net_pnl < 0 ? "−" : "+"}${formatNumber(Math.abs(metrics.net_pnl))}</b><span>net P&amp;L · {percent(metrics.net_return)}</span></div>
+        <div><b className="wb-loss">{formatPercent(Math.abs(metrics.max_drawdown))}</b><span>max drawdown</span></div>
+        <div><b>{formatNumber(metrics.trades)}</b><span>trades</span></div>
+        <div><Button size="compact-sm" variant="subtle" onClick={() => openRun(run)}>Open results</Button></div>
+      </div>
+    </Section>
   );
 }
 
@@ -90,7 +108,7 @@ export function StrategyDetail({ row, controller, onArchive }: {
               {tags.map((tag) => <span className="wb-source-tag" key={tag}>{tag}</span>)}
               <span>{row.config ? `${row.config.symbol} ${row.config.timeframe} · ${sessionLabel(row.config.session)}` : "No backtest yet"}</span>
               {row.config && <span>· {attempts.length} {attempts.length === 1 ? "attempt" : "attempts"}</span>}
-              <StatusChip row={row} />
+              <StatusChip status={row.status} />
               {row.archived && <span className="wb-source-tag">Archived</span>}
             </div>
           </div>
@@ -141,16 +159,9 @@ export function StrategyDetail({ row, controller, onArchive }: {
           )}
         </Section>
 
-        {history?.result && (
-          <Section title="Full history" aside={<Text size="xs" c="dimmed">{shortDate(history.input.start)} – {shortDate(history.input.end)}</Text>}>
-            <div className="wb-detail-figures">
-              <div><b className={history.result.metrics.net_pnl < 0 ? "wb-loss" : "wb-gain"}>{money(history.result.metrics.net_pnl)}</b><span>net P&amp;L · {percent(history.result.metrics.net_return)}</span></div>
-              <div><b className="wb-loss">{percent(-Math.abs(history.result.metrics.max_drawdown))}</b><span>max drawdown</span></div>
-              <div><b>{(history.result.metrics.trades ?? 0).toLocaleString()}</b><span>trades</span></div>
-              <div><Button size="compact-sm" variant="subtle" onClick={() => openRun(history)}>Open results</Button></div>
-            </div>
-          </Section>
-        )}
+        <RunFigures title="Best run" run={row.config?.bestRun} openRun={openRun} />
+        {history && history.id !== row.config?.bestRun?.id &&
+          <RunFigures title="Latest completed run" run={history} openRun={openRun} />}
 
         <Section
           title="Evaluations"

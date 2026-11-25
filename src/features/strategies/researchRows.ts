@@ -18,8 +18,13 @@ export type ResearchRow = {
   archived: boolean;
 };
 
+/** Both strategy lists order a stage by completed progress, then script name. */
+export function sortResearchRows<T extends { status: StrategyStageStatus }>(rows: T[], nameOf: (row: T) => string) {
+  return rows.sort((a, b) => b.status.stage - a.status.stage || nameOf(a).localeCompare(nameOf(b)));
+}
+
 export function researchRows(state: WorkbenchState): ResearchRow[] {
-  return state.strategies
+  const rows = state.strategies
     .flatMap<ResearchRow>((strategy) => {
       const evidence = testingEvidence(strategy, state.runs, state.evaluations || []);
       if (!evidence.configurations.length)
@@ -41,8 +46,8 @@ export function researchRows(state: WorkbenchState): ResearchRow[] {
         status: config.lifecycle,
         archived: isConfigurationArchived(strategy.id, config.key, state.research_archive),
       }));
-    })
-    .sort((a, b) => b.status.stage - a.status.stage || a.strategy.name.localeCompare(b.strategy.name));
+    });
+  return sortResearchRows(rows, row => row.strategy.name);
 }
 
 export function useResearchRows(state: WorkbenchState | null) {
@@ -80,8 +85,22 @@ export const rowGroups: { id: RowGroupId; title: string; hint: string }[] = [
   { id: "benchmark", title: "Benchmarks", hint: "Reference strategies to compare against." },
 ];
 
+export function groupedResearchRows<T extends { status: StrategyStageStatus }>(rows: T[]) {
+  const buckets = new Map<RowGroupId, T[]>();
+  for (const row of rows) {
+    const id = rowGroup(row);
+    const bucket = buckets.get(id);
+    if (bucket) bucket.push(row);
+    else buckets.set(id, [row]);
+  }
+  return rowGroups.flatMap(group => {
+    const members = buckets.get(group.id);
+    return members ? [{ ...group, rows: members }] : [];
+  });
+}
+
 /** Which group a row belongs to: what it needs next. */
-export function rowGroup(row: ResearchRow): RowGroupId {
+export function rowGroup(row: { status: StrategyStageStatus }): RowGroupId {
   const display = statusDisplay(row.status);
   if (display.state === "benchmark") return "benchmark";
   if (display.state === "tracking") return "tracking";

@@ -1,5 +1,6 @@
+import { href } from "../../app/navigation";
 import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
-import { Alert, Drawer, Group, Loader, Text } from '@mantine/core';
+import { Alert, Button, Drawer, Group, Loader, Text } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { WorkbenchState } from '../workspace/workbenchModel';
 import { StrategyPickerControls } from './StrategyPickerControls';
@@ -46,7 +47,6 @@ export function CollectiveDashboard({
     markets,
     refreshEvidence,
     refreshing,
-    result,
     retryTracking,
     search,
     selected,
@@ -77,6 +77,14 @@ export function CollectiveDashboard({
   }, [pickerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   const recentForm = useRecentForm(model);
   const watchCount = Object.values(recentForm).filter((form) => form.tone === 'watch' || form.tone === 'weak').length;
+  const removeStrategies = (ids: string[]) => {
+    choose((copies) => {
+      const remaining = { ...copies };
+      for (const id of ids) delete remaining[id];
+      return remaining;
+    });
+    setAdded(null);
+  };
 
   const loadingState = (
     <Group>
@@ -112,9 +120,25 @@ export function CollectiveDashboard({
 
   return (
     <>
-      <PortfolioHeader model={model} view={current} watchCount={watchCount} onSettings={() => setSettingsOpen(true)} />
+      <PortfolioHeader
+        model={model}
+        view={current}
+        watchCount={watchCount}
+        onSettings={() => setSettingsOpen(true)}
+        onRemoveStrategies={removeStrategies}
+      />
       {alerts}
       <div className='wb-content collective-dashboard wb-portfolio'>
+        {model.historyUpdate && (
+          <Alert color={model.historyUpdate.phase === 'error' ? 'red' : model.historyUpdate.phase === 'done' ? 'teal' : 'blue'}
+            title={model.historyUpdate.phase === 'error' ? 'Portfolio recalculation needs attention' : model.historyUpdate.phase === 'done' ? 'Portfolio recalculated' : 'Recalculating portfolio'}
+            role={model.historyUpdate.phase === 'error' ? 'alert' : 'status'}>
+            {model.historyUpdate.message}
+            {model.canRetryRecalculation && <Button size="compact-xs" variant="light" ml="xs" disabled={refreshing}
+              onClick={() => void model.recalculatePortfolio(true)}>Retry recalculation</Button>}
+            {model.historyUpdate.phase !== 'done' && <> <a href={href('runs')} target='_blank' rel='noreferrer'>View runs</a></>}
+          </Alert>
+        )}
         {error && (
           <Alert color='red' title='Portfolio data'>
             {error}
@@ -129,14 +153,16 @@ export function CollectiveDashboard({
                 {computed.error}
               </Alert>
             )}
-            {result?.depleted && (
-              <Alert color='orange' title='Starting capital runs out in this history'>
-                Combined equity reaches zero or below at this size. The replay continues through those losses; it does not
-                simulate margin liquidation.
-              </Alert>
-            )}
             {current === 'overview' && (
-              <CollectiveOverviewView model={model} recentForm={recentForm} onSettings={() => setSettingsOpen(true)} added={added} onUndo={() => { if (added) choose(added.copies); setAdded(null); }} onDismiss={() => setAdded(null)} />
+              <CollectiveOverviewView
+                model={model}
+                recentForm={recentForm}
+                onSettings={() => setSettingsOpen(true)}
+                onRemoveStrategies={removeStrategies}
+                added={added}
+                onUndo={() => { if (added) choose(added.copies); setAdded(null); }}
+                onDismiss={() => setAdded(null)}
+              />
             )}
             {current === 'calendar' && <CollectiveCalendarView model={model} />}
             {current === 'risk' && <RiskView model={model} />}

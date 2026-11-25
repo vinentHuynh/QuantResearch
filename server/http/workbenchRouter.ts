@@ -722,7 +722,10 @@ const server = createServer(async (req, res) => {
       if (req.method === 'POST' && parts[3] === 'series') return json(res, collective.series((await body(req)).ids));
       if (req.method === 'POST' && parts[3] === 'risk') return json(res, portfolioRisk.risk((await body(req)).runIds));
       if (req.method === 'POST' && parts[3] === 'refresh') return json(res, collective.rebuild());
-      if (req.method === 'POST' && parts[3] === 'import') return json(res, collective.importRun(String((await body(req)).runId || '')));
+      if (req.method === 'POST' && parts[3] === 'import') {
+        const payload = await body(req);
+        return json(res, 'runIds' in payload ? collective.importRuns(payload.runIds) : collective.importRun(String(payload.runId || '')));
+      }
     }
     if (req.method === "GET" && action === "dashboard")
       return json(res, dashboard(url.searchParams.get("symbol") || undefined));
@@ -955,6 +958,7 @@ const server = createServer(async (req, res) => {
     if (action === "runs" && parts[3]) {
       const id = parts[3],
         run = get<Run>("run", id);
+      if (req.method === "GET" && parts[4] === "status") return json(res, { status: run.status, error: run.error });
       if (req.method === "POST" && parts[4] === "stage-assessments") {
         if (run.input.portfolio_replay)
           throw new Error("Portfolio tracking runs cannot receive research stage assessments");

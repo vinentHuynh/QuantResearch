@@ -30,24 +30,30 @@ added · Undo", and each key figure notes what it was before ("Was +$209,055").
 
 ### When the combined book is unavailable
 
-If the selected histories share no common tested window, the card offers **Apply
-common tested window** when one exists. It also offers **Run strategies on latest
-data**: each selected strategy's latest saved run is relaunched with its saved
-settings, ending at the newest data for its market. The card waits for the runs,
-reloads the run list, then imports each new run as that strategy's exact history. It
-reports failures instead of showing success. Strategies without a saved run are
-skipped. The runs appear in **Runs** like any other backtest.
+Use **Apply common tested window** when the selected histories already overlap.
+**Recalculate portfolio** starts a fresh backtest for each distinct selected
+setup using its saved settings and the latest registered data for its market.
+The button is also available in the portfolio header when results are visible.
+Progress appears above the portfolio. **Retry recalculation** resumes that
+attempt after an error. **Recalculate portfolio** starts a new attempt.
+
+The app verifies the new histories, applies them together, preserves each
+strategy’s copy count, and brings the portfolio dates inside their shared tested
+window. If a setup cannot be rerun or the markets have no overlap, the message
+identifies the issue before the app changes the active portfolio.
 
 ## Build a combination
 
 1. In **Add strategies**, search, choose market chips, and filter by status or
-   timeframe; sort by return ÷ drawdown, net P&L or smallest drawdown. A **Needs rerun**
-   banner counts strategies made with older code or not linked to a research run. The
+   timeframe. The picker opens with the stage sections from **Strategies**, such
+   as **At robustness**. Each card shows the previewed history’s stage. If a
+   script has histories at different stages, each appears in its own section.
+   You can also sort by return ÷ drawdown, net P&L or smallest drawdown. The
    footer shows how many are selected, with **Clear**, **Cancel** (reverts to the
    selection when the picker opened) and **Add N strategies**. Each script has an expandable group of exact histories. The collapsed
    preview shows the highest saved-window P&L divided by maximum daily dollar
-   drawdown among the histories in the current tab and filters. It keeps the
-   summary to market, timeframe, net P&L, daily drawdown, trades, and Return/DD;
+   drawdown among the matching histories on that card. The summary shows
+   research stage, market, timeframe, net P&L, daily drawdown, trades, and Return/DD;
    dates and research warnings remain in the expanded histories. The plus button
    on a collapsed group adds that exact best history, importing its raw run first
    when needed. All includes every registered script, including the benchmark.
@@ -92,7 +98,8 @@ and drawdown percentage. P&L divides the book's net P&L by shared starting
 capital. Drawdown follows that book's daily P&L on an isolated equity path
 starting at shared capital and measures the largest decline from a running peak.
 Both follow the selected dates, accounting basis, copies, and pause/sizing policy.
-Use the **X** beside a book to remove it from the active combination. Change copy
+Use **Remove** beside a strategy, or choose **Remove strategies** in the
+portfolio header to remove several at once. Change copy
 counts under **Add → Selected copies**. Save again to update a named combination.
 
 Settings and named combinations persist in the browser. On load, the first saved

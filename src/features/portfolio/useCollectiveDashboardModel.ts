@@ -47,6 +47,7 @@ import {
   selectedCollectiveItems,
   summarizeCollectiveResult,
 } from "../../../shared/ts/collective.ts";
+import { recalculatePortfolioHistories, updatePortfolioEvidence } from "./refreshPortfolioHistories";
 import { useCollectiveSeries } from "./useCollectiveSeries";
 import type { WorkbenchState } from "../workspace/workbenchModel";
 import { portfolioStageStatus, strategyStageStatuses } from "../../../shared/ts/stageStatus.ts";
@@ -91,6 +92,10 @@ function loadCatalog(key: string): Promise<CollectiveCatalog> {
     () => { if (catalogRequests.get(key) === pending) catalogRequests.delete(key); },
   );
   return pending;
+}
+
+function namedCatalog(data: CollectiveCatalog) {
+  return { ...data, items: data.items.map(item => ({ ...item, name: strategyTitle(item.name) })) };
 }
 
 export function useCollectiveDashboardModel({
@@ -142,7 +147,13 @@ export function useCollectiveDashboardModel({
   const [timeframe, setTimeframe] = useState("all");
   const [search, setSearch] = useState("");
   const [focusRunId, setFocusRunId] = useState<string | undefined>();
-  const pendingExactRun = useRef<{ runId: string; strategyId: string } | null>(null);
+  const refreshController = useRef<AbortController | null>(null);
+  const recalculationAttempt = useRef<{ selection: string; runs: Map<string, string> } | null>(null);
+  const catalogVersion = useRef(0);
+  const [historyUpdate, setHistoryUpdate] = useState<{ phase: "running" | "done" | "error"; message: string } | null>(null);
+  const selectionRef = useRef({ settings, selectedSavedBookId });
+  selectionRef.current = { settings, selectedSavedBookId };
+  useEffect(() => () => refreshController.current?.abort(), []);
   const handledRunRoute = useRef<string | null>(null);
   const runsRef = useRef(researchState?.runs || []);
   runsRef.current = researchState?.runs || [];
@@ -202,7 +213,7 @@ export function useCollectiveDashboardModel({
         .join(","),
     [settings.copies, catalog],
   );
-  const { histories, seriesCatalog, loading, setLoading } = useCollectiveSeries(
+  const { histories, seriesCatalog, loading, setLoading, applyVerifiedSeries } = useCollectiveSeries(
     baseCatalog,
     ids,
     setError,
@@ -218,43 +229,15 @@ export function useCollectiveDashboardModel({
 
   useEffect(() => {
     let active = true;
+    const version = catalogVersion.current;
     loadCatalog(`${refreshKey}:${reload}`)
       .then((data) => {
-        if (!active) return;
-        const pending = pendingExactRun.current;
-        const pendingRun = pending && runsRef.current.find(run => run.id === pending.runId);
-        const exact = pendingRun ? exactPortfolioItemForRun(data, pendingRun) : undefined;
-        if (pending) pendingExactRun.current = null;
-        setCatalog({
-          ...data,
-          items: data.items.map((item) => ({
-            ...item,
-            name: strategyTitle(item.name),
-          })),
-        });
-        const importError = pending && !exact
-          ? "The exact verified history is unavailable after import. No other run was selected."
-          : "";
-        setError(importError || data.evidence_error || "");
-        if (pending) setImportState(importError
-          ? { runId: pending.runId, phase: "error", error: importError }
-          : { phase: "idle" });
-        if (pending && exact && pendingRun) {
-          setSettings((current) => ({
-            ...current,
-            copies: selectPortfolioHistory(current.copies, data, runsRef.current, exact, pending.strategyId),
-          }));
-        }
+        if (!active || version !== catalogVersion.current) return;
+        setCatalog(namedCatalog(data));
+        setError(data.evidence_error || "");
       })
-      .catch((fetchError) => {
-        if (!active) return;
-        const message = fetchError instanceof Error ? fetchError.message : String(fetchError);
-        setError(message);
-        const pending = pendingExactRun.current;
-        if (pending) {
-          pendingExactRun.current = null;
-          setImportState({ runId: pending.runId, phase: "error", error: message });
-        }
+      .catch((error) => {
+        if (active && version === catalogVersion.current) setError(String(error));
       })
       .finally(() => {
         // Tracking can retry on the next poll if this request failed or if a
@@ -415,9 +398,9 @@ export function useCollectiveDashboardModel({
   );
 
   const choose = useCallback(
-    (copies: Record<string, number>) => {
+    (copies: SetStateAction<Settings["copies"]>) => {
       setLoading(true);
-      setSettings((current) => ({ ...current, copies }));
+      setSettings((current) => ({ ...current, copies: typeof copies === "function" ? copies(current.copies) : copies }));
     },
     [setLoading],
   );
@@ -430,49 +413,90 @@ export function useCollectiveDashboardModel({
     }));
   }, []);
 
-  const hasRun = useCallback((runId: string) => runsRef.current.some((run) => run.id === runId && run.status === "Succeeded" && !!run.result), []);
-
-  /** Resolves true when the import finished without an error. */
   const refreshEvidence = useCallback(async (runId?: string): Promise<boolean> => {
+    if (refreshController.current) return false;
+    const controller = new AbortController();
+    refreshController.current = controller;
     setRefreshing(true);
     setError("");
     if (runId) setImportState({ runId, phase: "importing" });
     try {
-      let exactRequest: { runId: string; strategyId: string } | null = null;
-      if (runId) {
-        const run = runsRef.current.find(candidate => candidate.id === runId);
-        if (!run || run.status !== "Succeeded" || !run.result || !isPortfolioBaselineRun(run))
-          throw new Error("Choose a completed baseline run to import into the portfolio.");
-        exactRequest = { runId, strategyId: run.input.strategy.id };
-      }
-      const response = await fetch(runId ? "/api/workbench/collective/import" : "/api/workbench/collective/refresh", {
-        method: "POST",
-        ...(runId ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ runId }) } : {}),
-      });
-      let status = await response.json().catch(() => ({}));
-      if (!response.ok || status.error || status.evidence_error)
-        throw new Error(status.error || status.evidence_error || "Could not start evidence refresh");
-      while (status.running) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const poll = await fetch("/api/workbench/collective/status");
-        status = await poll.json().catch(() => ({}));
-        if (!poll.ok || status.error || status.evidence_error)
-          throw new Error(status.error || status.evidence_error || "Could not check evidence import");
-      }
-      pendingExactRun.current = exactRequest;
+      const run = runId ? runsRef.current.find(r => r.id === runId) : undefined;
+      if (runId && (!run || run.status !== "Succeeded" || !run.result || !isPortfolioBaselineRun(run)))
+        throw new Error("Choose a completed baseline run to import into the portfolio.");
+      await updatePortfolioEvidence(runId ? [runId] : undefined, controller.signal);
       if (runId) setImportState({ runId, phase: "verifying" });
-      setReload((current) => current + 1);
+      const data = await loadCatalog("verify-import");
+      controller.signal.throwIfAborted();
+      catalogVersion.current++;
+      setCatalog(namedCatalog(data));
+      if (run) {
+        const exact = exactPortfolioItemForRun(data, run);
+        if (!exact) throw new Error("The exact verified history is unavailable after import. No other run was selected.");
+        setSettings(current => ({ ...current, copies: selectPortfolioHistory(current.copies, data, runsRef.current, exact, run.input.strategy.id) }));
+        setImportState({ phase: "idle" });
+      }
+      setError(data.evidence_error || "");
       return true;
-    } catch (refreshError) {
-      if (runId && pendingExactRun.current?.runId === runId) pendingExactRun.current = null;
-      const message = refreshError instanceof Error ? refreshError.message : String(refreshError);
+    } catch (error) {
+      if (controller.signal.aborted) return false;
+      const message = error instanceof Error ? error.message : String(error);
       setError(message);
       if (runId) setImportState({ runId, phase: "error", error: message });
       return false;
     } finally {
-      setRefreshing(false);
+      refreshController.current = null;
+      if (!controller.signal.aborted) setRefreshing(false);
     }
   }, []);
+
+  const selectionKey = JSON.stringify([selectedSavedBookId, selected.map(item => item.id).sort()]);
+  const canRetryRecalculation = historyUpdate?.phase === "error" && recalculationAttempt.current?.selection === selectionKey;
+  const recalculatePortfolio = async (retry = false) => {
+    if (!catalog || !selected.length || refreshController.current) return;
+    const controller = new AbortController();
+    refreshController.current = controller;
+    setRefreshing(true);
+    setError("");
+    const progress = (message: string) => setHistoryUpdate({ phase: "running", message });
+    const attempt = retry && recalculationAttempt.current?.selection === selectionKey
+      ? recalculationAttempt.current : { selection: selectionKey, runs: new Map<string, string>() };
+    recalculationAttempt.current = attempt;
+    progress(retry ? "Checking backtests from this recalculation…" : "Preparing fresh backtests on the latest market data…");
+    try {
+      const update = await recalculatePortfolioHistories(selected, catalog, attempt.runs, controller.signal, progress);
+      controller.signal.throwIfAborted();
+      const current = selectionRef.current;
+      const copies = { ...current.settings.copies };
+      const chosen = Object.keys(copies).filter(id => copies[id] > 0);
+      if (current.selectedSavedBookId !== selectedSavedBookId || chosen.length !== selected.length || !selected.every(item => copies[item.id] > 0))
+        throw new Error("The selection changed during recalculation. Recalculate the current portfolio to apply its histories.");
+
+      const refreshedCopies: Record<string, number> = {};
+      for (const { previous, next } of update.replacements) {
+        refreshedCopies[next.id] = (refreshedCopies[next.id] || 0) + copies[previous];
+        if (refreshedCopies[next.id] > 100) throw new Error(`The refreshed histories would exceed 100 copies of ${next.name}.`);
+      }
+      const { start, end } = update.common;
+      catalogVersion.current++;
+      const refreshedCatalog = namedCatalog(update.catalog);
+      applyVerifiedSeries(refreshedCatalog, update.histories);
+      setCatalog(refreshedCatalog);
+      setSettings(current => {
+        const windowStart = current.start >= start && current.start <= end && !current.followCommonStart ? current.start : start;
+        const windowEnd = current.followLatest === false && current.end >= windowStart && current.end <= end ? current.end : end;
+        return { ...current, copies: refreshedCopies, start: windowStart, end: windowEnd };
+      });
+      recalculationAttempt.current = null;
+      setHistoryUpdate({ phase: "done", message: `The new backtests share a tested window from ${start} through ${end}.` });
+      void refreshResearch?.();
+    } catch (error) {
+      if (!controller.signal.aborted) setHistoryUpdate({ phase: "error", message: error instanceof Error ? error.message : String(error) });
+    } finally {
+      refreshController.current = null;
+      if (!controller.signal.aborted) setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (!view.startsWith("add~") || !baseCatalog || !researchState) return;
@@ -681,8 +705,9 @@ export function useCollectiveDashboardModel({
     policy,
     railCollapsed,
     refreshEvidence,
-    hasRun,
-    refreshResearch,
+    historyUpdate,
+    recalculatePortfolio,
+    canRetryRecalculation,
     refreshing,
     retryTracking,
     result,

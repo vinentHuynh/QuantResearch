@@ -29,6 +29,7 @@ assert.equal(e.status,'Not backtested');assert.equal(e.total,0);assert.equal(e.p
 const legacyRun=run('legacy-current',{input:{protocol:1,strategy:{...strategy,execution_source_hash:undefined},execution_source_hash:undefined,source_hash:'legacy-snapshot'}});
 e=summarize([legacyRun]);assert.equal(e.status,'Development backtest');assert.equal(e.total,1);assert.equal(e.previousSource,0);assert.equal(e.configurations[0].sourceHash,'legacy-snapshot');checks++;
 e=summarize([run('zero',{metrics:{trades:0}}),run('train',{input:{research:{role:'Training'}}}),run('invalid',{metrics:{net_return:NaN}})]);assert.equal(e.best,null);assert(e.issues.some(i=>i.title==='No trades'));checks++;
+assert.equal(e.configurations[0].bestRun, undefined);
 e=summarize([run('flagged',{tags:'checks-failed',metrics:{net_return:3},input:{criteria:'Max DD 20%',parameters:{delay:0}}}),run('unvalidated',{metrics:{net_return:10},input:{parameters:{delay:2}}}),run('passed',{tags:'stress,case-passed',input:{parameters:{delay:5}}})]);assert.equal(e.best.run.id,'passed');assert.equal(e.status,'Development backtest');assert(e.issues.some(i=>i.reason.includes('Max DD 20%')));checks++;
 e=summarize([run('es',{input:{dataset:{symbol:'ES'}},metrics:{net_return:10}}),run('nq')],[],'NQ');assert.equal(e.total,1);assert.equal(e.best.run.id,'nq');checks++;
 e=summarize([run('zero-dd',{metrics:{max_drawdown:0,net_return:10}}),run('measured')]);assert.equal(e.best.run.id,'measured');checks++;
@@ -61,6 +62,8 @@ const mixed = [...children(), run('es-failure', {tags:'checks-failed', input:{da
 e=summarize(reviewed(mixed,[evaluation()]),[evaluation()]);
 assert.equal(e.status,'Historical evaluation passed');assert.equal(e.tone,'teal');assert.equal(e.passingConfigurations,1);assert.equal(e.failingConfigurations,1);
 assert.equal(e.configurations.find(c=>c.symbol==='NQ').stage,2);assert.equal(e.configurations.find(c=>c.symbol==='ES').stage,1);
+assert.equal(e.configurations.find(c => c.symbol === 'NQ').bestRun.id, 'base');
+assert.equal(e.configurations.find(c => c.symbol === 'ES').bestRun.id, 'es-failure');
 assert(e.reviewComplete);assert.equal(e.review,'Complete');assert(e.issues[0].scope.startsWith('ES'));checks++;
 assert.equal(summarize(mixed,[evaluation()],'NQ').issues.length,0);
 assert.equal(summarize(mixed,[evaluation()],'ES').status,'Development backtest');checks++;

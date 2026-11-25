@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   ActionIcon,
   Badge,
@@ -15,7 +15,6 @@ import {
   IconMinus,
   IconPlus,
   IconRefresh,
-  IconX,
 } from '@tabler/icons-react';
 import { href } from '../../app/navigation';
 import type { RecentForm } from './recentForm';
@@ -50,76 +49,7 @@ const periodLabels: Record<PortfolioPnlPeriod, string> = {
 };
 
 export function CollectiveEmptyState({ model }: { model: Model }) {
-  const { computed, histories, hasRun, refreshEvidence, refreshResearch, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
-  const [rerun, setRerun] = useState<{ phase: 'idle' | 'starting' | 'running' | 'importing' | 'done' | 'error'; message?: string }>({ phase: 'idle' });
-  const hasRunRef = useRef(hasRun);
-  hasRunRef.current = hasRun;
-  const runnable = selected.flatMap((item) => (item.source_run_ids?.length ? [item.source_run_ids[item.source_run_ids.length - 1]] : []));
-  const api = '/api/workbench';
-  const getJson = async (path: string) => {
-    const response = await fetch(api + path, { cache: 'no-store' });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
-    return body;
-  };
-  /** Rerun each selected strategy with its saved settings, but through the newest data of its market. */
-  const rerunStrategies = async () => {
-    setRerun({ phase: 'starting' });
-    try {
-      const state = await getJson('/state');
-      const launched: string[] = [];
-      for (const id of runnable) {
-        const source = (state.runs || []).find((run: { id: string }) => run.id === id);
-        if (!source) continue;
-        const symbol = source.input.dataset?.symbol;
-        const newest = (state.datasets || [])
-          .filter((dataset: { symbol: string }) => dataset.symbol === symbol)
-          .sort((a: { last: string }, b: { last: string }) => String(b.last).localeCompare(String(a.last)))[0];
-        if (!newest) continue;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { strategy, dataset, retry_of, ...input } = source.input;
-        const payload = {
-          ...input,
-          strategy_id: strategy?.id || input.strategy_id,
-          dataset_id: newest.id,
-          dataset_ids: [newest.id],
-          timeframes: [input.timeframe],
-          end: String(newest.last).slice(0, 10),
-          sweep: {},
-        };
-        const response = await fetch(`${api}/runs`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body.error || `Could not start the run for ${strategy?.name || id}`);
-        launched.push(...(Array.isArray(body) ? body : [body]).map((run: { id: string }) => run.id));
-      }
-      if (!launched.length) throw new Error('None of the selected strategies has a saved run and newer market data to run on.');
-      setRerun({ phase: 'running', message: `Running ${launched.length} ${launched.length === 1 ? 'backtest' : 'backtests'} through the latest data…` });
-      const pending = new Set(launched);
-      for (let attempt = 0; pending.size && attempt < 900; attempt += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        for (const id of [...pending]) {
-          const run = await getJson(`/runs/${encodeURIComponent(id)}`);
-          if (run.status === 'Succeeded') pending.delete(id);
-          else if (['Failed', 'Cancelled', 'Canceled'].includes(run.status)) throw new Error(`A run ${run.status.toLowerCase()}. Open Runs to see why.`);
-        }
-      }
-      if (pending.size) throw new Error('The runs are still going. Check Runs, then use the refresh icon beside “Updated” above.');
-      setRerun({ phase: 'importing', message: 'Loading the new results into the portfolio…' });
-      // The app learns about finished runs on its own schedule; wait until it has them before importing.
-      for (let attempt = 0; attempt < 30 && !launched.every((id) => hasRunRef.current(id)); attempt += 1) {
-        await refreshResearch?.();
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-      if (!launched.every((id) => hasRunRef.current(id))) throw new Error('The new runs finished but have not shown up yet. Reload the page, then use Add strategies › Import exact run.');
-      for (const id of launched) {
-        if (!(await refreshEvidence(id))) throw new Error('Could not import a new run into the portfolio. The message above says why.');
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
-      setRerun({ phase: 'done', message: 'Updated to the latest data.' });
-    } catch (error) {
-      setRerun({ phase: 'error', message: error instanceof Error ? error.message : String(error) });
-    }
-  };
+  const { computed, histories, historyUpdate, refreshing, recalculatePortfolio, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
   const endExplanation = computed.coverageGap
     ? coverageEndExplanation(selected, histories, settings, testedWindow, tracking)
     : null;
@@ -133,7 +63,7 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
           ? computed.coverageGap
             ? endExplanation || (testedWindow.start
               ? `All selected books cover ${testedWindow.start} to ${testedWindow.end}. Apply this continuous tested window to calculate the combined book.`
-              : 'These configurations have no common tested window. Remove a configuration or choose different histories.')
+              : 'These histories cover different dates. Recalculate the portfolio to run fresh backtests on the latest available market data.')
             : 'Review the message above, then adjust the dates, calibration, or replay settings.'
           : 'Add tested strategies to see their combined P&L, calendar and contributions.'}
       </p>
@@ -150,16 +80,10 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
       )}
       {selected.length > 0 && (
         <>
-          <Button mt='md' ml={computed.coverageGap ? 'xs' : 0} variant='default' leftSection={<IconRefresh size={14} />}
-            loading={['starting', 'running', 'importing'].includes(rerun.phase)} disabled={!runnable.length} onClick={() => void rerunStrategies()}
-            title={runnable.length ? 'Rerun each selected strategy through the newest market data' : 'None of the selected strategies has a saved run to repeat'}>
-            Run strategies on latest data
+          <Button mt='md' ml={computed.coverageGap ? 'xs' : 0} variant='filled' leftSection={<IconRefresh size={14} />}
+            loading={historyUpdate?.phase === 'running'} disabled={refreshing} onClick={() => void recalculatePortfolio()}>
+            Recalculate portfolio
           </Button>
-          {rerun.message && (
-            <Text size='sm' mt='sm' c={rerun.phase === 'error' ? 'red' : 'dimmed'} role={rerun.phase === 'error' ? 'alert' : 'status'}>
-              {rerun.message} {['running', 'error'].includes(rerun.phase) && <a href={href('runs')}>View runs</a>}
-            </Text>
-          )}
         </>
       )}
       {!selected.length && (
@@ -206,10 +130,11 @@ export type AddedSummary = {
   was: { net: number | null; drawdown: number | null; ratio: number | null; winRate: number | null };
 };
 
-export function CollectiveOverviewView({ model, recentForm, onSettings, added, onUndo, onDismiss }: {
+export function CollectiveOverviewView({ model, recentForm, onSettings, onRemoveStrategies, added, onUndo, onDismiss }: {
   model: Model;
   recentForm: Record<string, RecentForm>;
   onSettings: () => void;
+  onRemoveStrategies: (ids: string[]) => void;
   added?: AddedSummary | null;
   onUndo?: () => void;
   onDismiss?: () => void;
@@ -241,7 +166,7 @@ export function CollectiveOverviewView({ model, recentForm, onSettings, added, o
   const worstSingle = [...periodComponents].sort((a, b) => b.maxDrawdownDollars - a.maxDrawdownDollars)[0];
   const ratio = periodMetrics.recoveryFactor;
   const setCopies = (id: string, value: number) =>
-    choose({ ...settings.copies, [id]: Math.min(100, Math.max(1, value)) });
+    choose((copies) => ({ ...copies, [id]: Math.min(100, Math.max(1, value)) }));
 
   const was = added?.was;
   return (
@@ -336,8 +261,8 @@ export function CollectiveOverviewView({ model, recentForm, onSettings, added, o
         <ScrollArea>
           <div className='wb-strategy-table' role='table' aria-label='Strategies in this portfolio' data-testid='selected-strategies'>
             <div role='row' className='is-head'>
-              {['Strategy', 'Size', 'Net P&L', 'Max drawdown', 'Share of P&L', 'Recent form', ''].map((heading, index) => (
-                <span role='columnheader' key={index}>{heading || <span className='visually-hidden'>Remove</span>}</span>
+              {['Strategy', 'Size', 'Net P&L', 'Max drawdown', 'Share of P&L', 'Recent form'].map((heading) => (
+                <span role='columnheader' key={heading}>{heading}</span>
               ))}
             </div>
             {selected.map((item) => {
@@ -359,7 +284,18 @@ export function CollectiveOverviewView({ model, recentForm, onSettings, added, o
                         <button type='button' className='wb-link-button' onClick={() => void retryTracking(item.id)}> Retry update</button>
                       )}
                     </span>
-                    <StrategyStageBadge {...collectiveProgress(item)} compact />
+                    <Group gap='xs'>
+                      <StrategyStageBadge {...collectiveProgress(item)} compact />
+                      <Button
+                        variant='subtle'
+                        color='gray'
+                        size='compact-xs'
+                        aria-label={`Remove ${name} ${item.symbol} ${item.timeframe}`}
+                        onClick={() => onRemoveStrategies([item.id])}
+                      >
+                        Remove
+                      </Button>
+                    </Group>
                   </div>
                   <div role='cell' className='wb-size-stepper'>
                     <ActionIcon size='sm' variant='default' aria-label={`Decrease size of ${name}`} disabled={copies <= 1} onClick={() => setCopies(item.id, copies - 1)}>
@@ -375,22 +311,6 @@ export function CollectiveOverviewView({ model, recentForm, onSettings, added, o
                   <span role='cell' className='mono'>{share == null ? '—' : `${Math.round(share * 100)}%`}</span>
                   <span role='cell'>
                     {form ? <a className={`wb-form is-${form.tone}`} href={href('portfolio', 'risk')}>{form.label}</a> : '—'}
-                  </span>
-                  <span role='cell'>
-                    <ActionIcon
-                      variant='subtle'
-                      color='gray'
-                      size='sm'
-                      aria-label={`Remove ${name} ${item.symbol} ${item.timeframe}`}
-                      title='Remove from portfolio'
-                      onClick={() => {
-                        const next = { ...settings.copies };
-                        delete next[item.id];
-                        choose(next);
-                      }}
-                    >
-                      <IconX size={14} />
-                    </ActionIcon>
                   </span>
                 </div>
               );

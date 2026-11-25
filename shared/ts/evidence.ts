@@ -163,7 +163,8 @@ export function testingEvidence(
     const executionIssues = attempts.filter(r => !active(r.status) && r.status !== "Succeeded" && !supersededTechnicalRunIds.has(r.id)).length;
     const noTrades = completed.length > 0 && completed.every(r => !r.result?.metrics.trades);
     const outcome = failed ? "Criteria not met" : incomplete ? "Evaluation incomplete" : noTrades ? "No trades" : executionIssues ? "Execution issues recorded" : activeEvaluation ? "Evaluation in progress" : passed ? "Declared checks passed" : "Validation pending";
-    const runId = (candidates.find(c => configuration(c.run) === key)?.run || completed.find(r => r.input.research?.role !== "Training") || sample).id;
+    const bestRun = candidates.find(c => configuration(c.run) === key)?.run;
+    const runId = (bestRun || completed.find(r => r.input.research?.role !== "Training") || sample).id;
     const evaluationId = (activeEvaluation || matchingEvaluations[0])?.id;
     const relevantIssues = issues.filter(issue =>
       issue.runId ? attempts.some(r => r.id === issue.runId) && !supersededTechnicalRunIds.has(issue.runId)
@@ -190,7 +191,7 @@ export function testingEvidence(
         : noTrades ? "Check signal activity and data coverage before evaluating."
         : executionIssues ? "Inspect execution errors and rerun the affected attempts."
         : completed.length ? "Run a later-period baseline with declared stress checks." : "Complete a backtest.",
-      runId, evaluationId, lifecycle,
+      bestRun, runId, evaluationId, lifecycle,
     };
   }).sort((a, b) => b.stage - a.stage || a.symbol.localeCompare(b.symbol) || a.key.localeCompare(b.key));
   const stage = configurations.reduce<ResearchStage>((highest, c) => Math.max(highest, c.stage) as ResearchStage, 0);

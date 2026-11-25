@@ -4,6 +4,7 @@ import { IconCheck, IconChevronDown, IconRefresh, IconSettings, IconTrash } from
 import { href } from "../../app/navigation";
 import type { CollectiveDashboardModel } from "./useCollectiveDashboardModel";
 import { PortfolioPeriodSelector } from "./PortfolioPeriodSelector";
+import { PortfolioStrategyRemoval } from "./PortfolioStrategyRemoval";
 
 export type PortfolioView = "overview" | "calendar" | "risk";
 
@@ -124,11 +125,13 @@ export function PortfolioHeader({
   view,
   watchCount,
   onSettings,
+  onRemoveStrategies,
 }: {
   model: CollectiveDashboardModel;
   view: PortfolioView;
   watchCount: number;
   onSettings: () => void;
+  onRemoveStrategies: (ids: string[]) => void;
 }) {
   const { catalog, pnlPeriod, refreshEvidence, refreshing, selected, selectedSavedBookId, setPnlPeriod, settings } = model;
   const updated = catalog
@@ -154,7 +157,7 @@ export function PortfolioHeader({
             {updated && (
               <>
                 {" · "}
-                <button
+                {selected.length ? <span>Updated {updated}</span> : <button
                   type="button"
                   className="wb-inline-refresh"
                   aria-label="Refresh data"
@@ -164,13 +167,20 @@ export function PortfolioHeader({
                 >
                   <IconRefresh size={13} className={refreshing ? "wb-spin" : undefined} />
                   Updated {updated}
-                </button>
+                </button>}
               </>
             )}
           </p>
         </div>
         <div className="wb-page-actions">
+          {model.result && (view !== "overview" || model.periodMetrics) && (
+            <Button variant="default" size="xs" leftSection={<IconRefresh size={14} />}
+              loading={model.historyUpdate?.phase === "running"} disabled={refreshing} onClick={() => void model.recalculatePortfolio()}>
+              Recalculate portfolio
+            </Button>
+          )}
           <PortfolioPeriodSelector value={pnlPeriod} onChange={setPnlPeriod} />
+          <PortfolioStrategyRemoval selected={selected} onRemove={onRemoveStrategies} />
           <Button variant="default" size="xs" leftSection={<IconSettings size={14} />} onClick={onSettings}>
             Settings
           </Button>

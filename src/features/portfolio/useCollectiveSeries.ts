@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type {
   CollectiveCatalog,
   CollectiveSeries,
@@ -12,9 +12,22 @@ export function useCollectiveSeries(
   const [histories, setHistories] = useState<CollectiveSeries[]>([]);
   const [seriesCatalog, setSeriesCatalog] = useState<CollectiveCatalog | null>(null);
   const [loading, setLoading] = useState(false);
+  const request = useRef<AbortController | null>(null);
+  const verified = useRef<{ catalog: CollectiveCatalog; ids: string } | null>(null);
+
+  function applyVerifiedSeries(catalog: CollectiveCatalog, histories: CollectiveSeries[]) {
+    request.current?.abort();
+    verified.current = { catalog, ids: histories.map(history => history.id).sort().join(",") };
+    setSeriesCatalog(catalog);
+    setHistories(histories);
+    setLoading(false);
+  }
 
   useEffect(() => {
+    if (verified.current?.catalog === catalog && verified.current.ids === ids) return;
+    verified.current = null;
     const controller = new AbortController();
+    request.current = controller;
     if (!catalog || !ids) {
       setLoading(false);
       return () => controller.abort();
@@ -53,5 +66,5 @@ export function useCollectiveSeries(
     };
   }, [catalog, ids, setError]);
 
-  return { histories, seriesCatalog, loading, setLoading };
+  return { histories, seriesCatalog, loading, setLoading, applyVerifiedSeries };
 }

@@ -2,36 +2,43 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Alert, Button, Group, Text, TextInput } from "@mantine/core";
 import { IconRefresh, IconSearch } from "@tabler/icons-react";
 import { statusDisplay } from "../../../shared/ts/strategyLifecycle.ts";
-import { strategyHref } from "../../app/navigation";
+import { href, strategyHref } from "../../app/navigation";
 import { strategyTitle } from "../../shared/formatting/strategyTitle";
 import { PageHeader } from "../../shared/ui/PageHeader";
 import { useStrategyStages } from "../../shared/ui/strategyStageContext";
 import { isInvalidRun } from "../runs/model";
-import type { WorkbenchState } from "../workspace/workbenchModel";
-import { rowAttempts, rowGroup, rowGroups, rowMeta, type ResearchRow, type RowGroupId } from "./researchRows";
+import { formatNumber, formatPercent, type WorkbenchState } from "../workspace/workbenchModel";
+import { groupedResearchRows, rowAttempts, rowMeta, type ResearchRow, type RowGroupId } from "./researchRows";
+import { ResearchGroupHeading, StageDots, StatusChip } from "./ResearchStageIndicators";
 import "./strategiesOverview.css";
 
 const COLLAPSED = 4;
 const collapsible: RowGroupId[] = ["failed", "rerun", "untested"];
 
-export function StageDots({ row }: { row: ResearchRow }) {
-  const display = statusDisplay(row.status);
-  const plain = display.state === "benchmark" || display.state === "tracking";
+function StrategyRowSummary({ row, attempts }: { row: ResearchRow; attempts: number }) {
+  const best = row.config?.bestRun;
+  const metrics = best?.result?.metrics;
+  const title = strategyTitle(row.strategy.name);
   return (
-    <span className="wb-stage-dots" aria-label={display.label} role="img">
-      {[1, 2, 3, 4, 5].map((stage) => {
-        const tone = plain ? "todo"
-          : stage < display.stage || (stage === display.stage && display.state === "ready") ? "done"
-            : stage === display.stage ? display.state : "todo";
-        return <i key={stage} className={`is-${tone}`} />;
-      })}
-    </span>
+    <div className="wb-strategy-summary">
+      <a className="wb-strategy-name" href={strategyHref(row.id)}>
+        <strong>{title}</strong>
+        <span>{rowMeta(row, attempts)}</span>
+      </a>
+      {best && metrics ? (
+        <div className="wb-strategy-best">
+          <a className="wb-link" href={href("runs", `inspect~${best.id}`)}
+            aria-label={`Open best run for ${title}, ${best.input.dataset.symbol} ${best.input.timeframe}`}
+            title={`${best.input.research?.scenario || best.input.stage} · ${best.input.start} – ${best.input.end}`}>
+            Best run
+          </a>
+          <span className="wb-gain">${formatNumber(metrics.net_pnl)} net</span>
+          <span>{formatPercent(Math.abs(metrics.max_drawdown))} drawdown</span>
+          <span>{formatNumber(metrics.trades)} {metrics.trades === 1 ? "trade" : "trades"}</span>
+        </div>
+      ) : row.config && <span className="wb-strategy-best">No qualifying run yet</span>}
+    </div>
   );
-}
-
-export function StatusChip({ row }: { row: ResearchRow }) {
-  const display = statusDisplay(row.status);
-  return <span className={`wb-status-chip is-${display.state}`} title={display.description}>{display.label}</span>;
 }
 
 export function StrategiesOverview({
@@ -61,9 +68,7 @@ export function StrategiesOverview({
     () => Object.fromEntries(rows.filter((row) => !row.archived).map((row) => [row.id, rowAttempts(state, row).length])),
     [rows, state],
   );
-  const groups = rowGroups
-    .map((group) => ({ ...group, rows: listed.filter((row) => rowGroup(row) === group.id) }))
-    .filter((group) => group.rows.length);
+  const groups = groupedResearchRows(listed);
   const invalidRuns = state.runs.filter(isInvalidRun);
 
   return (
@@ -100,21 +105,15 @@ export function StrategiesOverview({
           const shown = open ? group.rows : group.rows.slice(0, COLLAPSED);
           return (
             <section className="wb-strategy-group" key={group.id} aria-labelledby={`group-${group.id}`}>
-              <div className="wb-strategy-group-head">
-                <h2 id={`group-${group.id}`}>{group.title}<span className="wb-group-count">{group.rows.length}</span></h2>
-                <p>{group.hint}</p>
-              </div>
+              <ResearchGroupHeading id={`group-${group.id}`} title={group.title} hint={group.hint} count={group.rows.length} />
               <ul className="wb-strategy-rows">
                 {shown.map((row) => {
                   const display = statusDisplay(row.status);
                   return (
                     <li key={row.id} className="wb-strategy-row">
-                      <a className="wb-strategy-name" href={strategyHref(row.id)}>
-                        <strong>{strategyTitle(row.strategy.name)}</strong>
-                        <span>{rowMeta(row, attempts[row.id] || 0)}</span>
-                      </a>
-                      <StageDots row={row} />
-                      <StatusChip row={row} />
+                      <StrategyRowSummary row={row} attempts={attempts[row.id] || 0} />
+                      <StageDots status={row.status} />
+                      <StatusChip status={row.status} />
                       <div className="wb-strategy-row-actions">
                         {row.status.action && onAction ? (
                           <Button
@@ -172,15 +171,13 @@ export function ArchivedConfigurations({ state, rows, busy, onRestore }: {
       </div>
       <ul className="wb-strategy-rows">
         {archived.map((row) => {
-          const seed = rowAttempts(state, row)[0];
+          const attempts = rowAttempts(state, row);
+          const seed = attempts[0];
           return (
             <li key={row.id} className="wb-strategy-row">
-              <a className="wb-strategy-name" href={strategyHref(row.id)}>
-                <strong>{strategyTitle(row.strategy.name)}</strong>
-                <span>{rowMeta(row, rowAttempts(state, row).length)}</span>
-              </a>
-              <StageDots row={row} />
-              <StatusChip row={row} />
+              <StrategyRowSummary row={row} attempts={attempts.length} />
+              <StageDots status={row.status} />
+              <StatusChip status={row.status} />
               <div className="wb-strategy-row-actions">
                 {seed && <Button size="xs" variant="default" disabled={busy} onClick={() => onRestore(seed.id)}>Restore</Button>}
               </div>

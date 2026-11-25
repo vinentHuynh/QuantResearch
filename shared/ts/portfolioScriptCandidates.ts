@@ -235,8 +235,12 @@ export function portfolioScriptGroups(
   strategies: Strategy[], catalog: CollectiveCatalog, runs: RunSummary[],
   statuses: ReturnType<typeof strategyStageStatuses>, filters: Filters = {},
 ): PortfolioScriptGroup[] {
+  return groupPortfolioHistories(collectCandidates(strategies, catalog, runs, statuses, filters, true));
+}
+
+export function groupPortfolioHistories(candidates: PortfolioScriptCandidate[]): PortfolioScriptGroup[] {
   const groups = new Map<string, PortfolioScriptGroup>();
-  for (const candidate of collectCandidates(strategies, catalog, runs, statuses, filters, true)) {
+  for (const candidate of candidates) {
     const group = groups.get(candidate.strategyId) || { strategyId: candidate.strategyId, name: candidate.name, options: [] };
     const { strategyId, name, symbol, timeframe, item, run, status, pnl, chart, date } = candidate;
     group.options.push({ strategyId, name, symbol, timeframe, item, run, status, pnl, chart, date });
@@ -268,5 +272,5 @@ export function portfolioItemStrategyId(item: CollectiveItem, runs: RunSummary[]
 export function exactPortfolioItemForRun(catalog: CollectiveCatalog, run: RunSummary): CollectiveItem | undefined {
   return catalog.items.find(item => item.source_run_ids?.length === 1 && item.source_run_ids[0] === run.id
     && item.coverage?.length === 1 && item.coverage[0].start === run.input.start
-    && item.coverage[0].end === run.input.end && !item.latest_replay && !item.research_integrity_error);
+    && item.coverage[0].end === run.input.end && !item.latest_replay && !item.verified_replay && !item.research_integrity_error);
 }

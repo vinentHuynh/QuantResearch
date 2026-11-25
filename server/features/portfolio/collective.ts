@@ -1,3 +1,4 @@
+import { exactPortfolioItemForRun, isPortfolioBaselineRun } from "../../../shared/ts/portfolioScriptCandidates.ts";
 import { readFileSync, existsSync, statSync, mkdirSync, writeFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -46,32 +47,25 @@ export function createCollective(
     return index.items.filter((item) => !isArchivedCollectiveItem(item, archived, runStrategies));
   }
   const api = {
-    importRun: (runId: string) => {
+    importRun: (runId: string) => api.importRuns([runId]),
+    importRuns: (ids: unknown) => {
       if (refresh.running) throw new Error("Wait for the current evidence refresh to finish.");
-      if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(runId))
-        throw new Error("Choose a saved run with a valid ID.");
-      const run = researchState?.().runs.find(candidate => candidate.id === runId);
-      if (!run || run.status !== "Succeeded")
-        throw new Error("Choose a completed saved run.");
-      if (run.input.portfolio_replay)
-        throw new Error("Portfolio tracking runs cannot be imported as research baselines.");
-      const research = run.input.research;
-      const tags = (run.tags || "").toLowerCase();
-      const baseline = research
-        ? research.role === "Test" && research.scenario === "Baseline"
-        : !run.input.delay_bars && !["stress", "sensitivity", "benchmark"].some(tag => tags.includes(tag));
-      if (!baseline) throw new Error("Only baseline histories can be imported.");
+      if (!Array.isArray(ids) || !ids.length || ids.length > 100 ||
+          ids.some(id => typeof id !== "string" || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(id)))
+        throw new Error("Choose up to 100 saved runs with valid IDs.");
+      const runIds = [...new Set<string>(ids)];
+      const runs = researchState?.().runs || [];
+      const requested = runIds.map(id => {
+        const run = runs.find(candidate => candidate.id === id);
+        if (!run || run.status !== "Succeeded") throw new Error("Choose a completed saved run.");
+        if (run.input.portfolio_replay)
+          throw new Error("Portfolio tracking runs cannot be imported as research baselines.");
+        if (!isPortfolioBaselineRun(run)) throw new Error("Only baseline histories can be imported.");
+        return run;
+      });
       if (existsSync(join(folder, "index.json"))) {
-        const existing = api.catalog().items.find(item =>
-          item.source_run_ids?.length === 1 &&
-          item.source_run_ids[0] === runId &&
-          item.coverage.length === 1 &&
-          item.coverage[0].start === run.input.start &&
-          item.coverage[0].end === run.input.end &&
-          !item.latest_replay &&
-          !item.research_integrity_error,
-        );
-        if (existing) {
+        const catalog = api.catalog();
+        if (requested.every(run => exactPortfolioItemForRun(catalog, run))) {
           const now = new Date().toISOString();
           pinnedOnlyRefresh = true;
           refresh = { running: false, error: "", started_at: now, completed_at: now };
@@ -84,20 +78,19 @@ export function createCollective(
       if (!Array.isArray(pins) || pins.some(id => typeof id !== "string"))
         throw new Error("Saved history imports need repair before adding another run.");
       let rollbackPin: (() => void) | undefined;
-      if (!pins.includes(runId)) {
+      const added = runIds.filter(id => !pins.includes(id));
+      if (added.length) {
         const temp = `${pinsFile}.${process.pid}.tmp`;
-        writeFileSync(temp, JSON.stringify([...pins, runId]));
+        writeFileSync(temp, JSON.stringify([...pins, ...added]));
         renameSync(temp, pinsFile);
         rollbackPin = () => {
           if (!existsSync(pinsFile)) return;
           const current: unknown = JSON.parse(readFileSync(pinsFile, "utf8"));
           if (!Array.isArray(current) || current.some(id => typeof id !== "string"))
             throw new Error("Saved history imports changed during failed import.");
-          const index = current.indexOf(runId);
-          if (index < 0) return;
-          current.splice(index, 1);
+          const remaining = current.filter(id => !added.includes(id));
           const rollbackTemp = `${pinsFile}.${process.pid}.rollback.tmp`;
-          writeFileSync(rollbackTemp, JSON.stringify(current));
+          writeFileSync(rollbackTemp, JSON.stringify(remaining));
           renameSync(rollbackTemp, pinsFile);
         };
       }
