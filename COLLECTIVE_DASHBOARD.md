@@ -1,18 +1,50 @@
 # Combined strategy dashboard
 
-Open `http://127.0.0.1:5173`. The app lands on **Combined portfolio**.
+Open `http://127.0.0.1:5173`. The app lands on **Portfolio**.
 
-The first saved combination with all selected books available opens by default. The portfolio
-has four views: **Overview** (totals, chart, market and
-year tables), **Calendar** (daily P&L with the selected day's breakdown beside
-it), **Contributions**, and **Pause & sizing**. The **Combination** panel on
-the right stays visible in every view; **Add** opens the configuration picker.
-Individual evaluations and scorecards are linked from **Research**.
+The first saved combination with all selected books available opens by default. The
+portfolio has three views:
+
+- **Overview:** four key figures (net P&L, max drawdown, return ÷ drawdown, win rate),
+  the P&L chart (cumulative, daily or by year), and a strategies table with a size
+  stepper per row.
+- **Calendar:** daily P&L for the month with a month summary (month P&L, up days, down
+  days). The selected day opens a panel with the date, total and a by-strategy table.
+- **Risk:** **Recent form** for each strategy (last 10 and 30 trades, last 20 trading
+  days, distance below peak, with a **Pause this strategy** button), **Position size**
+  at 50%, 75% and 100%, and **Pause & resume rules**. Rules start as a short form (rule,
+  resume after, calibrate up to, whole contracts, **Run replay**); **Advanced options**
+  opens the full controls. The old condition panel is under **Full condition details**.
+
+The header holds the portfolio switcher (saved combinations), the period buttons and
+**Settings**, a drawer for capital, dates, accounting basis and export. **Add
+strategies** (from the strategies table or an empty portfolio) opens the picker. Old
+Contributions content now lives in the Overview table and the Risk tab.
+Individual evaluations and scorecards are linked from **Runs** and **Strategies**.
+
+### After adding strategies
+
+Closing the picker with new strategies shows a banner on Overview, "N strategies
+added · Undo", and each key figure notes what it was before ("Was +$209,055").
+**Undo** restores the previous selection.
+
+### When the combined book is unavailable
+
+If the selected histories share no common tested window, the card offers **Apply
+common tested window** when one exists. It also offers **Run strategies on latest
+data**: each selected strategy's latest saved run is relaunched with its saved
+settings, ending at the newest data for its market. The card waits for the runs,
+reloads the run list, then imports each new run as that strategy's exact history. It
+reports failures instead of showing success. Strategies without a saved run are
+skipped. The runs appear in **Runs** like any other backtest.
 
 ## Build a combination
 
-1. In **Add**, use **Passed**, **In progress**, **Failed**, or **All**. Passed opens
-   first. Each script has an expandable group of exact histories. The collapsed
+1. In **Add strategies**, search, choose market chips, and filter by status or
+   timeframe; sort by return ÷ drawdown, net P&L or smallest drawdown. A **Needs rerun**
+   banner counts strategies made with older code or not linked to a research run. The
+   footer shows how many are selected, with **Clear**, **Cancel** (reverts to the
+   selection when the picker opened) and **Add N strategies**. Each script has an expandable group of exact histories. The collapsed
    preview shows the highest saved-window P&L divided by maximum daily dollar
    drawdown among the histories in the current tab and filters. It keeps the
    summary to market, timeframe, net P&L, daily drawdown, trades, and Return/DD;
@@ -21,15 +53,15 @@ Individual evaluations and scorecards are linked from **Research**.
    when needed. All includes every registered script, including the benchmark.
 2. Expanded rows show the market/timeframe, saved dates, centered P&L, maximum
    daily drawdown percentage, and risk-adjusted score. Any intact saved
-   history can be added, including failed or unfinished validation. **Add shown**
-   keeps existing selections. Filtering never removes selected books; selections
+   history can be added, including failed or unfinished validation. Existing
+   selections are kept. Filtering never removes selected books; selections
    outside the view are counted. A completed result without a portfolio history
    offers **Import exact run**; a script without a result offers **Research**.
-3. Set **Starting capital (USD)** in the Combination panel. It defaults to
-   $100,000 shared across the entire portfolio. Set whole-number copies under
-   **Add → Selected copies**; two copies double a book's dollar P&L and exposure while total
+3. Set **Starting capital (USD)** in **Settings**. It defaults to
+   $100,000 shared across the entire portfolio. Set whole-number copies with the size stepper in the strategies table (or under
+   **Add strategies → Selected copies**); two copies double a book's dollar P&L and exposure while total
    capital stays fixed. This does not rerun risk-based sizing.
-4. In the Combination panel, choose dates and marked or closed-trade
+4. In **Settings**, choose dates and marked or closed-trade
    accounting. **Use common tested
    window** finds the intersection of the selected histories. Missing history
    blocks aggregation rather than becoming a zero return.
@@ -44,18 +76,18 @@ each period's cumulative P&L at zero. Drawdown, combination score, profit
 factor, win rate, and trade and day counts also use that period; drawdown starts
 from shared starting capital at the period boundary.
 
-Contributions lists **Strategy** and **Chart** separately; Chart identifies the
-market, timeframe and session. **Maximum drawdown** is each strategy's largest
+The Overview strategies table (and, with a pause or sizing rule on, the contributions
+table under Risk) shows each strategy's market, timeframe and session. **Maximum drawdown** is each strategy's largest
 peak-to-trough dollar loss within the selected dates, starting its cumulative
 P&L at zero. It uses the chosen accounting basis, copies and active pause/sizing
 replay. Drawdowns are measured at daily observations and do not capture intraday
 extremes. Individual strategy drawdowns are not additive portfolio drawdown.
-The period selector on Contributions shares the Overview selection. It updates
+The period selector shares the Overview selection. It updates
 each strategy's P&L, drawdown, return contribution, always-on result, trade
 counts, skipped trades and average size. **At cutoff** reflects the common end
 date, which stays fixed as the period start changes.
 
-The Combination list shows only each book's symbol, strategy name, P&L percentage,
+The strategies table shows only each book's symbol, strategy name, P&L percentage,
 and drawdown percentage. P&L divides the book's net P&L by shared starting
 capital. Drawdown follows that book's daily P&L on an isolated equity path
 starting at shared capital and measures the largest decline from a running peak.
@@ -65,7 +97,7 @@ counts under **Add → Selected copies**. Save again to update a named combinati
 
 Settings and named combinations persist in the browser. On load, the first saved
 combination with all selected books available becomes the default; without one, the portfolio
-restores the active settings or its initial catalog selection. From the Combination panel,
+restores the active settings or its initial catalog selection. From **Settings**,
 export daily P&L as CSV and save the combination, source identities and policy
 settings as JSON. Policy decision logs have a separate CSV export in **Pause &
 sizing**.
@@ -143,7 +175,7 @@ capital-based resizing. Overlapping strategies can create correlated exposure.
 
 Settings without a valid saved capital amount default to $100,000 total.
 Capital edits persist across reloads. Overview omits the separate starting-capital
-and ending-equity cards; edit capital in Combination. Combination JSON version 2 declares
+and ending-equity cards; edit capital in Settings. Combination JSON version 2 declares
 `capital_model: "shared"` and includes this capital; daily CSV includes
 `starting_capital` and the shared equity path. If equity reaches zero or below,
 the dashboard flags exhaustion and retains the full loss path. It does not
@@ -184,7 +216,7 @@ disabled. Existing saved modes remain selected, and existing volatility settings
 retain the explicitly labelled legacy estimator. The original rolling, streak,
 drawdown and manual experiments remain available.
 
-The Pause & sizing view now includes 50%, 75% and 100% constant-exposure
+The Risk tab's position-size table includes 50%, 75% and 100% constant-exposure
 benchmarks on the same books, dates and accounting basis, with net P&L, maximum
 dollar drawdown, worst day and recovery factor. Benchmarks retain the same
 shared starting capital and proportionally scale recorded net costs; they are
@@ -393,7 +425,7 @@ not resumed automatically after three winning shadow trades.
 
 ### Strategy condition and permission (condition version 1)
 
-The Pause / sizing view now assesses baseline strategy condition independently
+The Risk tab now assesses baseline strategy condition independently
 of entry permission. `Enabled` means the replay permits entries; it does not
 mean the strategy is profitable recently. Manual decisions and position sizing
 do not reset the descriptive history. The condition panel remains available

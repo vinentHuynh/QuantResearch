@@ -39,6 +39,7 @@ export function WorkbenchRoutes({ controller }: { controller: WorkbenchControlle
     return (
       <CollectiveDashboard
         researchState={state}
+        refreshResearch={controller.refresh}
         refreshKey={dashboardRefresh}
         view={route.sub}
         pickerOpen={controller.portfolioPickerOpen}
