@@ -78,11 +78,11 @@
 .wb-strategy-cell .wb-strategy-stage { margin-top: 2px; }
 .wb-size-stepper { display: inline-flex; align-items: center; gap: 8px; }
 .wb-size-stepper > span { min-width: 26px; text-align: center; font-weight: 700; }
-.wb-form { font-size: 12.5px; font-weight: 600; text-decoration: none; }
-.wb-form.is-watch { color: var(--watch); }
-.wb-form.is-weak { color: var(--loss); }
-.wb-form.is-ok { color: var(--teal-ink); }
-.wb-form.is-unknown { color: var(--muted); }
+.wb-form { display: inline-flex; flex-direction: column; gap: 2px; color: var(--ink); font-size: 12.5px; font-weight: 600; text-decoration: none; }
+.wb-form .is-watch { color: var(--watch); }
+.wb-form .is-weak { color: var(--loss); }
+.wb-form .is-ok { color: var(--teal-ink); }
+.wb-form .is-unknown { color: var(--muted); }
 .wb-add-hint {
   display: flex;
   align-items: center;

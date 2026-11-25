@@ -3,17 +3,38 @@ import { assessCondition } from "../../../shared/ts/strategyCondition.ts";
 import type { CollectiveDashboardModel } from "./useCollectiveDashboardModel";
 
 export type RecentForm = {
-  id: string;
   tone: "watch" | "weak" | "ok" | "unknown";
-  label: string;
-  last10: number | null;
+  status: string;
+  tradeSummary: string;
 };
+
+type Assessment = ReturnType<typeof assessCondition>;
+
+export function recentFormStatus(a: Assessment): Pick<RecentForm, "tone" | "status"> {
+  switch (a.condition) {
+    case "Watch — recent losses":
+      return { tone: "watch", status: "Watch · recent losses" };
+    case "Unusual weakness":
+      return { tone: "weak", status: a.condition };
+    case "Recovery developing":
+      return { tone: "ok", status: a.condition };
+    case "Within reference range":
+      return { tone: "ok", status: "Steady" };
+    default:
+      return { tone: "unknown", status: a.last20.count ? "Historical comparison unavailable" : "Daily history unavailable" };
+  }
+}
+
+const tradeMoney = new Intl.NumberFormat("en-US", {
+  style: "currency", currency: "USD", signDisplay: "exceptZero",
+  minimumFractionDigits: 0, maximumFractionDigits: 2,
+});
 
 /** Recent form of each selected strategy, as of today. Describes the past. */
 export function useRecentForm(model: CollectiveDashboardModel) {
   const { catalog, histories, selected } = model;
+  const today = new Date().toISOString().slice(0, 10);
   return useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
     return Object.fromEntries(
       selected.map((item) => {
         const assessment = assessCondition(
@@ -23,15 +44,13 @@ export function useRecentForm(model: CollectiveDashboardModel) {
           catalog?.condition_calibration,
           catalog?.market_data_through?.[item.symbol],
         );
-        const last10 = assessment.last10.count ? assessment.last10.pnl : null;
-        const tone: RecentForm["tone"] = assessment.condition === "Unusual weakness" ? "weak"
-          : assessment.condition.startsWith("Watch") ? "watch"
-            : assessment.condition === "Insufficient evidence" ? "unknown" : "ok";
-        const lead = tone === "weak" ? "Unusual weakness" : tone === "watch" ? "Watch" : tone === "ok" ? "Steady" : "Not enough data";
-        const label = last10 === null ? lead : `${lead} · last 10 trades ${last10 < 0 ? "−" : "+"}$${Math.abs(Math.round(last10)).toLocaleString("en-US")}`;
-        return [item.id, { id: item.id, tone, label, last10 } satisfies RecentForm];
+        const { count, requested, pnl } = assessment.last10;
+        const window = count === requested ? `Last ${count} trades` : `${count} confirmed ${count === 1 ? "trade" : "trades"}`;
+        const tradeSummary = count ? `${window} · ${tradeMoney.format(pnl)}`
+          : assessment.asOf ? "No confirmed trade exits" : "Trade history unavailable";
+        return [item.id, { ...recentFormStatus(assessment), tradeSummary }];
       }),
     ) as Record<string, RecentForm>;
-  }, [catalog, histories, selected]);
+  }, [catalog, histories, selected, today]);
 }
 

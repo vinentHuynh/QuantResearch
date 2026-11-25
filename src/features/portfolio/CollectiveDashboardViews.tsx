@@ -310,7 +310,12 @@ export function CollectiveOverviewView({ model, recentForm, onSettings, onRemove
                   <span role='cell' className='mono wb-loss'>{component ? wholeMoney(-component.maxDrawdownDollars) : '—'}</span>
                   <span role='cell' className='mono'>{share == null ? '—' : `${Math.round(share * 100)}%`}</span>
                   <span role='cell'>
-                    {form ? <a className={`wb-form is-${form.tone}`} href={href('portfolio', 'risk')}>{form.label}</a> : '—'}
+                    {form ? (
+                      <a className='wb-form' href={href('portfolio', 'risk')}>
+                        <span>{form.tradeSummary}</span>
+                        <span className={`is-${form.tone}`}>{form.status}</span>
+                      </a>
+                    ) : '—'}
                   </span>
                 </div>
               );

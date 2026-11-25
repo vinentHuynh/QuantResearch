@@ -4,6 +4,7 @@ import { assessCondition } from "../../../shared/ts/strategyCondition.ts";
 import { strategyTitle } from "../../../shared/ts/formatting.ts";
 import type { CollectiveDashboardModel } from "./useCollectiveDashboardModel";
 import { formatMoney as money, signedClass as signed } from "./collectiveViewModel";
+import { recentFormStatus } from "./recentForm";
 
 const dateFormat = new Intl.DateTimeFormat("en-US", {
   month: "short", day: "numeric", year: "numeric", timeZone: "UTC",
@@ -35,29 +36,28 @@ export function RecentFormCards({ model, onPause }: { model: CollectiveDashboard
         Trade windows use confirmed strategy exits. Daily P&amp;L includes recorded days with no exits. All dates are UTC.
       </Text>
       {rows.map(({ item, a }) => {
-        const tone = a.condition === "Unusual weakness" ? "weak" : a.condition.startsWith("Watch") ? "watch" : a.condition === "Insufficient evidence" ? "unknown" : "ok";
-        const lead = tone === "weak" ? "Unusual weakness" : tone === "watch" ? "Watch · recent losses" : tone === "ok" ? "Steady" : "Not enough data";
+        const { tone, status } = recentFormStatus(a);
         const windows = [
-          { label: "Last 10 trade exits", w: a.last10 },
-          { label: "Last 30 trade exits", w: a.last30 },
-          { label: "Last 20 observed days", w: a.last20 },
+          { label: "Last 10 trade exits", w: a.last10, empty: "No confirmed trade exits" },
+          { label: "Last 30 trade exits", w: a.last30, empty: "No confirmed trade exits" },
+          { label: "Last 20 observed days", w: a.last20, empty: "No observed days" },
         ];
         return (
           <article key={item.id} className="wb-recent-form-row" data-testid={`recent-form-${item.id}`}>
             <header>
               <h2>{strategyTitle(item.name || item.id)}<Text span c="dimmed"> · {item.symbol}</Text></h2>
-              <span className={`wb-status-chip is-${tone === "ok" ? "ready" : tone === "unknown" ? "next" : tone === "weak" ? "failed" : "blocked"}`}>{lead}</span>
+              <span className={`wb-status-chip is-${tone === "ok" ? "ready" : tone === "unknown" ? "next" : tone === "weak" ? "failed" : "blocked"}`}>{status}</span>
               <Button variant="default" size="xs" onClick={() => onPause(item.id)}>Pause this strategy</Button>
             </header>
             <div className="wb-recent-form-grid">
-              {windows.map(({ label, w }) => (
+              {windows.map(({ label, w, empty }) => (
                 <div key={label}>
                   <Text size="xs" c="dimmed">
                     {label}{w.count > 0 && w.count < w.requested && ` (${w.count} available)`}
                   </Text>
                   <strong className={`mono ${w.count ? signed(w.pnl) : ""}`}>{w.count ? signedMoney(w.pnl) : "—"}</strong>
                   <Text size="xs" c="dimmed">
-                    {w.start && w.end ? dateFormat.formatRange(new Date(w.start), new Date(w.end)) : "Not enough data"}
+                    {w.start && w.end ? dateFormat.formatRange(new Date(w.start), new Date(w.end)) : empty}
                   </Text>
                 </div>
               ))}

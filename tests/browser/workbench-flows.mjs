@@ -290,19 +290,28 @@ try {
   assert.deepEqual([updated.start, updated.end], ["2025-01-01", latest]);
   assert.equal(freshRuns.length, 4);
 
-  // Confirm that a sparse trade window spanning New Year reads chronologically.
+  // Recent trade results remain visible independently of historical comparison availability.
   await page.route("**/api/workbench/collective/series", route => {
     const { ids } = route.request().postDataJSON();
-    const trades = ["2025-12-31", "2026-01-05"].map(date => ({
-      entry: date + "T10:00:00Z", exit: date + "T12:00:00Z", pnl: 10, synthetic_exit: false,
-    }));
-    const daily = trades.map(t => ({ date: t.exit.slice(0, 10), pnl: t.pnl })).concat({ date: latest, pnl: 0 });
-    return route.fulfill({ json: ids.map(id => ({
-      id, coverage: catalogItems.find(book => book.id === id).coverage, daily, trades,
-    })) });
+    return route.fulfill({ json: ids.map(id => {
+      const dates = id.endsWith("-ES")
+        ? Array.from({ length: 10 }, (_, i) => `2025-12-${15 + i}`)
+        : ["2025-12-31", "2026-01-05"];
+      const trades = dates.map(date => ({
+        entry: date + "T10:00:00Z", exit: date + "T12:00:00Z", pnl: 10, synthetic_exit: false,
+      }));
+      const daily = dates.map(date => ({ date, pnl: 10 })).concat({ date: latest, pnl: 0 });
+      return { id, coverage: catalogItems.find(book => book.id === id).coverage, daily, trades };
+    }) });
   });
-  await page.goto(base + "/#/portfolio/risk");
   await page.reload();
+  const strategies = page.getByTestId("selected-strategies");
+  const fullWindowLink = strategies.getByRole("link", { name: "Last 10 trades · +$100 Historical comparison unavailable" });
+  await expect(strategies.getByRole("link", { name: "2 confirmed trades · +$20 Historical comparison unavailable" })).toBeVisible();
+  await fullWindowLink.click();
+  const fullWindowCard = page.getByTestId("recent-form-book-fresh-2-ES");
+  await expect(fullWindowCard.getByText("Historical comparison unavailable")).toBeVisible();
+  await expect(fullWindowCard.getByText("Last 10 trade exits").locator("..")).toContainText("+$100.00");
   const recentForm = page.getByTestId("recent-form-book-fresh-2-MNQ");
   const tradeWindow = recentForm.getByText("Last 30 trade exits (2 available)").locator("..");
   await expect(tradeWindow).toContainText(/Dec 31, 2025\s*–\s*Jan 5, 2026/);
