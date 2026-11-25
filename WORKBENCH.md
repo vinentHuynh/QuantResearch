@@ -192,8 +192,8 @@ verified ledgers. Unlinked, missing or mixed configurations require review; chan
 execution sources require retesting. Each row exposes missing checks and a matching
 action: configure a backtest, plan an evaluation with exact saved settings, inspect
 failed checks, or refresh portfolio evidence after a pass. Planning does not launch
-jobs. Refreshing imports histories and does not award a pass. Scorecards
-explicitly describe the latest evaluated configuration on the chosen market;
+jobs. Refreshing imports histories and does not award a pass. The Strategies
+list explicitly describes the latest evaluated configuration on the chosen market;
 script/library summaries include all recorded current-adapter configurations.
 Run/evaluation, scorecard and portfolio views share the same evidence calculation.
 
@@ -336,7 +336,7 @@ costs, and comparison/evaluation limits are specified in [the Pine audit](docs/w
 
 ## Evaluation and regime research
 
-**Evaluations & regimes** adds rolling walk-forward selection, complete candidate
+**Runs › Evaluations** (with regime studies) adds rolling walk-forward selection, complete candidate
 sensitivity tables, subsequent baseline/cost/delay tests, and a joined test equity
 path. Selection uses only training results and is recorded before test jobs.
 Criteria are frozen before launch. Successful execution and research outcome
@@ -401,9 +401,9 @@ Historical publication/revision timing is unavailable. Acquisition time uses
 the ZIP file's local modification timestamp. These limitations appear in the UI
 and saved run warnings.
 
-## Strategy dashboard
+## Strategies list
 
-Open **Dashboard** for the latest evaluation of each strategy in the selected
+Open **Strategies** for the latest evaluation of each strategy in the selected
 market. It refreshes automatically every ten seconds and through **Refresh**.
 New strategy adapters appear automatically, with **Not evaluated** until an
 evaluation exists. Choose a strategy in the profit chart or scorecard to view
@@ -512,6 +512,16 @@ original run and choose **Rerun identical inputs**.
 Plan, exact selections, run IDs, results, and browser screenshots are saved in
 [`artifacts/research/strategy-optimization-2022-2024/`](artifacts/research/strategy-optimization-2022-2024/).
 
+## Portfolio replays and refreshing results
+
+Portfolio tracking replays are pinned to the verified exact baseline run for each
+history, so reloading the app cannot silently swap a history. When histories end on
+different dates and share no common window, the Portfolio's empty state offers
+**Run strategies on latest data**: it relaunches each selected strategy's latest saved
+run through the newest data for its market and imports the results (see
+[COLLECTIVE_DASHBOARD.md](COLLECTIVE_DASHBOARD.md)). The Portfolio page does not poll
+the run list on its own, so that flow reloads it explicitly before importing.
+
 ## Validation commands
 
 ```powershell
@@ -523,6 +533,12 @@ npm run test:lifecycle
 npx playwright install chromium
 npm run test:browser
 ```
+
+`npm run test:unit:ts` includes the status-display and dev-startup tests, and
+`npm run test:browser:fixture` runs `tests/browser/workbench-flows.mjs`, which drives the
+redesigned Portfolio, New backtest and mobile navigation against intercepted traffic.
+The older `tests/browser/workbench-smoke.mjs` still expects the pre-redesign layout and
+needs `WORKBENCH_PYTHON`.
 
 Lifecycle tests use isolated synthetic datasets and temporarily register a
 test script. Browser tests use the real registered ZIP datasets and preserve

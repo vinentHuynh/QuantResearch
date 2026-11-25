@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActionIcon,
   Badge,
@@ -14,6 +14,7 @@ import {
   IconChevronRight,
   IconMinus,
   IconPlus,
+  IconRefresh,
   IconX,
 } from '@tabler/icons-react';
 import { href } from '../../app/navigation';
@@ -49,7 +50,76 @@ const periodLabels: Record<PortfolioPnlPeriod, string> = {
 };
 
 export function CollectiveEmptyState({ model }: { model: Model }) {
-  const { computed, histories, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
+  const { computed, histories, hasRun, refreshEvidence, refreshResearch, selected, setPickerOpen, settings, testedWindow, tracking, useCommon } = model;
+  const [rerun, setRerun] = useState<{ phase: 'idle' | 'starting' | 'running' | 'importing' | 'done' | 'error'; message?: string }>({ phase: 'idle' });
+  const hasRunRef = useRef(hasRun);
+  hasRunRef.current = hasRun;
+  const runnable = selected.flatMap((item) => (item.source_run_ids?.length ? [item.source_run_ids[item.source_run_ids.length - 1]] : []));
+  const api = '/api/workbench';
+  const getJson = async (path: string) => {
+    const response = await fetch(api + path, { cache: 'no-store' });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+    return body;
+  };
+  /** Rerun each selected strategy with its saved settings, but through the newest data of its market. */
+  const rerunStrategies = async () => {
+    setRerun({ phase: 'starting' });
+    try {
+      const state = await getJson('/state');
+      const launched: string[] = [];
+      for (const id of runnable) {
+        const source = (state.runs || []).find((run: { id: string }) => run.id === id);
+        if (!source) continue;
+        const symbol = source.input.dataset?.symbol;
+        const newest = (state.datasets || [])
+          .filter((dataset: { symbol: string }) => dataset.symbol === symbol)
+          .sort((a: { last: string }, b: { last: string }) => String(b.last).localeCompare(String(a.last)))[0];
+        if (!newest) continue;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { strategy, dataset, retry_of, ...input } = source.input;
+        const payload = {
+          ...input,
+          strategy_id: strategy?.id || input.strategy_id,
+          dataset_id: newest.id,
+          dataset_ids: [newest.id],
+          timeframes: [input.timeframe],
+          end: String(newest.last).slice(0, 10),
+          sweep: {},
+        };
+        const response = await fetch(`${api}/runs`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.error || `Could not start the run for ${strategy?.name || id}`);
+        launched.push(...(Array.isArray(body) ? body : [body]).map((run: { id: string }) => run.id));
+      }
+      if (!launched.length) throw new Error('None of the selected strategies has a saved run and newer market data to run on.');
+      setRerun({ phase: 'running', message: `Running ${launched.length} ${launched.length === 1 ? 'backtest' : 'backtests'} through the latest data…` });
+      const pending = new Set(launched);
+      for (let attempt = 0; pending.size && attempt < 900; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        for (const id of [...pending]) {
+          const run = await getJson(`/runs/${encodeURIComponent(id)}`);
+          if (run.status === 'Succeeded') pending.delete(id);
+          else if (['Failed', 'Cancelled', 'Canceled'].includes(run.status)) throw new Error(`A run ${run.status.toLowerCase()}. Open Runs to see why.`);
+        }
+      }
+      if (pending.size) throw new Error('The runs are still going. Check Runs, then use the refresh icon beside “Updated” above.');
+      setRerun({ phase: 'importing', message: 'Loading the new results into the portfolio…' });
+      // The app learns about finished runs on its own schedule; wait until it has them before importing.
+      for (let attempt = 0; attempt < 30 && !launched.every((id) => hasRunRef.current(id)); attempt += 1) {
+        await refreshResearch?.();
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      if (!launched.every((id) => hasRunRef.current(id))) throw new Error('The new runs finished but have not shown up yet. Reload the page, then use Add strategies › Import exact run.');
+      for (const id of launched) {
+        if (!(await refreshEvidence(id))) throw new Error('Could not import a new run into the portfolio. The message above says why.');
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+      setRerun({ phase: 'done', message: 'Updated to the latest data.' });
+    } catch (error) {
+      setRerun({ phase: 'error', message: error instanceof Error ? error.message : String(error) });
+    }
+  };
   const endExplanation = computed.coverageGap
     ? coverageEndExplanation(selected, histories, settings, testedWindow, tracking)
     : null;
@@ -77,6 +147,20 @@ export function CollectiveEmptyState({ model }: { model: Model }) {
             ? 'Apply common tested window'
             : 'Review configurations'}
         </Button>
+      )}
+      {selected.length > 0 && (
+        <>
+          <Button mt='md' ml={computed.coverageGap ? 'xs' : 0} variant='default' leftSection={<IconRefresh size={14} />}
+            loading={['starting', 'running', 'importing'].includes(rerun.phase)} disabled={!runnable.length} onClick={() => void rerunStrategies()}
+            title={runnable.length ? 'Rerun each selected strategy through the newest market data' : 'None of the selected strategies has a saved run to repeat'}>
+            Run strategies on latest data
+          </Button>
+          {rerun.message && (
+            <Text size='sm' mt='sm' c={rerun.phase === 'error' ? 'red' : 'dimmed'} role={rerun.phase === 'error' ? 'alert' : 'status'}>
+              {rerun.message} {['running', 'error'].includes(rerun.phase) && <a href={href('runs')}>View runs</a>}
+            </Text>
+          )}
+        </>
       )}
       {!selected.length && (
         <Button

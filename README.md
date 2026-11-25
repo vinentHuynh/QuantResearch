@@ -34,6 +34,9 @@ For the built app instead of the dev server:
 ```powershell
 npm run build   # typechecks frontend + backend, then builds
 npm start       # serves UI and API together on http://127.0.0.1:8001
+
+`npm run dev:full` starts the API first and only starts Vite once the API is
+listening, so the first page load never hits a connection-refused error.
 ```
 
 On macOS/Linux use `.venv/bin/python`; the npm scripts pick the platform's
@@ -44,34 +47,23 @@ and the full validation command list.
 
 ## The application
 
-Ten pages in three sidebar groups. Every view has its own address (for example
-`#/portfolio/calendar`), so any state is linkable. **New backtest** and **Search**
-(Ctrl/Cmd + K) are reachable from every page. Below 900px the sidebar collapses
-into a bottom bar.
+Four sidebar sections plus **New backtest**. Each section has its own tabs, and every
+view has its own address (for example `#/portfolio/calendar`), so any state is
+linkable. Old addresses (`#/scorecards`, `#/datasets`, `#/event-studies`,
+`#/portfolio/pause` and so on) still work and land on the section that now holds that
+content. **New backtest** and **Search** (Ctrl/Cmd + K) are reachable from every page.
+Below 900px the sidebar collapses into a bottom bar.
 
-**Research flow**
+| Section | Tabs | What it is for |
+| --- | --- | --- |
+| Portfolio | Overview · Calendar · Risk | Combined P&L, key figures, strategies table with size steppers; daily calendar; recent form, position size and pause/sizing rules. **Settings** holds capital, dates, accounting and export; **Add strategies** opens the picker |
+| Strategies | Strategies · Scripts · Source library · Archived | One row per strategy with its research stage and next step; the 17 tracked runnable adapters; a searchable index of the catalogued sources |
+| Runs | Backtests · Evaluations | The full run ledger (paged, 50 rows) with filters and comparison; walk-forward evaluations open in a slide-out with the question, results table and pass criteria |
+| Data | Market data · Pattern studies | Import and version market-data archives; supply/demand, order blocks, FVGs and S/R tested against matched controls, summarised as a pattern/verdict table |
 
-| Page | What it is for |
-| --- | --- |
-| Research workspace | Entry point: recent activity, what needs attention, run cleanup |
-| Scripts & library | The 17 tracked runnable adapters plus a searchable index of 171 catalogued sources |
-| Runs & compare | The full run ledger with filters, saved views, side-by-side comparison |
-| Evaluations & regimes | Walk-forward evaluations, cost/delay stress, parameter sensitivity, regime studies |
-
-**Portfolio**
-
-| Page | What it is for |
-| --- | --- |
-| Strategy scorecards | Latest evaluated configuration per strategy and market |
-| Combined portfolio | Cross-market picker, combined curves, calendar, weights, CSV export |
-| Watchlist | Frozen historical replay set |
-
-**Data & studies**
-
-| Page | What it is for |
-| --- | --- |
-| Pattern event studies | Supply/demand, order blocks, FVGs and S/R tested against matched controls |
-| Datasets | Import and version market-data archives |
+Strategy status is shown the same way everywhere: a **stage · state** chip
+(for example *Backtest · Needs rerun*) plus a plain-language note, never raw
+internal labels. Names are cleaned with the same rules on every page.
 
 ### Running an experiment
 

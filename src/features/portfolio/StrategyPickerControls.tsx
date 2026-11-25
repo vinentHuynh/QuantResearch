@@ -109,7 +109,7 @@ export function StrategyPickerControls({
   selected: CollectiveItem[];
   runs?: RunSummary[];
   strategies?: Strategy[];
-  refreshEvidence: (runId?: string) => Promise<void>;
+  refreshEvidence: (runId?: string) => Promise<unknown>;
   refreshing: boolean;
   retryTracking: (id: string) => Promise<void>;
   setMarkets: Dispatch<SetStateAction<string[]>>;
